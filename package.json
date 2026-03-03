@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build",
+    "build": "prisma db push && react-router build",
     "dev": "react-router dev --port 5175",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
