@@ -1,0 +1,126 @@
+/* ============================================
+   MODAL SYSTEM
+   Modern replacement for prompt() and confirm()
+   ============================================ */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: #ffffff;
+    width: 100%;
+    max-width: 440px;
+    padding: 32px;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    transform: translateY(30px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0) scale(1);
+}
+
+.modal-header {
+    margin-bottom: 24px;
+}
+
+.modal-title {
+    font-family: var(--font-display, 'Josefin Sans', sans-serif);
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.2;
+}
+
+.modal-body {
+    margin-bottom: 32px;
+    color: #555;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* Form elements in modal */
+.modal-input {
+    width: 100%;
+    padding: 16px 20px;
+    border: 1.5px solid #eee;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 16px;
+    margin-top: 12px;
+    transition: all 0.2s;
+    background: #f9f9f9;
+}
+
+.modal-input:focus {
+    outline: none;
+    border-color: #1a1a1a;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.modal-btn--cancel {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.modal-btn--cancel:hover {
+    background: #eeeeee;
+}
+
+.modal-btn--primary {
+    background: #1a1a1a;
+    color: #fff;
+    flex: 1;
+}
+
+.modal-btn--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+    .modal-content {
+        margin: 20px;
+        padding: 24px;
+    }
+}

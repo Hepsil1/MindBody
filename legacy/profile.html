@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Особистий кабінет | MIND BODY</title>
+    <link rel="icon" type="image/png" href="pics/mind_body_logo_sun.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600&family=Pacifico&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="src/css/variables.css?v=2.0">
+    <link rel="stylesheet" href="src/css/base.css?v=2.0">
+    <link rel="stylesheet" href="src/css/components.css?v=2.0">
+    <link rel="stylesheet" href="src/css/layout.css?v=2.0">
+    <link rel="stylesheet" href="src/css/animations.css?v=2.0">
+    <link rel="stylesheet" href="src/css/wishlist.css?v=2.0">
+    <link rel="stylesheet" href="admin/admin.css?v=2.0">
+
+    <style>
+        :root {
+            --profile-sidebar-width: 300px;
+            --profile-gap: 60px;
+        }
+
+        /* Profile Specific Layout */
+        .profile-hero {
+            position: relative;
+            height: 400px;
+            /* Shorter than main hero */
+            overflow: hidden;
+            border-radius: 0 0 40px 40px;
+            margin-bottom: 60px;
+        }
+
+        .profile-hero__slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        .profile-hero__slide.active {
+            opacity: 1;
+        }
+
+        .profile-hero__img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7);
+        }
+
+        .profile-hero__content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            z-index: 2;
+            width: 100%;
+            padding: 0 20px;
+        }
+
+        .profile-hero__title {
+            font-family: var(--font-display);
+            font-size: 42px;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .profile-hero__subtitle {
+            font-size: 18px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .profile-container {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: 0 var(--container-padding);
+            padding-bottom: 120px;
+            display: grid;
+            grid-template-columns: var(--profile-sidebar-width) 1fr;
+            gap: var(--profile-gap);
+        }
+
+        /* Sidebar Styling */
+        .profile-sidebar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 40px 30px;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            height: fit-content;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 140px;
+        }
+
+        .profile-user-info {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: #fff;
+            font-family: var(--font-display);
+            font-size: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 25px rgba(61, 122, 140, 0.3);
+        }
+
+        .profile-name-display {
+            font-family: var(--font-display);
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .profile-email-display {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+
+        .profile-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .profile-nav-btn {
+            width: 100%;
+            text-align: left;
+            padding: 16px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 14px;
+            color: var(--color-text-secondary);
+            font-family: var(--font-body);
+            font-weight: 500;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .profile-nav-btn:hover {
+            background: rgba(61, 122, 140, 0.05);
+            color: var(--color-primary);
+            transform: translateX(4px);
+        }
+
+        .profile-nav-btn.active {
+            background: var(--color-primary);
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(61, 122, 140, 0.25);
+        }
+
+        .logout-btn {
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            color: #e57373;
+        }
+
+        .logout-btn:hover {
+            color: #d32f2f;
+            background: rgba(229, 115, 115, 0.05);
+        }
+
+        /* Content Area */
+        .profile-content-area {
+            min-height: 500px;
+        }
+
+        .dashboard-welcome {
+            font-size: 32px;
+            font-family: var(--font-display);
+            margin-bottom: 20px;
+            color: var(--color-text-primary);
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-box {
+            background: #fff;
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-val {
+            font-size: 28px;
+            font-family: var(--font-display);
+            color: var(--color-primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-txt {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #888;
+        }
+
+        .content-block {
+            background: #fff;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+            display: none;
+            animation: slideUpFade 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .content-block.active {
+            display: block;
+        }
+
+        @keyframes slideUpFade {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Order List Styling */
+        .order-history-item {
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            gap: 20px;
+            padding: 24px;
+            border: 1px solid #f0f0f0;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+            align-items: center;
+        }
+
+        .order-history-item:hover {
+            border-color: var(--color-primary-light);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .order-status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-new {
+            background: #E3F2FD;
+            color: #1976D2;
+        }
+
+        .status-processing {
+            background: #FFF3E0;
+            color: #F57C00;
+        }
+
+        .status-delivered {
+            background: #E8F5E9;
+            color: #388E3C;
+        }
+
+        /* Form Styling override */
+        .profile-form .input-group input {
+            background: #fcfcfc;
+            border: 1.5px solid #eaeaea;
+        }
+
+        .profile-form .input-group input:focus {
+            background: #fff;
+            border-color: var(--color-primary);
+        }
+
+        @media(max-width: 1000px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-sidebar {
+                position: static;
+                text-align: center;
+            }
+
+            .profile-nav-btn {
+                justify-content: center;
+            }
+
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .order-history-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="src/css/toast.css?v=2.0">
+    <link rel="stylesheet" href="src/css/modal.css?v=2.0">
+    <script src="src/js/toast.js?v=2.0"></script>
+    <script src="src/js/modal.js?v=2.0"></script>
+</head>
+
+<body>
+    <!-- Top Promo Bar -->
+    <div class="top-bar">
+        <div class="container top-bar__container">
+            <div class="top-bar__item">
+                <span class="top-bar__text">Безкоштовна доставка від 3000 грн</span>
+            </div>
+            <div class="top-bar__item">
+                <a href="#sale" class="top-bar__link">Програма лояльності: -10% на перше замовлення</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header header--hero" id="header">
+        <div class="header__container">
+            <a href="index.html" class="header__logo">
+                <img src="pics/mind_body_1.png" alt="MIND BODY" class="header__logo-img">
+            </a>
+
+            <nav class="header__nav" id="mainNav">
+                <ul class="header__nav-list">
+                    <li><a href="shop-women.html" class="header__nav-link">Жінкам</a></li>
+                    <li><a href="shop-kids.html" class="header__nav-link">Дітям</a></li>
+                    <li><a href="about.html" class="header__nav-link">Про бренд</a></li>
+                </ul>
+            </nav>
+
+            <div class="header__actions">
+                <button class="header__action-btn" id="profileBtn" aria-label="Профіль"
+                    onclick="Header.handleProfileClick(event)">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </button>
+                <button class="header__action-btn header__wishlist-btn" aria-label="Улюблені"
+                    onclick="location.href='wishlist.html'">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
+                        stroke-width="2">
+                        <path
+                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                    <span class="header__wishlist-count">0</span>
+                </button>
+                <button class="header__action-btn header__cart-btn" aria-label="Кошик"
+                    onclick="location.href='checkout.html'">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                    <span class="header__cart-count">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Profile Hero Slider -->
+    <section class="profile-hero" id="profileSlider">
+        <!-- Static Content Overlay -->
+        <div class="profile-hero__content">
+            <h1 class="profile-hero__title">Ваш Особистий Простір</h1>
+            <p class="profile-hero__subtitle">Керуйте замовленнями легко</p>
+        </div>
+
+        <!-- Background Slides -->
+        <div class="profile-hero__slide active">
+            <img src="generalpics/347_131123.jpg" alt="Mind Body Atmosphere" class="profile-hero__img">
+        </div>
+        <div class="profile-hero__slide">
+            <img src="generalpics/588_131123.jpg" alt="Mind Body Community" class="profile-hero__img">
+        </div>
+        <div class="profile-hero__slide">
+            <img src="generalpics/374_131123.jpg" alt="Mind Body Lifestyle" class="profile-hero__img">
+        </div>
+    </section>
+
+    <div class="profile-container">
+        <!-- Sidebar -->
+        <aside class="profile-sidebar">
+            <div class="profile-user-info">
+                <h3 class="profile-name-display" id="sidebarName">Гість</h3>
+                <p class="profile-email-display" id="sidebarEmail">...</p>
+            </div>
+
+            <nav class="profile-nav">
+                <button class="profile-nav-btn active" onclick="profileApp.switchTab('dashboard')">
+                    <div style="width:24px; display:flex; justify-content:center;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                    </div>
+                    <span>Мій Кабінет</span>
+                </button>
+                <button class="profile-nav-btn" onclick="profileApp.switchTab('orders')">
+                    <div style="width:24px; display:flex; justify-content:center;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                        </svg>
+                    </div>
+                    <span>Історія замовлень</span>
+                </button>
+                <button class="profile-nav-btn" onclick="profileApp.switchTab('settings')">
+                    <div style="width:24px; display:flex; justify-content:center;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <span>Особисті дані</span>
+                </button>
+
+                <div style="height: 1px; background: #eee; margin: 10px 0;"></div>
+
+                <button class="profile-nav-btn" onclick="window.api.logout()" style="color: #e57373;">
+                    <div style="width:24px; display:flex; justify-content:center;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span>Вийти</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="profile-content-area">
+
+            <!-- Dashboard -->
+            <div id="tab-dashboard" class="content-block active">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:30px;">
+                    <div>
+                        <span
+                            style="font-size:14px; text-transform:uppercase; letter-spacing:0.1em; color:#888;">Особистий
+                            простір</span>
+                        <h2 class="dashboard-welcome" style="margin:0; margin-top:8px;">З поверненням, <span
+                                id="dashName" style="color:var(--color-primary);">...</span></h2>
+                    </div>
+                    <div class="stat-badge-luxury">
+                        <span>MIND CLUB</span>
+                        <div style="font-size:12px; font-weight:400; opacity:0.8;">Status: New</div>
+                    </div>
+                </div>
+
+                <div class="stats-cards" style="grid-template-columns: 1fr 1fr;">
+                    <div class="stat-box">
+                        <div class="stat-val" id="statsOrders">0</div>
+                        <div class="stat-txt">Активних замовлень</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val" style="color: var(--color-primary);">-10%</div>
+                        <div class="stat-txt">Ваша персональна знижка</div>
+                    </div>
+                </div>
+
+                <div
+                    style="background: #fafafa; border-radius: 20px; padding: 30px; border: 1px dashed #ddd; text-align: center;">
+                    <h3 style="margin-bottom: 16px; font-family: var(--font-display);">Актуальна пропозиція</h3>
+                    <p style="color: #666; margin-bottom: 24px;">Нова колекція весни вже доступна. Отримайте -15% на
+                        категорію "Жінкам" за промокодом <b>MIND15</b>.</p>
+                    <a href="shop-women.html" class="btn btn--primary">Перейти до покупок</a>
+                </div>
+            </div>
+
+            <!-- Orders -->
+            <div id="tab-orders" class="content-block">
+                <h2 class="section-title" style="margin-bottom: 30px; font-family:var(--font-display); font-size:28px;">
+                    Мої замовлення</h2>
+                <div id="ordersList">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div id="tab-settings" class="content-block">
+                <h2 class="section-title" style="margin-bottom: 30px; font-family:var(--font-display); font-size:28px;">
+                    Редагувати профіль</h2>
+                <form id="profileForm" class="profile-form settings-form" onsubmit="profileApp.saveSettings(event)">
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label
+                                style="display:block; margin-bottom:8px; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">Повне
+                                ім'я</label>
+                            <input type="text" id="settingName" style="width:100%; padding:16px; border-radius:12px;"
+                                required>
+                        </div>
+                        <div class="input-group">
+                            <label
+                                style="display:block; margin-bottom:8px; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">Телефон</label>
+                            <input type="tel" id="settingPhone" style="width:100%; padding:16px; border-radius:12px;"
+                                placeholder="+380...">
+                        </div>
+                    </div>
+
+                    <div class="input-group" style="margin-top:20px;">
+                        <label
+                            style="display:block; margin-bottom:8px; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">Email
+                            (не змінюється)</label>
+                        <input type="email" id="settingEmail"
+                            style="width:100%; padding:16px; border-radius:12px; opacity:0.7;" disabled>
+                    </div>
+
+                    <div class="input-group" style="margin-top:20px;">
+                        <label
+                            style="display:block; margin-bottom:8px; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">Адреса
+                            доставки</label>
+                        <input type="text" id="settingAddress" style="width:100%; padding:16px; border-radius:12px;"
+                            placeholder="Місто, відділення...">
+                    </div>
+
+                    <button type="submit" class="btn btn--primary" style="margin-top:40px; min-width: 200px;">Зберегти
+                        зміни</button>
+                    <p id="saveMsg" style="margin-top:16px; color:var(--color-success); font-weight:600; display:none;">
+                        ✓ Дані успішно оновлено
+                    </p>
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__grid">
+                <div class="footer__brand">
+                    <img src="pics/mind_body_logo.png" alt="MIND BODY" class="footer__logo">
+                    <p class="footer__tagline">Motivate for active life</p>
+                    <div class="footer__socials">
+                        <a href="#" class="footer__social" aria-label="Instagram">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="footer__social" aria-label="Facebook">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer__nav">
+                    <h4 class="footer__nav-title">Магазин</h4>
+                    <ul class="footer__nav-list">
+                        <li><a href="shop-women.html">Жінкам</a></li>
+                        <li><a href="shop-kids.html">Дітям</a></li>
+                        <li><a href="#">Новинки</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer__nav">
+                    <h4 class="footer__nav-title">Компанія</h4>
+                    <ul class="footer__nav-list">
+                        <li><a href="about.html">Про бренд</a></li>
+                        <li><a href="#">Sustainability</a></li>
+                        <li><a href="contacts.html">Контакти</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer__nav">
+                    <h4 class="footer__nav-title">Допомога</h4>
+                    <ul class="footer__nav-list">
+                        <li><a href="#">Доставка та оплата</a></li>
+                        <li><a href="#">Повернення</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer__contact">
+                    <h4 class="footer__nav-title">Контакти</h4>
+                    <p>mind-body.com.ua</p>
+                    <p>Одеса, Україна</p>
+                    <p>+38 (063) 123-45-67</p>
+                </div>
+            </div>
+
+            <div class="footer__bottom">
+                <p class="footer__copyright">© 2026 MIND BODY. Всі права захищено.</p>
+                <div class="footer__payments">
+                    <span class="payment-badge">Visa</span>
+                    <span class="payment-badge">Mastercard</span>
+                    <span class="payment-badge">Apple Pay</span>
+                    <span class="payment-badge">G-Pay</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal__overlay" onclick="Header.closeAuth()"></div>
+        <div class="modal__container" style="max-width: 450px; padding: 40px;">
+            <div id="loginForm" class="auth-form">
+                <h2 style="font-family: var(--font-display); margin-bottom: 24px; font-size: 28px;">Вхід</h2>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="example@mail.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" id="loginPass" class="form-input" placeholder="••••••••">
+                </div>
+                <button class="btn btn--primary" style="width:100%; margin-top: 20px;"
+                    onclick="Header.handleLogin()">Увійти</button>
+                <div style="margin-top:24px; text-align:center; font-size: 14px; color:#666;">
+                    Немає акаунту? <a href="#" onclick="Header.toggleAuthForm('register')"
+                        style="color:var(--color-primary); font-weight:600;">Створити</a>
+                </div>
+                <div style="margin-top:20px; padding-top:20px; border-top: 1px solid #eee; text-align:center;">
+                    <button class="btn btn--outline" style="width:100%; gap:12px;">
+                        <img src="https://www.google.com/favicon.ico" width="18" height="18" alt="Google">
+                        Увійти через Google
+                    </button>
+                </div>
+            </div>
+
+            <div id="registerForm" class="auth-form" style="display:none;">
+                <h2 style="font-family: var(--font-display); margin-bottom: 24px; font-size: 28px;">Реєстрація</h2>
+                <div class="form-group">
+                    <label class="form-label">Повне ім'я</label>
+                    <input type="text" id="regName" class="form-input" placeholder="Олександр Шевченко">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="regEmail" class="form-input" placeholder="example@mail.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" id="regPass" class="form-input" placeholder="••••••••">
+                </div>
+                <button class="btn btn--primary" style="width:100%; margin-top: 20px;"
+                    onclick="Header.handleRegister()">Зареєструватися</button>
+                <div style="margin-top:24px; text-align:center; font-size: 14px; color:#666;">
+                    Вже є акаунт? <a href="#" onclick="Header.toggleAuthForm('login')"
+                        style="color:var(--color-primary); font-weight:600;">Увійти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/js/api.js?v=2.0"></script>
+    <script src="src/js/main.js?v=2.0"></script>
+    <script src="src/js/profile.js?v=2.0"></script>
+    <script src="src/js/cart.js?v=2.0"></script>
+    <script src="src/js/wishlist.js?v=2.0"></script>
+    <script src="admin/admin.js?v=2.0"></script>
+    <!-- Add simple script to re-check active tab visual state if needed -->
+    <script>
+        // Ensure buttons have active visual state
+        const updateNavVisuals = (t) => {
+            document.querySelectorAll('.profile-nav-btn').forEach(b => b.classList.remove('active'));
+            // The onclick in HTML does logic, here we just need to ensure the class is toggled
+            // Actually profile.js logic handles this if implementation is correct.
+        }
+    </script>
+</body>
+
+</html>

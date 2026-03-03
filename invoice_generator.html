@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Рахунку (Консалтинг)</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --border: #eaeaea;
+            --text: #1f2937;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #f3f4f6;
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            /* Fix padding issue */
+        }
+
+        button.btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button.btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .invoice-sheet {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+
+            .controls,
+            .no-print {
+                display: none !important;
+            }
+
+            .invoice-sheet {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                height: auto;
+            }
+        }
+
+        /* Invoice Typography */
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .header-table,
+        .items-table,
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .header-table td {
+            vertical-align: top;
+            padding: 5px 0;
+        }
+
+        .label {
+            font-weight: bold;
+            width: 120px;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .items-table th {
+            background: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        .text-center {
+            text-align: center !important;
+        }
+
+        .totals-table td {
+            padding: 5px;
+            font-weight: bold;
+        }
+
+        .signature-block {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature-line {
+            border-top: 1px solid black;
+            width: 200px;
+            display: inline-block;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="controls no-print">
+        <h2>🛠 Налаштування Рахунку</h2>
+        <div class="control-group">
+            <label>Номер рахунку:</label>
+            <input type="text" id="invNumber" value="СФ-001" oninput="updateInvoice()">
+        </div>
+        <div class="control-group">
+            <label>Дата:</label>
+            <input type="date" id="invDate" oninput="updateInvoice()">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="control-group">
+                <label>Постачальник (Ви):</label>
+                <input type="text" id="sellerName" placeholder="Назва компанії / ФОП..." value="ФОП Юрист В.В.">
+                <input type="text" id="sellerDetails" placeholder="ІПН, IBAN, Адреса..."
+                    value="ІПН 1234567890, UA2732000000001234567890123456" style="margin-top: 5px;">
+            </div>
+
+            <div class="control-group">
+                <label>Замовник (Клієнт):</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="buyerInn" placeholder="Введіть ЄДРПОУ для пошуку (напр. 12345678)"
+                        style="width: 70%;">
+                    <button class="btn-primary" onclick="mockAutoFill()">🔍 Знайти</button>
+                </div>
+                <input type="text" id="buyerName" placeholder="Назва клієнта" style="margin-top: 5px;">
+                <input type="text" id="buyerDetails" placeholder="Адреса, тел..." style="margin-top: 5px;">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Послуга:</label>
+            <input type="text" id="serviceName" value="Консультаційні послуги з питань комерційного права"
+                oninput="updateInvoice()">
+        </div>
+
+        <div class="control-group">
+            <label>Сума (грн):</label>
+            <input type="number" id="servicePrice" value="5000" oninput="updateInvoice()">
+        </div>
+
+        <button class="btn-primary" onclick="window.print()" style="width: 100%; margin-top: 20px; font-size: 16px;">🖨
+            Зберегти як PDF / Друкувати</button>
+    </div>
+
+    <!-- Paper Sheet -->
+    <div class="invoice-sheet" id="invoice">
+        <h1 id="displayTitle">РАХУНОК-ФАКТУРА № СФ-001</h1>
+        <p>від <span id="displayDate">...</span></p>
+
+        <hr style="border: 0; border-top: 2px solid black; margin: 20px 0;">
+
+        <table class="header-table">
+            <tr>
+                <td class="label">Постачальник:</td>
+                <td>
+                    <strong id="displaySeller">ФОП Юрист В.В.</strong><br>
+                    <span id="displaySellerDetails" style="font-size: 14px;">ІПН 1234567890, UA...</span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="height: 10px;"></td>
+            </tr>
+            <tr>
+                <td class="label">Одержувач:</td>
+                <td>
+                    <strong id="displayBuyer">...</strong><br>
+                    <span id="displayBuyerDetails" style="font-size: 14px;">...</span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="height: 10px;"></td>
+            </tr>
+            <tr>
+                <td class="label">Платник:</td>
+                <td>Той самий</td>
+            </tr>
+        </table>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 30px;">№</th>
+                    <th>Товари (роботи, послуги)</th>
+                    <th style="width: 60px;">К-сть</th>
+                    <th style="width: 60px;">Од.</th>
+                    <th style="width: 100px;">Ціна</th>
+                    <th style="width: 100px;">Сума</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center">1</td>
+                    <td id="displayService">Консультаційні послуги...</td>
+                    <td class="text-center">1</td>
+                    <td class="text-center">посл.</td>
+                    <td class="text-right" id="displayPrice">5 000.00</td>
+                    <td class="text-right" id="displaySum">5 000.00</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="totals-table" align="right" style="width: auto;">
+            <tr>
+                <td class="text-right">Всього:</td>
+                <td class="text-right" id="displayTotal">5 000.00 грн</td>
+            </tr>
+            <tr>
+                <td class="text-right">Без ПДВ:</td>
+                <td class="text-right">-</td>
+            </tr>
+            <tr>
+                <td class="text-right" style="border-top: 1px solid black; font-size: 16px;">До сплати:</td>
+                <td class="text-right" style="border-top: 1px solid black; font-size: 16px;" id="displayTotalFinal">5
+                    000.00 грн</td>
+            </tr>
+        </table>
+
+        <div style="margin-top: 30px; font-style: italic;">
+            Всього на суму: <span id="amountInWords">П'ять тисяч гривень 00 копійок</span>
+        </div>
+
+        <div style="margin-top: 50px;">
+            <p><strong>Призначення платежу:</strong> Оплата за консультаційні послуги згідно рахунку № <span
+                    id="paymentRefNum">...</span> від <span id="paymentRefDate">...</span>, Без ПДВ.</p>
+        </div>
+
+        <div class="signature-block">
+            <div>
+                Виписав(ла): _________________
+            </div>
+            <div style="text-align: right;">
+                _________________ (Підпис)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Init Date
+        document.getElementById('invDate').valueAsDate = new Date();
+        updateInvoice();
+
+        // Mock Auto Fill Function
+        function mockAutoFill() {
+            const inn = document.getElementById('buyerInn').value;
+            const buyerName = document.getElementById('buyerName');
+            const buyerDetails = document.getElementById('buyerDetails');
+
+            // NOTE: In a real production environment, you would call an API like Opendatabot or YouControl here.
+            // Example fetch: fetch('https://api.opendatabot.ua/api/v3/company/' + inn)
+
+            if (inn.length < 8) {
+                alert("Будь ласка, введіть коректний код ЄДРПОУ (8 цифр) або ІПН (10 цифр).");
+                return;
+            }
+
+            // Simulating API response logic
+            // Since we cannot call real paid APIs from this static file without a key/proxy.
+            alert("Імітація пошуку в реєстрі для коду: " + inn + "\n(У реальному проекті тут буде запит до API Opendatabot/YouControl)");
+
+            // Dummy data fill for demonstration
+            buyerName.value = "ТОВ 'ПРИКЛАД КОМПАНІ ВІД " + inn + "'";
+            buyerDetails.value = "01001, м. Київ, вул. Хрещатик, буд. 1, код ЄДРПОУ " + inn;
+
+            updateInvoice();
+        }
+
+        function updateInvoice() {
+            // Inputs
+            const num = document.getElementById('invNumber').value;
+            const dateVal = document.getElementById('invDate').value;
+            const seller = document.getElementById('sellerName').value;
+            const sellerDet = document.getElementById('sellerDetails').value;
+            const buyer = document.getElementById('buyerName').value;
+            const buyerDet = document.getElementById('buyerDetails').value;
+            const service = document.getElementById('serviceName').value;
+            const price = parseFloat(document.getElementById('servicePrice').value) || 0;
+
+            // Formatter
+            const dateObj = new Date(dateVal);
+            const dateStr = dateObj.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
+            const money = (val) => val.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$& ');
+
+            // Update DOM
+            document.getElementById('displayTitle').innerText = `РАХУНОК-ФАКТУРА № ${num}`;
+            document.getElementById('displayDate').innerText = dateStr;
+
+            document.getElementById('displaySeller').innerText = seller || "........";
+            document.getElementById('displaySellerDetails').innerText = sellerDet || "";
+
+            document.getElementById('displayBuyer').innerText = buyer || "........";
+            document.getElementById('displayBuyerDetails').innerText = buyerDet || "";
+
+            document.getElementById('displayService').innerText = service;
+            document.getElementById('displayPrice').innerText = money(price);
+            document.getElementById('displaySum').innerText = money(price);
+            document.getElementById('displayTotal').innerText = money(price) + " грн";
+            document.getElementById('displayTotalFinal').innerText = money(price) + " грн";
+
+            // Payment Reference
+            document.getElementById('paymentRefNum').innerText = num;
+            document.getElementById('paymentRefDate').innerText = dateObj.toLocaleDateString('uk-UA');
+
+            // Words (Simplified for single thousands/hundreds)
+            document.getElementById('amountInWords').innerText = convertNumberToWords(price);
+        }
+
+        function convertNumberToWords(amount) {
+            // Simple mapping for demo. For critical financial docs, use a robust library like 'ukr-number-words'.
+            return `Всього ${amount} грн. 00 коп.`;
+        }
+    </script>
+</body>
+
+</html>

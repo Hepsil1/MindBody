@@ -1,0 +1,422 @@
+/* ================================================
+   MIND BODY Admin Dashboard - CSS
+   Professional, Minimal, Fast
+   ================================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --sidebar-width: 260px;
+    --header-height: 72px;
+
+    --color-bg: #f8f9fb;
+    --color-sidebar: #1a1a2e;
+    --color-white: #ffffff;
+    --color-text: #1a1a2e;
+    --color-text-muted: #6b7280;
+    --color-border: #e5e7eb;
+
+    --color-primary: #4A9B8C;
+    --color-green: #10b981;
+    --color-blue: #3b82f6;
+    --color-purple: #8b5cf6;
+    --color-orange: #f59e0b;
+    --color-red: #ef4444;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    min-height: 100vh;
+    display: flex;
+}
+
+/* ============ SIDEBAR ============ */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    background: var(--color-sidebar);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.sidebar__logo {
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo-icon {
+    font-size: 24px;
+    color: var(--color-primary);
+}
+
+.logo-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.5px;
+}
+
+.sidebar__nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+
+.nav-item:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-item.active {
+    color: white;
+    background: var(--color-primary);
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.nav-badge {
+    margin-left: auto;
+    background: var(--color-red);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.sidebar__footer {
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.logout-btn:hover {
+    color: var(--color-red);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ============ MAIN CONTENT ============ */
+.main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+}
+
+.header {
+    height: var(--header-height);
+    background: var(--color-white);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.header__title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.header__date {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+.header__link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    transition: all 0.15s;
+}
+
+.header__link:hover {
+    color: var(--color-primary);
+    background: rgba(74, 155, 140, 0.08);
+}
+
+/* ============ STATS CARDS ============ */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    padding: 32px;
+}
+
+.stat-card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+    transition: all 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-card__icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.stat-card__icon--green {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-green);
+}
+
+.stat-card__icon--blue {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-blue);
+}
+
+.stat-card__icon--purple {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--color-purple);
+}
+
+.stat-card__icon--orange {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-orange);
+}
+
+.stat-card__content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-card__label {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin-bottom: 4px;
+}
+
+.stat-card__value {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+/* ============ RECENT ORDERS ============ */
+.recent-orders {
+    padding: 0 32px 32px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.section-link {
+    font-size: 14px;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.section-link:hover {
+    text-decoration: underline;
+}
+
+.orders-table-wrapper {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.orders-table th,
+.orders-table td {
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 14px;
+}
+
+.orders-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.orders-table tr:not(:last-child) td {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.orders-table tr:hover td {
+    background: #fafafa;
+}
+
+.loading-row td,
+.empty-row td {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 40px;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-badge--new {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-blue);
+}
+
+.status-badge--processing {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-orange);
+}
+
+.status-badge--shipped {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--color-purple);
+}
+
+.status-badge--delivered {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-green);
+}
+
+.status-badge--cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--color-red);
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 1200px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 72px;
+    }
+
+    .sidebar__logo .logo-text,
+    .nav-item span,
+    .nav-badge {
+        display: none;
+    }
+
+    .sidebar__logo {
+        justify-content: center;
+    }
+
+    .nav-item {
+        justify-content: center;
+        padding: 14px;
+    }
+
+    .main {
+        margin-left: 72px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+        padding: 16px;
+    }
+
+    .recent-orders {
+        padding: 0 16px 16px;
+    }
+
+    .header {
+        padding: 0 16px;
+    }
+}

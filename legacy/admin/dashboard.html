@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | MIND BODY Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../src/css/variables.css?v=2.0">
+    <link rel="stylesheet" href="../src/css/base.css?v=2.0">
+    <link rel="stylesheet" href="dashboard.css?v=2.0">
+    <link rel="stylesheet" href="../src/css/toast.css?v=2.0">
+    <script src="../src/js/toast.js?v=2.0"></script>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar__logo">
+            <span class="logo-icon">◆</span>
+            <span class="logo-text">MIND BODY</span>
+        </div>
+
+        <nav class="sidebar__nav">
+            <a href="dashboard.html" class="nav-item active">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Дашборд</span>
+            </a>
+            <a href="orders.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                <span>Замовлення</span>
+                <span class="nav-badge" id="ordersBadge">0</span>
+            </a>
+            <a href="customers.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Клієнти</span>
+            </a>
+            <a href="media.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>Медіа</span>
+            </a>
+        </nav>
+
+        <div class="sidebar__footer">
+            <a href="../index.html?edit=true" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                <span>Редагувати сайт</span>
+            </a>
+            <button class="nav-item logout-btn" onclick="logout()">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Вийти</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header class="header">
+            <div class="header__left">
+                <h1 class="header__title">Дашборд</h1>
+                <span class="header__date" id="currentDate"></span>
+            </div>
+            <div class="header__right">
+                <a href="../index.html" target="_blank" class="header__link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                    Переглянути сайт
+                </a>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <section class="stats">
+            <div class="stat-card">
+                <div class="stat-card__icon stat-card__icon--green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
+                <div class="stat-card__content">
+                    <span class="stat-card__label">Виручка</span>
+                    <span class="stat-card__value" id="statRevenue">0 ₴</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__icon stat-card__icon--blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                </div>
+                <div class="stat-card__content">
+                    <span class="stat-card__label">Замовлення</span>
+                    <span class="stat-card__value" id="statOrders">0</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__icon stat-card__icon--orange">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="stat-card__content">
+                    <span class="stat-card__label">Клієнти</span>
+                    <span class="stat-card__value" id="statCustomers">0</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Orders -->
+        <section class="recent-orders">
+            <div class="section-header">
+                <h2 class="section-title">Останні замовлення</h2>
+                <a href="orders.html" class="section-link">Всі замовлення →</a>
+            </div>
+            <div class="orders-table-wrapper">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>№ Замовлення</th>
+                            <th>Клієнт</th>
+                            <th>Сума</th>
+                            <th>Статус</th>
+                            <th>Дата</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentOrdersBody">
+                        <tr class="loading-row">
+                            <td colspan="5">Завантаження...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = 'http://localhost:4444';
+        const token = localStorage.getItem('admin_token');
+
+        // Check auth
+        if (!token) {
+            window.location.href = 'index.html';
+        }
+
+        // Format date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('uk-UA', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/admin/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('statRevenue').textContent = formatMoney(data.revenue);
+                    document.getElementById('statOrders').textContent = data.orders_count;
+                    document.getElementById('statProducts').textContent = data.products_count;
+                    document.getElementById('statCustomers').textContent = data.customers_count || 0;
+                    document.getElementById('ordersBadge').textContent = data.orders_count;
+                }
+            } catch (e) {
+                console.error('Stats error:', e);
+            }
+        }
+
+        // Load recent orders
+        async function loadRecentOrders() {
+            try {
+                const response = await fetch(`${API_URL}/admin/orders`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const orders = await response.json();
+                    renderOrders(orders.slice(0, 5)); // Show only 5 recent
+                }
+            } catch (e) {
+                console.error('Orders error:', e);
+            }
+        }
+
+        function renderOrders(orders) {
+            const tbody = document.getElementById('recentOrdersBody');
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Замовлень ще немає</td></tr>';
+                return;
+            }
+            tbody.innerHTML = orders.map(order => `
+                <tr>
+                    <td><strong>${order.order_number}</strong></td>
+                    <td>${order.customer_name || order.customer_email || '—'}</td>
+                    <td>${formatMoney(order.total_amount)}</td>
+                    <td><span class="status-badge status-badge--${order.status}">${getStatusLabel(order.status)}</span></td>
+                    <td>${formatDate(order.created_at)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('uk-UA').format(amount) + ' ₴';
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('uk-UA');
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'new': 'Новий',
+                'processing': 'В обробці',
+                'shipped': 'Відправлено',
+                'delivered': 'Доставлено',
+                'cancelled': 'Скасовано'
+            };
+            return labels[status] || status;
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_token');
+            window.location.href = 'index.html';
+        }
+
+        // Init
+        loadStats();
+        loadRecentOrders();
+    </script>
+</body>
+
+</html>

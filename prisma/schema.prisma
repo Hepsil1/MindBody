@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal
+  comparePrice Decimal?
+  sku         String?  @unique
+  stock       Int      @default(0)
+  status      String   @default("draft") // active, draft, archived
+  category    String?
+  images      String?
+  colors      String?
+  sizes       String?
+  inventory   String?
+  shopPageSlug String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  orderItems  OrderItem[]
+}
+
+model Customer {
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String   @unique
+  phone        String?
+  passwordHash String?  // Stored password hash for admin management
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  orders       Order[]
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  orderNumber   Int         @unique
+  customerId    String
+  customer      Customer    @relation(fields: [customerId], references: [id])
+  status        String      @default("pending") // pending, processing, shipped, delivered, cancelled
+  paymentStatus String      @default("pending") // pending, paid, refunded
+  total         Decimal
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Decimal
+  size      String?
+  color     String?
+}
+
+model Slide {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   @default("triptych") // "triptych" or "single"
+  page        String   @default("home") // "home" or "about"
+  link        String?
+  image1      String   // Main/left image
+  image1Pos   String   @default("center center")
+  image2      String?  // Center image (for triptych)
+  image2Pos   String   @default("center center")
+  image3      String?  // Right image (for triptych)
+  image3Pos   String   @default("center center")
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  title       String
+  subtitle    String?
+  image       String
+  imagePos    String   @default("center center")
+  link        String
+  buttonText  String   @default("Переглянути все")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ShopPage {
+  id          String   @id @default(uuid())
+  slug        String   @unique // 'women', 'kids', etc.
+  title       String
+  subtitle    String?
+  prefixLabel String?
+  heroImage   String
+  heroImagePos String  @default("50% 50% 1")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FilterConfig {
+  id        String   @id @default("global")
+  config    String   // JSON string: { categories: {}, colors: {}, priceRanges: [] }
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  productId  String
+  authorName String
+  rating     Int      // 1-5
+  text       String
+  isVerified Boolean  @default(false)
+  isApproved Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model ContactRequest {
+  id        String   @id @default(uuid())
+  contact   String   // email or phone
+  createdAt DateTime @default(now())
+}
+
+model PromoCode {
+  id            String    @id @default(uuid())
+  code          String    @unique
+  discountType  String    @default("percent") // "percent" or "fixed"
+  discountValue Float
+  minOrder      Float     @default(0)
+  maxUses       Int?
+  usedCount     Int       @default(0)
+  isActive      Boolean   @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+}

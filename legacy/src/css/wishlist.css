@@ -1,0 +1,149 @@
+/* ================================================
+   Wishlist / Like Button Styles
+   ================================================ */
+
+/* Wishlist Button on Product Cards */
+.product-card__wishlist {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.product-card__wishlist:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 6px 20px rgba(61, 122, 140, 0.15);
+}
+
+.product-card__wishlist svg {
+    width: 22px;
+    height: 22px;
+    stroke: var(--color-text);
+    fill: none;
+    transition: all 0.3s ease;
+}
+
+.product-card__wishlist:hover svg {
+    stroke: var(--color-primary);
+}
+
+/* Active State - Liked */
+.product-card__wishlist.active {
+    background: linear-gradient(135deg, #E63946 0%, #FF006E 100%);
+    border-color: #E63946;
+    animation: pulse-like 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.product-card__wishlist.active svg {
+    fill: #fff;
+    stroke: #fff;
+    animation: heart-beat 0.6s ease;
+}
+
+/* Pulse Animation on Like */
+@keyframes pulse-like {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    50% {
+        transform: scale(1.25);
+        box-shadow: 0 8px 24px rgba(230, 57, 70, 0.4);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 6px 20px rgba(230, 57, 70, 0.3);
+    }
+}
+
+/* Heart Beat Animation */
+@keyframes heart-beat {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    25% {
+        transform: scale(1.2);
+    }
+
+    50% {
+        transform: scale(0.95);
+    }
+
+    75% {
+        transform: scale(1.1);
+    }
+}
+
+/* Hover State for Active Button */
+.product-card__wishlist.active:hover {
+    background: linear-gradient(135deg, #D62936 0%, #E6005E 100%);
+    box-shadow: 0 8px 24px rgba(230, 57, 70, 0.35);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .product-card__wishlist {
+        width: 40px;
+        height: 40px;
+    }
+
+    .product-card__wishlist svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* ================================================
+   HEADER BADGES (Wishlist & Cart)
+   ================================================ */
+
+/* Ensure all header buttons are relative for badge positioning */
+.header__action-btn,
+.header__cart-btn,
+.header__wishlist-btn {
+    position: relative !important;
+}
+
+/* Unified style for both Wishlist and Cart count badges */
+.header__wishlist-count,
+.header__cart-count,
+.wishlist-count,
+.cart-count {
+    position: absolute !important;
+    top: 2px !important;
+    right: 2px !important;
+    width: 18px !important;
+    height: 18px !important;
+    background-color: #3D7A8C !important;
+    color: #FFFFFF !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    border-radius: 50% !important;
+    display: flex;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    z-index: 100 !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    pointer-events: none;
+}

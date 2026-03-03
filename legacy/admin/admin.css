@@ -1,0 +1,329 @@
+/* ================================================
+   MIND BODY - Admin Editor Styles
+   ================================================ */
+
+/* Admin Toolbar */
+.admin-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    font-family: 'Inter', sans-serif;
+}
+
+.admin-toolbar.hidden {
+    display: none;
+}
+
+.admin-toolbar__left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.admin-toolbar__logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.admin-toolbar__logo .icon {
+    font-size: 20px;
+}
+
+.admin-toolbar__status {
+    background: rgba(74, 155, 140, 0.2);
+    color: #4ADE80;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.admin-toolbar__right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-toolbar__btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.admin-toolbar__btn--primary {
+    background: #4A9B8C;
+    color: white;
+}
+
+.admin-toolbar__btn--primary:hover {
+    background: #3A7B6C;
+    transform: translateY(-1px);
+}
+
+.admin-toolbar__btn--secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.admin-toolbar__btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.admin-toolbar__btn--danger {
+    background: transparent;
+    color: #FC8181;
+}
+
+.admin-toolbar__btn--danger:hover {
+    background: rgba(252, 129, 129, 0.1);
+}
+
+/* Edit Overlay on Elements */
+[data-editable] {
+    position: relative;
+    outline: 2px dashed transparent;
+    transition: outline 0.2s;
+}
+
+body.admin-mode [data-editable]:hover {
+    outline: 2px dashed #4A9B8C;
+    cursor: pointer;
+}
+
+body.admin-mode [data-editable]:hover::after {
+    content: '✏️';
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 28px;
+    height: 28px;
+    background: #4A9B8C;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+
+/* Sidebar Editor */
+.admin-sidebar {
+    position: fixed;
+    top: 56px;
+    right: 0;
+    width: 380px;
+    height: calc(100vh - 56px);
+    background: white;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    font-family: 'Inter', sans-serif;
+}
+
+.admin-sidebar.open {
+    transform: translateX(0);
+}
+
+.admin-sidebar__header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-sidebar__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.admin-sidebar__close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f5f5f5;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-sidebar__close:hover {
+    background: #eee;
+}
+
+.admin-sidebar__content {
+    padding: 24px;
+}
+
+.admin-sidebar__group {
+    margin-bottom: 20px;
+}
+
+.admin-sidebar__label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.admin-sidebar__input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.admin-sidebar__input:focus {
+    border-color: #4A9B8C;
+}
+
+.admin-sidebar__textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.admin-sidebar__actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #eee;
+}
+
+.admin-sidebar__save {
+    flex: 1;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    color: white;
+    background: #4A9B8C;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.admin-sidebar__save:hover {
+    background: #3A7B6C;
+}
+
+.admin-sidebar__cancel {
+    flex: 1;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    color: #666;
+    background: #f5f5f5;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.admin-sidebar__cancel:hover {
+    background: #eee;
+}
+
+/* Image Uploader */
+.image-uploader {
+    border: 2px dashed #ddd;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.image-uploader:hover {
+    border-color: #4A9B8C;
+    background: rgba(74, 155, 140, 0.05);
+}
+
+.image-uploader__icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.image-uploader__text {
+    font-size: 14px;
+    color: #666;
+}
+
+.image-uploader__preview {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+/* Push content down when toolbar is visible */
+body.admin-mode {
+    padding-top: 56px;
+}
+
+body.admin-mode header {
+    top: 56px !important;
+}
+
+/* Notification Toast */
+.admin-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 16px 24px;
+    background: #1a1a2e;
+    color: white;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 11000;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.admin-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.admin-toast.success {
+    background: #10B981;
+}
+
+.admin-toast.error {
+    background: #EF4444;
+}

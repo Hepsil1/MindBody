@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Замовлення | MIND BODY Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        /* Orders Page Specific */
+        .filters {
+            display: flex;
+            gap: 12px;
+            padding: 24px 32px;
+            background: var(--color-white);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--color-border);
+            background: var(--color-white);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            color: var(--color-text-muted);
+        }
+
+        .filter-btn:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+        }
+
+        .filter-count {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-left: 6px;
+        }
+
+        .filter-btn.active .filter-count {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .orders-content {
+            padding: 24px 32px;
+        }
+
+        .orders-table td {
+            vertical-align: middle;
+        }
+
+        .order-customer {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .order-customer__name {
+            font-weight: 500;
+        }
+
+        .order-customer__email {
+            font-size: 12px;
+            color: var(--color-text-muted);
+        }
+
+        .order-items {
+            font-size: 13px;
+            color: var(--color-text-muted);
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--color-border);
+            background: var(--color-white);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .action-btn:hover {
+            background: var(--color-bg);
+        }
+
+        .action-btn--primary {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+        }
+
+        .action-btn--primary:hover {
+            background: #3a8a7c;
+        }
+
+        /* Status Select */
+        .status-select {
+            padding: 6px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-family: inherit;
+            background: var(--color-white);
+            cursor: pointer;
+        }
+
+        .status-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        /* Order Detail Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--color-white);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.2s;
+        }
+
+        .modal-overlay.open .modal {
+            transform: translateY(0);
+        }
+
+        .modal__header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal__title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal__close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--color-bg);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal__body {
+            padding: 24px;
+        }
+
+        .detail-group {
+            margin-bottom: 20px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .detail-value {
+            font-size: 15px;
+        }
+
+        .order-items-list {
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .order-item {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .order-item__name {
+            font-weight: 500;
+        }
+
+        .order-item__meta {
+            font-size: 13px;
+            color: var(--color-text-muted);
+        }
+
+        .order-item__price {
+            font-weight: 600;
+        }
+    </style>
+    <link rel="stylesheet" href="../src/css/toast.css?v=2.0">
+    <link rel="stylesheet" href="../src/css/modal.css?v=2.0">
+    <script src="../src/js/toast.js?v=2.0"></script>
+    <script src="../src/js/modal.js?v=2.0"></script>
+</head>
+
+<body>
+    <!-- Sidebar (same as dashboard) -->
+    <aside class="sidebar">
+        <div class="sidebar__logo">
+            <span class="logo-icon">◆</span>
+            <span class="logo-text">MIND BODY</span>
+        </div>
+
+        <nav class="sidebar__nav">
+            <a href="dashboard.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Дашборд</span>
+            </a>
+            <a href="orders.html" class="nav-item active">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                <span>Замовлення</span>
+            </a>
+            <a href="customers.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+                <span>Клієнти</span>
+            </a>
+            <a href="media.html" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>Медіа</span>
+            </a>
+        </nav>
+
+        <div class="sidebar__footer">
+            <a href="../index.html?edit=true" class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                <span>Редагувати сайт</span>
+            </a>
+            <button class="nav-item logout-btn" onclick="logout()">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Вийти</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header class="header">
+            <div class="header__left">
+                <h1 class="header__title">Замовлення</h1>
+            </div>
+        </header>
+
+        <!-- Filters -->
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">
+                Всі<span class="filter-count" id="countAll">0</span>
+            </button>
+            <button class="filter-btn" data-filter="new">
+                Нові<span class="filter-count" id="countNew">0</span>
+            </button>
+            <button class="filter-btn" data-filter="processing">
+                В обробці<span class="filter-count" id="countProcessing">0</span>
+            </button>
+            <button class="filter-btn" data-filter="shipped">
+                Відправлені<span class="filter-count" id="countShipped">0</span>
+            </button>
+            <button class="filter-btn" data-filter="delivered">
+                Доставлені<span class="filter-count" id="countDelivered">0</span>
+            </button>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="orders-content">
+            <div class="orders-table-wrapper">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>№ Замовлення</th>
+                            <th>Клієнт</th>
+                            <th>Товари</th>
+                            <th>Сума</th>
+                            <th>Статус</th>
+                            <th>Дата</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersBody">
+                        <tr class="loading-row">
+                            <td colspan="7">Завантаження...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Order Detail Modal -->
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal">
+            <div class="modal__header">
+                <h3 class="modal__title" id="modalTitle">Замовлення #</h3>
+                <button class="modal__close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal__body" id="modalBody">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:4444';
+        const token = localStorage.getItem('admin_token');
+        let allOrders = [];
+        let currentFilter = 'all';
+
+        if (!token) {
+            window.location.href = 'index.html';
+        }
+
+        // Load Orders
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_URL}/admin/orders`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    allOrders = await response.json();
+                    updateCounts();
+                    renderOrders();
+                }
+            } catch (e) {
+                console.error('Orders error:', e);
+            }
+        }
+
+        function updateCounts() {
+            document.getElementById('countAll').textContent = allOrders.length;
+            document.getElementById('countNew').textContent = allOrders.filter(o => o.status === 'new').length;
+            document.getElementById('countProcessing').textContent = allOrders.filter(o => o.status === 'processing').length;
+            document.getElementById('countShipped').textContent = allOrders.filter(o => o.status === 'shipped').length;
+            document.getElementById('countDelivered').textContent = allOrders.filter(o => o.status === 'delivered').length;
+        }
+
+        function renderOrders() {
+            const tbody = document.getElementById('ordersBody');
+            let orders = allOrders;
+
+            if (currentFilter !== 'all') {
+                orders = allOrders.filter(o => o.status === currentFilter);
+            }
+
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Немає замовлень</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = orders.map(order => `
+                <tr>
+                    <td><strong>${order.order_number}</strong></td>
+                    <td>
+                        <div class="order-customer">
+                            <span class="order-customer__name">${order.customer_name || '—'}</span>
+                            <span class="order-customer__email">${order.customer_email || ''}</span>
+                        </div>
+                    </td>
+                    <td class="order-items">${order.items ? order.items.length : 0} товар(ів)</td>
+                    <td><strong>${formatMoney(order.total_amount)}</strong></td>
+                    <td>
+                        <select class="status-select" onchange="updateStatus(${order.id}, this.value)">
+                            <option value="new" ${order.status === 'new' ? 'selected' : ''}>Новий</option>
+                            <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>В обробці</option>
+                            <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Відправлено</option>
+                            <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Доставлено</option>
+                            <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Скасовано</option>
+                        </select>
+                    </td>
+                    <td>${formatDate(order.created_at)}</td>
+                    <td>
+                        <button class="action-btn" onclick="viewOrder(${order.id})">Деталі</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function updateStatus(orderId, status) {
+            try {
+                const response = await fetch(`${API_URL}/admin/orders/${orderId}/status?status=${status}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    // Update local data
+                    const order = allOrders.find(o => o.id === orderId);
+                    if (order) order.status = status;
+                    updateCounts();
+                }
+            } catch (e) {
+                console.error('Update error:', e);
+            }
+        }
+
+        function viewOrder(orderId) {
+            const order = allOrders.find(o => o.id === orderId);
+            if (!order) return;
+
+            document.getElementById('modalTitle').textContent = `Замовлення ${order.order_number}`;
+            document.getElementById('modalBody').innerHTML = `
+                <div class="detail-group">
+                    <div class="detail-label">Клієнт</div>
+                    <div class="detail-value">${order.customer_name || '—'}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value">${order.customer_email || '—'}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Телефон</div>
+                    <div class="detail-value">${order.customer_phone || '—'}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Доставка</div>
+                    <div class="detail-value">${order.delivery_city}, ${order.delivery_address}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Оплата</div>
+                    <div class="detail-value">${order.payment_method === 'cash_on_delivery' ? 'Наложений платіж' : order.payment_method}</div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Товари</div>
+                    <div class="order-items-list">
+                        ${order.items && order.items.length > 0 ? order.items.map(item => `
+                            <div class="order-item">
+                                <div>
+                                    <div class="order-item__name">${item.name}</div>
+                                    <div class="order-item__meta">${item.size || ''} ${item.color || ''} × ${item.quantity}</div>
+                                </div>
+                                <div class="order-item__price">${formatMoney(item.price * item.quantity)}</div>
+                            </div>
+                        `).join('') : '<div class="order-item">Немає товарів</div>'}
+                    </div>
+                </div>
+                <div class="detail-group">
+                    <div class="detail-label">Загальна сума</div>
+                    <div class="detail-value" style="font-size:20px;font-weight:700;">${formatMoney(order.total_amount)}</div>
+                </div>
+            `;
+            document.getElementById('orderModal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('orderModal').classList.remove('open');
+        }
+
+        // Filters
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderOrders();
+            });
+        });
+
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('uk-UA').format(amount) + ' ₴';
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('uk-UA', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_token');
+            window.location.href = 'index.html';
+        }
+
+        // Close modal on overlay click
+        document.getElementById('orderModal').addEventListener('click', (e) => {
+            if (e.target.id === 'orderModal') closeModal();
+        });
+
+        // Init
+        loadOrders();
+    </script>
+</body>
+
+</html>

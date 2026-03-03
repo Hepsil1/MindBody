@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Допомога та Сервіс — MIND BODY</title>
+    <meta name="description" content="Умови доставки, оплати та повернення товарів MIND BODY.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600&family=Pacifico&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="src/css/variables.css?v=2.0">
+    <link rel="stylesheet" href="src/css/base.css?v=2.0">
+    <link rel="stylesheet" href="src/css/components.css?v=2.0">
+    <link rel="stylesheet" href="src/css/layout.css?v=2.0">
+    <link rel="stylesheet" href="admin/admin.css?v=2.0">
+    <link rel="stylesheet" href="src/css/animations.css?v=2.0">
+    <link rel="stylesheet" href="src/css/wishlist.css?v=2.0">
+    <style>
+        .page-header {
+            padding-top: calc(var(--header-height) + var(--space-4xl));
+            padding-bottom: var(--space-2xl);
+            text-align: center;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('pics/IMG_0814.JPG');
+            background-size: cover;
+            background-position: center;
+            color: white;
+        }
+
+        .page-header h1 {
+            color: white;
+        }
+
+        .page-header p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .help-section {
+            padding: var(--space-section) 0;
+            background: white;
+        }
+
+        .help-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .help-block {
+            margin-bottom: var(--space-4xl);
+        }
+
+        .help-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .help-title {
+            font-family: var(--font-display);
+            font-size: var(--text-2xl);
+            margin-bottom: var(--space-lg);
+            padding-bottom: var(--space-sm);
+            border-bottom: 2px solid var(--color-primary-light);
+            display: inline-block;
+        }
+
+        .help-content h3 {
+            font-size: var(--text-lg);
+            margin-bottom: var(--space-sm);
+            margin-top: var(--space-xl);
+        }
+
+        .help-content h3:first-child {
+            margin-top: 0;
+        }
+
+        .help-content p {
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-md);
+            line-height: 1.6;
+        }
+
+        .help-content ul {
+            list-style: disc;
+            padding-left: 20px;
+            margin-bottom: var(--space-md);
+            color: var(--color-text-secondary);
+        }
+
+        .help-content li {
+            margin-bottom: 8px;
+        }
+
+        .accordion-item {
+            border: 1px solid var(--color-border);
+            border-bottom: none;
+        }
+
+        .accordion-item:last-child {
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .accordion-header {
+            padding: 20px;
+            cursor: pointer;
+            background: #fcfcfc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .accordion-header:hover {
+            background: #f5f5f5;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 20px;
+            border-top: 1px solid var(--color-border);
+            background: white;
+        }
+
+        .accordion-item.active .accordion-content {
+            display: block;
+        }
+
+        .accordion-icon {
+            transition: transform 0.3s;
+        }
+
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+    <link rel="stylesheet" href="src/css/toast.css?v=2.0">
+    <link rel="stylesheet" href="src/css/modal.css?v=2.0">
+    <script src="src/js/toast.js?v=2.0"></script>
+    <script src="src/js/modal.js?v=2.0"></script>
+</head>
+
+<body>
+    <!-- Top Promo Bar -->
+    <div class="top-bar">
+        <div class="container top-bar__container">
+            <div class="top-bar__item">
+                <span class="top-bar__text">Безкоштовна доставка від 3000 грн</span>
+            </div>
+            <div class="top-bar__item">
+                <a href="#" class="top-bar__link">Програма лояльності: -10% на перше замовлення</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header header--static" id="header">
+        <div class="header__container">
+            <a href="index.html" class="header__logo">
+                <img src="pics/mind_body_1.png" alt="MIND BODY" class="header__logo-img">
+            </a>
+
+            <nav class="header__nav" id="mainNav">
+                <ul class="header__nav-list">
+                    <li><a href="shop-women.html" class="header__nav-link">Жінкам</a></li>
+                    <li><a href="shop-kids.html" class="header__nav-link">Дітям</a></li>
+                    <li><a href="about.html" class="header__nav-link">Про бренд</a></li>
+                </ul>
+            </nav>
+
+            <div class="header__actions">
+                <button class="header__action-btn" id="profileBtn" aria-label="Профіль"
+                    onclick="Header.handleProfileClick(event)">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </button>
+                <button class="header__action-btn header__wishlist-btn" aria-label="Улюблені"
+                    onclick="location.href='wishlist.html'">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
+                        stroke-width="2">
+                        <path
+                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                    <span class="header__wishlist-count">0</span>
+                </button>
+                <button class="header__action-btn header__cart-btn" aria-label="Кошик"
+                    onclick="location.href='checkout.html'">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                    <span class="header__cart-count">0</span>
+                </button>
+                <button class="header__burger" id="burgerBtn" aria-label="Меню">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-header">
+        <div class="container">
+            <h1 class="section__title">Допомога клієнтам</h1>
+            <p class="section__subtitle">Все про доставку, оплату та сервіс</p>
+        </div>
+    </div>
+
+    <section class="help-section">
+        <div class="container help-container">
+
+            <div id="delivery" class="help-block">
+                <h2 class="help-title">Доставка</h2>
+                <div class="help-content">
+                    <p>Ми здійснюємо доставку по всій Україні через службу "Нова Пошта".</p>
+
+                    <h3>Терміни доставки</h3>
+                    <p>Зазвичай доставка займає 1-3 дні з моменту підтвердження замовлення. Замовлення, оформлені до
+                        14:00, відправляються в той же день.</p>
+
+                    <h3>Вартість</h3>
+                    <ul>
+                        <li>До відділення Нової Пошти — за тарифами перевізника (від 70 грн).</li>
+                        <li>Кур'єрська доставка — за тарифами перевізника.</li>
+                        <li><strong>Безкоштовна доставка</strong> при замовленні від 3000 гривень.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="payment" class="help-block">
+                <h2 class="help-title">Оплата</h2>
+                <div class="help-content">
+                    <p>Ви можете обрати найбільш зручний для вас спосіб оплати.</p>
+
+                    <h3>1. Оплата при отриманні (післяплата)</h3>
+                    <p>Оплата готівкою або карткою у відділенні Нової Пошти при отриманні товару. Зверніть увагу: Нова
+                        Пошта стягує комісію за переказ коштів (20 грн + 2% від суми).</p>
+
+                    <h3>2. Онлайн оплата карткою</h3>
+                    <p>Швидка та безпечна оплата через LiqPay без комісій. Приймаємо Visa, Mastercard, Apple Pay, Google
+                        Pay.</p>
+                </div>
+            </div>
+
+            <div id="returns" class="help-block">
+                <h2 class="help-title">Обмін та повернення</h2>
+                <div class="help-content">
+                    <p>Якщо товар вам не підійшов, ви можете повернути його або обміняти протягом 14 днів з моменту
+                        покупки, згідно з Законом України "Про захист прав споживачів".</p>
+
+                    <h3>Умови повернення</h3>
+                    <ul>
+                        <li>Товар не був у вживанні та не має слідів носіння (плям, запахів).</li>
+                        <li>Збережено товарний вигляд, ярлики та оригінальне пакування.</li>
+                        <li>В наявності є чек або квитанція про оплату.</li>
+                    </ul>
+
+                    <p><strong>Увага:</strong> Витрати на доставку при поверненні товару (якщо це не брак) покриває
+                        покупець.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__grid">
+                <div class="footer__brand">
+                    <img src="pics/mind_body_logo.png" alt="MIND BODY" class="footer__logo">
+                    <p class="footer__tagline">Motivate for active life</p>
+                    <!-- Socials... -->
+                </div>
+                <div class="footer__nav">
+                    <h4 class="footer__nav-title">Магазин</h4>
+                    <ul class="footer__nav-list">
+                        <li><a href="shop-women.html">Жінкам</a></li>
+                        <li><a href="shop-kids.html">Дітям</a></li>
+                    </ul>
+                </div>
+                <!-- ... -->
+                <div class="footer__nav">
+                    <h4 class="footer__nav-title">Компанія</h4>
+                    <ul class="footer__nav-list">
+                        <li><a href="about.html">Про бренд</a></li>
+                        <li><a href="about.html#values">Sustainability</a></li>
+                        <li><a href="contacts.html">Контакти</a></li>
+                    </ul>
+                </div>
+                <div class="footer__nav">
+                    <h4 class="footer__nav-title">Допомога</h4>
+                    <ul class="footer__nav-list">
+                        <li><a href="delivery.html">Доставка</a></li>
+                        <li><a href="delivery.html#payment">Оплата</a></li>
+                        <li><a href="delivery.html#returns">Повернення</a></li>
+                        <li><a href="size-guide.html">Розмірна сітка</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+                <!-- ... -->
+            </div>
+            <div class="footer__bottom">
+                <p class="footer__copyright">© 2026 MIND BODY. Всі права захищено.</p>
+                <div class="footer__payments">
+                    <span class="payment-badge">Visa</span>
+                    <span class="payment-badge">Mastercard</span>
+                    <span class="payment-badge">Apple Pay</span>
+                    <span class="payment-badge">G-Pay</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal__overlay" onclick="Header.closeAuth()"></div>
+        <div class="modal__container" style="max-width: 450px; padding: 40px;">
+            <div id="loginForm" class="auth-form">
+                <h2 style="font-family: var(--font-display); margin-bottom: 24px; font-size: 28px;">Вхід</h2>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="example@mail.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" id="loginPass" class="form-input" placeholder="••••••••">
+                </div>
+                <button class="btn btn--primary" style="width:100%; margin-top: 20px;"
+                    onclick="Header.handleLogin()">Увійти</button>
+                <div style="margin-top:24px; text-align:center; font-size: 14px; color:#666;">
+                    Немає акаунту? <a href="#" onclick="Header.toggleAuthForm('register')"
+                        style="color:var(--color-primary); font-weight:600;">Створити</a>
+                </div>
+                <div style="margin-top:20px; padding-top:20px; border-top: 1px solid #eee; text-align:center;">
+                    <button class="btn btn--outline" style="width:100%; gap:12px;">
+                        <img src="https://www.google.com/favicon.ico" width="18" height="18" alt="Google">
+                        Увійти через Google
+                    </button>
+                </div>
+            </div>
+
+            <div id="registerForm" class="auth-form" style="display:none;">
+                <h2 style="font-family: var(--font-display); margin-bottom: 24px; font-size: 28px;">Реєстрація</h2>
+                <div class="form-group">
+                    <label class="form-label">Повне ім'я</label>
+                    <input type="text" id="regName" class="form-input" placeholder="Олександр Шевченко">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="regEmail" class="form-input" placeholder="example@mail.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" id="regPass" class="form-input" placeholder="••••••••">
+                </div>
+                <button class="btn btn--primary" style="width:100%; margin-top: 20px;"
+                    onclick="Header.handleRegister()">Зареєструватися</button>
+                <div style="margin-top:24px; text-align:center; font-size: 14px; color:#666;">
+                    Вже є акаунт? <a href="#" onclick="Header.toggleAuthForm('login')"
+                        style="color:var(--color-primary); font-weight:600;">Увійти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="src/js/api.js?v=2.0"></script>
+    <script src="src/js/main.js?v=2.0"></script>
+    <script src="src/js/cart.js?v=2.0"></script>
+    <script src="src/js/wishlist.js?v=2.0"></script>
+    <script src="admin/admin.js?v=2.0"></script>
+</body>
+
+</html>

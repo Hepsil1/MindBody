@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIND BODY — Спортивний одяг для йоги, гімнастики та усвідомленого руху</title>
+    <meta name="description"
+        content="Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика. Зроблено з душею.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600&family=Pacifico&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="src/css/variables.css?v=2.0">
+    <link rel="stylesheet" href="src/css/base.css?v=2.0">
+    <link rel="stylesheet" href="src/css/components.css?v=2.0">
+    <link rel="stylesheet" href="src/css/layout.css?v=2.0">
+    <link rel="stylesheet" href="src/css/animations.css?v=2.0">
+    <link rel="stylesheet" href="src/css/wishlist.css?v=2.0">
+    <link rel="stylesheet" href="src/css/hero.css?v=2.0">
+    <!-- Admin Editor (loads only in edit mode) -->
+    <link rel="stylesheet" href="admin/admin.css?v=2.0">
+    <link rel="stylesheet" href="src/css/toast.css?v=2.0">
+    <link rel="stylesheet" href="src/css/modal.css?v=2.0">
+    <script src="src/js/toast.js?v=2.0"></script>
+    <script src="src/js/modal.js?v=2.0"></script>
+</head>
+
+<body>
+    <!-- Top Promo Bar (Puma Style) -->
+    <div class="top-bar">
+        <div class="container top-bar__container">
+            <div class="top-bar__item">
+                <span class="top-bar__text">Безкоштовна доставка від 3000 грн</span>
+            </div>
+            <div class="top-bar__item">
+                <a href="#sale" class="top-bar__link">Програма лояльності: -10% на перше замовлення</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preloader -->
+    <div class="preloader" id="preloader">
+        <div class="preloader__logo">
+            <img src="pics/mind_body_logo_sun.png" alt="MIND BODY" class="preloader__sun">
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header header--hero" id="header">
+        <div class="header__container">
+            <a href="/" class="header__logo">
+                <img src="pics/mind_body_1.png" alt="MIND BODY" class="header__logo-img">
+            </a>
+
+            <nav class="header__nav" id="mainNav">
+                <ul class="header__nav-list">
+                    <li><a href="shop-women.html" class="header__nav-link">Жінкам</a></li>
+                    <li><a href="shop-kids.html" class="header__nav-link">Дітям</a></li>
+
+                    <li><a href="about.html" class="header__nav-link">Про бренд</a></li>
+                </ul>
+            </nav>
+
+            <div class="header__actions">
+                <button class="header__action-btn" id="profileBtn" aria-label="Профіль"
+                    onclick="Header.handleProfileClick(event)">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </button>
+                <button class="header__action-btn header__wishlist-btn" aria-label="Улюблені"
+                    onclick="location.href='wishlist.html'">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
+                        stroke-width="2">
+                        <path
+                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                    <span class="header__wishlist-count">0</span>
+                </button>
+                <button class="header__action-btn header__cart-btn" aria-label="Кошик"
+                    onclick="location.href='checkout.html'">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                    <span class="header__cart-count">0</span>
+                </button>
+                <button class="header__burger" id="burgerBtn" aria-label="Меню">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+
+
+    <!-- Hero Section -->
+    <section class="hero-slider" id="hero" aria-label="Вітрина бренду MIND BODY">
+
+        <!-- Slides Container -->
+        <div class="hero-slider__slides">
+
+            <!-- Slide 1: Teal Collection -->
+            <div class="hero-slider__slide is-active" data-slide="0">
+                <div class="hero-slider__triptych">
+                    <div class="hero-slider__triptych-item">
+                        <img src="generalpics/333_131123.jpg" alt="Active Teal Suit">
+                    </div>
+                    <div class="hero-slider__triptych-item">
+                        <img src="generalpics/374_131123.jpg" alt="Yoga Performance Teal">
+                    </div>
+                    <div class="hero-slider__triptych-item">
+                        <img src="generalpics/338_131123.jpg" alt="Teal Style">
+                    </div>
+                </div>
+                <div class="hero-slider__overlay"></div>
+            </div>
+
+            <!-- Slide 2: Cocoa Jumpsuit -->
+            <div class="hero-slider__slide" data-slide="1">
+                <div class="hero-slider__triptych">
+                    <div class="hero-slider__triptych-item">
+                        <img src="pics2cloths/IMG_4971.JPG" alt="Cocoa Fit Suit">
+                    </div>
+                    <div class="hero-slider__triptych-item">
+                        <img src="pics2cloths/IMG_4976.JPG" alt="Cocoa Jumpsuit Style">
+                    </div>
+                    <div class="hero-slider__triptych-item">
+                        <img src="pics2cloths/IMG_4980.JPG" alt="Active Comfort Brown">
+                    </div>
+                </div>
+                <div class="hero-slider__overlay"></div>
+            </div>
+
+            <!-- Slide 3: Black Hooded Suit -->
+            <div class="hero-slider__slide" data-slide="2">
+                <div class="hero-slider__triptych">
+                    <div class="hero-slider__triptych-item">
+                        <img src="pics1cloths/IMG_6201.JPG" alt="Black Hooded Suit">
+                    </div>
+                    <div class="hero-slider__triptych-item">
+                        <img src="pics1cloths/IMG_6203.JPG" alt="Hoodie Collection">
+                    </div>
+                    <div class="hero-slider__triptych-item">
+                        <img src="pics1cloths/IMG_6204.JPG" alt="Sport Flare Pants">
+                    </div>
+                </div>
+                <div class="hero-slider__overlay"></div>
+            </div>
+
+            <!-- Slide 4: Purple Collection -->
+            <div class="hero-slider__slide" data-slide="3">
+                <div class="hero-slider__triptych">
+                    <div class="hero-slider__triptych-item">
+                        <img src="generalpics/348_131123.jpg" alt="Purple Detail">
+                    </div>
+                    <div class="hero-slider__triptych-item">
+                        <img src="generalpics/595_131123.jpg" alt="Purple Performance">
+                    </div>
+                    <div class="hero-slider__triptych-item">
+                        <img src="generalpics/602_131123.jpg" alt="Active Purple Design">
+                    </div>
+                </div>
+                <div class="hero-slider__overlay"></div>
+            </div>
+
+            <!-- Slide 5: Experiment Single Photo -->
+            <div class="hero-slider__slide" data-slide="4">
+                <div class="hero-slider__triptych">
+                    <div class="hero-slider__triptych-item">
+                        <img src="Slides/Example.png" alt="MIND BODY Premium Line">
+                    </div>
+                </div>
+                <div class="hero-slider__overlay"></div>
+            </div>
+
+        </div>
+
+        <!-- Content Layer (stays on top of all slides) -->
+        <div class="hero-slider__content">
+            <!-- Full Brand Logo (High Center) -->
+            <div class="hero-slider__logo-container">
+                <div class="hero-slider__logo">
+                    <img src="pics/mind_body_logo.png" alt="MIND BODY — sport wear">
+                </div>
+            </div>
+
+            <!-- CTA (Positioned above indicators) -->
+            <div class="hero-slider__footer-cta">
+                <div class="hero-slider__cta">
+                    <a href="#shop" class="btn btn--primary btn--glow" id="cta-shop">Перейти до магазину</a>
+                    <a href="#about" class="btn btn--glass" id="cta-about">Про бренд</a>
+                </div>
+
+                <!-- Slide Indicators (Moved inside footer context for better alignment) -->
+                <div class="hero-slider__nav">
+                    <button class="hero-slider__dot is-active" data-slide="0" aria-label="Slide 1"></button>
+                    <button class="hero-slider__dot" data-slide="1" aria-label="Slide 2"></button>
+                    <button class="hero-slider__dot" data-slide="2" aria-label="Slide 3"></button>
+                    <button class="hero-slider__dot" data-slide="3" aria-label="Slide 4"></button>
+                    <button class="hero-slider__dot" data-slide="4" aria-label="Slide 5"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="hero-slider__scroll" aria-hidden="true">
+            <span>Scroll</span>
+            <div class="hero-slider__scroll-line"></div>
+        </div>
+
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories section" id="shop">
+        <div class="container">
+            <div class="section__header">
+                <h2 class="section__title">Обирайте свій стиль</h2>
+                <p class="section__subtitle">Колекції для активного способу життя</p>
+            </div>
+            <div class="categories__grid">
+                <!-- Women Collection -->
+                <a href="shop-women.html" class="category-card">
+                    <div class="category-card__image">
+                        <img src="pics1cloths/IMG_6207.JPG" alt="Жіноча колекція">
+                    </div>
+                    <div class="category-card__overlay"></div>
+                    <div class="category-card__content">
+                        <p class="category-card__count">Колекція для неї</p>
+                        <h3 class="category-card__title">Жінкам</h3>
+                        <div class="category-card__shop-now">Переглянути все</div>
+                    </div>
+                </a>
+
+                <!-- Kids Collection -->
+                <a href="shop-kids.html" class="category-card">
+                    <div class="category-card__image">
+                        <img src="pics2cloths/IMG_5222.JPG" alt="Дитяча колекція">
+                    </div>
+                    <div class="category-card__overlay"></div>
+                    <div class="category-card__content">
+                        <p class="category-card__count">Для малечі</p>
+                        <h3 class="category-card__title">Дітям</h3>
+                        <div class="category-card__shop-now">Дивитись товари</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Arrivals Section -->
+    <section class="products section" id="new">
+        <div class="container">
+            <div class="section__header section__header--flex">
+                <div>
+                    <h2 class="section__title">Нові надходження</h2>
+                    <p class="section__subtitle">Останні колекції сезону</p>
+                </div>
+                <a href="#" class="btn btn--outline">Дивитись все</a>
+            </div>
+            <div class="products__grid">
+                <!-- Product 1: Winter Cherry Bell -->
+                <div class="product-card" data-product-id="home-1">
+                    <div class="product-card__image">
+                        <img src="pics1cloths/IMG_6201.JPG" alt="SCHEMER WINTER bell Вишня" loading="lazy">
+                        <span class="product-card__badge">Hot</span>
+                        <button class="product-card__wishlist" aria-label="Додати в улюблені">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                        </button>
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">SCHEMER WINTER bell (Вишня)</h3>
+                        <p class="product-card__category">Теплий комбінезон кльош</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">3 490 ₴</span>
+                            <span class="product-card__price-usd">$87</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 2: Chocolate Jumpsuit -->
+                <div class="product-card" data-product-id="home-2">
+                    <div class="product-card__image">
+                        <img src="pics2cloths/IMG_4971.JPG" alt="SCHEMER WINTER Шоколад" loading="lazy">
+                        <span class="product-card__badge">New</span>
+                        <button class="product-card__wishlist" aria-label="Додати в улюблені">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                        </button>
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">SCHEMER WINTER (Шоколад)</h3>
+                        <p class="product-card__category">Комбінезон на мікрофлісі</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">2 990 ₴</span>
+                            <span class="product-card__price-usd">$77</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 3: Winter Cherry Detail -->
+                <div class="product-card" data-product-id="home-3">
+                    <div class="product-card__image">
+                        <img src="pics1cloths/IMG_6205.JPG" alt="SCHEMER WINTER bell Деталі" loading="lazy">
+                        <button class="product-card__wishlist" aria-label="Додати в улюблені">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                        </button>
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">SCHEMER WINTER bell (Чорний)</h3>
+                        <p class="product-card__category">Теплий комбінезон кльош</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">3 490 ₴</span>
+                            <span class="product-card__price-usd">$87</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product 4: Chocolate Back View -->
+                <div class="product-card" data-product-id="home-4">
+                    <div class="product-card__image">
+                        <img src="pics2cloths/IMG_5228.JPG" alt="SCHEMER WINTER Вигляд ззаду" loading="lazy">
+                        <button class="product-card__wishlist" aria-label="Додати в улюблені">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                        </button>
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">SCHEMER WINTER (Black)</h3>
+                        <p class="product-card__category">Спортивний комбінезон</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">2 990 ₴</span>
+                            <span class="product-card__price-usd">$77</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duplicate sets for page fullness as requested -->
+                <!-- Duplicate 1 -->
+                <div class="product-card">
+                    <div class="product-card__image">
+                        <img src="pics1cloths/IMG_6210.JPG" alt="Lifestyle Look" loading="lazy">
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">SCHEMER bell (Limited)</h3>
+                        <p class="product-card__category">Колекція Lifestyle</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">3 490 ₴</span>
+                            <span class="product-card__price-usd">$87</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duplicate 2 -->
+                <div class="product-card">
+                    <div class="product-card__image">
+                        <img src="pics2cloths/IMG_5217.JPG" alt="Yoga Fit" loading="lazy">
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">SCHEMER Active (Chocolate)</h3>
+                        <p class="product-card__category">Для йоги та розтяжки</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">2 990 ₴</span>
+                            <span class="product-card__price-usd">$77</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duplicate 3 -->
+                <div class="product-card">
+                    <div class="product-card__image">
+                        <img src="pics1cloths/IMG_6212.JPG" alt="Outdoor Chic" loading="lazy">
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">WINTER Bell Sport</h3>
+                        <p class="product-card__category">Повсякденний лук</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">3 490 ₴</span>
+                            <span class="product-card__price-usd">$87</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duplicate 4 -->
+                <div class="product-card">
+                    <div class="product-card__image">
+                        <img src="pics2cloths/IMG_4983.JPG" alt="Gym Focus" loading="lazy">
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">SCHEMER Pro Fit</h3>
+                        <p class="product-card__category">Для тренувань</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">2 990 ₴</span>
+                            <span class="product-card__price-usd">$77</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Children Arrivals Section -->
+    <section class="products section" id="kids-arrivals">
+        <div class="container">
+            <div class="section__header section__header--flex">
+                <div>
+                    <h2 class="section__title">Дитяча колекція</h2>
+                    <p class="section__subtitle">Комфорт та стиль для маленьких чемпіонів</p>
+                </div>
+                <a href="#shop" class="btn btn--outline">Дивитись все</a>
+            </div>
+            <div class="products__grid">
+                <!-- Kid Product 1 -->
+                <div class="product-card">
+                    <div class="product-card__image">
+                        <div class="product-card__placeholder"
+                            style="background: linear-gradient(135deg, #F8F5F0 0%, #3D7A8C 100%); display:flex; align-items:center; justify-content:center; height:100%;">
+                            <img src="pics/mind_body_logo_sun.png" alt="Kids Suit" style="width:80px; opacity:0.3;">
+                        </div>
+                        <span class="product-card__badge">New Kids</span>
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">Дитячий комбінезон "Mini Schemer"</h3>
+                        <p class="product-card__category">Дитяча лінійка</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">1 990 ₴</span>
+                            <span class="product-card__price-usd">$49</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kid Product 2 -->
+                <div class="product-card">
+                    <div class="product-card__image">
+                        <div class="product-card__placeholder"
+                            style="background: linear-gradient(135deg, #EDE9E3 0%, #4B3B6B 100%); display:flex; align-items:center; justify-content:center; height:100%;">
+                            <img src="pics/mind_body_logo_sun.png" alt="Kids Case" style="width:80px; opacity:0.3;">
+                        </div>
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">Дитячий костюм "Lotus Junior"</h3>
+                        <p class="product-card__category">Комплект для гімнастики</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">2 190 ₴</span>
+                            <span class="product-card__price-usd">$55</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kid Product 3 -->
+                <div class="product-card">
+                    <div class="product-card__image">
+                        <div class="product-card__placeholder"
+                            style="background: linear-gradient(135deg, #F0F4F8 0%, #1E3A5F 100%); display:flex; align-items:center; justify-content:center; height:100%;">
+                            <img src="pics/mind_body_logo_sun.png" alt="Kids Leggings" style="width:80px; opacity:0.3;">
+                        </div>
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">Легінси "Tiny Motion"</h3>
+                        <p class="product-card__category">Для активних ігор</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">1 290 ₴</span>
+                            <span class="product-card__price-usd">$32</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kid Product 4 -->
+                <div class="product-card">
+                    <div class="product-card__image">
+                        <div class="product-card__placeholder"
+                            style="background: linear-gradient(135deg, #F8F5F0 0%, #3D7A8C 100%); display:flex; align-items:center; justify-content:center; height:100%;">
+                            <img src="pics/mind_body_logo_sun.png" alt="Kids Top" style="width:80px; opacity:0.3;">
+                        </div>
+                        <span class="product-card__badge">Sale</span>
+                        <div class="product-card__actions">
+                            <button class="btn btn--small btn--primary">Додати в кошик</button>
+                        </div>
+                    </div>
+                    <div class="product-card__info">
+                        <h3 class="product-card__name">Спортивний топ "Star Kid"</h3>
+                        <p class="product-card__category">Базовий шар</p>
+                        <div class="product-card__price-row">
+                            <span class="product-card__price">990 ₴</span>
+                            <span class="product-card__price-usd">$25</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Brand Values Section -->
+    <section class="values section" id="values">
+        <div class="values__bg">
+            <div class="values__mandala"></div>
+            <div class="values__mandala--2"></div>
+        </div>
+        <div class="container">
+            <div class="section__header section__header--center">
+                <h2 class="section__title section__title--light">Чому обирають нас</h2>
+                <p class="section__subtitle section__subtitle--light">Motivate for active life</p>
+            </div>
+            <div class="values__grid">
+                <div class="value-card">
+                    <div class="value-card__icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4 4 12.954 4 24s8.954 20 20 20z" />
+                            <path d="M24 14v20M14 24h20" />
+                        </svg>
+                    </div>
+                    <h3 class="value-card__title">Made with soul</h3>
+                    <p class="value-card__text">Зроблено з душею та любов'ю до деталей</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-card__icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M24 4c-6 8-16 12-16 24a16 16 0 0032 0c0-12-10-16-16-24z" />
+                        </svg>
+                    </div>
+                    <h3 class="value-card__title">Pleasant to touch</h3>
+                    <p class="value-card__text">Приємні на дотик тканини преміум якості</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-card__icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M4 24c4-8 12-14 20-14s16 6 20 14c-4 8-12 14-20 14S8 32 4 24z" />
+                            <circle cx="24" cy="24" r="6" />
+                        </svg>
+                    </div>
+                    <h3 class="value-card__title">Breathable</h3>
+                    <p class="value-card__text">Дихаючі матеріали для максимального комфорту</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-card__icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M24 4L4 14v10c0 12 8 20 20 24 12-4 20-12 20-24V14L24 4z" />
+                        </svg>
+                    </div>
+                    <h3 class="value-card__title">Eco-friendly</h3>
+                    <p class="value-card__text">Екологічні матеріали турботи про планету</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-card__icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M8 24h32M24 8v32M12 12l24 24M36 12L12 36" />
+                        </svg>
+                    </div>
+                    <h3 class="value-card__title">4-WAY stretch</h3>
+                    <p class="value-card__text">Еластичність у всіх напрямках для свободи руху</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-card__icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M4 8h40M4 24h40M4 40h40" />
+                        </svg>
+                    </div>
+                    <h3 class="value-card__title">High quality sewing</h3>
+                    <p class="value-card__text">Бездоганний крій та якісне пошиття</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- About Section -->
+    <section class="about section" id="about">
+        <div class="container">
+            <div class="about__grid">
+                <div class="about__image">
+                    <img src="generalpics/338_131123.jpg" alt="MIND BODY Lifestyle"
+                        style="width:100%; height:100%; object-fit:cover; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl);">
+                </div>
+                <div class="about__content">
+                    <span class="about__label">Про бренд</span>
+                    <h2 class="about__title">Подаруй собі комфорт</h2>
+                    <p class="about__text">
+                        MIND BODY — український бренд спортивного одягу, створений з любов'ю до руху та гармонії.
+                        Ми віримо, що одяг для занять йогою, гімнастикою та акробатикою має бути не лише функціональним,
+                        але й надихати на нові досягнення.
+                    </p>
+                    <p class="about__text">
+                        Наші колекції для жінок та дітей поєднують premium якість матеріалів,
+                        сучасний дизайн та турботу про довкілля.
+                    </p>
+                    <div class="about__links">
+                        <a href="about.html" class="btn btn--outline">Дізнатись більше</a>
+                        <a href="#" class="about__sustainability">
+                            <span>Sustainability</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Instagram Section -->
+    <section class="instagram section">
+        <div class="container">
+            <div class="section__header section__header--center">
+                <h2 class="section__title">Слідкуйте за нами</h2>
+                <a href="https://instagram.com/mindbody_sportwear" class="instagram__handle"
+                    target="_blank">@mindbody_sportwear</a>
+            </div>
+            <div class="instagram__grid">
+                <a href="https://instagram.com/mindbody_sportwear" target="_blank" class="instagram__item">
+                    <img src="generalpics/374_131123.jpg" alt="Instagram" loading="lazy">
+                    <div class="instagram__overlay">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                        </svg>
+                    </div>
+                </a>
+                <a href="https://instagram.com/mindbody_sportwear" target="_blank" class="instagram__item">
+                    <img src="pics1cloths/IMG_6201.JPG" alt="Instagram" loading="lazy">
+                    <div class="instagram__overlay">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                        </svg>
+                    </div>
+                </a>
+                <a href="https://instagram.com/mindbody_sportwear" target="_blank" class="instagram__item">
+                    <img src="pics2cloths/IMG_4971.JPG" alt="Instagram" loading="lazy">
+                    <div class="instagram__overlay">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                        </svg>
+                    </div>
+                </a>
+                <a href="https://instagram.com/mindbody_sportwear" target="_blank" class="instagram__item">
+                    <img src="generalpics/595_131123.jpg" alt="Instagram" loading="lazy">
+                    <div class="instagram__overlay">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                        </svg>
+                    </div>
+                </a>
+                <a href="https://instagram.com/mindbody_sportwear" target="_blank" class="instagram__item">
+                    <img src="pics1cloths/IMG_6210.JPG" alt="Instagram" loading="lazy">
+                    <div class="instagram__overlay">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                        </svg>
+                    </div>
+                </a>
+                <a href="https://instagram.com/mindbody_sportwear" target="_blank" class="instagram__item">
+                    <img src="pics2cloths/IMG_5217.JPG" alt="Instagram" loading="lazy">
+                    <div class="instagram__overlay">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                        </svg>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="newsletter">
+        <div class="newsletter__bg">
+            <div class="newsletter__mandala"></div>
+        </div>
+        <div class="container">
+            <div class="newsletter__content">
+                <h2 class="newsletter__title">Отримуйте новини першими</h2>
+                <p class="newsletter__text">Підпишіться на розсилку та отримайте 10% знижки на перше замовлення</p>
+                <form class="newsletter__form">
+                    <input type="email" class="newsletter__input" placeholder="Ваш email" required>
+                    <button type="submit" class="btn btn--primary">Підписатись</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__grid">
+                <div class="footer__brand">
+                    <img src="pics/mind_body_logo.png" alt="MIND BODY" class="footer__logo">
+                    <p class="footer__tagline">Motivate for active life</p>
+                    <div class="footer__socials">
+                        <a href="#" class="footer__social" aria-label="Instagram">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="footer__social" aria-label="Facebook">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer__nav">
+                    <h4 class="footer__nav-title">Магазин</h4>
+                    <ul class="footer__nav-list">
+                        <li><a href="shop-women.html">Жінкам</a></li>
+                        <li><a href="shop-kids.html">Дітям</a></li>
+
+                        <li><a href="#">Новинки</a></li>
+                        <li><a href="#">Розпродаж</a></li>
+                    </ul>
+                </div>
+                <div class="footer__nav">
+                    <h4 class="footer__nav-title">Компанія</h4>
+                    <ul class="footer__nav-list">
+                        <li><a href="about.html">Про бренд</a></li>
+                        <li><a href="about.html#values">Sustainability</a></li>
+                        <li><a href="contacts.html">Контакти</a></li>
+                        <li><a href="#">Кар'єра</a></li>
+                    </ul>
+                </div>
+                <div class="footer__nav">
+                    <h4 class="footer__nav-title">Допомога</h4>
+                    <ul class="footer__nav-list">
+                        <li><a href="delivery.html">Доставка</a></li>
+                        <li><a href="delivery.html#payment">Оплата</a></li>
+                        <li><a href="delivery.html#returns">Повернення</a></li>
+                        <li><a href="size-guide.html">Розмірна сітка</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer__contact">
+                    <h4 class="footer__nav-title">Контакти</h4>
+                    <p>mind-body.com.ua</p>
+                    <p>Одеса, Україна</p>
+                    <p>+38 (063) 123-45-67</p>
+                </div>
+            </div>
+            <div class="footer__bottom">
+                <p class="footer__copyright">© 2026 MIND BODY. Всі права захищено.</p>
+                <div class="footer__payments">
+                    <span class="payment-badge">Visa</span>
+                    <span class="payment-badge">Mastercard</span>
+                    <span class="payment-badge">Apple Pay</span>
+                    <span class="payment-badge">G-Pay</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal__overlay" onclick="Header.closeAuth()"></div>
+        <div class="modal__container" style="max-width: 450px; padding: 40px;">
+            <div id="loginForm" class="auth-form">
+                <h2 style="font-family: var(--font-display); margin-bottom: 24px; font-size: 28px;">Вхід</h2>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="example@mail.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" id="loginPass" class="form-input" placeholder="••••••••">
+                </div>
+                <button class="btn btn--primary" style="width:100%; margin-top: 20px;"
+                    onclick="Header.handleLogin()">Увійти</button>
+                <div style="margin-top:24px; text-align:center; font-size: 14px; color:#666;">
+                    Немає акаунту? <a href="#" onclick="Header.toggleAuthForm('register')"
+                        style="color:var(--color-primary); font-weight:600;">Створити</a>
+                </div>
+                <div style="margin-top:20px; padding-top:20px; border-top: 1px solid #eee; text-align:center;">
+                    <button class="btn btn--outline" style="width:100%; gap:12px;">
+                        <img src="https://www.google.com/favicon.ico" width="18" height="18" alt="Google">
+                        Увійти через Google
+                    </button>
+                </div>
+            </div>
+
+            <div id="registerForm" class="auth-form" style="display:none;">
+                <h2 style="font-family: var(--font-display); margin-bottom: 24px; font-size: 28px;">Реєстрація</h2>
+                <div class="form-group">
+                    <label class="form-label">Повне ім'я</label>
+                    <input type="text" id="regName" class="form-input" placeholder="Олександр Шевченко">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="regEmail" class="form-input" placeholder="example@mail.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" id="regPass" class="form-input" placeholder="••••••••">
+                </div>
+                <button class="btn btn--primary" style="width:100%; margin-top: 20px;"
+                    onclick="Header.handleRegister()">Зареєструватися</button>
+                <div style="margin-top:24px; text-align:center; font-size: 14px; color:#666;">
+                    Вже є акаунт? <a href="#" onclick="Header.toggleAuthForm('login')"
+                        style="color:var(--color-primary); font-weight:600;">Увійти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="src/js/hero-slider.js"></script>
+    <script src="src/js/api.js?v=2.0"></script>
+    <script src="src/js/main.js?v=2.0"></script>
+    <script src="src/js/hero-slider.js?v=2.0"></script>
+    <script src="src/js/cart.js?v=2.0"></script>
+    <script src="src/js/wishlist.js?v=2.0"></script>
+    <!-- Admin Editor (activates on ?edit=true) -->
+    <script src="admin/admin.js?v=2.0"></script>
+</body>
+
+</html>

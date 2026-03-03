@@ -1,0 +1,527 @@
+[
+  {
+    "id": "w1",
+    "name": "SCHEMER WINTER Bell (Вишня)",
+    "category": "jumpsuit",
+    "collection": "winter",
+    "price": 3490,
+    "priceUSD": 87,
+    "sizes": [
+      "XXS",
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Вишня",
+        "code": "#8B1538"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6201.JPG",
+      "pics1cloths/IMG_6202.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Теплий комбінезон кльош у вишневому відтінку."
+  },
+  {
+    "id": "w2",
+    "name": "SCHEMER WINTER (Шоколад)",
+    "category": "jumpsuit",
+    "collection": "winter",
+    "price": 2990,
+    "priceUSD": 77,
+    "sizes": [
+      "XXS",
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Шоколад",
+        "code": "#4A2511"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6203.JPG",
+      "pics1cloths/IMG_6204.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Комбінезон на мікрофлісі для комфортних тренувань."
+  },
+  {
+    "id": "w3",
+    "name": "SCHEMER WINTER Bell (Чорний)",
+    "category": "jumpsuit",
+    "collection": "winter",
+    "price": 3490,
+    "priceUSD": 87,
+    "sizes": [
+      "XXS",
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Чорний",
+        "code": "#1a1a1a"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6205.JPG",
+      "pics1cloths/IMG_6206.JPG"
+    ],
+    "isNew": false,
+    "inStock": true,
+    "description": "Класичний чорний комбінезон кльош."
+  },
+  {
+    "id": "w4",
+    "name": "Active Motion Leggings",
+    "category": "leggings",
+    "collection": "active",
+    "price": 1490,
+    "priceUSD": 38,
+    "sizes": [
+      "XS",
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Синій",
+        "code": "#1e3a5f"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6207.JPG",
+      "pics1cloths/IMG_6209.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Еластичні легінси для йоги та фітнесу."
+  },
+  {
+    "id": "w5",
+    "name": "SCHEMER Pro Fit (Gray)",
+    "category": "jumpsuit",
+    "collection": "profit",
+    "price": 3100,
+    "priceUSD": 78,
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Сірий",
+        "code": "#808080"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6210.JPG",
+      "pics1cloths/IMG_6212.JPG"
+    ],
+    "isNew": false,
+    "inStock": true,
+    "description": "Професійний комбінезон для занять у залі."
+  },
+  {
+    "id": "w6",
+    "name": "Aura Yoga Set",
+    "category": "leggings",
+    "collection": "active",
+    "price": 2200,
+    "priceUSD": 55,
+    "sizes": [
+      "XXS",
+      "XS",
+      "S"
+    ],
+    "colors": [
+      {
+        "name": "Лаванда",
+        "code": "#E6E6FA"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6215.JPG",
+      "pics1cloths/IMG_6201.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Комплект для йоги преміум якості."
+  },
+  {
+    "id": "w7",
+    "name": "SCHEMER Bell Limited",
+    "category": "jumpsuit",
+    "collection": "limited",
+    "price": 3600,
+    "priceUSD": 90,
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Бордо",
+        "code": "#800000"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6202.JPG",
+      "pics1cloths/IMG_6203.JPG"
+    ],
+    "isNew": false,
+    "inStock": true,
+    "description": "Лімітована серія комбінезонів."
+  },
+  {
+    "id": "w8",
+    "name": "Urban Sport Jumpsuit",
+    "category": "jumpsuit",
+    "collection": "active",
+    "price": 2800,
+    "priceUSD": 70,
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Олива",
+        "code": "#808000"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6204.JPG",
+      "pics1cloths/IMG_6205.JPG"
+    ],
+    "isNew": false,
+    "inStock": true,
+    "description": "Стильний комбінезон для міських прогулянок."
+  },
+  {
+    "id": "w9",
+    "name": "Zen Leggings",
+    "category": "leggings",
+    "collection": "active",
+    "price": 1350,
+    "priceUSD": 34,
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Беж",
+        "code": "#F5F5DC"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6206.JPG",
+      "pics1cloths/IMG_6207.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Базові легінси для комфортних тренувань."
+  },
+  {
+    "id": "w10",
+    "name": "SCHEMER Winter Plus",
+    "category": "jumpsuit",
+    "collection": "winter",
+    "price": 3800,
+    "priceUSD": 95,
+    "sizes": [
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Графіт",
+        "code": "#383838"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6209.JPG",
+      "pics1cloths/IMG_6210.JPG"
+    ],
+    "isNew": false,
+    "inStock": true,
+    "description": "Утеплений комбінезон для зимових днів."
+  },
+  {
+    "id": "w11",
+    "name": "Elite Performance Top",
+    "category": "tops",
+    "collection": "profit",
+    "price": 1100,
+    "priceUSD": 28,
+    "sizes": [
+      "XS",
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Чорний",
+        "code": "#1a1a1a"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6212.JPG",
+      "pics1cloths/IMG_6215.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Спортивний топ з високою підтримкою."
+  },
+  {
+    "id": "w12",
+    "name": "Floral Studio Set",
+    "category": "leggings",
+    "collection": "active",
+    "price": 2400,
+    "priceUSD": 60,
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Принт",
+        "code": "#FFC0CB"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6201.JPG",
+      "pics1cloths/IMG_6204.JPG"
+    ],
+    "isNew": false,
+    "inStock": true,
+    "description": "Набір з квітковим принтом для йоги."
+  },
+  {
+    "id": "w13",
+    "name": "SCHEMER Active Bell",
+    "category": "jumpsuit",
+    "collection": "active",
+    "price": 2950,
+    "priceUSD": 74,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Темно-синій",
+        "code": "#000080"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6202.JPG",
+      "pics1cloths/IMG_6206.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Активний комбінезон кльош."
+  },
+  {
+    "id": "w14",
+    "name": "Breathe High Waist",
+    "category": "leggings",
+    "collection": "active",
+    "price": 1600,
+    "priceUSD": 40,
+    "sizes": [
+      "XXS",
+      "XS",
+      "S"
+    ],
+    "colors": [
+      {
+        "name": "Світло-сірий",
+        "code": "#D3D3D3"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6203.JPG",
+      "pics1cloths/IMG_6207.JPG"
+    ],
+    "isNew": false,
+    "inStock": true,
+    "description": "Легінси з високою талією для бігу."
+  },
+  {
+    "id": "w15",
+    "name": "Power Fit Jumpsuit",
+    "category": "jumpsuit",
+    "collection": "profit",
+    "price": 3200,
+    "priceUSD": 80,
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Неоновий",
+        "code": "#39FF14"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6205.JPG",
+      "pics1cloths/IMG_6209.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Потужний комбінезон для кросфіту."
+  },
+  {
+    "id": "w16",
+    "name": "Studio Chill Set",
+    "category": "leggings",
+    "collection": "active",
+    "price": 1900,
+    "priceUSD": 48,
+    "sizes": [
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Капучино",
+        "code": "#C4A484"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6210.JPG",
+      "pics1cloths/IMG_6215.JPG"
+    ],
+    "isNew": false,
+    "inStock": true,
+    "description": "Комфортний набір для розтяжки."
+  },
+  {
+    "id": "w17",
+    "name": "Winter Flow Jumpsuit",
+    "category": "jumpsuit",
+    "collection": "winter",
+    "price": 3650,
+    "priceUSD": 91,
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Смарагд",
+        "code": "#50C878"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6201.JPG",
+      "pics1cloths/IMG_6212.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Зимовий комбінезон для плавності рухів."
+  },
+  {
+    "id": "w18",
+    "name": "Dynamic Leggings",
+    "category": "leggings",
+    "collection": "active",
+    "price": 1550,
+    "priceUSD": 39,
+    "sizes": [
+      "XS",
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Фіолетовий",
+        "code": "#800080"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6202.JPG",
+      "pics1cloths/IMG_6204.JPG"
+    ],
+    "isNew": false,
+    "inStock": true,
+    "description": "Динамічні легінси для активного руху."
+  },
+  {
+    "id": "w19",
+    "name": "Pro Master Top",
+    "category": "tops",
+    "collection": "profit",
+    "price": 1250,
+    "priceUSD": 31,
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Білий",
+        "code": "#FFFFFF"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6206.JPG",
+      "pics1cloths/IMG_6209.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Професійний топ для майстрів спорту."
+  },
+  {
+    "id": "w20",
+    "name": "SCHEMER Winter Luxe",
+    "category": "jumpsuit",
+    "collection": "winter",
+    "price": 4200,
+    "priceUSD": 105,
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Золото",
+        "code": "#FFD700"
+      }
+    ],
+    "images": [
+      "pics1cloths/IMG_6215.JPG",
+      "pics1cloths/IMG_6201.JPG"
+    ],
+    "isNew": true,
+    "inStock": true,
+    "description": "Люксовий зимовий комбінезон."
+  }
+]

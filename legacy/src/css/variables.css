@@ -1,0 +1,155 @@
+/* ================================================
+   MIND BODY Design System - CSS Variables
+   ================================================ */
+
+:root {
+  /* === Colors === */
+  /* Primary */
+  --color-primary: #3D7A8C;
+  --color-primary-dark: #2A5A68;
+  --color-primary-light: #6BA3B2;
+
+  /* Accents */
+  --color-accent: #4B3B6B;
+  --color-accent-light: #7A6B9B;
+  --color-marsala: #722F37;
+
+  /* Backgrounds */
+  --color-bg-cream: #F8F5F0;
+  --color-bg-soft: #EDE9E3;
+  --color-bg-white: #FFFFFF;
+
+  /* Text */
+  --color-text-primary: #2D2D2D;
+  --color-text-secondary: #6B6B6B;
+  --color-text-light: #999999;
+  --color-text-white: #FFFFFF;
+
+  /* Status */
+  --color-error: #E53935;
+  --color-success: #2E7D32;
+  --color-warning: #F9A825;
+
+  /* === Gradients === */
+  --gradient-brand: linear-gradient(180deg, #F8F5F0 0%, #3D7A8C 100%);
+  --gradient-hero: linear-gradient(135deg, #EDE9E3 0%, #6BA3B2 50%, #3D7A8C 100%);
+  --gradient-card: linear-gradient(180deg, rgba(248, 245, 240, 0.9) 0%, rgba(61, 122, 140, 0.1) 100%);
+  --gradient-values: linear-gradient(180deg, #3D7A8C 0%, #2A5A68 100%);
+
+  /* === Typography === */
+  --font-display: 'Josefin Sans', sans-serif;
+  --font-script: 'Pacifico', cursive;
+  --font-body: 'Inter', sans-serif;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;
+  /* 12px */
+  --text-sm: 0.875rem;
+  /* 14px */
+  --text-base: 1rem;
+  /* 16px */
+  --text-lg: 1.125rem;
+  /* 18px */
+  --text-xl: 1.25rem;
+  /* 20px */
+  --text-2xl: 1.5rem;
+  /* 24px */
+  --text-3xl: 2rem;
+  /* 32px */
+  --text-4xl: 3rem;
+  /* 48px */
+  --text-5xl: 4rem;
+  /* 64px */
+  --text-6xl: 4.5rem;
+  /* 72px */
+
+  /* Line Heights */
+  --leading-none: 1;
+  --leading-tight: 1.1;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* Letter Spacing */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.05em;
+  --tracking-wider: 0.1em;
+  --tracking-widest: 0.2em;
+
+  /* === Spacing === */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+  --space-5xl: 128px;
+  --space-section: 120px;
+
+  /* === Layout === */
+  --container-max: 1440px;
+  --container-padding: 80px;
+  --grid-columns: 12;
+  --grid-gutter: 24px;
+
+  /* === Border Radius === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* === Shadows === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.15);
+
+  /* === Transitions === */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  --transition-spring: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* === Z-Index === */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal: 400;
+  --z-popover: 500;
+  --z-tooltip: 600;
+
+  /* === Header === */
+  --header-height: 80px;
+  --header-height-mobile: 60px;
+}
+
+/* Dark mode variables (for future use) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Potential dark mode overrides */
+    --color-bg-cream: #1A1A1A;
+    --color-text-primary: #F8F5F0;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  :root {
+    --container-padding: 40px;
+    --space-section: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --container-padding: 20px;
+    --space-section: 60px;
+    --text-6xl: 2.5rem;
+    --text-5xl: 2rem;
+    --text-4xl: 1.75rem;
+  }
+}

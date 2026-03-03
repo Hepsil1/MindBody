@@ -1,0 +1,494 @@
+[
+    {
+        "id": "k1",
+        "name": "Комбінезон LITTLE STAR (Pink)",
+        "category": "jumpsuit",
+        "collection": "Kids Active",
+        "price": 1850,
+        "sizes": [
+            "110",
+            "116",
+            "122"
+        ],
+        "colors": [
+            {
+                "name": "Рожевий",
+                "code": "#FF69B4"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6201.JPG",
+            "pics1cloths/IMG_6202.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "Зручний комбінезон для маленьких зірочок."
+    },
+    {
+        "id": "k2",
+        "name": "Легінси BUTTERFLY (Purple)",
+        "category": "leggings",
+        "collection": "Kids Dance",
+        "price": 950,
+        "sizes": [
+            "116",
+            "122",
+            "128"
+        ],
+        "colors": [
+            {
+                "name": "Фіолетовий",
+                "code": "#9B59B6"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6203.JPG",
+            "pics1cloths/IMG_6204.JPG"
+        ],
+        "isNew": false,
+        "inStock": true,
+        "description": "Еластичні легінси для танців та ігор."
+    },
+    {
+        "id": "k3",
+        "name": "Топ RAINBOW (Coral)",
+        "category": "tops",
+        "collection": "Kids Active",
+        "price": 650,
+        "sizes": [
+            "110",
+            "116"
+        ],
+        "colors": [
+            {
+                "name": "Корал",
+                "code": "#FF6B6B"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6205.JPG",
+            "pics1cloths/IMG_6206.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "Яскравий топ для занять спортом."
+    },
+    {
+        "id": "k4",
+        "name": "Dino Motion Set",
+        "category": "jumpsuit",
+        "collection": "Kids Active",
+        "price": 1700,
+        "sizes": [
+            "104",
+            "110",
+            "116"
+        ],
+        "colors": [
+            {
+                "name": "Зелений",
+                "code": "#2ECC71"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6207.JPG",
+            "pics1cloths/IMG_6209.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "Комплект для активних хлопчиків та дівчаток."
+    },
+    {
+        "id": "k5",
+        "name": "Sparkle Dance Leggings",
+        "category": "leggings",
+        "collection": "Kids Dance",
+        "price": 1100,
+        "sizes": [
+            "122",
+            "128",
+            "134"
+        ],
+        "colors": [
+            {
+                "name": "Срібло",
+                "code": "#C0C0C0"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6210.JPG",
+            "pics1cloths/IMG_6212.JPG"
+        ],
+        "isNew": false,
+        "inStock": true,
+        "description": "Сяючі легінси для виступів."
+    },
+    {
+        "id": "k6",
+        "name": "Junior Gym Jumpsuit",
+        "category": "jumpsuit",
+        "collection": "Kids Active",
+        "price": 1950,
+        "sizes": [
+            "116",
+            "122",
+            "128"
+        ],
+        "colors": [
+            {
+                "name": "Блакитний",
+                "code": "#3498DB"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6215.JPG",
+            "pics1cloths/IMG_6201.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "Професійний комбінезон для гімнастики."
+    },
+    {
+        "id": "k7",
+        "name": "Mini Athlete Top",
+        "category": "tops",
+        "collection": "Kids Active",
+        "price": 600,
+        "sizes": [
+            "104",
+            "110"
+        ],
+        "colors": [
+            {
+                "name": "Жовтий",
+                "code": "#F1C40F"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6202.JPG",
+            "pics1cloths/IMG_6203.JPG"
+        ],
+        "isNew": false,
+        "inStock": true,
+        "description": "Базовий топ для юних спортсменів."
+    },
+    {
+        "id": "k8",
+        "name": "Cloud Walking Leggings",
+        "category": "leggings",
+        "collection": "Kids Active",
+        "price": 850,
+        "sizes": [
+            "110",
+            "116",
+            "122"
+        ],
+        "colors": [
+            {
+                "name": "Білий",
+                "code": "#FFFFFF"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6204.JPG",
+            "pics1cloths/IMG_6205.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "М'які легінси для повсякденного носіння."
+    },
+    {
+        "id": "k9",
+        "name": "Forest Friend Jumpsuit",
+        "category": "jumpsuit",
+        "collection": "Kids Active",
+        "price": 1650,
+        "sizes": [
+            "116",
+            "122"
+        ],
+        "colors": [
+            {
+                "name": "Олива",
+                "code": "#556B2F"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6206.JPG",
+            "pics1cloths/IMG_6207.JPG"
+        ],
+        "isNew": false,
+        "inStock": true,
+        "description": "Міцний комбінезон для ігор на свіжому повітрі."
+    },
+    {
+        "id": "k10",
+        "name": "Neon Power Set",
+        "category": "jumpsuit",
+        "collection": "Kids Active",
+        "price": 2100,
+        "sizes": [
+            "128",
+            "134"
+        ],
+        "colors": [
+            {
+                "name": "Неон",
+                "code": "#ADFF2F"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6209.JPG",
+            "pics1cloths/IMG_6210.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "Яскравий набір для сучасних танців."
+    },
+    {
+        "id": "k11",
+        "name": "Pinky Promise Top",
+        "category": "tops",
+        "collection": "Kids Dance",
+        "price": 550,
+        "sizes": [
+            "110",
+            "116"
+        ],
+        "colors": [
+            {
+                "name": "Ніжно-рожевий",
+                "code": "#FFB6C1"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6212.JPG",
+            "pics1cloths/IMG_6215.JPG"
+        ],
+        "isNew": false,
+        "inStock": true,
+        "description": "Легкий топ для розтяжки."
+    },
+    {
+        "id": "k12",
+        "name": "Space Explorer Leggings",
+        "category": "leggings",
+        "collection": "Kids Active",
+        "price": 1200,
+        "sizes": [
+            "116",
+            "122",
+            "128"
+        ],
+        "colors": [
+            {
+                "name": "Космос",
+                "code": "#2C3E50"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6201.JPG",
+            "pics1cloths/IMG_6204.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "Легінси з космічним принтом."
+    },
+    {
+        "id": "k13",
+        "name": "Candy Cane Jumpsuit",
+        "category": "jumpsuit",
+        "collection": "Kids Dance",
+        "price": 1800,
+        "sizes": [
+            "104",
+            "110",
+            "116"
+        ],
+        "colors": [
+            {
+                "name": "Червоний",
+                "code": "#E74C3C"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6202.JPG",
+            "pics1cloths/IMG_6206.JPG"
+        ],
+        "isNew": false,
+        "inStock": true,
+        "description": "Нарядний комбінезон для святкових виступів."
+    },
+    {
+        "id": "k14",
+        "name": "Summer Breeze Top",
+        "category": "tops",
+        "collection": "Kids Active",
+        "price": 680,
+        "sizes": [
+            "116",
+            "122"
+        ],
+        "colors": [
+            {
+                "name": "Бірюза",
+                "code": "#40E0D0"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6203.JPG",
+            "pics1cloths/IMG_6207.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "Топ для занять у спекотні дні."
+    },
+    {
+        "id": "k15",
+        "name": "Hero Motion Leggings",
+        "category": "leggings",
+        "collection": "Kids Active",
+        "price": 1050,
+        "sizes": [
+            "122",
+            "128",
+            "134"
+        ],
+        "colors": [
+            {
+                "name": "Синій",
+                "code": "#3498DB"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6205.JPG",
+            "pics1cloths/IMG_6209.JPG"
+        ],
+        "isNew": false,
+        "inStock": true,
+        "description": "Міцні легінси для активного руху."
+    },
+    {
+        "id": "k16",
+        "name": "Ballerina Dream Jumpsuit",
+        "category": "jumpsuit",
+        "collection": "Kids Dance",
+        "price": 2200,
+        "sizes": [
+            "110",
+            "116",
+            "122"
+        ],
+        "colors": [
+            {
+                "name": "Пудра",
+                "code": "#E1C699"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6210.JPG",
+            "pics1cloths/IMG_6215.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "Ніжний комбінезон для майбутніх балерин."
+    },
+    {
+        "id": "k17",
+        "name": "Turbo Sport Top",
+        "category": "tops",
+        "collection": "Kids Active",
+        "price": 750,
+        "sizes": [
+            "128",
+            "134"
+        ],
+        "colors": [
+            {
+                "name": "Помаранчевий",
+                "code": "#E67E22"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6201.JPG",
+            "pics1cloths/IMG_6212.JPG"
+        ],
+        "isNew": false,
+        "inStock": true,
+        "description": "Яскравий топ для інтенсивних тренувань."
+    },
+    {
+        "id": "k18",
+        "name": "Jungle Joy Leggings",
+        "category": "leggings",
+        "collection": "Kids Active",
+        "price": 980,
+        "sizes": [
+            "104",
+            "110",
+            "116"
+        ],
+        "colors": [
+            {
+                "name": "Тропік",
+                "code": "#27AE60"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6202.JPG",
+            "pics1cloths/IMG_6204.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "Веселі легінси з тропічним малюнком."
+    },
+    {
+        "id": "k19",
+        "name": "Winter Kid Luxe",
+        "category": "jumpsuit",
+        "collection": "Kids Active",
+        "price": 2500,
+        "sizes": [
+            "116",
+            "122",
+            "128"
+        ],
+        "colors": [
+            {
+                "name": "Чорний",
+                "code": "#1a1a1a"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6206.JPG",
+            "pics1cloths/IMG_6209.JPG"
+        ],
+        "isNew": false,
+        "inStock": true,
+        "description": "Преміальний комбінезон для холодної погоди."
+    },
+    {
+        "id": "k20",
+        "name": "Magic Motion Top",
+        "category": "tops",
+        "collection": "Kids Dance",
+        "price": 820,
+        "sizes": [
+            "110",
+            "116"
+        ],
+        "colors": [
+            {
+                "name": "Веселка",
+                "code": "#9B59B6"
+            }
+        ],
+        "images": [
+            "pics1cloths/IMG_6215.JPG",
+            "pics1cloths/IMG_6201.JPG"
+        ],
+        "isNew": true,
+        "inStock": true,
+        "description": "Чарівний топ для танцювальних талантів."
+    }
+]

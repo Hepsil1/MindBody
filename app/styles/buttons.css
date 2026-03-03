@@ -1,0 +1,109 @@
+/* ========================================
+   BUTTON STYLES
+   ======================================== */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 32px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: var(--radius-full);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    white-space: nowrap;
+}
+
+/* Primary Button */
+.btn--primary {
+    background: var(--color-primary);
+    color: var(--color-text-white);
+    box-shadow: 0 4px 16px rgba(61, 122, 140, 0.3);
+}
+
+.btn--primary:hover {
+    background: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(61, 122, 140, 0.4);
+}
+
+/* Glow Effect for Primary CTA */
+.btn--glow {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn--glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(90deg,
+            var(--color-primary-light),
+            var(--color-accent-light),
+            var(--color-primary-light));
+    background-size: 200% 100%;
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    animation: glowShift 3s linear infinite;
+}
+
+.btn--glow:hover::before {
+    opacity: 1;
+}
+
+@keyframes glowShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 200% 50%;
+    }
+}
+
+/* Outline Button */
+.btn--outline {
+    background: transparent;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+}
+
+.btn--outline:hover {
+    background: var(--color-primary);
+    color: var(--color-text-white);
+    transform: translateY(-2px);
+}
+
+/* Glass Button */
+.btn--glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--color-text-white);
+}
+
+.btn--glass:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Secondary Button */
+.btn--secondary {
+    background: var(--color-accent);
+    color: var(--color-text-white);
+}
+
+.btn--secondary:hover {
+    background: var(--color-accent-light);
+    transform: translateY(-2px);
+}
