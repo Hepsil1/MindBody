@@ -52,7 +52,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     let relatedProducts: any[] = [];
 
     try {
-        const productResult: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Product WHERE id = ?`, id);
+        const productResult: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Product" WHERE id = $1`, id);
 
         if (productResult[0]) {
             const p = productResult[0];
@@ -94,7 +94,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
             };
 
             const relatedResult: any[] = await prisma.$queryRawUnsafe(
-                `SELECT id, name, price, images FROM Product WHERE category = ? AND id != ? LIMIT 4`,
+                `SELECT id, name, price, images FROM "Product" WHERE category = $1 AND id != $2 LIMIT 4`,
                 p.category, p.id
             );
 
@@ -106,7 +106,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
             }));
         }
 
-        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT config FROM FilterConfig WHERE id = 'global' LIMIT 1`);
+        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT config FROM "FilterConfig" WHERE id = 'global' LIMIT 1`);
         if (configResult[0]?.config) {
             filterConfig = JSON.parse(configResult[0].config);
         }

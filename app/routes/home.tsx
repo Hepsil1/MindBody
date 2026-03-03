@@ -18,7 +18,7 @@ export function meta({ }: Route.MetaArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   try {
     // Use Raw SQL to only fetch HOME slides (page is null or 'home')
-    const slides = await prisma.$queryRaw`SELECT * FROM Slide WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC` as any[];
+    const slides = await prisma.$queryRaw`SELECT * FROM "Slide" WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC` as any[];
 
     // Dynamic check for category model
     const categoryModel = (prisma as any).category;
@@ -31,10 +31,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     let kidsProducts: any[] = [];
     try {
       const allProducts = await prisma.$queryRaw`
-        SELECT id, name, description, price, comparePrice, category, images, colors, sizes, shopPageSlug
-        FROM Product
+        SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, "shopPageSlug"
+        FROM "Product"
         WHERE status = 'active'
-        ORDER BY createdAt DESC
+        ORDER BY "createdAt" DESC
       ` as any[];
 
       womenProducts = allProducts

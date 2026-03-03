@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
         // First find customer by email (case-insensitive)
         const customers = await prisma.$queryRaw<any[]>`
-            SELECT * FROM Customer WHERE LOWER(email) = ${emailLower}
+            SELECT * FROM "Customer" WHERE LOWER(email) = ${emailLower}
         `;
 
         if (customers.length === 0) {

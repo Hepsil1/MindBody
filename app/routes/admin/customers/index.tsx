@@ -33,7 +33,7 @@ export default function AdminCustomers() {
     };
 
     const getTotalSpent = (orders: { total: any }[]) => {
-        return orders.reduce((sum, order) => sum + Number(order.total), 0);
+        return orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
     };
 
     return (

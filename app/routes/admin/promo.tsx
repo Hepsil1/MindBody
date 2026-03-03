@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export async function loader() {
     const promos = await prisma.$queryRawUnsafe(
-        `SELECT * FROM PromoCode ORDER BY createdAt DESC`
+        `SELECT * FROM "PromoCode" ORDER BY "createdAt" DESC`
     ) as any[];
     return { promos };
 }
@@ -29,8 +29,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
         try {
             await prisma.$executeRawUnsafe(
-                `INSERT INTO PromoCode (id, code, discountType, discountValue, minOrder, maxUses, usedCount, isActive, expiresAt, createdAt)
-                 VALUES (?, ?, ?, ?, ?, ?, 0, 1, ?, datetime('now'))`,
+                `INSERT INTO "PromoCode" (id, code, "discountType", "discountValue", "minOrder", "maxUses", "usedCount", "isActive", "expiresAt", "createdAt")
+                 VALUES ($1, $2, $3, $4, $5, $6, 0, true, $7, CURRENT_TIMESTAMP)`,
                 id, code, discountType, discountValue, minOrder, maxUses, expiresAt ? new Date(expiresAt).toISOString() : null
             );
         } catch (e: any) {
@@ -45,15 +45,15 @@ export async function action({ request }: ActionFunctionArgs) {
         const id = formData.get("id") as string;
         const currentActive = formData.get("isActive") === "true";
         await prisma.$executeRawUnsafe(
-            `UPDATE PromoCode SET isActive = ? WHERE id = ?`,
-            currentActive ? 0 : 1, id
+            `UPDATE "PromoCode" SET "isActive" = $1 WHERE id = $2`,
+            !currentActive, id
         );
     }
 
     if (intent === "delete") {
         const id = formData.get("id") as string;
         await prisma.$executeRawUnsafe(
-            `DELETE FROM PromoCode WHERE id = ?`, id
+            `DELETE FROM "PromoCode" WHERE id = $1`, id
         );
     }
 

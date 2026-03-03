@@ -17,7 +17,7 @@ export async function action({ request }: { request: Request }) {
         const id = crypto.randomUUID();
 
         await prisma.$executeRawUnsafe(
-            `INSERT INTO ContactRequest (id, contact, createdAt) VALUES (?, ?, datetime('now'))`,
+            `INSERT INTO "ContactRequest" (id, contact, "createdAt") VALUES ($1, $2, CURRENT_TIMESTAMP)`,
             id, trimmed
         );
 

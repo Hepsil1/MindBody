@@ -9,7 +9,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     if (intent === "delete_all") {
         try {
-            await prisma.$executeRawUnsafe(`DELETE FROM Product`);
+            await prisma.$executeRawUnsafe(`DELETE FROM "Product"`);
             return { success: true };
         } catch (e) {
             console.error("Failed to delete all products:", e);
@@ -21,7 +21,7 @@ export async function action({ request }: Route.ActionArgs) {
         const id = formData.get("id");
         try {
             // Use raw SQL to avoid potential Prisma Client issues with the new schema if it's not regenerated
-            await prisma.$executeRawUnsafe(`DELETE FROM Product WHERE id = ?`, String(id));
+            await prisma.$executeRawUnsafe(`DELETE FROM "Product" WHERE id = $1`, String(id));
             return { success: true };
         } catch (e) {
             console.error("Failed to delete product:", e);

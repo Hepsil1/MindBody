@@ -29,7 +29,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     // 1. Fetch FilterConfig (Safe Raw SQL)
     let filterConfig = null;
     try {
-        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT config FROM FilterConfig WHERE id = 'global' LIMIT 1`);
+        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT config FROM "FilterConfig" WHERE id = 'global' LIMIT 1`);
         if (configResult[0]?.config) {
             filterConfig = JSON.parse(configResult[0].config);
         }
@@ -47,7 +47,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     let products: any[] = [];
     try {
         const rawProducts: any[] = await prisma.$queryRawUnsafe(
-            `SELECT * FROM Product WHERE shopPageSlug = ? AND status = 'active' ORDER BY createdAt DESC`,
+            `SELECT * FROM "Product" WHERE "shopPageSlug" = $1 AND status = 'active' ORDER BY "createdAt" DESC`,
             categorySlug
         );
         products = rawProducts;

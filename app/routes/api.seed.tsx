@@ -270,7 +270,7 @@ export async function action({ request }: { request: Request }) {
         for (const product of SAMPLE_PRODUCTS) {
             // Check if SKU already exists
             const existing = await prisma.$queryRaw`
-                SELECT id FROM Product WHERE sku = ${product.sku} LIMIT 1
+                SELECT id FROM "Product" WHERE sku = ${product.sku} LIMIT 1
             ` as any[];
 
             if (existing.length > 0) {
@@ -278,27 +278,25 @@ export async function action({ request }: { request: Request }) {
                 continue;
             }
 
-            await prisma.$executeRaw`
-                INSERT INTO Product (id, name, description, price, comparePrice, sku, stock, status, category, images, colors, sizes, inventory, shopPageSlug, createdAt, updatedAt)
-                VALUES (
-                    ${crypto.randomUUID()},
-                    ${product.name},
-                    ${product.description},
-                    ${product.price},
-                    ${product.comparePrice || null},
-                    ${product.sku},
-                    ${product.stock},
-                    ${product.status},
-                    ${product.category},
-                    ${product.images},
-                    ${product.colors},
-                    ${product.sizes},
-                    ${product.inventory},
-                    ${product.shopPageSlug},
-                    datetime('now'),
-                    datetime('now')
-                )
-            `;
+            await prisma.$executeRawUnsafe(`
+                INSERT INTO "Product" (id, name, description, price, "comparePrice", sku, stock, status, category, images, colors, sizes, inventory, "shopPageSlug", "createdAt", "updatedAt")
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            `,
+                crypto.randomUUID(),
+                product.name,
+                product.description,
+                product.price,
+                product.comparePrice || null,
+                product.sku,
+                product.stock,
+                product.status,
+                product.category,
+                product.images,
+                product.colors,
+                product.sizes,
+                product.inventory,
+                product.shopPageSlug
+            );
             created++;
         }
 

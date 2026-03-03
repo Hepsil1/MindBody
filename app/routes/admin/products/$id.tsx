@@ -54,18 +54,18 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
     try {
         // 1. Fetch FilterConfig (Raw SQL)
-        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT config FROM FilterConfig WHERE id = 'global' LIMIT 1`);
+        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT config FROM "FilterConfig" WHERE id = 'global' LIMIT 1`);
         if (configResult[0]?.config) {
             filterConfig = JSON.parse(configResult[0].config);
         }
 
         // 2. Fetch ShopPages (Raw SQL)
-        const pagesResult: any[] = await prisma.$queryRawUnsafe(`SELECT slug, title FROM ShopPage`);
+        const pagesResult: any[] = await prisma.$queryRawUnsafe(`SELECT slug, title FROM "ShopPage"`);
         shopPages = pagesResult.map((p: any) => ({ slug: p.slug, title: p.title }));
 
         // 3. Fetch Product if not new (Raw SQL)
         if (!isNew) {
-            const productResult: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Product WHERE id = ?`, params.id);
+            const productResult: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Product" WHERE id = $1`, params.id);
             if (productResult[0]) {
                 const p = productResult[0];
                 const parseJson = (str: string, fallback: any) => {
@@ -142,31 +142,27 @@ export async function action({ request, params }: ActionFunctionArgs) {
         try {
             const now = new Date().toISOString();
 
-            // Schema Updates (Lazy Migration)
-            const columns = ["colors", "sizes", "shopPageSlug", "inventory"];
-            for (const col of columns) {
-                try { await prisma.$executeRawUnsafe(`ALTER TABLE Product ADD COLUMN ${col} String`); } catch { }
-            }
+            // Remove lazy migration (not needed for Postgres, schema managed by Prisma)
 
-            // Upsert Product
+            // Upsert Product (PostgreSQL syntax)
             await prisma.$executeRawUnsafe(`
-                INSERT INTO Product (id, name, description, price, comparePrice, sku, status, stock, category, shopPageSlug, images, colors, sizes, inventory, createdAt, updatedAt)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO "Product" (id, name, description, price, "comparePrice", sku, status, stock, category, "shopPageSlug", images, colors, sizes, inventory, "createdAt", "updatedAt")
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 ON CONFLICT(id) DO UPDATE SET
-                    name=excluded.name,
-                    description=excluded.description,
-                    price=excluded.price,
-                    comparePrice=excluded.comparePrice,
-                    sku=excluded.sku,
-                    status=excluded.status,
-                    stock=excluded.stock,
-                    category=excluded.category,
-                    shopPageSlug=excluded.shopPageSlug,
-                    images=excluded.images,
-                    colors=excluded.colors,
-                    sizes=excluded.sizes,
-                    inventory=excluded.inventory,
-                    updatedAt=excluded.updatedAt
+                    name=EXCLUDED.name,
+                    description=EXCLUDED.description,
+                    price=EXCLUDED.price,
+                    "comparePrice"=EXCLUDED."comparePrice",
+                    sku=EXCLUDED.sku,
+                    status=EXCLUDED.status,
+                    stock=EXCLUDED.stock,
+                    category=EXCLUDED.category,
+                    "shopPageSlug"=EXCLUDED."shopPageSlug",
+                    images=EXCLUDED.images,
+                    colors=EXCLUDED.colors,
+                    sizes=EXCLUDED.sizes,
+                    inventory=EXCLUDED.inventory,
+                    "updatedAt"=EXCLUDED."updatedAt"
             `, id, name, description, price, comparePrice, sku, status, stock, category, shopPageSlug, images, colors, sizes, inventory, now, now);
 
             return { success: true };

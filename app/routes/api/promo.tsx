@@ -11,7 +11,7 @@ export async function loader({ request }: { request: Request }) {
 
     try {
         const promo = await prisma.$queryRawUnsafe(
-            `SELECT * FROM PromoCode WHERE code = ? LIMIT 1`,
+            `SELECT * FROM "PromoCode" WHERE code = $1 LIMIT 1`,
             code
         ) as any[];
 
@@ -64,7 +64,7 @@ export async function action({ request }: { request: Request }) {
         }
 
         await prisma.$executeRawUnsafe(
-            `UPDATE PromoCode SET usedCount = usedCount + 1 WHERE code = ?`,
+            `UPDATE "PromoCode" SET "usedCount" = "usedCount" + 1 WHERE code = $1`,
             code.trim().toUpperCase()
         );
 

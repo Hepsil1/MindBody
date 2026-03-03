@@ -11,13 +11,13 @@ export async function loader({ request }: { request: Request }) {
     try {
         const searchTerm = `%${query.trim()}%`;
         const products = await prisma.$queryRaw`
-            SELECT id, name, price, comparePrice, category, images, shopPageSlug
-            FROM Product
+            SELECT id, name, price, "comparePrice", category, images, "shopPageSlug"
+            FROM "Product"
             WHERE status = 'active'
             AND (
-                name LIKE ${searchTerm}
-                OR description LIKE ${searchTerm}
-                OR category LIKE ${searchTerm}
+                name ILIKE ${searchTerm}
+                OR description ILIKE ${searchTerm}
+                OR category ILIKE ${searchTerm}
             )
             ORDER BY name ASC
             LIMIT 8

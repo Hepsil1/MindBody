@@ -11,10 +11,10 @@ export async function loader({ request }: { request: Request }) {
 
     try {
         const reviews = await prisma.$queryRawUnsafe(
-            `SELECT id, productId, authorName, rating, text, isVerified, createdAt 
-             FROM Review 
-             WHERE productId = ? AND isApproved = 1
-             ORDER BY createdAt DESC`,
+            `SELECT id, "productId", "authorName", rating, text, "isVerified", "createdAt" 
+             FROM "Review" 
+             WHERE "productId" = $1 AND "isApproved" = true
+             ORDER BY "createdAt" DESC`,
             productId
         ) as any[];
 
@@ -55,8 +55,8 @@ export async function action({ request }: { request: Request }) {
 
         const id = crypto.randomUUID();
         await prisma.$executeRawUnsafe(
-            `INSERT INTO Review (id, productId, authorName, rating, text, isVerified, isApproved, createdAt) 
-             VALUES (?, ?, ?, ?, ?, 0, 1, datetime('now'))`,
+            `INSERT INTO "Review" (id, "productId", "authorName", rating, text, "isVerified", "isApproved", "createdAt") 
+             VALUES ($1, $2, $3, $4, $5, false, true, CURRENT_TIMESTAMP)`,
             id, productId, trimmedName, ratingNum, trimmedText
         );
 

@@ -13,7 +13,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         // Fetch ALL slides using Raw SQL to ensure we see the 'page' column
         // The Prisma Client might be outdated, so standard findMany might return objects without 'page' property
         // or fail to filter by it. Raw SQL gives us the raw DB rows.
-        const allSlidesRaw = await prisma.$queryRaw`SELECT * FROM Slide ORDER BY "order" ASC` as any[];
+        const allSlidesRaw = await prisma.$queryRaw`SELECT * FROM "Slide" ORDER BY "order" ASC` as any[];
 
         // Standardize raw result (SQLite raw result might depend on driver, usually it's array of objects)
         // Manual filtering ensures strict separation
@@ -110,24 +110,24 @@ export async function action({ request }: Route.ActionArgs) {
         const now = new Date().toISOString();
 
         if (intent === "create") {
-            const maxOrderResult = await prisma.$queryRaw`SELECT MAX("order") as maxOrder FROM Slide` as any[];
+            const maxOrderResult = await prisma.$queryRaw`SELECT MAX("order") as "maxOrder" FROM "Slide"` as any[];
             const newOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
             const newId = randomUUID();
 
             // Create HOME slide (explicit page='home')
             await prisma.$executeRaw`
-                INSERT INTO Slide (id, name, type, page, link, image1, image1Pos, image2, image2Pos, image3, image3Pos, "order", isActive, createdAt, updatedAt)
+                INSERT INTO "Slide" (id, name, type, page, link, image1, "image1Pos", image2, "image2Pos", image3, "image3Pos", "order", "isActive", "createdAt", "updatedAt")
                 VALUES (${newId}, ${name}, ${type}, 'home', ${link || null}, ${image1}, ${image1Pos}, ${type === 'single' ? null : (image2 || null)}, ${type === 'single' ? 'center center' : image2Pos}, ${type === 'single' ? null : (image3 || null)}, ${type === 'single' ? 'center center' : image3Pos}, ${newOrder}, 1, ${now}, ${now})
             `;
         } else {
             // Update HOME slide
             await prisma.$executeRaw`
-                UPDATE Slide 
+                UPDATE "Slide" 
                 SET name=${name}, type=${type}, link=${link || null},
-                    image1=${image1}, image1Pos=${image1Pos},
-                    image2=${type === 'single' ? null : (image2 || null)}, image2Pos=${type === 'single' ? 'center center' : image2Pos},
-                    image3=${type === 'single' ? null : (image3 || null)}, image3Pos=${type === 'single' ? 'center center' : image3Pos},
-                    updatedAt=${now}
+                    image1=${image1}, "image1Pos"=${image1Pos},
+                    image2=${type === 'single' ? null : (image2 || null)}, "image2Pos"=${type === 'single' ? 'center center' : image2Pos},
+                    image3=${type === 'single' ? null : (image3 || null)}, "image3Pos"=${type === 'single' ? 'center center' : image3Pos},
+                    "updatedAt"=${now}
                 WHERE id=${id}
             `;
         }
@@ -137,7 +137,7 @@ export async function action({ request }: Route.ActionArgs) {
     if (intent === "delete") {
         const id = formData.get("id") as string;
         try {
-            await prisma.$executeRaw`DELETE FROM Slide WHERE id=${id}`;
+            await prisma.$executeRaw`DELETE FROM "Slide" WHERE id=${id}`;
             return { success: true };
         } catch (error) {
             console.error("Failed to delete slide:", error);
@@ -183,9 +183,10 @@ export async function action({ request }: Route.ActionArgs) {
         } catch (e) {
             console.log("Prisma FilterConfig failed, using raw SQL fallback:", e);
             const now = new Date().toISOString();
-            // SQLite UPSERT (INSERT OR REPLACE)
+            // PostgreSQL UPSERT
             await prisma.$executeRawUnsafe(
-                `INSERT OR REPLACE INTO FilterConfig (id, config, updatedAt) VALUES ('global', ?, ?)`,
+                `INSERT INTO "FilterConfig" (id, config, "updatedAt") VALUES ('global', $1, $2)
+                 ON CONFLICT(id) DO UPDATE SET config = $1, "updatedAt" = $2`,
                 config, now
             );
         }
@@ -224,7 +225,7 @@ export async function action({ request }: Route.ActionArgs) {
 
         // Use Raw SQL to bypass client validation for 'page'
         await prisma.$executeRaw`
-            INSERT INTO Slide (id, name, type, page, image1, image1Pos, image2, image2Pos, image3, image3Pos, "order", isActive, createdAt, updatedAt)
+            INSERT INTO "Slide" (id, name, type, page, image1, "image1Pos", image2, "image2Pos", image3, "image3Pos", "order", "isActive", "createdAt", "updatedAt")
             VALUES (${id}, ${name}, ${type}, 'about', ${image1}, ${image1Pos}, ${image2 || null}, ${image2Pos}, ${image3 || null}, ${image3Pos}, ${newOrder}, 1, ${now}, ${now})
         `;
         return { success: true };
@@ -259,12 +260,12 @@ export async function action({ request }: Route.ActionArgs) {
 
         // Use Raw SQL for update
         await prisma.$executeRaw`
-            UPDATE Slide 
+            UPDATE "Slide" 
             SET name=${name}, type=${type}, 
-                image1=${image1}, image1Pos=${image1Pos},
-                image2=${image2 || null}, image2Pos=${image2Pos},
-                image3=${image3 || null}, image3Pos=${image3Pos},
-                updatedAt=${now}
+                image1=${image1}, "image1Pos"=${image1Pos},
+                image2=${image2 || null}, "image2Pos"=${image2Pos},
+                image3=${image3 || null}, "image3Pos"=${image3Pos},
+                "updatedAt"=${now}
             WHERE id=${id}
         `;
         return { success: true };
@@ -272,7 +273,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     if (intent === "delete_about_slide") {
         const id = formData.get("id") as string;
-        await prisma.$executeRaw`DELETE FROM Slide WHERE id=${id}`;
+        await prisma.$executeRaw`DELETE FROM "Slide" WHERE id=${id}`;
         return { success: true };
     }
 

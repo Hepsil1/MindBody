@@ -63,7 +63,7 @@ export async function action({ request }: ActionFunctionArgs) {
         for (const item of items) {
             try {
                 const products: any[] = await prisma.$queryRawUnsafe(
-                    `SELECT stock, inventory FROM Product WHERE id = ?`,
+                    `SELECT stock, inventory FROM "Product" WHERE id = $1`,
                     String(item.id)
                 );
 
@@ -85,7 +85,7 @@ export async function action({ request }: ActionFunctionArgs) {
                     }
 
                     await prisma.$executeRawUnsafe(
-                        `UPDATE Product SET stock = ?, inventory = ? WHERE id = ?`,
+                        `UPDATE "Product" SET stock = $1, inventory = $2 WHERE id = $3`,
                         totalStock,
                         JSON.stringify(inventoryArr),
                         String(item.id)
