@@ -4,32 +4,21 @@ import type { Route } from "./+types/index";
 import { prisma } from "../../db.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
-    try {
-        const [productsCount, customersCount, revenue] = await Promise.all([
-            prisma.product.count(),
-            prisma.customer.count(),
-            prisma.order.aggregate({ _sum: { total: true } }),
-        ]);
+    const [productsCount, customersCount, revenue] = await Promise.all([
+        prisma.product.count(),
+        prisma.customer.count(),
+        prisma.order.aggregate({ _sum: { total: true } }),
+    ]);
 
-        return {
-            productsCount,
-            customersCount,
-            revenue: Number(revenue._sum.total || 0),
-            debugError: null
-        };
-    } catch (error: any) {
-        console.error("DEBUG: Admin Dashboard Loader Error:", error);
-        return {
-            productsCount: 0,
-            customersCount: 0,
-            revenue: 0,
-            debugError: error?.message || "Unknown error"
-        };
-    }
+    return {
+        productsCount,
+        customersCount,
+        revenue: Number(revenue._sum.total || 0),
+    };
 }
 
 export default function AdminDashboard() {
-    const { productsCount, customersCount, revenue, debugError } = useLoaderData<typeof loader>();
+    const { productsCount, customersCount, revenue } = useLoaderData<typeof loader>();
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("uk-UA", {
@@ -50,11 +39,6 @@ export default function AdminDashboard() {
             <div className="admin-page-header">
                 <h1>Dashboard</h1>
                 <p>Огляд магазину</p>
-                {debugError && (
-                    <div style={{ color: 'red', marginTop: '10px', padding: '10px', border: '1px solid red', borderRadius: '5px' }}>
-                        Error: {debugError}
-                    </div>
-                )}
             </div>
 
             {/* Stats */}
