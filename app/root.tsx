@@ -83,9 +83,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       error.status === 404
         ? "Сторінку не знайдено."
         : error.statusText || details;
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
+  } else if (error && error instanceof Error) {
     details = error.message;
-    stack = error.stack;
+    stack = import.meta.env.DEV ? error.stack : undefined;
   }
 
   return (
