@@ -2,41 +2,23 @@ import { Link, useLoaderData } from "react-router";
 import { prisma } from "../../../db.server";
 
 export async function loader() {
-    try {
-        const orders = await prisma.order.findMany({
-            include: { customer: true },
-            orderBy: { createdAt: 'desc' }
-        });
+    const orders = await prisma.order.findMany({
+        include: { customer: true },
+        orderBy: { createdAt: 'desc' }
+    });
 
-        if (orders.length === 0) {
-            return {
-                orders: [
-                    { id: "o1", orderNumber: "1001", customer: "Анна Коваленко", email: "anna@k.ua", date: "03.03.2026", total: 3490, paymentStatus: "paid", orderStatus: "processing" },
-                    { id: "o2", orderNumber: "1002", customer: "Олександр Петренко", email: "olex@p.ua", date: "02.03.2026", total: 1690, paymentStatus: "pending", orderStatus: "pending" },
-                ]
-            };
-        }
-
-        return {
-            orders: orders.map(order => ({
-                id: order.id,
-                orderNumber: String(order.orderNumber),
-                customer: order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : "Unknown",
-                email: order.customer?.email || "No Email",
-                date: new Date(order.createdAt).toLocaleDateString('uk-UA'),
-                total: Number(order.total),
-                paymentStatus: order.paymentStatus,
-                orderStatus: order.status
-            }))
-        };
-    } catch (e) {
-        console.warn("Orders loader failed, using mock data:", e);
-        return {
-            orders: [
-                { id: "demo-o1", orderNumber: "DEMO-1", customer: "Тест Тестович", email: "test@demo.ua", date: "03.03.2026", total: 1200, paymentStatus: "paid", orderStatus: "delivered" }
-            ]
-        };
-    }
+    return {
+        orders: orders.map(order => ({
+            id: order.id,
+            orderNumber: String(order.orderNumber),
+            customer: order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : "Unknown",
+            email: order.customer?.email || "No Email",
+            date: new Date(order.createdAt).toLocaleDateString('uk-UA'),
+            total: Number(order.total),
+            paymentStatus: order.paymentStatus,
+            orderStatus: order.status
+        }))
+    };
 }
 
 export default function AdminOrdersList() {
