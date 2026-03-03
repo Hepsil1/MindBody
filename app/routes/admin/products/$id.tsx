@@ -2,7 +2,6 @@ import { type LoaderFunctionArgs, type ActionFunctionArgs } from "react-router";
 import { useLoaderData, useFetcher, useNavigate, useParams, Link } from "react-router";
 import { useState, useEffect } from "react";
 import { prisma } from "../../../db.server";
-import crypto from "crypto";
 
 // --- Types ---
 interface FilterConfigData {
@@ -198,6 +197,22 @@ const ArrowLeftIcon = () => (
         <polyline points="12 19 5 12 12 5" />
     </svg>
 );
+
+
+// --- Error Boundary ---
+export function ErrorBoundary({ error }: { error: any }) {
+    console.error("ErrorBoundary caught error in AdminProductEdit:", error);
+    return (
+        <div style={{ padding: '40px', background: '#0f1115', color: 'white', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+            <h1 style={{ color: '#ef4444' }}>Помилка на сторінці редагування товару</h1>
+            <pre style={{ background: '#1c1f26', padding: '20px', borderRadius: '8px', overflowX: 'auto', marginTop: '20px' }}>
+                {error?.message || String(error)}
+                <br /><br />
+                {error?.stack}
+            </pre>
+        </div>
+    );
+}
 
 // --- Component ---
 export default function AdminProductEdit() {
