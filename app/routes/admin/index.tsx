@@ -4,21 +4,33 @@ import type { Route } from "./+types/index";
 import { prisma } from "../../db.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
-    const [productsCount, customersCount, revenue] = await Promise.all([
-        prisma.product.count(),
-        prisma.customer.count(),
-        prisma.order.aggregate({ _sum: { total: true } }),
-    ]);
+    try {
+        console.log("Checking DB connection...");
+        const [productsCount, customersCount, revenue] = await Promise.all([
+            prisma.product.count(),
+            prisma.customer.count(),
+            prisma.order.aggregate({ _sum: { total: true } }),
+        ]);
 
-    return {
-        productsCount,
-        customersCount,
-        revenue: Number(revenue._sum.total || 0),
-    };
+        return {
+            productsCount,
+            customersCount,
+            revenue: Number(revenue._sum.total || 0),
+            debugError: null
+        };
+    } catch (error: any) {
+        console.error("ADMIN LOADER ERROR:", error);
+        return {
+            productsCount: 0,
+            customersCount: 0,
+            revenue: 0,
+            debugError: error?.message || "Unknown database error"
+        };
+    }
 }
 
 export default function AdminDashboard() {
-    const { productsCount, customersCount, revenue } = useLoaderData<typeof loader>();
+    const { productsCount, customersCount, revenue, debugError } = useLoaderData<typeof loader>();
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("uk-UA", {
@@ -39,6 +51,20 @@ export default function AdminDashboard() {
             <div className="admin-page-header">
                 <h1>Dashboard</h1>
                 <p>Огляд магазину</p>
+                {debugError && (
+                    <div style={{
+                        color: 'white',
+                        background: '#ef4444',
+                        marginTop: '15px',
+                        padding: '15px',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        lineHeight: '1.5',
+                        borderLeft: '4px solid #7f1d1d'
+                    }}>
+                        <strong>Database Connection Error:</strong> {debugError}
+                    </div>
+                )}
             </div>
 
             {/* Stats */}
