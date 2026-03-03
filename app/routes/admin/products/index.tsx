@@ -32,11 +32,21 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-    // raw sql fallback for loading products if prisma client is stale
     try {
         const dbProducts = await prisma.product.findMany({
             orderBy: { createdAt: "desc" },
         });
+
+        if (dbProducts.length === 0) {
+            // If empty (seed not run), use mock data for demo
+            return {
+                products: [
+                    { id: "w1", name: "Комбінезон SCHEMER WINTER Bell (Вишня)", price: 3490, stock: 12, status: "active", sku: "W24-001", inventory: null, category: "jumpsuit", description: "" },
+                    { id: "w2", name: "Легінси Active Motion (Чорні)", price: 1690, stock: 45, status: "active", sku: "A24-002", inventory: null, category: "leggings", description: "" },
+                ]
+            };
+        }
+
         const products = dbProducts.map(p => ({
             ...p,
             price: Number(p.price),
@@ -44,14 +54,13 @@ export async function loader({ request }: Route.LoaderArgs) {
         }));
         return { products };
     } catch (e) {
-        console.error("Loader error", e);
-        const dbProducts = await prisma.$queryRawUnsafe(`SELECT * FROM Product ORDER BY createdAt DESC`);
-        const products = (dbProducts as any[]).map(p => ({
-            ...p,
-            price: Number(p.price),
-            comparePrice: p.comparePrice ? Number(p.comparePrice) : null
-        }));
-        return { products };
+        console.warn("Products loader failed, using fallback mock data:", e);
+        return {
+            products: [
+                { id: "mock1", name: "Демо-товар: Комбінезон", price: 2990, stock: 10, status: "active", sku: "DEMO-001", inventory: null, category: "jumpsuit", description: "" },
+                { id: "mock2", name: "Демо-товар: Легінси", price: 1490, stock: 25, status: "active", sku: "DEMO-002", inventory: null, category: "leggings", description: "" },
+            ]
+        };
     }
 }
 

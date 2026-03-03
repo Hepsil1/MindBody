@@ -7,13 +7,18 @@ export const adminSession = createCookie("admin_session", {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    secrets: ["mindbody_admin_secret"],
+    secrets: [process.env.SESSION_SECRET || "mindbody_admin_secret_default_123"],
 });
 
-export const ADMIN_PASSWORD = "admin"; // Default password for now
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin"; // Use env var or default
 
 export async function isAuthenticated(request: Request) {
-    const cookieHeader = request.headers.get("Cookie");
-    const value = await adminSession.parse(cookieHeader);
-    return value === "authenticated";
+    try {
+        const cookieHeader = request.headers.get("Cookie");
+        if (!cookieHeader) return false;
+        const value = await adminSession.parse(cookieHeader);
+        return value === "authenticated";
+    } catch (e) {
+        return false;
+    }
 }

@@ -8,7 +8,7 @@ import type { Route } from "./+types/_layout";
 export async function loader({ request }: Route.LoaderArgs) {
     const url = new URL(request.url);
     if (url.pathname === "/admin/login") {
-        return null; // Skip check for login page
+        return null;
     }
 
     const authenticated = await isAuthenticated(request);
