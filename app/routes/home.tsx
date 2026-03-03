@@ -69,31 +69,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       console.error('Failed to load products:', e);
     }
 
-    // Fallback sample data if DB is empty - use actual products from JSON
-    if (womenProducts.length === 0) {
-      womenProducts = productsWomen.slice(0, 4).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category === 'jumpsuit' ? 'Комбінезон' : (p.category === 'leggings' ? 'Легінси' : 'Товар'),
-        price: p.price,
-        price_usd: p.priceUSD || Math.round(p.price / 40),
-        image: `/${p.images[0]}`,
-        image2: p.images[1] ? `/${p.images[1]}` : null,
-        is_new: p.isNew
-      }));
-    }
-    if (kidsProducts.length === 0) {
-      kidsProducts = productsKids.slice(0, 4).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category.includes('jumpsuit') ? 'Дитячий комбінезон' : 'Дитячий товар',
-        price: p.price,
-        price_usd: p.priceUSD || Math.round(p.price / 40),
-        image: `/${p.images[0]}`,
-        image2: p.images[1] ? `/${p.images[1]}` : null,
-        is_new: p.isNew
-      }));
-    }
+    // Fallback logic removed - if DB is empty, categories will just show no products, ensuring admin sync.
 
     return {
       slides: slides.map((s: any) => ({

@@ -55,23 +55,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         console.warn("Product fetch failed, using fallback:", e.message);
     }
 
-    // Fallback to local JSON files if DB is empty
-    if (products.length === 0) {
-        const sourceData = categorySlug === 'kids' ? productsKids : productsWomen;
-        // Transform JSON structure to match DB structure for the mapper below
-        products = sourceData.map(p => ({
-            id: p.id,
-            name: p.name,
-            description: p.description,
-            price: p.price,
-            comparePrice: 0, // Placeholder
-            images: JSON.stringify(p.images.map(img => `/${img}`)),
-            category: p.category,
-            colors: JSON.stringify(p.colors ? p.colors.map(c => c.name) : []),
-            sizes: JSON.stringify(p.sizes || []),
-            status: 'active'
-        }));
-    }
+    // Removed fallback to local JSON files if DB is empty to ensure admin panel and storefront sync.
 
     // Map Raw DB Objects to Frontend Props
     const mappedProducts = products.map((p: any) => {
