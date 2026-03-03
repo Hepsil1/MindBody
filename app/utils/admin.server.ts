@@ -10,7 +10,7 @@ export const adminSession = createCookie("admin_session", {
     secrets: [process.env.SESSION_SECRET || "mindbody_admin_secret_default_123"],
 });
 
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin"; // Use env var or default
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
 
 export async function isAuthenticated(request: Request) {
     try {
