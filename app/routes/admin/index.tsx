@@ -101,6 +101,36 @@ export default function AdminDashboard() {
                     </div>
                 </Link>
             </div>
+
+            {/* Demo Data Button */}
+            {productsCount === 0 && (
+                <div style={{ marginTop: "48px", textAlign: "center", padding: "40px", borderRadius: "16px", background: "rgba(94, 234, 212, 0.05)", border: "1px dashed var(--accent-primary)" }}>
+                    <h3 style={{ marginBottom: "12px", color: "var(--text-main)" }}>База даних порожня?</h3>
+                    <p style={{ color: "var(--text-muted)", marginBottom: "24px", fontSize: "14px" }}>Завантажте демонстраційні товари та налаштування фільтрів для зручного тестування.</p>
+                    <button
+                        onClick={async () => {
+                            if (confirm("Завантажити демо-дані?")) {
+                                try {
+                                    const res = await fetch("/api/seed", { method: "POST" });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        alert("Дані успішно завантажено! Сторінка оновиться.");
+                                        window.location.reload();
+                                    } else {
+                                        alert("Помилка: " + data.error);
+                                    }
+                                } catch (e) {
+                                    alert("Помилка з'єднання");
+                                }
+                            }
+                        }}
+                        className="admin-btn admin-btn--primary"
+                        style={{ padding: "12px 32px", fontSize: "15px" }}
+                    >
+                        🚀 Завантажити Демо-дані
+                    </button>
+                </div>
+            )}
         </>
     );
 }
