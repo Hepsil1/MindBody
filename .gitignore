@@ -1,7 +1,11 @@
 .DS_Store
 .env
 /node_modules/
+/.vercel/
 
 # React Router
 /.react-router/
 /build/
+
+# Migration script (one-time use)
+migrate-to-neon.mjs
