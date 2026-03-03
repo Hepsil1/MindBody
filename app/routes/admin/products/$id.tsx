@@ -1,5 +1,5 @@
 import { type LoaderFunctionArgs, type ActionFunctionArgs } from "react-router";
-import { useLoaderData, useFetcher, useNavigate, useParams, Link } from "react-router";
+import { useLoaderData, useFetcher, useNavigate, useParams, Link, isRouteErrorResponse } from "react-router";
 import { useState, useEffect } from "react";
 import { prisma } from "../../../db.server";
 
@@ -120,7 +120,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
 
     if (intent === "save_product") {
-        const id = params.id === "new" ? crypto.randomUUID() : params.id;
+        const id = params.id === "new" ? generateUUID() : params.id;
 
         // Basic Fields
         const name = formData.get("name") as string;
@@ -198,17 +198,46 @@ const ArrowLeftIcon = () => (
     </svg>
 );
 
+// --- Custom UUID fallback ---
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
 
 // --- Error Boundary ---
 export function ErrorBoundary({ error }: { error: any }) {
     console.error("ErrorBoundary caught error in AdminProductEdit:", error);
+
+    let errorDetails = "";
+    if (isRouteErrorResponse(error)) {
+        errorDetails = `HTTP Error ${error.status} ${error.statusText}\nData: ${JSON.stringify(error.data)}`;
+    } else if (error instanceof Error) {
+        errorDetails = `${error.message}\n${error.stack}`;
+    } else if (typeof error === 'object' && error !== null) {
+        // Try to stringify safely, handling circular references or proxy objects
+        try {
+            const cache = new Set();
+            errorDetails = JSON.stringify(error, (key, value) => {
+                if (typeof value === 'object' && value !== null) {
+                    if (cache.has(value)) { return '[Circular]'; }
+                    cache.add(value);
+                }
+                return value;
+            }, 2);
+        } catch (e) {
+            errorDetails = `Failed to stringify error object: ${String(e)}`;
+        }
+    } else {
+        errorDetails = String(error);
+    }
+
     return (
         <div style={{ padding: '40px', background: '#0f1115', color: 'white', minHeight: '100vh', fontFamily: 'sans-serif' }}>
             <h1 style={{ color: '#ef4444' }}>Помилка на сторінці редагування товару</h1>
-            <pre style={{ background: '#1c1f26', padding: '20px', borderRadius: '8px', overflowX: 'auto', marginTop: '20px' }}>
-                {error?.message || String(error)}
-                <br /><br />
-                {error?.stack}
+            <pre style={{ background: '#1c1f26', padding: '20px', borderRadius: '8px', overflowX: 'auto', marginTop: '20px', color: '#f1f5f9', fontSize: '14px' }}>
+                {errorDetails}
             </pre>
         </div>
     );

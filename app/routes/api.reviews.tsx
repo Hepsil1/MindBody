@@ -53,7 +53,7 @@ export async function action({ request }: { request: Request }) {
         const trimmedName = authorName.trim().substring(0, 50);
         const trimmedText = text.trim().substring(0, 1000);
 
-        const id = crypto.randomUUID();
+        const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         await prisma.$executeRawUnsafe(
             `INSERT INTO "Review" (id, "productId", "authorName", rating, text, "isVerified", "isApproved", "createdAt") 
              VALUES ($1, $2, $3, $4, $5, false, true, CURRENT_TIMESTAMP)`,

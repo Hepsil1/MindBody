@@ -282,7 +282,8 @@ export async function action({ request }: { request: Request }) {
                 INSERT INTO "Product" (id, name, description, price, "comparePrice", sku, stock, status, category, images, colors, sizes, inventory, "shopPageSlug", "createdAt", "updatedAt")
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             `,
-                crypto.randomUUID(),
+                Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+
                 product.name,
                 product.description,
                 product.price,

@@ -21,7 +21,7 @@ export async function action({ request }: ActionFunctionArgs) {
         const minOrder = parseFloat(formData.get("minOrder") as string) || 0;
         const maxUses = formData.get("maxUses") ? parseInt(formData.get("maxUses") as string) : null;
         const expiresAt = formData.get("expiresAt") as string || null;
-        const id = crypto.randomUUID();
+        const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
         if (!code || discountValue <= 0) {
             return { error: "Заповніть обов'язкові поля" };
