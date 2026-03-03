@@ -145,12 +145,18 @@ export default function ShopCategory() {
     const isIframe = typeof window !== 'undefined' && window.parent !== window;
 
     const dynamicFilters = useMemo(() => {
-        if (!filterConfig?.config) return null;
-        try {
-            return JSON.parse(filterConfig.config);
-        } catch (e) {
-            return null;
+        // filterConfig is already a parsed object from loader (categories, colors, sizes, priceRanges)
+        if (!filterConfig) return null;
+        // If it's a string (shouldn't happen but be safe), parse it
+        if (typeof filterConfig === 'string') {
+            try { return JSON.parse(filterConfig); } catch { return null; }
         }
+        // If it has a .config property (raw DB row), parse that
+        if (filterConfig.config) {
+            try { return JSON.parse(filterConfig.config); } catch { return null; }
+        }
+        // Already a parsed object with categories/colors/sizes
+        return filterConfig;
     }, [filterConfig]);
 
     const categories = useMemo(() => {

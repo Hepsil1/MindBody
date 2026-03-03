@@ -20,11 +20,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     // Use Raw SQL to only fetch HOME slides (page is null or 'home')
     const slides = await prisma.$queryRaw`SELECT * FROM "Slide" WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC` as any[];
 
-    // Dynamic check for category model
-    const categoryModel = (prisma as any).category;
-    const categoriesFromDb = categoryModel
-      ? await categoryModel.findMany({ orderBy: { order: "asc" } })
-      : [];
+    // Fetch categories directly via raw SQL
+    const categoriesFromDb: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Category" ORDER BY "order" ASC`);
 
     // Fetch active products from DB for homepage
     let womenProducts: any[] = [];

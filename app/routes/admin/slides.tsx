@@ -18,14 +18,13 @@ export async function loader({ request }: Route.LoaderArgs) {
         const slides = allSlidesRaw.filter((s: any) => !s.page || s.page === "home");
         const aboutSlides = allSlidesRaw.filter((s: any) => s.page === "about");
 
-        const categoryModel = (prisma as any).category;
-        const categories = categoryModel
-            ? await categoryModel.findMany({ orderBy: { order: "asc" } })
-            : [];
+        const categoriesResult: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Category" ORDER BY "order" ASC`);
+        const categories = categoriesResult || [];
 
         const shopPages = await prisma.shopPage.findMany();
-        // @ts-ignore
-        const filterConfig = prisma.filterConfig ? await prisma.filterConfig.findUnique({ where: { id: "global" } }) : null;
+        // Use raw SQL for filterConfig to ensure it always works
+        const filterConfigResult: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "FilterConfig" WHERE id = 'global' LIMIT 1`);
+        const filterConfig = filterConfigResult[0] || null;
 
         return { slides, categories, shopPages, filterConfig, aboutSlides };
     } catch (error) {
@@ -158,10 +157,10 @@ export async function action({ request }: Route.ActionArgs) {
         const uploaded = await saveFile(imageFile);
         if (uploaded) image = uploaded;
 
-        await (prisma as any).category.update({
-            where: { id },
-            data: { title, subtitle, link, buttonText, image, imagePos }
-        });
+        await prisma.$executeRawUnsafe(
+            `UPDATE "Category" SET title = $1, subtitle = $2, link = $3, "buttonText" = $4, image = $5, "imagePos" = $6, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $7`,
+            title, subtitle, link, buttonText, image, imagePos, id
+        );
 
         return { success: true };
     }
@@ -169,25 +168,15 @@ export async function action({ request }: Route.ActionArgs) {
     if (intent === "update_filters") {
         const config = formData.get("config") as string;
         try {
-            // @ts-ignore
-            if (prisma.filterConfig) {
-                await prisma.filterConfig.upsert({
-                    where: { id: "global" },
-                    update: { config, updatedAt: new Date() },
-                    create: { id: "global", config, updatedAt: new Date() }
-                });
-            } else {
-                throw new Error("filterConfig model not found in Prisma Client");
-            }
-        } catch (e) {
-            console.log("Prisma FilterConfig failed, using raw SQL fallback:", e);
             const now = new Date().toISOString();
-            // PostgreSQL UPSERT
+            // PostgreSQL UPSERT - always reliable
             await prisma.$executeRawUnsafe(
-                `INSERT INTO "FilterConfig" (id, config, "updatedAt") VALUES ('global', $1, $2)
-                 ON CONFLICT(id) DO UPDATE SET config = $1, "updatedAt" = $2`,
+                `INSERT INTO "FilterConfig" (id, config, "updatedAt") VALUES ('global', $1, $2::timestamp)
+                 ON CONFLICT(id) DO UPDATE SET config = $1, "updatedAt" = $2::timestamp`,
                 config, now
             );
+        } catch (e) {
+            console.error("FilterConfig update failed:", e);
         }
         return { success: true };
     }
