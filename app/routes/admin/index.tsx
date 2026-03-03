@@ -101,42 +101,6 @@ export default function AdminDashboard() {
                     </div>
                 </Link>
             </div>
-
-            {/* Demo Data Section */}
-            <div style={{ marginTop: "48px", textAlign: "center", padding: "40px", borderRadius: "16px", background: "rgba(94, 234, 212, 0.05)", border: "1px dashed var(--accent-primary)" }}>
-                <h3 style={{ marginBottom: "12px", color: "var(--text-main)" }}>Демо-дані</h3>
-                <p style={{ color: "var(--text-muted)", marginBottom: "24px", fontSize: "14px" }}>
-                    Завантажте демонстраційні товари та налаштування фільтрів (українською) для зручного перегляду функціоналу.
-                </p>
-                <button
-                    onClick={async (e) => {
-                        const btn = e.currentTarget;
-                        if (!confirm("Завантажити демо-дані? Це оновить товари та фільтри.")) return;
-
-                        try {
-                            btn.disabled = true;
-                            btn.innerText = "⏳ Завантаження...";
-                            const res = await fetch("/api/seed", { method: "POST" });
-                            const data = await res.json();
-                            if (data.success) {
-                                alert("Дані завантажено! Сторінка оновиться.");
-                                window.location.reload();
-                            } else {
-                                alert("Помилка: " + data.error);
-                            }
-                        } catch (err) {
-                            alert("Помилка з'єднання");
-                        } finally {
-                            btn.disabled = false;
-                            btn.innerText = "🚀 Завантажити Демо-дані";
-                        }
-                    }}
-                    className="admin-btn admin-btn--primary"
-                    style={{ padding: "12px 32px", fontSize: "15px" }}
-                >
-                    🚀 Завантажити Демо-дані
-                </button>
-            </div>
         </>
     );
 }

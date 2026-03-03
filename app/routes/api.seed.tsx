@@ -302,37 +302,9 @@ export async function action({ request }: { request: Request }) {
             created++;
         }
 
-        // Create or update global FilterConfig
-        const filterConfig = {
-            categories: {
-                women: ["Комбінезони", "Комплекти", "Легінси", "Топи"],
-                kids: ["Гімнастика", "Акробатика", "Легінси", "Комплекти"]
-            },
-            colors: {
-                black: { label: "Чорний", hex: "#000000" },
-                white: { label: "Білий", hex: "#ffffff" },
-                grey: { label: "Сірий", hex: "#808080" },
-                navy: { label: "Темно-синій", hex: "#000080" },
-                pink: { label: "Рожевий", hex: "#ffc0cb" },
-                blue: { label: "Синій", hex: "#0000ff" }
-            },
-            priceRanges: [
-                { min: 0, max: 1000, label: "До 1000 грн" },
-                { min: 1000, max: 2000, label: "1000 - 2000 грн" },
-                { min: 2000, max: null, label: "Від 2000 грн" }
-            ]
-        };
-
-        const configJson = JSON.stringify(filterConfig);
-
-        await prisma.$executeRawUnsafe(
-            `INSERT OR REPLACE INTO FilterConfig (id, config, updatedAt) VALUES ('global', ?, datetime('now'))`,
-            configJson
-        );
-
         return Response.json({
             success: true,
-            message: `Створено ${created} товарів, пропущено ${skipped} (вже існують). Фільтри оновлено.`,
+            message: `Створено ${created} товарів, пропущено ${skipped} (вже існують)`,
             created,
             skipped,
             total: SAMPLE_PRODUCTS.length,

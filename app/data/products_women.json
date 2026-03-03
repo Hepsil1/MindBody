@@ -1,7 +1,7 @@
 [
   {
     "id": "w1",
-    "name": "SCHEMER WINTER Bell (Вишня)",
+    "name": "Комбінезон SCHEMER WINTER Bell (Вишня)",
     "category": "jumpsuit",
     "collection": "winter",
     "price": 3490,
@@ -26,11 +26,11 @@
     ],
     "isNew": true,
     "inStock": true,
-    "description": "Теплий комбінезон кльош у вишневому відтінку."
+    "description": "Преміальний утеплений комбінезон кльош у глибокому вишневому відтінку. Ідеальний баланс тепла та елегантності."
   },
   {
     "id": "w2",
-    "name": "SCHEMER WINTER (Шоколад)",
+    "name": "Комбінезон SCHEMER WINTER (Шоколад)",
     "category": "jumpsuit",
     "collection": "winter",
     "price": 2990,
@@ -59,7 +59,7 @@
   },
   {
     "id": "w3",
-    "name": "SCHEMER WINTER Bell (Чорний)",
+    "name": "Комбінезон SCHEMER WINTER Bell (Чорний)",
     "category": "jumpsuit",
     "collection": "winter",
     "price": 3490,
@@ -84,11 +84,11 @@
     ],
     "isNew": false,
     "inStock": true,
-    "description": "Класичний чорний комбінезон кльош."
+    "description": "Класика у чорному виконанні. Комбінезон кльош з мікрофлісом, що забезпечує ідеальну посадку та тепло під час занять."
   },
   {
     "id": "w4",
-    "name": "Active Motion Leggings",
+    "name": "Легінси Active Motion",
     "category": "leggings",
     "collection": "active",
     "price": 1490,
@@ -110,11 +110,11 @@
     ],
     "isNew": true,
     "inStock": true,
-    "description": "Еластичні легінси для йоги та фітнесу."
+    "description": "Еластичні легінси з компресійним ефектом. Тканина, що дихає, забезпечує комфорт при інтенсивних тренуваннях."
   },
   {
     "id": "w5",
-    "name": "SCHEMER Pro Fit (Gray)",
+    "name": "Комбінезон SCHEMER Pro Fit (Gray)",
     "category": "jumpsuit",
     "collection": "profit",
     "price": 3100,
@@ -136,7 +136,7 @@
     ],
     "isNew": false,
     "inStock": true,
-    "description": "Професійний комбінезон для занять у залі."
+    "description": "Професійна модель для занять гімнастикою та акробатикою. Ергономічний крій для повної свободи рухів."
   },
   {
     "id": "w6",

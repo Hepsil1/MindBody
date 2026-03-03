@@ -1,7 +1,7 @@
 [
     {
         "id": "k1",
-        "name": "Комбінезон LITTLE STAR (Pink)",
+        "name": "Дитячий комбінезон LITTLE STAR (Рожевий)",
         "category": "jumpsuit",
         "collection": "Kids Active",
         "price": 1850,
@@ -22,11 +22,11 @@
         ],
         "isNew": true,
         "inStock": true,
-        "description": "Зручний комбінезон для маленьких зірочок."
+        "description": "Зручний та яскравий комбінезон для маленьких зірочок гімнастики. Тканина преміум якості, що не сковує рухів."
     },
     {
         "id": "k2",
-        "name": "Легінси BUTTERFLY (Purple)",
+        "name": "Легінси для дівчаток BUTTERFLY (Purple)",
         "category": "leggings",
         "collection": "Kids Dance",
         "price": 950,
@@ -47,11 +47,11 @@
         ],
         "isNew": false,
         "inStock": true,
-        "description": "Еластичні легінси для танців та ігор."
+        "description": "Еластичні легінси для танців та активних ігор. Стильний принт та надійна підтримка."
     },
     {
         "id": "k3",
-        "name": "Топ RAINBOW (Coral)",
+        "name": "Топ для спорту RAINBOW (Coral)",
         "category": "tops",
         "collection": "Kids Active",
         "price": 650,
@@ -71,11 +71,11 @@
         ],
         "isNew": true,
         "inStock": true,
-        "description": "Яскравий топ для занять спортом."
+        "description": "Яскравий та комфортний топ для занять спортом. Спеціальний крій забезпечує ідеальну посадку."
     },
     {
         "id": "k4",
-        "name": "Dino Motion Set",
+        "name": "Комплект Dino Motion (Зелений)",
         "category": "jumpsuit",
         "collection": "Kids Active",
         "price": 1700,
@@ -96,11 +96,11 @@
         ],
         "isNew": true,
         "inStock": true,
-        "description": "Комплект для активних хлопчиків та дівчаток."
+        "description": "Універсальний комплект для активних хлопчиків та дівчаток. Міцна тканина витримає будь-які пригоди."
     },
     {
         "id": "k5",
-        "name": "Sparkle Dance Leggings",
+        "name": "Сяючі легінси Sparkle Dance (Срібло)",
         "category": "leggings",
         "collection": "Kids Dance",
         "price": 1100,
@@ -121,11 +121,11 @@
         ],
         "isNew": false,
         "inStock": true,
-        "description": "Сяючі легінси для виступів."
+        "description": "Стильні сяючі легінси для виступів та урочистих подій. Ефектне сріблясте напилення."
     },
     {
         "id": "k6",
-        "name": "Junior Gym Jumpsuit",
+        "name": "Професійний комбінезон Junior Gym",
         "category": "jumpsuit",
         "collection": "Kids Active",
         "price": 1950,
@@ -146,7 +146,7 @@
         ],
         "isNew": true,
         "inStock": true,
-        "description": "Професійний комбінезон для гімнастики."
+        "description": "Модель розроблена спеціально для професійної гімнастики. Максимальна свобода при виконанні складних елементів."
     },
     {
         "id": "k7",

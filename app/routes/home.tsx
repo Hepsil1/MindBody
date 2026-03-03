@@ -5,6 +5,8 @@ import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
 import ProductCard from "../components/ProductCard";
 import { prisma } from "../db.server";
+import productsWomen from "../data/products_women.json";
+import productsKids from "../data/products_kids.json";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -70,22 +72,30 @@ export async function loader({ request }: Route.LoaderArgs) {
       console.error('Failed to load products:', e);
     }
 
-    // Fallback sample data if DB is empty
+    // Fallback sample data if DB is empty - use actual products from JSON
     if (womenProducts.length === 0) {
-      womenProducts = [
-        { id: "w1", name: "SCHEMER WINTER Bell", category: "Комбінезон", price: 3490, price_usd: 87, image: "/pics1cloths/IMG_6201.JPG", image2: "/pics1cloths/IMG_6203.JPG", is_new: true },
-        { id: "w2", name: "SCHEMER CLASSIC", category: "Комбінезон", price: 2990, price_usd: 77, image: "/pics1cloths/IMG_6207.JPG", image2: "/pics1cloths/IMG_6208.JPG", is_new: true },
-        { id: "w3", name: "MIND Yoga Set", category: "Комплект", price: 2790, price_usd: 70, image: "/pics1cloths/IMG_6209.JPG", image2: "/pics1cloths/IMG_6211.JPG", is_new: true },
-        { id: "w4", name: "BODY Leggings Pro", category: "Легінси", price: 1690, price_usd: 42, image: "/pics1cloths/IMG_6212.JPG", image2: "/pics1cloths/IMG_6213.JPG", is_new: true },
-      ];
+      womenProducts = productsWomen.slice(0, 4).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category === 'jumpsuit' ? 'Комбінезон' : (p.category === 'leggings' ? 'Легінси' : 'Товар'),
+        price: p.price,
+        price_usd: p.priceUSD || Math.round(p.price / 40),
+        image: `/${p.images[0]}`,
+        image2: p.images[1] ? `/${p.images[1]}` : null,
+        is_new: p.isNew
+      }));
     }
     if (kidsProducts.length === 0) {
-      kidsProducts = [
-        { id: "k1", name: "MINI SCHEMER", category: "Дитячий комбінезон", price: 1890, price_usd: 47, image: "/pics2cloths/IMG_5222.JPG", image2: "/pics2cloths/IMG_5223.JPG", is_new: true },
-        { id: "k2", name: "KIDS Gymnastic", category: "Дитячий комбінезон", price: 2190, price_usd: 55, image: "/pics2cloths/IMG_5225.JPG", image2: "/pics2cloths/IMG_5226.JPG", is_new: true },
-        { id: "k3", name: "LITTLE BODY", category: "Комплект дитячий", price: 1590, price_usd: 40, image: "/pics2cloths/IMG_5217.JPG", image2: "/pics2cloths/IMG_5218.JPG", is_new: true },
-        { id: "k4", name: "MINI Yoga Bell", category: "Комплект дитячий", price: 1790, price_usd: 45, image: "/pics2cloths/IMG_5227.JPG", image2: "/pics2cloths/IMG_5228.JPG", is_new: true },
-      ];
+      kidsProducts = productsKids.slice(0, 4).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category.includes('jumpsuit') ? 'Дитячий комбінезон' : 'Дитячий товар',
+        price: p.price,
+        price_usd: p.priceUSD || Math.round(p.price / 40),
+        image: `/${p.images[0]}`,
+        image2: p.images[1] ? `/${p.images[1]}` : null,
+        is_new: p.isNew
+      }));
     }
 
     return {
