@@ -145,10 +145,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
             // Remove lazy migration (not needed for Postgres, schema managed by Prisma)
 
-            // Upsert Product (PostgreSQL syntax)
+            // Upsert Product (PostgreSQL syntax) using CURRENT_TIMESTAMP
             await prisma.$executeRawUnsafe(`
                 INSERT INTO "Product" (id, name, description, price, "comparePrice", sku, status, stock, category, "shopPageSlug", images, colors, sizes, inventory, "createdAt", "updatedAt")
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 ON CONFLICT(id) DO UPDATE SET
                     name=EXCLUDED.name,
                     description=EXCLUDED.description,
@@ -163,8 +163,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
                     colors=EXCLUDED.colors,
                     sizes=EXCLUDED.sizes,
                     inventory=EXCLUDED.inventory,
-                    "updatedAt"=EXCLUDED."updatedAt"
-            `, id, name, description, price, comparePrice, sku, status, stock, category, shopPageSlug, images, colors, sizes, inventory, now, now);
+                    "updatedAt"=CURRENT_TIMESTAMP
+            `, id, name, description, price, comparePrice, sku, status, stock, category, shopPageSlug, images, colors, sizes, inventory);
 
             return { success: true };
         } catch (e) {
@@ -258,10 +258,12 @@ export default function AdminProductEdit() {
         fetcher.submit(data, { method: "post" });
     };
 
-    // Redirect on success
+    // Redirect on success or show error
     useEffect(() => {
         if (fetcher.data?.success) {
             navigate("/admin/products");
+        } else if (fetcher.data?.error) {
+            alert("Помилка при збереженні: " + fetcher.data.error);
         }
     }, [fetcher.data, navigate]);
 
