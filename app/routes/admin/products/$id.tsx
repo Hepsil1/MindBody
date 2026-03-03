@@ -108,7 +108,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
         try {
             const buffer = await file.arrayBuffer();
-            const base64 = Buffer.from(buffer).toString("base64");
+            let base64 = "";
+            if (typeof Buffer !== "undefined") {
+                base64 = Buffer.from(buffer).toString("base64");
+            } else {
+                const bytes = new Uint8Array(buffer);
+                let binary = '';
+                for (let i = 0; i < bytes.length; i += 8192) {
+                    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 8192)));
+                }
+                base64 = btoa(binary);
+            }
             const mimeType = file.type || "image/jpeg";
             const dataUrl = `data:${mimeType};base64,${base64}`;
 

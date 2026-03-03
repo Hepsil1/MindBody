@@ -60,8 +60,18 @@ export async function action({ request }: { request: Request }) {
 
         if (file && file.size > 0 && file.name) {
             try {
-                const buffer = Buffer.from(await file.arrayBuffer());
-                const base64 = buffer.toString("base64");
+                const arrayBuffer = await file.arrayBuffer();
+                let base64 = "";
+                if (typeof Buffer !== "undefined") {
+                    base64 = Buffer.from(arrayBuffer).toString("base64");
+                } else {
+                    const bytes = new Uint8Array(arrayBuffer);
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i += 8192) {
+                        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 8192)));
+                    }
+                    base64 = btoa(binary);
+                }
                 const mimeType = file.type || "image/jpeg";
                 heroImage = `data:${mimeType};base64,${base64}`;
             } catch (e) {

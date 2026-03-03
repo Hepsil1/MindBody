@@ -2,7 +2,6 @@ import type { Route } from "./+types/slides";
 import { prisma } from "../../db.server";
 import { useState, useRef, useEffect } from "react";
 import { useLoaderData, useFetcher, Link } from "react-router";
-import { randomUUID } from "node:crypto";
 import HeroSlider, { type SlideData } from "../../components/HeroSlider";
 import CategoryCard from "../../components/CategoryCard";
 
@@ -38,8 +37,21 @@ async function saveFile(file: any) {
     if (!(file instanceof Blob)) return null;
 
     try {
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const base64 = buffer.toString("base64");
+        const arrayBuffer = await file.arrayBuffer();
+
+        // Vercel Edge / Browser compatible Base64 encoding without Buffer
+        let base64 = "";
+        if (typeof Buffer !== "undefined") {
+            base64 = Buffer.from(arrayBuffer).toString("base64");
+        } else {
+            const bytes = new Uint8Array(arrayBuffer);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i += 8192) {
+                binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 8192)));
+            }
+            base64 = btoa(binary);
+        }
+
         // @ts-ignore
         const mimeType = file.type || "image/jpeg";
         return `data:${mimeType};base64,${base64}`;
@@ -110,7 +122,7 @@ export async function action({ request }: Route.ActionArgs) {
         if (intent === "create") {
             const maxOrderResult = await prisma.$queryRaw`SELECT MAX("order") as "maxOrder" FROM "Slide"` as any[];
             const newOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
-            const newId = randomUUID();
+            const newId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
             // Create HOME slide (explicit page='home')
             await prisma.$executeRaw`
@@ -208,7 +220,7 @@ export async function action({ request }: Route.ActionArgs) {
 
         const maxOrder = await prisma.slide.aggregate({ _max: { order: true } });
         const newOrder = (maxOrder._max?.order || 0) + 1;
-        const id = randomUUID();
+        const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         const now = new Date().toISOString();
 
         // Use Raw SQL to bypass client validation for 'page'
