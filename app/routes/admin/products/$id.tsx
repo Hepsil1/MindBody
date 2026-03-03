@@ -99,90 +99,93 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 // --- Action ---
 export async function action({ request, params }: ActionFunctionArgs) {
-    const formData = await request.formData();
-    const intent = formData.get("intent");
+    try {
+        const formData = await request.formData();
+        const intent = formData.get("intent");
 
-    if (intent === "upload_image") {
-        const file = formData.get("file") as File;
-        if (!file || file.size === 0) return { error: "No file selected" };
+        if (intent === "upload_image") {
+            const file = formData.get("file") as File;
+            if (!file || file.size === 0) return { error: "No file selected" };
 
-        try {
-            const buffer = await file.arrayBuffer();
-            let base64 = "";
-            if (typeof Buffer !== "undefined") {
-                base64 = Buffer.from(buffer).toString("base64");
-            } else {
-                const bytes = new Uint8Array(buffer);
-                let binary = '';
-                for (let i = 0; i < bytes.length; i += 8192) {
-                    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 8192)));
+            try {
+                const buffer = await file.arrayBuffer();
+                let base64 = "";
+                if (typeof Buffer !== "undefined") {
+                    base64 = Buffer.from(buffer).toString("base64");
+                } else {
+                    const bytes = new Uint8Array(buffer);
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i += 8192) {
+                        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 8192)));
+                    }
+                    base64 = btoa(binary);
                 }
-                base64 = btoa(binary);
+                const mimeType = file.type || "image/jpeg";
+                const dataUrl = `data:${mimeType};base64,${base64}`;
+
+                return { imageUrl: dataUrl };
+            } catch (e) {
+                console.error("Upload failed:", e);
+                return { error: "Failed to process image" };
             }
-            const mimeType = file.type || "image/jpeg";
-            const dataUrl = `data:${mimeType};base64,${base64}`;
-
-            return { imageUrl: dataUrl };
-        } catch (e) {
-            console.error("Upload failed:", e);
-            return { error: "Failed to process image" };
         }
-    }
 
-    if (intent === "save_product") {
-        const id = params.id === "new" ? generateUUID() : params.id;
+        if (intent === "save_product") {
+            const id = params.id === "new" ? generateUUID() : params.id;
 
-        // Basic Fields
-        const name = formData.get("name") as string;
-        const description = formData.get("description") as string;
-        const price = parseFloat(formData.get("price") as string) || 0;
-        const comparePrice = parseFloat(formData.get("comparePrice") as string) || null;
-        const sku = formData.get("sku") as string;
-        const status = formData.get("status") as string;
-        const stock = parseInt(formData.get("stock") as string) || 0;
+            // Basic Fields
+            const name = formData.get("name") as string;
+            const description = formData.get("description") as string;
+            const price = parseFloat(formData.get("price") as string) || 0;
+            const comparePrice = parseFloat(formData.get("comparePrice") as string) || null;
+            const sku = formData.get("sku") as string;
+            const status = formData.get("status") as string;
+            const stock = parseInt(formData.get("stock") as string) || 0;
 
-        // Complex Fields
-        const category = formData.get("category") as string;
-        const shopPageSlug = formData.get("shopPageSlug") as string;
-        const images = formData.get("images") as string;
-        const colors = formData.get("colors") as string;
-        const sizes = formData.get("sizes") as string;
-        const inventory = formData.get("inventory") as string;
+            // Complex Fields
+            const category = formData.get("category") as string;
+            const shopPageSlug = formData.get("shopPageSlug") as string;
+            const images = formData.get("images") as string;
+            const colors = formData.get("colors") as string;
+            const sizes = formData.get("sizes") as string;
+            const inventory = formData.get("inventory") as string;
 
-        try {
-            const now = new Date().toISOString();
+            try {
+                const now = new Date().toISOString();
 
-            // Remove lazy migration (not needed for Postgres, schema managed by Prisma)
+                // Upsert Product (PostgreSQL syntax) using CURRENT_TIMESTAMP
+                await prisma.$executeRawUnsafe(`
+                    INSERT INTO "Product" (id, name, description, price, "comparePrice", sku, status, stock, category, "shopPageSlug", images, colors, sizes, inventory, "createdAt", "updatedAt")
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    ON CONFLICT(id) DO UPDATE SET
+                        name=EXCLUDED.name,
+                        description=EXCLUDED.description,
+                        price=EXCLUDED.price,
+                        "comparePrice"=EXCLUDED."comparePrice",
+                        sku=EXCLUDED.sku,
+                        status=EXCLUDED.status,
+                        stock=EXCLUDED.stock,
+                        category=EXCLUDED.category,
+                        "shopPageSlug"=EXCLUDED."shopPageSlug",
+                        images=EXCLUDED.images,
+                        colors=EXCLUDED.colors,
+                        sizes=EXCLUDED.sizes,
+                        inventory=EXCLUDED.inventory,
+                        "updatedAt"=CURRENT_TIMESTAMP
+                `, id, name, description, price, comparePrice, sku, status, stock, category, shopPageSlug, images, colors, sizes, inventory);
 
-            // Upsert Product (PostgreSQL syntax) using CURRENT_TIMESTAMP
-            await prisma.$executeRawUnsafe(`
-                INSERT INTO "Product" (id, name, description, price, "comparePrice", sku, status, stock, category, "shopPageSlug", images, colors, sizes, inventory, "createdAt", "updatedAt")
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ON CONFLICT(id) DO UPDATE SET
-                    name=EXCLUDED.name,
-                    description=EXCLUDED.description,
-                    price=EXCLUDED.price,
-                    "comparePrice"=EXCLUDED."comparePrice",
-                    sku=EXCLUDED.sku,
-                    status=EXCLUDED.status,
-                    stock=EXCLUDED.stock,
-                    category=EXCLUDED.category,
-                    "shopPageSlug"=EXCLUDED."shopPageSlug",
-                    images=EXCLUDED.images,
-                    colors=EXCLUDED.colors,
-                    sizes=EXCLUDED.sizes,
-                    inventory=EXCLUDED.inventory,
-                    "updatedAt"=CURRENT_TIMESTAMP
-            `, id, name, description, price, comparePrice, sku, status, stock, category, shopPageSlug, images, colors, sizes, inventory);
-
-            return { success: true };
-        } catch (e) {
-            console.error("Save failed:", e);
-            return { error: "Failed to save product" };
+                return { success: true };
+            } catch (e) {
+                console.error("Save failed:", e);
+                return { error: "Failed to save product" };
+            }
         }
-    }
 
-    return null;
+        return null;
+    } catch (e: any) {
+        console.error("Action error:", e);
+        return { error: e.message || "Сталася серверна помилка" };
+    }
 }
 
 // --- Icons ---

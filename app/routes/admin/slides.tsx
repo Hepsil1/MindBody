@@ -61,77 +61,80 @@ async function saveFile(file: any) {
     }
 }
 
+
 export async function action({ request }: Route.ActionArgs) {
-    const formData = await request.formData();
-    const intent = formData.get("intent");
+    try {
+        const formData = await request.formData();
 
-    if (intent === "update_shop_page") {
-        const slug = formData.get("slug") as string;
-        const heroImagePos = (formData.get("heroImagePos") as string) || "50% 50% 1";
-        let heroImage = formData.get("currentHeroImage") as string;
-        const file = formData.get("heroImageFile");
+        const intent = formData.get("intent");
 
-        const uploadedPath = await saveFile(file);
-        if (uploadedPath) {
-            heroImage = uploadedPath;
+        if (intent === "update_shop_page") {
+            const slug = formData.get("slug") as string;
+            const heroImagePos = (formData.get("heroImagePos") as string) || "50% 50% 1";
+            let heroImage = formData.get("currentHeroImage") as string;
+            const file = formData.get("heroImageFile");
+
+            const uploadedPath = await saveFile(file);
+            if (uploadedPath) {
+                heroImage = uploadedPath;
+            }
+
+            // Upsert logic for shop page
+            await prisma.shopPage.upsert({
+                where: { slug },
+                update: { heroImage, heroImagePos },
+                create: {
+                    slug,
+                    heroImage,
+                    heroImagePos,
+                    title: slug === 'women' ? 'Жіноча' : 'Діти', // Defaults 
+                    subtitle: 'колекція'
+                }
+            });
+            return { success: true };
         }
 
-        // Upsert logic for shop page
-        await prisma.shopPage.upsert({
-            where: { slug },
-            update: { heroImage, heroImagePos },
-            create: {
-                slug,
-                heroImage,
-                heroImagePos,
-                title: slug === 'women' ? 'Жіноча' : 'Діти', // Defaults 
-                subtitle: 'колекція'
-            }
-        });
-        return { success: true };
-    }
+        if (intent === "create" || intent === "update") {
+            const id = formData.get("id") as string;
+            const name = formData.get("name") as string;
+            const type = formData.get("type") as string;
+            const link = formData.get("link") as string;
 
-    if (intent === "create" || intent === "update") {
-        const id = formData.get("id") as string;
-        const name = formData.get("name") as string;
-        const type = formData.get("type") as string;
-        const link = formData.get("link") as string;
+            const image1Pos = formData.get("image1Pos") as string || "center center";
+            const image2Pos = formData.get("image2Pos") as string || "center center";
+            const image3Pos = formData.get("image3Pos") as string || "center center";
 
-        const image1Pos = formData.get("image1Pos") as string || "center center";
-        const image2Pos = formData.get("image2Pos") as string || "center center";
-        const image3Pos = formData.get("image3Pos") as string || "center center";
+            let image1 = formData.get("image1_url") as string || "";
+            let image2 = formData.get("image2_url") as string || "";
+            let image3 = formData.get("image3_url") as string || "";
 
-        let image1 = formData.get("image1_url") as string || "";
-        let image2 = formData.get("image2_url") as string || "";
-        let image3 = formData.get("image3_url") as string || "";
+            const image1File = formData.get("image1_file");
+            const image2File = formData.get("image2_file");
+            const image3File = formData.get("image3_file");
 
-        const image1File = formData.get("image1_file");
-        const image2File = formData.get("image2_file");
-        const image3File = formData.get("image3_file");
+            const u1 = await saveFile(image1File);
+            const u2 = await saveFile(image2File);
+            const u3 = await saveFile(image3File);
 
-        const u1 = await saveFile(image1File);
-        const u2 = await saveFile(image2File);
-        const u3 = await saveFile(image3File);
+            if (u1) image1 = u1;
+            if (u2) image2 = u2;
+            if (u3) image3 = u3;
 
-        if (u1) image1 = u1;
-        if (u2) image2 = u2;
-        if (u3) image3 = u3;
+            const now = new Date().toISOString();
 
-        const now = new Date().toISOString();
+            if (intent === "create") {
+                const maxOrderResult = await prisma.$queryRaw`SELECT MAX("order") as "maxOrder" FROM "Slide"` as any[];
+                const newOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
+                const newId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-        if (intent === "create") {
-            const maxOrderResult = await prisma.$queryRaw`SELECT MAX("order") as "maxOrder" FROM "Slide"` as any[];
-            const newOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
-            const newId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-
-            // Create HOME slide (explicit page='home')
-            await prisma.$executeRaw`
+                // Create HOME slide (explicit page='home')
+                await prisma.$executeRaw`
                 INSERT INTO "Slide" (id, name, type, page, link, image1, "image1Pos", image2, "image2Pos", image3, "image3Pos", "order", "isActive", "createdAt", "updatedAt")
                 VALUES (${newId}, ${name}, ${type}, 'home', ${link || null}, ${image1}, ${image1Pos}, ${type === 'single' ? null : (image2 || null)}, ${type === 'single' ? 'center center' : image2Pos}, ${type === 'single' ? null : (image3 || null)}, ${type === 'single' ? 'center center' : image3Pos}, ${newOrder}, 1, ${now}, ${now})
             `;
-        } else {
-            // Update HOME slide
-            await prisma.$executeRaw`
+            } else {
+                // Update HOME slide
+                await prisma.$executeRaw`
                 UPDATE "Slide" 
                 SET name=${name}, type=${type}, link=${link || null},
                     image1=${image1}, "image1Pos"=${image1Pos},
@@ -140,126 +143,126 @@ export async function action({ request }: Route.ActionArgs) {
                     "updatedAt"=${now}
                 WHERE id=${id}
             `;
-        }
-        return { success: true };
-    }
-
-    if (intent === "delete") {
-        const id = formData.get("id") as string;
-        try {
-            await prisma.$executeRaw`DELETE FROM "Slide" WHERE id=${id}`;
+            }
             return { success: true };
-        } catch (error) {
-            console.error("Failed to delete slide:", error);
-            return { error: "Failed to delete" };
         }
-    }
 
-    if (intent === "update_category") {
-        const id = formData.get("id") as string;
-        const title = formData.get("title") as string;
-        const subtitle = formData.get("subtitle") as string;
-        const link = formData.get("link") as string;
-        const buttonText = formData.get("buttonText") as string;
-        const imagePos = formData.get("imagePos") as string || "center center";
+        if (intent === "delete") {
+            const id = formData.get("id") as string;
+            try {
+                await prisma.$executeRaw`DELETE FROM "Slide" WHERE id=${id}`;
+                return { success: true };
+            } catch (error) {
+                console.error("Failed to delete slide:", error);
+                return { error: "Failed to delete" };
+            }
+        }
 
-        let image = formData.get("image_url") as string || "";
-        const imageFile = formData.get("image_file");
+        if (intent === "update_category") {
+            const id = formData.get("id") as string;
+            const title = formData.get("title") as string;
+            const subtitle = formData.get("subtitle") as string;
+            const link = formData.get("link") as string;
+            const buttonText = formData.get("buttonText") as string;
+            const imagePos = formData.get("imagePos") as string || "center center";
 
-        const uploaded = await saveFile(imageFile);
-        if (uploaded) image = uploaded;
+            let image = formData.get("image_url") as string || "";
+            const imageFile = formData.get("image_file");
 
-        await prisma.$executeRawUnsafe(
-            `UPDATE "Category" SET title = $1, subtitle = $2, link = $3, "buttonText" = $4, image = $5, "imagePos" = $6, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $7`,
-            title, subtitle, link, buttonText, image, imagePos, id
-        );
+            const uploaded = await saveFile(imageFile);
+            if (uploaded) image = uploaded;
 
-        return { success: true };
-    }
-
-    if (intent === "update_filters") {
-        const config = formData.get("config") as string;
-        try {
-            const now = new Date().toISOString();
-            // PostgreSQL UPSERT - always reliable
             await prisma.$executeRawUnsafe(
-                `INSERT INTO "FilterConfig" (id, config, "updatedAt") VALUES ('global', $1, $2::timestamp)
-                 ON CONFLICT(id) DO UPDATE SET config = $1, "updatedAt" = $2::timestamp`,
-                config, now
+                `UPDATE "Category" SET title = $1, subtitle = $2, link = $3, "buttonText" = $4, image = $5, "imagePos" = $6, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $7`,
+                title, subtitle, link, buttonText, image, imagePos, id
             );
-        } catch (e) {
-            console.error("FilterConfig update failed:", e);
+
+            return { success: true };
         }
-        return { success: true };
-    }
 
-    // About Slides actions - use Slide model with page: "about"
-    if (intent === "create_about_slide") {
-        const name = formData.get("name") as string || "About Slide";
-        const type = formData.get("type") as string || "triptych";
+        if (intent === "update_filters") {
+            const config = formData.get("config") as string;
+            try {
+                const now = new Date().toISOString();
+                // PostgreSQL UPSERT - always reliable
+                await prisma.$executeRawUnsafe(
+                    `INSERT INTO "FilterConfig" (id, config, "updatedAt") VALUES ('global', $1, $2::timestamp)
+                 ON CONFLICT(id) DO UPDATE SET config = $1, "updatedAt" = $2::timestamp`,
+                    config, now
+                );
+            } catch (e) {
+                console.error("FilterConfig update failed:", e);
+            }
+            return { success: true };
+        }
 
-        let image1 = formData.get("image1_url") as string || "/pics1cloths/IMG_6201.JPG";
-        let image2 = formData.get("image2_url") as string || "";
-        let image3 = formData.get("image3_url") as string || "";
+        // About Slides actions - use Slide model with page: "about"
+        if (intent === "create_about_slide") {
+            const name = formData.get("name") as string || "About Slide";
+            const type = formData.get("type") as string || "triptych";
 
-        const image1Pos = formData.get("image1Pos") as string || "center center";
-        const image2Pos = formData.get("image2Pos") as string || "center center";
-        const image3Pos = formData.get("image3Pos") as string || "center center";
+            let image1 = formData.get("image1_url") as string || "/pics1cloths/IMG_6201.JPG";
+            let image2 = formData.get("image2_url") as string || "";
+            let image3 = formData.get("image3_url") as string || "";
 
-        const image1File = formData.get("image1_file");
-        const image2File = formData.get("image2_file");
-        const image3File = formData.get("image3_file");
+            const image1Pos = formData.get("image1Pos") as string || "center center";
+            const image2Pos = formData.get("image2Pos") as string || "center center";
+            const image3Pos = formData.get("image3Pos") as string || "center center";
 
-        const u1 = await saveFile(image1File);
-        const u2 = await saveFile(image2File);
-        const u3 = await saveFile(image3File);
+            const image1File = formData.get("image1_file");
+            const image2File = formData.get("image2_file");
+            const image3File = formData.get("image3_file");
 
-        if (u1) image1 = u1;
-        if (u2) image2 = u2;
-        if (u3) image3 = u3;
+            const u1 = await saveFile(image1File);
+            const u2 = await saveFile(image2File);
+            const u3 = await saveFile(image3File);
 
-        const maxOrder = await prisma.slide.aggregate({ _max: { order: true } });
-        const newOrder = (maxOrder._max?.order || 0) + 1;
-        const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        const now = new Date().toISOString();
+            if (u1) image1 = u1;
+            if (u2) image2 = u2;
+            if (u3) image3 = u3;
 
-        // Use Raw SQL to bypass client validation for 'page'
-        await prisma.$executeRaw`
+            const maxOrder = await prisma.slide.aggregate({ _max: { order: true } });
+            const newOrder = (maxOrder._max?.order || 0) + 1;
+            const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            const now = new Date().toISOString();
+
+            // Use Raw SQL to bypass client validation for 'page'
+            await prisma.$executeRaw`
             INSERT INTO "Slide" (id, name, type, page, image1, "image1Pos", image2, "image2Pos", image3, "image3Pos", "order", "isActive", "createdAt", "updatedAt")
             VALUES (${id}, ${name}, ${type}, 'about', ${image1}, ${image1Pos}, ${image2 || null}, ${image2Pos}, ${image3 || null}, ${image3Pos}, ${newOrder}, 1, ${now}, ${now})
         `;
-        return { success: true };
-    }
+            return { success: true };
+        }
 
-    if (intent === "update_about_slide") {
-        const id = formData.get("id") as string;
-        const name = formData.get("name") as string;
-        const type = formData.get("type") as string;
+        if (intent === "update_about_slide") {
+            const id = formData.get("id") as string;
+            const name = formData.get("name") as string;
+            const type = formData.get("type") as string;
 
-        const image1Pos = formData.get("image1Pos") as string || "center center";
-        const image2Pos = formData.get("image2Pos") as string || "center center";
-        const image3Pos = formData.get("image3Pos") as string || "center center";
+            const image1Pos = formData.get("image1Pos") as string || "center center";
+            const image2Pos = formData.get("image2Pos") as string || "center center";
+            const image3Pos = formData.get("image3Pos") as string || "center center";
 
-        let image1 = formData.get("image1_url") as string || "";
-        let image2 = formData.get("image2_url") as string || "";
-        let image3 = formData.get("image3_url") as string || "";
+            let image1 = formData.get("image1_url") as string || "";
+            let image2 = formData.get("image2_url") as string || "";
+            let image3 = formData.get("image3_url") as string || "";
 
-        const image1File = formData.get("image1_file");
-        const image2File = formData.get("image2_file");
-        const image3File = formData.get("image3_file");
+            const image1File = formData.get("image1_file");
+            const image2File = formData.get("image2_file");
+            const image3File = formData.get("image3_file");
 
-        const u1 = await saveFile(image1File);
-        const u2 = await saveFile(image2File);
-        const u3 = await saveFile(image3File);
+            const u1 = await saveFile(image1File);
+            const u2 = await saveFile(image2File);
+            const u3 = await saveFile(image3File);
 
-        if (u1) image1 = u1;
-        if (u2) image2 = u2;
-        if (u3) image3 = u3;
+            if (u1) image1 = u1;
+            if (u2) image2 = u2;
+            if (u3) image3 = u3;
 
-        const now = new Date().toISOString();
+            const now = new Date().toISOString();
 
-        // Use Raw SQL for update
-        await prisma.$executeRaw`
+            // Use Raw SQL for update
+            await prisma.$executeRaw`
             UPDATE "Slide" 
             SET name=${name}, type=${type}, 
                 image1=${image1}, "image1Pos"=${image1Pos},
@@ -268,16 +271,20 @@ export async function action({ request }: Route.ActionArgs) {
                 "updatedAt"=${now}
             WHERE id=${id}
         `;
-        return { success: true };
-    }
+            return { success: true };
+        }
 
-    if (intent === "delete_about_slide") {
-        const id = formData.get("id") as string;
-        await prisma.$executeRaw`DELETE FROM "Slide" WHERE id=${id}`;
-        return { success: true };
-    }
+        if (intent === "delete_about_slide") {
+            const id = formData.get("id") as string;
+            await prisma.$executeRaw`DELETE FROM "Slide" WHERE id=${id}`;
+            return { success: true };
+        }
 
-    return { error: "Unknown intent" };
+        return { error: "Unknown intent" };
+    } catch (e: any) {
+        console.error("Action error:", e);
+        return { error: e.message || "Сталася серверна помилка" };
+    }
 }
 
 // Icon Components
@@ -691,11 +698,11 @@ export default function AdminVisualEditor() {
     // Close manager on successful submit
     useEffect(() => {
         if (fetcher.state === "idle" && fetcher.data?.success) {
-            // Only collapse if we deleted the currently expanded slide, or if we created a NEW one
-            // We can check fetcher.formData to see what happened
-            // For now, let's keep it simple: if delete, it disappears from list anyway.
-            // If create, we reset the form
             (document.getElementById("create-slide-form") as HTMLFormElement)?.reset();
+        }
+
+        if (fetcher.state === "idle" && fetcher.data?.error) {
+            alert(`Помилка: ${fetcher.data.error}`);
         }
     }, [fetcher.state, fetcher.data]);
 

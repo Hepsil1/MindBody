@@ -46,58 +46,63 @@ export async function loader() {
 
 // --- Action ---
 export async function action({ request }: { request: Request }) {
-    const formData = await request.formData();
-    const intent = formData.get("intent");
+    try {
+        const formData = await request.formData();
+        const intent = formData.get("intent");
 
-    if (intent === "update_page") {
-        const id = formData.get("id") as string;
-        const title = formData.get("title") as string;
-        const prefixLabel = formData.get("prefixLabel") as string;
-        const heroImagePos = formData.get("heroImagePos") as string;
+        if (intent === "update_page") {
+            const id = formData.get("id") as string;
+            const title = formData.get("title") as string;
+            const prefixLabel = formData.get("prefixLabel") as string;
+            const heroImagePos = formData.get("heroImagePos") as string;
 
-        let heroImage = formData.get("currentHeroImage") as string;
-        const file = formData.get("heroImageFile") as File;
+            let heroImage = formData.get("currentHeroImage") as string;
+            const file = formData.get("heroImageFile") as File;
 
-        if (file && file.size > 0 && file.name) {
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                let base64 = "";
-                if (typeof Buffer !== "undefined") {
-                    base64 = Buffer.from(arrayBuffer).toString("base64");
-                } else {
-                    const bytes = new Uint8Array(arrayBuffer);
-                    let binary = '';
-                    for (let i = 0; i < bytes.length; i += 8192) {
-                        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 8192)));
+            if (file && file.size > 0 && file.name) {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    let base64 = "";
+                    if (typeof Buffer !== "undefined") {
+                        base64 = Buffer.from(arrayBuffer).toString("base64");
+                    } else {
+                        const bytes = new Uint8Array(arrayBuffer);
+                        let binary = '';
+                        for (let i = 0; i < bytes.length; i += 8192) {
+                            binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 8192)));
+                        }
+                        base64 = btoa(binary);
                     }
-                    base64 = btoa(binary);
+                    const mimeType = file.type || "image/jpeg";
+                    heroImage = `data:${mimeType};base64,${base64}`;
+                } catch (e) {
+                    console.error("File upload failed:", e);
                 }
-                const mimeType = file.type || "image/jpeg";
-                heroImage = `data:${mimeType};base64,${base64}`;
-            } catch (e) {
-                console.error("File upload failed:", e);
             }
+
+            // If ID is temp, create new record
+            if (id.startsWith("temp-")) {
+                const slug = id.replace("temp-", "");
+                await prisma.shopPage.upsert({
+                    where: { slug: slug },
+                    update: { title, prefixLabel, heroImage, heroImagePos },
+                    create: { slug, title, prefixLabel, heroImage, heroImagePos, subtitle: "колекція" }
+                });
+            } else {
+                await prisma.shopPage.update({
+                    where: { id },
+                    data: { title, prefixLabel, heroImage, heroImagePos }
+                });
+            }
+
+            return { success: true };
         }
 
-        // If ID is temp, create new record
-        if (id.startsWith("temp-")) {
-            const slug = id.replace("temp-", "");
-            await prisma.shopPage.upsert({
-                where: { slug: slug },
-                update: { title, prefixLabel, heroImage, heroImagePos },
-                create: { slug, title, prefixLabel, heroImage, heroImagePos, subtitle: "колекція" }
-            });
-        } else {
-            await prisma.shopPage.update({
-                where: { id },
-                data: { title, prefixLabel, heroImage, heroImagePos }
-            });
-        }
-
-        return { success: true };
+        return null;
+    } catch (e: any) {
+        console.error("Action error:", e);
+        return { error: e.message || "Сталася серверна помилка" };
     }
-
-    return null;
 }
 
 // --- Components ---
