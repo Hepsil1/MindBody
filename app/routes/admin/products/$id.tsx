@@ -2,8 +2,6 @@ import { type LoaderFunctionArgs, type ActionFunctionArgs } from "react-router";
 import { useLoaderData, useFetcher, useNavigate, useParams, Link } from "react-router";
 import { useState, useEffect } from "react";
 import { prisma } from "../../../db.server";
-import fs from "fs/promises";
-import path from "path";
 import crypto from "crypto";
 
 // --- Types ---
@@ -109,14 +107,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
         const file = formData.get("file") as File;
         if (!file || file.size === 0) return { error: "No file selected" };
 
-        const buffer = await file.arrayBuffer();
-        const fileName = `${Date.now()}-${file.name.replace(/\s/g, "_")}`;
-        const uploadPath = path.join(process.cwd(), "public", "uploads", "products", fileName);
+        try {
+            const buffer = await file.arrayBuffer();
+            const base64 = Buffer.from(buffer).toString("base64");
+            const mimeType = file.type || "image/jpeg";
+            const dataUrl = `data:${mimeType};base64,${base64}`;
 
-        await fs.mkdir(path.dirname(uploadPath), { recursive: true });
-        await fs.writeFile(uploadPath, Buffer.from(buffer));
-
-        return { imageUrl: `/uploads/products/${fileName}` };
+            return { imageUrl: dataUrl };
+        } catch (e) {
+            console.error("Upload failed:", e);
+            return { error: "Failed to process image" };
+        }
     }
 
     if (intent === "save_product") {

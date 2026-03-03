@@ -2,8 +2,6 @@ import type { Route } from "./+types/slides";
 import { prisma } from "../../db.server";
 import { useState, useRef, useEffect } from "react";
 import { useLoaderData, useFetcher, Link } from "react-router";
-import fs from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import HeroSlider, { type SlideData } from "../../components/HeroSlider";
 import CategoryCard from "../../components/CategoryCard";
@@ -40,15 +38,16 @@ async function saveFile(file: any) {
     if (!file || typeof file === "string" || file.size === 0) return null;
     if (!(file instanceof Blob)) return null;
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    // @ts-ignore
-    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await fs.mkdir(uploadDir, { recursive: true });
-
-    const filePath = path.join(uploadDir, fileName);
-    await fs.writeFile(filePath, buffer);
-    return `/uploads/${fileName}`;
+    try {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const base64 = buffer.toString("base64");
+        // @ts-ignore
+        const mimeType = file.type || "image/jpeg";
+        return `data:${mimeType};base64,${base64}`;
+    } catch (e) {
+        console.error("File processing failed:", e);
+        return null;
+    }
 }
 
 export async function action({ request }: Route.ActionArgs) {

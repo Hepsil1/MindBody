@@ -2,8 +2,6 @@
 import { Form, useLoaderData, useActionData, useNavigation, useSubmit } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { PrismaClient } from "@prisma/client";
-import fs from "fs/promises";
-import path from "path";
 import { Buffer } from "buffer";
 
 // --- Types ---
@@ -63,13 +61,14 @@ export async function action({ request }: { request: Request }) {
         const file = formData.get("heroImageFile") as File;
 
         if (file && file.size > 0 && file.name) {
-            const uploadDir = path.join(process.cwd(), "public", "uploads");
-            await fs.mkdir(uploadDir, { recursive: true });
-            const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
-            const filePath = path.join(uploadDir, fileName);
-            const buffer = Buffer.from(await file.arrayBuffer());
-            await fs.writeFile(filePath, buffer);
-            heroImage = `/uploads/${fileName}`;
+            try {
+                const buffer = Buffer.from(await file.arrayBuffer());
+                const base64 = buffer.toString("base64");
+                const mimeType = file.type || "image/jpeg";
+                heroImage = `data:${mimeType};base64,${base64}`;
+            } catch (e) {
+                console.error("File upload failed:", e);
+            }
         }
 
         // If ID is temp, create new record
