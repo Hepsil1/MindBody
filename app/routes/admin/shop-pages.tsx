@@ -1,7 +1,7 @@
 
 import { Form, useLoaderData, useActionData, useNavigation, useSubmit } from "react-router";
 import { useState, useEffect, useRef } from "react";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../db.server";
 import { Buffer } from "buffer";
 
 // --- Types ---
@@ -25,7 +25,6 @@ const CameraIcon = () => (
 
 // --- Loader ---
 export async function loader() {
-    const prisma = new PrismaClient();
     const pages = await prisma.shopPage.findMany();
     // Use fallback minimal data if DB is empty
     if (!pages || pages.length === 0) {
@@ -49,7 +48,6 @@ export async function loader() {
 export async function action({ request }: { request: Request }) {
     const formData = await request.formData();
     const intent = formData.get("intent");
-    const prisma = new PrismaClient();
 
     if (intent === "update_page") {
         const id = formData.get("id") as string;
