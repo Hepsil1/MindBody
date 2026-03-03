@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npx prisma generate && (npx prisma db push --accept-data-loss || true) && react-router build",
+    "build": "npx prisma generate && react-router build",
     "dev": "react-router dev --port 5175",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
