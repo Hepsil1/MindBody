@@ -52,11 +52,11 @@ export async function action({ request }: { request: Request }) {
 
         if (intent === "update_page") {
             const id = formData.get("id") as string;
-            const title = formData.get("title") as string;
-            const prefixLabel = formData.get("prefixLabel") as string;
-            const heroImagePos = formData.get("heroImagePos") as string;
+            const title = (formData.get("title") as string) || "Без назви";
+            const prefixLabel = (formData.get("prefixLabel") as string) || null;
+            const heroImagePos = (formData.get("heroImagePos") as string) || "50% 50% 1";
 
-            let heroImage = formData.get("currentHeroImage") as string;
+            let heroImage = (formData.get("currentHeroImage") as string) || "";
             const file = formData.get("heroImageFile") as File;
 
             if (file && file.size > 0 && file.name) {

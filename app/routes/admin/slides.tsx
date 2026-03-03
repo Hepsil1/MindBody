@@ -96,13 +96,13 @@ export async function action({ request }: Route.ActionArgs) {
 
         if (intent === "create" || intent === "update") {
             const id = formData.get("id") as string;
-            const name = formData.get("name") as string;
-            const type = formData.get("type") as string;
-            const link = formData.get("link") as string;
+            const name = (formData.get("name") as string) || "Без назви";
+            const type = (formData.get("type") as string) || "triptych";
+            const link = (formData.get("link") as string) || null;
 
-            const image1Pos = formData.get("image1Pos") as string || "center center";
-            const image2Pos = formData.get("image2Pos") as string || "center center";
-            const image3Pos = formData.get("image3Pos") as string || "center center";
+            const image1Pos = (formData.get("image1Pos") as string) || "center center";
+            const image2Pos = (formData.get("image2Pos") as string) || "center center";
+            const image3Pos = (formData.get("image3Pos") as string) || "center center";
 
             let image1 = formData.get("image1_url") as string || "";
             let image2 = formData.get("image2_url") as string || "";
@@ -160,13 +160,13 @@ export async function action({ request }: Route.ActionArgs) {
 
         if (intent === "update_category") {
             const id = formData.get("id") as string;
-            const title = formData.get("title") as string;
-            const subtitle = formData.get("subtitle") as string;
-            const link = formData.get("link") as string;
-            const buttonText = formData.get("buttonText") as string;
-            const imagePos = formData.get("imagePos") as string || "center center";
+            const title = (formData.get("title") as string) || "";
+            const subtitle = (formData.get("subtitle") as string) || null;
+            const link = (formData.get("link") as string) || "";
+            const buttonText = (formData.get("buttonText") as string) || "Переглянути все";
+            const imagePos = (formData.get("imagePos") as string) || "center center";
 
-            let image = formData.get("image_url") as string || "";
+            let image = (formData.get("image_url") as string) || "";
             const imageFile = formData.get("image_file");
 
             const uploaded = await saveFile(imageFile);
@@ -236,12 +236,12 @@ export async function action({ request }: Route.ActionArgs) {
 
         if (intent === "update_about_slide") {
             const id = formData.get("id") as string;
-            const name = formData.get("name") as string;
-            const type = formData.get("type") as string;
+            const name = (formData.get("name") as string) || "About Slide";
+            const type = (formData.get("type") as string) || "triptych";
 
-            const image1Pos = formData.get("image1Pos") as string || "center center";
-            const image2Pos = formData.get("image2Pos") as string || "center center";
-            const image3Pos = formData.get("image3Pos") as string || "center center";
+            const image1Pos = (formData.get("image1Pos") as string) || "center center";
+            const image2Pos = (formData.get("image2Pos") as string) || "center center";
+            const image3Pos = (formData.get("image3Pos") as string) || "center center";
 
             let image1 = formData.get("image1_url") as string || "";
             let image2 = formData.get("image2_url") as string || "";

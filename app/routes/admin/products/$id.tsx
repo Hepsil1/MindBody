@@ -134,21 +134,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const id = params.id === "new" ? generateUUID() : params.id;
 
             // Basic Fields
-            const name = formData.get("name") as string;
-            const description = formData.get("description") as string;
+            const name = (formData.get("name") as string) || "Новий товар";
+            const description = (formData.get("description") as string) || null;
             const price = parseFloat(formData.get("price") as string) || 0;
             const comparePrice = parseFloat(formData.get("comparePrice") as string) || null;
-            const sku = formData.get("sku") as string;
-            const status = formData.get("status") as string;
+            const sku = (formData.get("sku") as string) || null;
+            const status = (formData.get("status") as string) || "draft";
             const stock = parseInt(formData.get("stock") as string) || 0;
 
             // Complex Fields
-            const category = formData.get("category") as string;
-            const shopPageSlug = formData.get("shopPageSlug") as string;
-            const images = formData.get("images") as string;
-            const colors = formData.get("colors") as string;
-            const sizes = formData.get("sizes") as string;
-            const inventory = formData.get("inventory") as string;
+            const category = (formData.get("category") as string) || null;
+            const shopPageSlug = (formData.get("shopPageSlug") as string) || null;
+            const images = (formData.get("images") as string) || "[]";
+            const colors = (formData.get("colors") as string) || "[]";
+            const sizes = (formData.get("sizes") as string) || "[]";
+            const inventory = (formData.get("inventory") as string) || null;
 
             try {
                 const now = new Date().toISOString();
