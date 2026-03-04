@@ -120,8 +120,6 @@ export async function action({ request }: Route.ActionArgs) {
             if (u2) image2 = u2;
             if (u3) image3 = u3;
 
-            const now = new Date().toISOString();
-
             if (intent === "create") {
                 const maxOrderResult = await prisma.$queryRaw`SELECT MAX("order") as "maxOrder" FROM "Slide"` as any[];
                 const newOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
@@ -130,7 +128,7 @@ export async function action({ request }: Route.ActionArgs) {
                 // Create HOME slide (explicit page='home')
                 await prisma.$executeRaw`
                 INSERT INTO "Slide" (id, name, type, page, link, image1, "image1Pos", image2, "image2Pos", image3, "image3Pos", "order", "isActive", "createdAt", "updatedAt")
-                VALUES (${newId}, ${name}, ${type}, 'home', ${link || null}, ${image1}, ${image1Pos}, ${type === 'single' ? null : (image2 || null)}, ${type === 'single' ? 'center center' : image2Pos}, ${type === 'single' ? null : (image3 || null)}, ${type === 'single' ? 'center center' : image3Pos}, ${newOrder}, true, ${now}, ${now})
+                VALUES (${newId}, ${name}, ${type}, 'home', ${link || null}, ${image1}, ${image1Pos}, ${type === 'single' ? null : (image2 || null)}, ${type === 'single' ? 'center center' : image2Pos}, ${type === 'single' ? null : (image3 || null)}, ${type === 'single' ? 'center center' : image3Pos}, ${newOrder}, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             `;
             } else {
                 // Update HOME slide
@@ -140,7 +138,7 @@ export async function action({ request }: Route.ActionArgs) {
                     image1=${image1}, "image1Pos"=${image1Pos},
                     image2=${type === 'single' ? null : (image2 || null)}, "image2Pos"=${type === 'single' ? 'center center' : image2Pos},
                     image3=${type === 'single' ? null : (image3 || null)}, "image3Pos"=${type === 'single' ? 'center center' : image3Pos},
-                    "updatedAt"=${now}
+                    "updatedAt"=CURRENT_TIMESTAMP
                 WHERE id=${id}
             `;
             }
@@ -183,12 +181,11 @@ export async function action({ request }: Route.ActionArgs) {
         if (intent === "update_filters") {
             const config = formData.get("config") as string;
             try {
-                const now = new Date().toISOString();
                 // PostgreSQL UPSERT - always reliable
                 await prisma.$executeRawUnsafe(
-                    `INSERT INTO "FilterConfig" (id, config, "updatedAt") VALUES ('global', $1, $2::timestamp)
-                 ON CONFLICT(id) DO UPDATE SET config = $1, "updatedAt" = $2::timestamp`,
-                    config, now
+                    `INSERT INTO "FilterConfig" (id, config, "updatedAt") VALUES ('global', $1, CURRENT_TIMESTAMP)
+                 ON CONFLICT(id) DO UPDATE SET config = $1, "updatedAt" = CURRENT_TIMESTAMP`,
+                    config
                 );
             } catch (e) {
                 console.error("FilterConfig update failed:", e);
@@ -224,12 +221,11 @@ export async function action({ request }: Route.ActionArgs) {
             const maxOrder = await prisma.slide.aggregate({ _max: { order: true } });
             const newOrder = (maxOrder._max?.order || 0) + 1;
             const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            const now = new Date().toISOString();
 
             // Use Raw SQL to bypass client validation for 'page'
             await prisma.$executeRaw`
             INSERT INTO "Slide" (id, name, type, page, image1, "image1Pos", image2, "image2Pos", image3, "image3Pos", "order", "isActive", "createdAt", "updatedAt")
-            VALUES (${id}, ${name}, ${type}, 'about', ${image1}, ${image1Pos}, ${image2 || null}, ${image2Pos}, ${image3 || null}, ${image3Pos}, ${newOrder}, true, ${now}, ${now})
+            VALUES (${id}, ${name}, ${type}, 'about', ${image1}, ${image1Pos}, ${image2 || null}, ${image2Pos}, ${image3 || null}, ${image3Pos}, ${newOrder}, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         `;
             return { success: true };
         }
@@ -259,8 +255,6 @@ export async function action({ request }: Route.ActionArgs) {
             if (u2) image2 = u2;
             if (u3) image3 = u3;
 
-            const now = new Date().toISOString();
-
             // Use Raw SQL for update
             await prisma.$executeRaw`
             UPDATE "Slide" 
@@ -268,7 +262,7 @@ export async function action({ request }: Route.ActionArgs) {
                 image1=${image1}, "image1Pos"=${image1Pos},
                 image2=${image2 || null}, "image2Pos"=${image2Pos},
                 image3=${image3 || null}, "image3Pos"=${image3Pos},
-                "updatedAt"=${now}
+                "updatedAt"=CURRENT_TIMESTAMP
             WHERE id=${id}
         `;
             return { success: true };
