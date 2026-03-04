@@ -24,37 +24,42 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-    const formData = await request.formData();
-    const intent = formData.get("intent");
+    try {
+        const formData = await request.formData();
+        const intent = formData.get("intent");
 
-    if (intent === "update_status") {
-        const status = formData.get("status") as string;
-        await prisma.order.update({
-            where: { id: params.id },
-            data: { status }
-        });
+        if (intent === "update_status") {
+            const status = formData.get("status") as string;
+            await prisma.order.update({
+                where: { id: params.id },
+                data: { status }
+            });
+        }
+
+        if (intent === "update_payment") {
+            const paymentStatus = formData.get("paymentStatus") as string;
+            await prisma.order.update({
+                where: { id: params.id },
+                data: { paymentStatus }
+            });
+        }
+
+        if (intent === "delete") {
+            // First delete order items, then the order
+            await prisma.orderItem.deleteMany({
+                where: { orderId: params.id }
+            });
+            await prisma.order.delete({
+                where: { id: params.id }
+            });
+            return redirect("/admin/orders");
+        }
+
+        return null;
+    } catch (e: any) {
+        console.error("Order action error:", e);
+        return { error: e.message || "Сталася серверна помилка" };
     }
-
-    if (intent === "update_payment") {
-        const paymentStatus = formData.get("paymentStatus") as string;
-        await prisma.order.update({
-            where: { id: params.id },
-            data: { paymentStatus }
-        });
-    }
-
-    if (intent === "delete") {
-        // First delete order items, then the order
-        await prisma.orderItem.deleteMany({
-            where: { orderId: params.id }
-        });
-        await prisma.order.delete({
-            where: { id: params.id }
-        });
-        return redirect("/admin/orders");
-    }
-
-    return null;
 }
 
 const statusLabels: Record<string, { text: string; color: string }> = {

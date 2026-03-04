@@ -130,7 +130,7 @@ export async function action({ request }: Route.ActionArgs) {
                 // Create HOME slide (explicit page='home')
                 await prisma.$executeRaw`
                 INSERT INTO "Slide" (id, name, type, page, link, image1, "image1Pos", image2, "image2Pos", image3, "image3Pos", "order", "isActive", "createdAt", "updatedAt")
-                VALUES (${newId}, ${name}, ${type}, 'home', ${link || null}, ${image1}, ${image1Pos}, ${type === 'single' ? null : (image2 || null)}, ${type === 'single' ? 'center center' : image2Pos}, ${type === 'single' ? null : (image3 || null)}, ${type === 'single' ? 'center center' : image3Pos}, ${newOrder}, 1, ${now}, ${now})
+                VALUES (${newId}, ${name}, ${type}, 'home', ${link || null}, ${image1}, ${image1Pos}, ${type === 'single' ? null : (image2 || null)}, ${type === 'single' ? 'center center' : image2Pos}, ${type === 'single' ? null : (image3 || null)}, ${type === 'single' ? 'center center' : image3Pos}, ${newOrder}, true, ${now}, ${now})
             `;
             } else {
                 // Update HOME slide
@@ -229,7 +229,7 @@ export async function action({ request }: Route.ActionArgs) {
             // Use Raw SQL to bypass client validation for 'page'
             await prisma.$executeRaw`
             INSERT INTO "Slide" (id, name, type, page, image1, "image1Pos", image2, "image2Pos", image3, "image3Pos", "order", "isActive", "createdAt", "updatedAt")
-            VALUES (${id}, ${name}, ${type}, 'about', ${image1}, ${image1Pos}, ${image2 || null}, ${image2Pos}, ${image3 || null}, ${image3Pos}, ${newOrder}, 1, ${now}, ${now})
+            VALUES (${id}, ${name}, ${type}, 'about', ${image1}, ${image1Pos}, ${image2 || null}, ${image2Pos}, ${image3 || null}, ${image3Pos}, ${newOrder}, true, ${now}, ${now})
         `;
             return { success: true };
         }

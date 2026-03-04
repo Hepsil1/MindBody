@@ -11,53 +11,58 @@ export async function loader() {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-    const formData = await request.formData();
-    const intent = formData.get("intent");
+    try {
+        const formData = await request.formData();
+        const intent = formData.get("intent");
 
-    if (intent === "create") {
-        const code = (formData.get("code") as string)?.trim().toUpperCase();
-        const discountType = formData.get("discountType") as string || "percent";
-        const discountValue = parseFloat(formData.get("discountValue") as string) || 0;
-        const minOrder = parseFloat(formData.get("minOrder") as string) || 0;
-        const maxUses = formData.get("maxUses") ? parseInt(formData.get("maxUses") as string) : null;
-        const expiresAt = formData.get("expiresAt") as string || null;
-        const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        if (intent === "create") {
+            const code = (formData.get("code") as string)?.trim().toUpperCase();
+            const discountType = formData.get("discountType") as string || "percent";
+            const discountValue = parseFloat(formData.get("discountValue") as string) || 0;
+            const minOrder = parseFloat(formData.get("minOrder") as string) || 0;
+            const maxUses = formData.get("maxUses") ? parseInt(formData.get("maxUses") as string) : null;
+            const expiresAt = formData.get("expiresAt") as string || null;
+            const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-        if (!code || discountValue <= 0) {
-            return { error: "Заповніть обов'язкові поля" };
-        }
-
-        try {
-            await prisma.$executeRawUnsafe(
-                `INSERT INTO "PromoCode" (id, code, "discountType", "discountValue", "minOrder", "maxUses", "usedCount", "isActive", "expiresAt", "createdAt")
-                 VALUES ($1, $2, $3, $4, $5, $6, 0, true, $7, CURRENT_TIMESTAMP)`,
-                id, code, discountType, discountValue, minOrder, maxUses, expiresAt ? new Date(expiresAt).toISOString() : null
-            );
-        } catch (e: any) {
-            if (e.message?.includes('UNIQUE')) {
-                return { error: "Промокод з таким кодом вже існує" };
+            if (!code || discountValue <= 0) {
+                return { error: "Заповніть обов'язкові поля" };
             }
-            return { error: "Помилка створення" };
+
+            try {
+                await prisma.$executeRawUnsafe(
+                    `INSERT INTO "PromoCode" (id, code, "discountType", "discountValue", "minOrder", "maxUses", "usedCount", "isActive", "expiresAt", "createdAt")
+                     VALUES ($1, $2, $3, $4, $5, $6, 0, true, $7, CURRENT_TIMESTAMP)`,
+                    id, code, discountType, discountValue, minOrder, maxUses, expiresAt ? new Date(expiresAt).toISOString() : null
+                );
+            } catch (e: any) {
+                if (e.message?.includes('UNIQUE')) {
+                    return { error: "Промокод з таким кодом вже існує" };
+                }
+                return { error: "Помилка створення" };
+            }
         }
-    }
 
-    if (intent === "toggle") {
-        const id = formData.get("id") as string;
-        const currentActive = formData.get("isActive") === "true";
-        await prisma.$executeRawUnsafe(
-            `UPDATE "PromoCode" SET "isActive" = $1 WHERE id = $2`,
-            !currentActive, id
-        );
-    }
+        if (intent === "toggle") {
+            const id = formData.get("id") as string;
+            const currentActive = formData.get("isActive") === "true";
+            await prisma.$executeRawUnsafe(
+                `UPDATE "PromoCode" SET "isActive" = $1 WHERE id = $2`,
+                !currentActive, id
+            );
+        }
 
-    if (intent === "delete") {
-        const id = formData.get("id") as string;
-        await prisma.$executeRawUnsafe(
-            `DELETE FROM "PromoCode" WHERE id = $1`, id
-        );
-    }
+        if (intent === "delete") {
+            const id = formData.get("id") as string;
+            await prisma.$executeRawUnsafe(
+                `DELETE FROM "PromoCode" WHERE id = $1`, id
+            );
+        }
 
-    return null;
+        return null;
+    } catch (e: any) {
+        console.error("Promo action error:", e);
+        return { error: e.message || "Сталася серверна помилка" };
+    }
 }
 
 export default function AdminPromo() {
