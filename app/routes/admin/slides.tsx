@@ -1221,6 +1221,19 @@ export default function AdminVisualEditor() {
                                                                 fileInputName="image_file"
                                                                 value={positions[`${cat.id}_imagePos`] || (cat as any).imagePos || "center center"}
                                                                 onChange={(val: string) => updatePos(cat.id, "imagePos", val)}
+                                                                aspectRatio="400/380"
+                                                                overlay={(
+                                                                    <>
+                                                                        <div className="category-card__overlay" style={{ pointerEvents: 'none', position: 'absolute', inset: 0, zIndex: 2 }}></div>
+                                                                        <div className="category-card__content" style={{ pointerEvents: 'none', position: 'absolute', inset: 0, zIndex: 3, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '40px', textAlign: 'left' }}>
+                                                                            <p className="category-card__count" style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', letterSpacing: '0.2em', textTransform: 'uppercase', margin: 0 }}>{cat.subtitle || 'ДЛЯ ВАС'}</p>
+                                                                            <h3 className="category-card__title" style={{ fontSize: '32px', marginBottom: '8px', textTransform: 'uppercase', marginTop: '8px', fontWeight: 600 }}>{cat.title}</h3>
+                                                                            <div className="category-card__shop-now" style={{ marginTop: '24px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', padding: '12px 28px', background: 'rgba(255, 255, 255, 0.15)', backdropFilter: 'blur(12px)', width: 'fit-content', borderRadius: '30px', border: '1px solid rgba(255, 255, 255, 0.3)', opacity: 1, transform: 'none' }}>
+                                                                                {cat.buttonText || 'Переглянути все'}
+                                                                            </div>
+                                                                        </div>
+                                                                    </>
+                                                                )}
                                                             />
                                                             <input type="hidden" name="image_url" value={cat.image} />
                                                             <input type="hidden" name="imagePos" value={positions[`${cat.id}_imagePos`] || (cat as any).imagePos || "center center"} />
@@ -1337,6 +1350,10 @@ export default function AdminVisualEditor() {
                                                                     fileInputName="image1_file"
                                                                     value={positions[`${slide.id}_image1Pos`] || (slide as any).image1Pos || "center center"}
                                                                     onChange={(val: string) => updatePos(slide.id, "image1Pos", val)}
+                                                                    aspectRatio={slide.type === 'single' ? '16/9' : '9/16'}
+                                                                    overlay={
+                                                                        <div className="hero-slider__overlay" style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 40%, rgba(0, 0, 0, 0.3) 100%)', position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}></div>
+                                                                    }
                                                                 />
                                                                 <input type="hidden" name="image1Pos" value={positions[`${slide.id}_image1Pos`] || (slide as any).image1Pos || "center center"} />
                                                                 <input type="hidden" name="image1_url" value={slide.image1} />
@@ -1348,6 +1365,8 @@ export default function AdminVisualEditor() {
                                                                             fileInputName="image2_file"
                                                                             value={positions[`${slide.id}_image2Pos`] || (slide as any).image2Pos || "center center"}
                                                                             onChange={(val: string) => updatePos(slide.id, "image2Pos", val)}
+                                                                            aspectRatio="9/16"
+                                                                            overlay={<div className="hero-slider__overlay" style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 40%, rgba(0, 0, 0, 0.3) 100%)', position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}></div>}
                                                                         />
                                                                         <input type="hidden" name="image2Pos" value={positions[`${slide.id}_image2Pos`] || (slide as any).image2Pos || "center center"} />
                                                                         <input type="hidden" name="image2_url" value={slide.image2 || ""} />
@@ -1357,6 +1376,8 @@ export default function AdminVisualEditor() {
                                                                             fileInputName="image3_file"
                                                                             value={positions[`${slide.id}_image3Pos`] || (slide as any).image3Pos || "center center"}
                                                                             onChange={(val: string) => updatePos(slide.id, "image3Pos", val)}
+                                                                            aspectRatio="9/16"
+                                                                            overlay={<div className="hero-slider__overlay" style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 40%, rgba(0, 0, 0, 0.3) 100%)', position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}></div>}
                                                                         />
                                                                         <input type="hidden" name="image3Pos" value={positions[`${slide.id}_image3Pos`] || (slide as any).image3Pos || "center center"} />
                                                                         <input type="hidden" name="image3_url" value={slide.image3 || ""} />
@@ -1596,58 +1617,7 @@ export default function AdminVisualEditor() {
                 )
             }
 
-            {/* --- CATEGORIES EDITOR MODAL --- */}
-            {
-                categoriesOpen && (
-                    <div style={{
-                        position: 'fixed', inset: 0, zIndex: 100,
-                        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <div style={{
-                            width: '90%', maxWidth: '600px', maxHeight: '90vh',
-                            background: '#0f1216', borderRadius: '16px',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            display: 'flex', flexDirection: 'column',
-                            overflow: 'hidden', boxShadow: '0 50px 100px rgba(0,0,0,0.5)'
-                        }}>
-                            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#161b22' }}>
-                                <h3 style={{ margin: 0, color: '#fff', fontSize: '16px', fontWeight: 600 }}>Редактор категорій</h3>
-                                <button onClick={() => setCategoriesOpen(false)} style={{ color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
-                            </div>
-                            <div className="admin-scroll-custom" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-                                {categories.map((cat: any) => (
-                                    <div key={cat.id} style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                            <h4 style={{ margin: 0, color: '#fff' }}>{cat.title}</h4>
-                                            <button onClick={() => setExpandedCategoryId(cat.id === expandedCategoryId ? null : cat.id)} style={{ color: 'var(--accent-primary)' }}>
-                                                {expandedCategoryId === cat.id ? 'Згорнути' : 'Редагувати'}
-                                            </button>
-                                        </div>
-                                        {expandedCategoryId === cat.id && (
-                                            <fetcher.Form method="post" encType="multipart/form-data">
-                                                <input type="hidden" name="intent" value="update_category" />
-                                                <input type="hidden" name="id" value={cat.id} />
-                                                <div style={{ marginBottom: '12px' }}><input name="title" defaultValue={cat.title} style={{ width: '100%', padding: '10px', background: '#1e293b', border: 'none', color: '#fff' }} /></div>
-                                                <div style={{ marginBottom: '12px' }}><input name="link" defaultValue={cat.link} style={{ width: '100%', padding: '10px', background: '#1e293b', border: 'none', color: '#fff' }} /></div>
-                                                <ImageCropSelector
-                                                    currentImageUrl={cat.image}
-                                                    fileInputName="image_file"
-                                                    value={positions[`${cat.id}_imagePos`] || cat.imagePos}
-                                                    onChange={(val) => updatePos(cat.id, 'imagePos', val)}
-                                                    aspectRatio="400/380"
-                                                />
-                                                <button type="submit" disabled={fetcher.state !== "idle"} style={{ width: '100%', padding: '12px', background: 'var(--accent-primary)', color: '#000', borderRadius: '8px', fontWeight: 'bold' }}>Зберегти</button>
-                                            </fetcher.Form>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
+            {/* Duplicate Categories Modal Removed */}
             {/* --- FILTER CONFIG EDITOR MODAL (New) --- */}
             {
                 filtersOpen && (
@@ -2308,7 +2278,27 @@ function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: { isOpen: boolea
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                                 <div>
                                     <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>Фото 1</div>
-                                    <input type="file" onChange={e => setEditFile1(e.target.files?.[0] || null)} style={{ fontSize: '12px', color: '#fff', width: '100%' }} />
+                                    <ImageCropSelector
+                                        currentImageUrl={editingSlide.image1}
+                                        fileInputName="image1_file"
+                                        value={editingSlide.image1Pos || "center center"}
+                                        onChange={(val: string) => setEditingSlide({ ...editingSlide, image1Pos: val })}
+                                        onFileSelect={setEditFile1}
+                                        aspectRatio={editingSlide.type === 'single' ? '16/9' : '9/16'}
+                                        overlay={
+                                            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10, pointerEvents: 'none', background: 'linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 40%, rgba(0, 0, 0, 0.3) 100%)' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '-40px' }}>
+                                                    <img src="/pics/mind_body_logo.png" alt="MIND BODY" style={{ maxWidth: '75vw', width: '250px', height: 'auto', filter: 'brightness(0) invert(1) drop-shadow(0 0 15px rgba(255,255,255,0.3))' }} />
+                                                </div>
+                                                <div style={{ position: 'absolute', left: '20px', bottom: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', opacity: 0.8 }}>
+                                                    <p style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)', color: '#fff', fontSize: '10px', fontFamily: "'Tenor Sans', sans-serif", letterSpacing: '0.15em', textTransform: 'uppercase', textShadow: '0 2px 4px rgba(0,0,0,0.5)', margin: 0, whiteSpace: 'nowrap' }}>
+                                                        Одяг, який надихає тебе рухатись
+                                                    </p>
+                                                    <div style={{ width: '1px', height: '20px', background: '#fff' }}></div>
+                                                </div>
+                                            </div>
+                                        }
+                                    />
                                     <input
                                         type="text"
                                         value={editingSlide.image1}
@@ -2320,7 +2310,24 @@ function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: { isOpen: boolea
                                     <>
                                         <div>
                                             <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>Фото 2</div>
-                                            <input type="file" onChange={e => setEditFile2(e.target.files?.[0] || null)} style={{ fontSize: '12px', color: '#fff', width: '100%' }} />
+                                            <ImageCropSelector
+                                                currentImageUrl={editingSlide.image2 || ""}
+                                                fileInputName="image2_file"
+                                                value={editingSlide.image2Pos || "center center"}
+                                                onChange={(val: string) => setEditingSlide({ ...editingSlide, image2Pos: val })}
+                                                onFileSelect={setEditFile2}
+                                                aspectRatio="9/16"
+                                                overlay={
+                                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10, pointerEvents: 'none', background: 'linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 40%, rgba(0, 0, 0, 0.3) 100%)' }}>
+                                                        <div style={{ position: 'absolute', left: '20px', bottom: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', opacity: 0.8 }}>
+                                                            <p style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)', color: '#fff', fontSize: '10px', fontFamily: "'Tenor Sans', sans-serif", letterSpacing: '0.15em', textTransform: 'uppercase', textShadow: '0 2px 4px rgba(0,0,0,0.5)', margin: 0, whiteSpace: 'nowrap' }}>
+                                                                Одяг, який надихає тебе рухатись
+                                                            </p>
+                                                            <div style={{ width: '1px', height: '20px', background: '#fff' }}></div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            />
                                             <input
                                                 type="text"
                                                 value={editingSlide.image2 || ""}
@@ -2330,7 +2337,21 @@ function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: { isOpen: boolea
                                         </div>
                                         <div>
                                             <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>Фото 3</div>
-                                            <input type="file" onChange={e => setEditFile3(e.target.files?.[0] || null)} style={{ fontSize: '12px', color: '#fff', width: '100%' }} />
+                                            <ImageCropSelector
+                                                currentImageUrl={editingSlide.image3 || ""}
+                                                fileInputName="image3_file"
+                                                value={editingSlide.image3Pos || "center center"}
+                                                onChange={(val: string) => setEditingSlide({ ...editingSlide, image3Pos: val })}
+                                                onFileSelect={setEditFile3}
+                                                aspectRatio="9/16"
+                                                overlay={
+                                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10, pointerEvents: 'none', background: 'linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 40%, rgba(0, 0, 0, 0.3) 100%)' }}>
+                                                        <div style={{ position: 'absolute', right: '20px', bottom: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', opacity: 0.8 }}>
+                                                            <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.4)', overflow: 'hidden' }}><div style={{ width: '100%', height: '100%', background: '#fff' }}></div></div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            />
                                             <input
                                                 type="text"
                                                 value={editingSlide.image3 || ""}
