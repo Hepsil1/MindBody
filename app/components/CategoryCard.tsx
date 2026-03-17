@@ -23,7 +23,7 @@ export default function CategoryCard({ title, subtitle, image, imagePos, link, b
     const { position, scale } = parseImagePos();
 
     return (
-        <Link to={link} className="category-card">
+        <Link to={link} prefetch="intent" className="category-card">
             <div className="category-card__image">
                 <img
                     src={image}

@@ -4,8 +4,6 @@ import { useLoaderData, Link } from "react-router";
 import ProductCard from "../components/ProductCard";
 import { useState, useMemo } from "react";
 import { prisma } from "../db.server";
-import productsWomen from "../data/products_women.json";
-import productsKids from "../data/products_kids.json";
 
 export function meta({ data }: { data: any }) {
     const shopPage = data?.shopPage;
@@ -40,7 +38,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
             .catch((e: any) => { console.error("ShopPage fetch failed", e); return null; }),
         // 3. Products — only needed columns, no SELECT *
         prisma.$queryRawUnsafe(
-            `SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, "shopPageSlug", status, "createdAt"
+            `SELECT id, name, price, "comparePrice", category, images, colors, sizes, "shopPageSlug", status, "createdAt"
              FROM "Product"
              WHERE "shopPageSlug" = $1 AND status = 'active'
              ORDER BY "createdAt" DESC`,

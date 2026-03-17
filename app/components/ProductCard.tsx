@@ -57,7 +57,7 @@ export default function ProductCard({ product }: { product: Product }) {
     return (
         <div className="product-card" data-product-id={id}>
             <div className="product-card__image-wrapper">
-                <Link to={`/product/${id}`} className="product-card__image-link">
+                <Link to={`/product/${id}`} prefetch="intent" className="product-card__image-link">
                     <img src={image} alt={name} className="product-card__img product-card__img--main" loading="lazy" />
                     {image2 && <img src={image2} alt={name} className="product-card__img product-card__img--hover" loading="lazy" />}
                     <div className="product-card__overlay"></div>
@@ -77,6 +77,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
                 <Link
                     to={`/product/${id}`}
+                    prefetch="intent"
                     className="product-card__quick-view"
                     aria-label="Quick view"
                     onClick={(e) => { e.stopPropagation(); /* TODO: quick view modal logic */ }}
@@ -93,7 +94,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 </div>
 
                 <h3 className="product-card__title">
-                    <Link to={`/product/${id}`}>{name}</Link>
+                    <Link to={`/product/${id}`} prefetch="intent">{name}</Link>
                 </h3>
 
                 <div className="product-card__price-row">

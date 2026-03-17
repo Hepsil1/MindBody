@@ -5,8 +5,6 @@ import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
 import ProductCard from "../components/ProductCard";
 import { prisma } from "../db.server";
-import productsWomen from "../data/products_women.json";
-import productsKids from "../data/products_kids.json";
 
 export function meta({ }: Route.MetaArgs) {
   return [

@@ -33,23 +33,29 @@ async function saveFile(file: any) {
 
     try {
         const arrayBuffer = await file.arrayBuffer();
-
-        // Vercel Edge / Browser compatible Base64 encoding without Buffer
-        let base64 = "";
-        if (typeof Buffer !== "undefined") {
-            base64 = Buffer.from(arrayBuffer).toString("base64");
-        } else {
-            const bytes = new Uint8Array(arrayBuffer);
-            let binary = '';
-            for (let i = 0; i < bytes.length; i += 8192) {
-                binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 8192)));
-            }
-            base64 = btoa(binary);
-        }
-
+        const buffer = Buffer.from(arrayBuffer);
         // @ts-ignore
         const mimeType = file.type || "image/jpeg";
-        return `data:${mimeType};base64,${base64}`;
+        const ext = mimeType.replace("image/", "").replace("jpeg", "jpg").replace("svg+xml", "svg");
+        const filename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+        // Try to save as static file (works on localhost, fails on Vercel read-only FS)
+        try {
+            const path = await import("path");
+            const fs = await import("fs");
+            const uploadsDir = path.default.join(process.cwd(), "public", "uploads");
+            if (!fs.default.existsSync(uploadsDir)) {
+                fs.default.mkdirSync(uploadsDir, { recursive: true });
+            }
+            fs.default.writeFileSync(path.default.join(uploadsDir, filename), buffer);
+            console.log(`✅ Saved file: /uploads/${filename} (${(buffer.length / 1024).toFixed(0)} KB)`);
+            return `/uploads/${filename}`;
+        } catch {
+            // Fallback to base64 for Vercel (read-only filesystem)
+            console.log("⚠️ File system write failed (Vercel?), falling back to base64");
+            const base64 = buffer.toString("base64");
+            return `data:${mimeType};base64,${base64}`;
+        }
     } catch (e) {
         console.error("File processing failed:", e);
         return null;

@@ -9,3 +9,14 @@
 
 # Migration script (one-time use)
 migrate-to-neon.mjs
+
+# Uploaded images (generated from DB, not committed)
+/public/uploads/
+
+# Diagnostic scripts
+perf_analysis.mjs
+check_db_size.mjs
+check_imgs_len.mjs
+measure_payload.mjs
+test_loader.mjs
+migrate_images_to_files.mjs

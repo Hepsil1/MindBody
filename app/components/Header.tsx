@@ -119,7 +119,7 @@ export function Header() {
 
     const handleProfileClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        window.location.href = user ? '/profile' : '/auth';
+        navigate(user ? '/profile' : '/auth');
     };
 
     const getInitials = (name: string) => {
@@ -143,14 +143,14 @@ export function Header() {
 
             <header className={`header ${isScrolled ? 'is-scrolled' : ''}`} id="header">
                 <div className="header__container">
-                    <Link to="/" className="header__logo">
+                    <Link to="/" prefetch="intent" className="header__logo">
                         <img src="/pics/mind_body_1.png" alt="MIND BODY" className="header__logo-img" />
                     </Link>
 
                     <nav className={`header__nav ${isMenuOpen ? "header__nav--active" : ""}`}>
                         <ul className="header__nav-list">
                             <li className="header__nav-item header__nav-item--mega">
-                                <NavLink to="/shop/women" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
+                                <NavLink to="/shop/women" prefetch="intent" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
                                     Жінкам
                                 </NavLink>
                                 <div className="mega-menu">
@@ -184,7 +184,7 @@ export function Header() {
                                 </div>
                             </li>
                             <li className="header__nav-item header__nav-item--mega">
-                                <NavLink to="/shop/kids" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
+                                <NavLink to="/shop/kids" prefetch="intent" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
                                     Дітям
                                 </NavLink>
                                 <div className="mega-menu">
@@ -214,7 +214,7 @@ export function Header() {
                                 </div>
                             </li>
                             <li className="header__nav-item">
-                                <NavLink to="/about" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
+                                <NavLink to="/about" prefetch="intent" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
                                     Про бренд
                                 </NavLink>
                             </li>

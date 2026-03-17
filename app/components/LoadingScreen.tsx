@@ -7,9 +7,7 @@ export function LoadingScreen() {
     useEffect(() => {
         // Hide loader once DOM is interactive (don't wait for all images/fonts)
         const handleReady = () => {
-            setTimeout(() => {
-                setIsVisible(false);
-            }, 500);
+            setIsVisible(false);
         };
 
         // If DOM is already ready, hide immediately
@@ -35,7 +33,7 @@ export function LoadingScreen() {
             // Wait for fade out animation to finish before unmounting
             const timer = setTimeout(() => {
                 setShouldRender(false);
-            }, 500); // Match transition duration
+            }, 800); // Match transition duration (0.8s)
             return () => clearTimeout(timer);
         }
     }, [isVisible]);
