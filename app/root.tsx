@@ -14,6 +14,7 @@ import { Header } from "./components/Header";
 import Footer from "./components/Footer";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { ToastProvider } from "./components/Toast";
+import FloatingContact from "./components/FloatingContact";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/png", href: "/logo-sun.png" },
@@ -40,6 +41,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
       {!isAdminRoute && <Header />}
       {children}
       {!isAdminRoute && <Footer />}
+      {!isAdminRoute && <FloatingContact />}
     </ToastProvider>
   );
 }

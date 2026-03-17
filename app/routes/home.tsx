@@ -1,6 +1,6 @@
 import type { Route } from "./+types/home";
 import { Link, useLoaderData } from "react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
 import ProductCard from "../components/ProductCard";
@@ -106,7 +106,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function Home() {
   const { slides, categories, womenProducts, kidsProducts } = useLoaderData<typeof loader>();
-  const [showBackToTop, setShowBackToTop] = useState(false);
 
   // Scroll logic for parallax and back-to-top button
   useEffect(() => {
@@ -122,12 +121,6 @@ export default function Home() {
         bgElement.style.transform = `translateY(${offset}px)`;
       }
 
-      // Back to top visibility
-      if (window.scrollY > 500) {
-        setShowBackToTop(true);
-      } else {
-        setShowBackToTop(false);
-      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -165,12 +158,7 @@ export default function Home() {
     };
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
+
 
   return (
     <main>
@@ -412,16 +400,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Back to Top Button */}
-      <button
-        className={`back-to-top ${showBackToTop ? 'is-visible' : ''}`}
-        onClick={scrollToTop}
-        aria-label="Back to top"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="18 15 12 9 6 15"></polyline>
-        </svg>
-      </button>
+
     </main>
   );
 }

@@ -73,8 +73,28 @@ export default function Footer() {
                             </div>
 
                             <div className="footer-puma__nav-col">
-                                <h5 className="footer-puma__col-header">Соцмережі</h5>
+                                <h5 className="footer-puma__col-header">Зв'язатись</h5>
                                 <ul className="footer-puma__nav-list">
+                                    <li>
+                                        <a href="tel:+380501234567">
+                                            📞 +38 (050) 123-45-67
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="viber://chat?number=%2B380501234567" target="_blank" rel="noopener noreferrer">
+                                            Viber
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="https://wa.me/380501234567" target="_blank" rel="noopener noreferrer">
+                                            WhatsApp
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="https://t.me/+380501234567" target="_blank" rel="noopener noreferrer">
+                                            Telegram
+                                        </a>
+                                    </li>
                                     <li>
                                         <a href="https://instagram.com/mindbody.sportwear" target="_blank" rel="noopener noreferrer">
                                             Instagram
