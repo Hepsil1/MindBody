@@ -56,8 +56,12 @@ export default function Footer() {
                             <div className="footer-puma__nav-col">
                                 <h5 className="footer-puma__col-header">Каталог</h5>
                                 <ul className="footer-puma__nav-list">
-                                    <li><Link to="/shop/women">Жінкам</Link></li>
-                                    <li><Link to="/shop/kids">Дітям</Link></li>
+                                    <li><Link to="/shop/yoga">Yoga</Link></li>
+                                    <li><Link to="/shop/sport">Sport</Link></li>
+                                    <li><Link to="/shop/dance">Dance</Link></li>
+                                    <li><Link to="/shop/casual">Casual</Link></li>
+                                    <li><Link to="/shop/kids">Kids</Link></li>
+                                    <li><Link to="/shop/yogatools">YogaTools</Link></li>
                                 </ul>
                             </div>
 
