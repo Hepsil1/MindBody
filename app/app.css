@@ -1,4 +1,4 @@
-﻿/* ================================================
+/* ================================================
    MIND BODY - Consolidated Global Styles
    ================================================ */
 
@@ -1190,61 +1190,88 @@ h3 {
    LAYOUT STYLES FROM LEGACY
    ================================================ */
 
-/* === Top Bar === */
+/* === Top Bar — Premium Marquee === */
 .top-bar {
-  background: #000;
-  color: #fff;
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  height: 34px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  height: 36px;
   display: flex;
   align-items: center;
   z-index: 2000;
-  position: relative;
 }
 
-.top-bar__container {
-  width: 100%;
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: 0 var(--container-padding);
+.top-bar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(61, 122, 140, 0.4), rgba(200, 170, 110, 0.3), transparent);
+  pointer-events: none;
+}
+
+.top-bar__marquee {
   display: flex;
-  justify-content: space-between;
+  width: max-content;
+  animation: marquee-scroll 30s linear infinite;
+}
+
+.top-bar__marquee:hover {
+  animation-play-state: paused;
+}
+
+.top-bar__track {
+  display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .top-bar__item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  gap: 8px;
+  padding: 0 28px;
+  font-family: var(--font-display, 'Inter', sans-serif);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  line-height: 36px;
 }
 
-.top-bar__link {
-  color: #fff;
+.top-bar__item a {
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   transition: color 0.3s ease;
-  opacity: 0.9;
 }
 
-.top-bar__link:hover {
-  color: var(--color-primary-light);
+.top-bar__item a:hover {
+  color: rgba(200, 170, 110, 1);
 }
 
-@media (max-width: 768px) {
-  .top-bar__item--desktop {
-    display: none;
-  }
+.top-bar__separator {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(61, 122, 140, 0.5);
+  flex-shrink: 0;
+}
 
-  .top-bar__container {
-    justify-content: center;
-  }
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 /* === Header === */
 .header {
   position: fixed;
-  top: 32px;
+  top: 36px;
   left: 0;
   right: 0;
   height: var(--header-height);

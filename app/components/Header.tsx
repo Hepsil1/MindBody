@@ -129,17 +129,23 @@ export function Header() {
     return (
         <>
             <div className="top-bar">
-                <div className="container top-bar__container">
-                    <div className="top-bar__item">
-                        <NavLink to="/about" prefetch="intent" className="top-bar__text" style={{ textDecoration: 'none', color: 'inherit' }}>
-                            Про бренд
-                        </NavLink>
-                    </div>
-                    <div className="top-bar__item">
-                        <span className="top-bar__link">
-                            ✨ -10% на перше замовлення
-                        </span>
-                    </div>
+                <div className="top-bar__marquee">
+                    {[0, 1].map((i) => (
+                        <div className="top-bar__track" key={i}>
+                            <div className="top-bar__item">🇺🇦 Українське виробництво</div>
+                            <div className="top-bar__separator" />
+                            <div className="top-bar__item">✨ –5% на перше замовлення</div>
+                            <div className="top-bar__separator" />
+                            <div className="top-bar__item">📦 Безкоштовна доставка від 2000₴</div>
+                            <div className="top-bar__separator" />
+                            <div className="top-bar__item">
+                                <NavLink to="/about" prefetch="intent">Про бренд MIND BODY →</NavLink>
+                            </div>
+                            <div className="top-bar__separator" />
+                            <div className="top-bar__item">🧘‍♀️ Yoga · Sport · Dance · Casual</div>
+                            <div className="top-bar__separator" />
+                        </div>
+                    ))}
                 </div>
             </div>
 

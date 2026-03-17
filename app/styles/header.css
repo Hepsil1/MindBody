@@ -2,31 +2,85 @@
    HEADER & NAVIGATION STYLES
    ======================================== */
 
-/* === Top Bar === */
+/* === Top Bar — Premium Marquee === */
 .top-bar {
-    background: var(--color-primary);
-    color: var(--color-text-white);
-    font-size: var(--text-sm);
-    padding: 8px 0;
-}
-
-.top-bar__container {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    height: 36px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: var(--space-md);
+    z-index: 2000;
 }
 
-.top-bar__text,
-.top-bar__link {
-    color: var(--color-text-white);
+.top-bar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(61, 122, 140, 0.4), rgba(200, 170, 110, 0.3), transparent);
+    pointer-events: none;
+}
+
+.top-bar__marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee-scroll 30s linear infinite;
+}
+
+.top-bar__marquee:hover {
+    animation-play-state: paused;
+}
+
+.top-bar__track {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.top-bar__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 28px;
+    font-family: var(--font-display, 'Inter', sans-serif);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.85);
+    white-space: nowrap;
+    line-height: 36px;
+}
+
+.top-bar__item a {
+    color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
-    transition: opacity 0.3s ease;
+    transition: color 0.3s ease;
 }
 
-.top-bar__link:hover {
-    opacity: 0.8;
+.top-bar__item a:hover {
+    color: rgba(200, 170, 110, 1);
 }
+
+.top-bar__separator {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(61, 122, 140, 0.5);
+    flex-shrink: 0;
+}
+
+@keyframes marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
 
 /* === Main Header === */
 .header {
