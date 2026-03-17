@@ -26,34 +26,33 @@ export function meta({ data }: { data: any }) {
 export async function loader({ params }: LoaderFunctionArgs) {
     const categorySlug = params.category || "women";
 
-    // 1. Fetch FilterConfig (Safe Raw SQL)
+    // Run all 3 queries in parallel for max speed
     let filterConfig = null;
-    try {
-        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT config FROM "FilterConfig" WHERE id = 'global' LIMIT 1`);
-        if (configResult[0]?.config) {
-            filterConfig = JSON.parse(configResult[0].config);
-        }
-    } catch (e) {
-        console.error("FilterConfig fetch failed", e);
-    }
-
-    // 2. Fetch ShopPage
     let shopPage = null;
-    try {
-        shopPage = await prisma.shopPage.findUnique({ where: { slug: categorySlug } });
-    } catch (e) { console.error("ShopPage fetch failed", e); }
-
-    // 3. Fetch Products (Raw SQL with Fallback to JSON)
     let products: any[] = [];
-    try {
-        const rawProducts: any[] = await prisma.$queryRawUnsafe(
-            `SELECT * FROM "Product" WHERE "shopPageSlug" = $1 AND status = 'active' ORDER BY "createdAt" DESC`,
+
+    const [configResult, shopPageResult, rawProducts] = await Promise.all([
+        // 1. FilterConfig
+        prisma.$queryRawUnsafe(`SELECT config FROM "FilterConfig" WHERE id = 'global' LIMIT 1`)
+            .catch((e: any) => { console.error("FilterConfig fetch failed", e); return []; }) as Promise<any[]>,
+        // 2. ShopPage
+        prisma.shopPage.findUnique({ where: { slug: categorySlug } })
+            .catch((e: any) => { console.error("ShopPage fetch failed", e); return null; }),
+        // 3. Products — only needed columns, no SELECT *
+        prisma.$queryRawUnsafe(
+            `SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, "shopPageSlug", status, "createdAt"
+             FROM "Product"
+             WHERE "shopPageSlug" = $1 AND status = 'active'
+             ORDER BY "createdAt" DESC`,
             categorySlug
-        );
-        products = rawProducts;
-    } catch (e: any) {
-        console.warn("Product fetch failed, using fallback:", e.message);
+        ).catch((e: any) => { console.warn("Product fetch failed:", e.message); return []; }) as Promise<any[]>
+    ]);
+
+    if ((configResult as any[])[0]?.config) {
+        try { filterConfig = JSON.parse((configResult as any[])[0].config); } catch {}
     }
+    shopPage = shopPageResult;
+    products = rawProducts as any[];
 
     // Removed fallback to local JSON files if DB is empty to ensure admin panel and storefront sync.
 

@@ -17,54 +17,52 @@ export function meta({ }: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   try {
-    // Use Raw SQL to only fetch HOME slides (page is null or 'home')
-    const slides = await prisma.$queryRaw`SELECT * FROM "Slide" WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC` as any[];
+    // Fetch HOME slides — only needed columns, not SELECT *
+    const slides = await prisma.$queryRaw`SELECT id, name, type, link, image1, image2, image3, "image1Pos", "image2Pos", "image3Pos" FROM "Slide" WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC` as any[];
 
-    // Fetch categories directly via raw SQL
-    const categoriesFromDb: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Category" ORDER BY "order" ASC`);
+    // Fetch categories — only needed columns
+    const categoriesFromDb: any[] = await prisma.$queryRawUnsafe(`SELECT id, title, subtitle, image, "imagePos", link, "buttonText" FROM "Category" ORDER BY "order" ASC`);
 
-    // Fetch active products from DB for homepage
+    // Fetch active products — TWO targeted queries with LIMIT 4 instead of loading ALL products
     let womenProducts: any[] = [];
     let kidsProducts: any[] = [];
     try {
-      const allProducts = await prisma.$queryRaw`
-        SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, "shopPageSlug"
-        FROM "Product"
-        WHERE status = 'active'
-        ORDER BY "createdAt" DESC
-      ` as any[];
-
-      womenProducts = allProducts
-        .filter((p: any) => p.shopPageSlug === 'women' || p.category === 'women')
-        .slice(0, 4)
-        .map((p: any) => ({
+      // Helper to map raw product rows to frontend shape
+      const mapProduct = (p: any, fallbackImg: string) => {
+        let imgs: string[] = [];
+        try { imgs = JSON.parse(p.images || '[]'); } catch { }
+        return {
           id: p.id,
           name: p.name,
-          category: p.category || 'women',
+          category: p.category || p.shopPageSlug,
           price: Number(p.price),
           price_usd: Math.round(Number(p.price) / 40),
-          image: (() => { try { const imgs = JSON.parse(p.images || '[]'); return imgs[0] || '/pics1cloths/IMG_6201.JPG'; } catch { return '/pics1cloths/IMG_6201.JPG'; } })(),
-          image2: (() => { try { const imgs = JSON.parse(p.images || '[]'); return imgs[1] || null; } catch { return null; } })(),
+          image: imgs[0] || fallbackImg,
+          image2: imgs[1] || null,
           is_new: p.createdAt ? (Date.now() - new Date(p.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 : false,
           is_sale: p.comparePrice ? Number(p.comparePrice) > Number(p.price) : false,
           sale_price: p.comparePrice && Number(p.comparePrice) > Number(p.price) ? Number(p.price) : undefined
-        }));
+        };
+      };
 
-      kidsProducts = allProducts
-        .filter((p: any) => p.shopPageSlug === 'kids' || p.category === 'kids')
-        .slice(0, 4)
-        .map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          category: p.category || 'kids',
-          price: Number(p.price),
-          price_usd: Math.round(Number(p.price) / 40),
-          image: (() => { try { const imgs = JSON.parse(p.images || '[]'); return imgs[0] || '/pics2cloths/IMG_5222.JPG'; } catch { return '/pics2cloths/IMG_5222.JPG'; } })(),
-          image2: (() => { try { const imgs = JSON.parse(p.images || '[]'); return imgs[1] || null; } catch { return null; } })(),
-          is_new: p.createdAt ? (Date.now() - new Date(p.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 : false,
-          is_sale: p.comparePrice ? Number(p.comparePrice) > Number(p.price) : false,
-          sale_price: p.comparePrice && Number(p.comparePrice) > Number(p.price) ? Number(p.price) : undefined
-        }));
+      // Only fetch 4 women products with lightweight columns
+      const [rawWomen, rawKids] = await Promise.all([
+        prisma.$queryRawUnsafe(
+          `SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", "createdAt"
+           FROM "Product"
+           WHERE ("shopPageSlug" = 'women' OR category = 'women') AND status = 'active'
+           ORDER BY "createdAt" DESC LIMIT 4`
+        ) as Promise<any[]>,
+        prisma.$queryRawUnsafe(
+          `SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", "createdAt"
+           FROM "Product"
+           WHERE ("shopPageSlug" = 'kids' OR category = 'kids') AND status = 'active'
+           ORDER BY "createdAt" DESC LIMIT 4`
+        ) as Promise<any[]>
+      ]);
+
+      womenProducts = rawWomen.map((p: any) => mapProduct(p, '/pics1cloths/IMG_6201.JPG'));
+      kidsProducts = rawKids.map((p: any) => mapProduct(p, '/pics2cloths/IMG_5222.JPG'));
     } catch (e) {
       console.error('Failed to load products:', e);
     }

@@ -7,22 +7,17 @@ import CategoryCard from "../../components/CategoryCard";
 
 export async function loader({ request }: Route.LoaderArgs) {
     try {
-        // Fetch ALL slides using Raw SQL to ensure we see the 'page' column
-        // The Prisma Client might be outdated, so standard findMany might return objects without 'page' property
-        // or fail to filter by it. Raw SQL gives us the raw DB rows.
-        const allSlidesRaw = await prisma.$queryRaw`SELECT * FROM "Slide" ORDER BY "order" ASC` as any[];
+        // Run all queries in parallel for speed
+        const [allSlidesRaw, categoriesResult, shopPages, filterConfigResult] = await Promise.all([
+            prisma.$queryRaw`SELECT id, name, type, link, image1, image2, image3, "image1Pos", "image2Pos", "image3Pos", page, "order", "isActive" FROM "Slide" ORDER BY "order" ASC` as Promise<any[]>,
+            prisma.$queryRawUnsafe(`SELECT id, title, subtitle, image, "imagePos", link, "buttonText", "order" FROM "Category" ORDER BY "order" ASC`) as Promise<any[]>,
+            prisma.shopPage.findMany(),
+            prisma.$queryRawUnsafe(`SELECT * FROM "FilterConfig" WHERE id = 'global' LIMIT 1`) as Promise<any[]>
+        ]);
 
-        // Standardize raw result (SQLite raw result might depend on driver, usually it's array of objects)
-        // Manual filtering ensures strict separation
         const slides = allSlidesRaw.filter((s: any) => !s.page || s.page === "home");
         const aboutSlides = allSlidesRaw.filter((s: any) => s.page === "about");
-
-        const categoriesResult: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Category" ORDER BY "order" ASC`);
         const categories = categoriesResult || [];
-
-        const shopPages = await prisma.shopPage.findMany();
-        // Use raw SQL for filterConfig to ensure it always works
-        const filterConfigResult: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "FilterConfig" WHERE id = 'global' LIMIT 1`);
         const filterConfig = filterConfigResult[0] || null;
 
         return { slides, categories, shopPages, filterConfig, aboutSlides };

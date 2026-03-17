@@ -52,7 +52,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
     let relatedProducts: any[] = [];
 
     try {
-        const productResult: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Product" WHERE id = $1`, id);
+        const productResult: any[] = await prisma.$queryRawUnsafe(
+            `SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, inventory, status, "shopPageSlug", "createdAt"
+             FROM "Product" WHERE id = $1`, id
+        );
 
         if (productResult[0]) {
             const p = productResult[0];
