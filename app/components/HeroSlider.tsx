@@ -58,10 +58,9 @@ interface HeroSliderProps {
     autoPlay?: boolean;
     interval?: number;
     children?: React.ReactNode;
-    showScroll?: boolean;
 }
 
-export default function HeroSlider({ slides: propSlides, autoPlay = true, interval = 5000, children, showScroll = true }: HeroSliderProps) {
+export default function HeroSlider({ slides: propSlides, autoPlay = true, interval = 5000, children }: HeroSliderProps) {
     const slides = propSlides && propSlides.length > 0 ? propSlides : defaultSlides;
     const [activeSlide, setActiveSlide] = useState(0);
 
@@ -154,13 +153,7 @@ export default function HeroSlider({ slides: propSlides, autoPlay = true, interv
                 </div>
             </div>
 
-            {/* Scroll Indicator */}
-            {showScroll && (
-                <div className="hero-slider__scroll" aria-hidden="true">
-                    <span>Гортай</span>
-                    <div className="hero-slider__scroll-line"></div>
-                </div>
-            )}
+
         </section>
     );
 }

@@ -167,18 +167,13 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
                                             <Link to="/shop/yoga" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                            <Link to="/shop/yoga?cat=jumpsuit" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
-                                            <Link to="/shop/yoga?cat=leggings" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Лосини</Link>
-                                            <Link to="/shop/yoga?cat=velo" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>VELO</Link>
-                                            <Link to="/shop/yoga?cat=tops" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Топи</Link>
-                                            <Link to="/shop/yoga?cat=shorts" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
-                                            <Link to="/shop/yoga?cat=longsleeve" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Лонгсліви</Link>
-                                            <Link to="/shop/yoga?cat=tshirt" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Футболки, майки</Link>
-                                        </div>
-                                        <div className="mega-menu__col">
-                                            <h4 className="mega-menu__heading">Матеріал</h4>
-                                            <Link to="/shop/yoga?material=sport" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Sport</Link>
-                                            <Link to="/shop/yoga?material=cotton" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Cotton</Link>
+                                            <Link to="/shop/yoga?cat=Комбінезони" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
+                                            <Link to="/shop/yoga?cat=Лосини" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Лосини</Link>
+                                            <Link to="/shop/yoga?cat=VELO" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>VELO</Link>
+                                            <Link to="/shop/yoga?cat=Топи" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Топи</Link>
+                                            <Link to="/shop/yoga?cat=Шорти" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
+                                            <Link to="/shop/yoga?cat=Лонгсліви" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Лонгсліви</Link>
+                                            <Link to="/shop/yoga?cat=Футболки, майки" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Футболки, майки</Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
@@ -204,13 +199,13 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
                                             <Link to="/shop/sport" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                            <Link to="/shop/sport?cat=jumpsuit" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
-                                            <Link to="/shop/sport?cat=leggings" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Лосини</Link>
-                                            <Link to="/shop/sport?cat=velo" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>VELO</Link>
-                                            <Link to="/shop/sport?cat=tops" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Топи</Link>
-                                            <Link to="/shop/sport?cat=shorts" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
-                                            <Link to="/shop/sport?cat=longsleeve" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Лонгсліви</Link>
-                                            <Link to="/shop/sport?cat=dance" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Dance</Link>
+                                            <Link to="/shop/sport?cat=Комбінезони" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
+                                            <Link to="/shop/sport?cat=Лосини" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Лосини</Link>
+                                            <Link to="/shop/sport?cat=VELO" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>VELO</Link>
+                                            <Link to="/shop/sport?cat=Топи" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Топи</Link>
+                                            <Link to="/shop/sport?cat=Шорти" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
+                                            <Link to="/shop/sport?cat=Лонгсліви" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Лонгсліви</Link>
+                                            <Link to="/shop/sport?cat=Dance" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Dance</Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
@@ -236,9 +231,9 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
                                             <Link to="/shop/dance" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                            <Link to="/shop/dance?cat=jumpsuit" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
-                                            <Link to="/shop/dance?cat=mesh" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Моделі із сітки</Link>
-                                            <Link to="/shop/dance?cat=paye" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Комплекти пайє</Link>
+                                            <Link to="/shop/dance?cat=Комбінезони" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
+                                            <Link to="/shop/dance?cat=Моделі із сітки" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Моделі із сітки</Link>
+                                            <Link to="/shop/dance?cat=Комплекти пілон" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Комплекти пілон</Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
@@ -264,17 +259,17 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
                                             <Link to="/shop/casual" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                            <Link to="/shop/casual?cat=suits" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Костюми</Link>
-                                            <Link to="/shop/casual?cat=shirts" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Сорочки</Link>
-                                            <Link to="/shop/casual?cat=tshirt" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Футболки</Link>
-                                            <Link to="/shop/casual?cat=tanks" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Майки</Link>
+                                            <Link to="/shop/casual?cat=Костюми" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Костюми</Link>
+                                            <Link to="/shop/casual?cat=Сорочки" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Сорочки</Link>
+                                            <Link to="/shop/casual?cat=Футболки" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Футболки</Link>
+                                            <Link to="/shop/casual?cat=Майки" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Майки</Link>
                                         </div>
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Ще</h4>
-                                            <Link to="/shop/casual?cat=shorts" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
-                                            <Link to="/shop/casual?cat=thermo" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Термо</Link>
-                                            <Link to="/shop/casual?cat=hoodies" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Худі / Світшоти</Link>
-                                            <Link to="/shop/casual?cat=joggers" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Джоггери</Link>
+                                            <Link to="/shop/casual?cat=Шорти" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
+                                            <Link to="/shop/casual?cat=Термо" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Термо</Link>
+                                            <Link to="/shop/casual?cat=Худі/світшоти" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Худі / Світшоти</Link>
+                                            <Link to="/shop/casual?cat=Джогери" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Джоггери</Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
@@ -300,14 +295,7 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
                                             <Link to="/shop/kids" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                            <Link to="/shop/kids?cat=jumpsuit" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
-                                        </div>
-                                        <div className="mega-menu__col">
-                                            <h4 className="mega-menu__heading">Тип рукава</h4>
-                                            <Link to="/shop/kids?sleeve=long" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Рукав</Link>
-                                            <Link to="/shop/kids?sleeve=short" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Короткий рукав</Link>
-                                            <Link to="/shop/kids?sleeve=none" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Без рукава</Link>
-                                            <Link to="/shop/kids?cat=velo" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>VELO</Link>
+                                            <Link to="/shop/kids?cat=Комбінезони" className="mega-menu__link" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">

@@ -2,7 +2,7 @@ import { type LoaderFunctionArgs } from "react-router";
 import { useLoaderData, Link } from "react-router";
 // import { ApiService } from "../utils/api";
 import ProductCard from "../components/ProductCard";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { prisma } from "../db.server";
 
 export function meta({ data }: { data: any }) {
@@ -81,11 +81,14 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
     return { products: mappedProducts, category: categorySlug, shopPage, filterConfig };
 }
+import { useSearchParams } from "react-router";
 
 export default function ShopCategory() {
     const { products, category, shopPage, filterConfig } = useLoaderData<typeof loader>();
+    const [searchParams] = useSearchParams();
+    const initialCat = searchParams.get('cat');
 
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCat ? [initialCat] : []);
     const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
     const [selectedColors, setSelectedColors] = useState<string[]>([]);
     const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
@@ -98,6 +101,15 @@ export default function ShopCategory() {
         price: true
     });
     const LOAD_MORE_COUNT = 12;
+
+    useEffect(() => {
+        const cat = searchParams.get('cat');
+        if (cat) {
+            setSelectedCategories([cat]);
+        } else {
+            setSelectedCategories([]);
+        }
+    }, [searchParams]);
 
     const toggleSection = (section: 'category' | 'size' | 'color' | 'price') => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
