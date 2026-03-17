@@ -10,8 +10,7 @@
 # Migration script (one-time use)
 migrate-to-neon.mjs
 
-# Uploaded images (generated from DB, not committed)
-/public/uploads/
+# Uploaded images are committed for Vercel deployment
 
 # Diagnostic scripts
 perf_analysis.mjs
