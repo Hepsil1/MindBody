@@ -47,7 +47,7 @@ const COLOR_MAP: Record<string, string> = {
 
 export async function loader({ params }: LoaderFunctionArgs) {
     const id = params.id;
-    let product = null;
+    let product: any = null;
     let filterConfig: FilterConfigData | null = null;
     let relatedProducts: any[] = [];
 
@@ -109,9 +109,16 @@ export async function loader({ params }: LoaderFunctionArgs) {
             }));
         }
 
-        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT config FROM "FilterConfig" WHERE id = 'global' LIMIT 1`);
-        if (configResult[0]?.config) {
-            filterConfig = JSON.parse(configResult[0].config);
+        const configResult: any[] = await prisma.$queryRawUnsafe(
+            `SELECT id, config FROM "FilterConfig" WHERE id = $1 OR id = 'global'`, 
+            product?.shopPageSlug || 'global'
+        );
+        const specificConfig = configResult.find(c => c.id === product?.shopPageSlug);
+        const globalConfig = configResult.find(c => c.id === 'global');
+        const configToParse = specificConfig?.config || globalConfig?.config;
+        
+        if (configToParse) {
+            try { filterConfig = JSON.parse(configToParse); } catch {}
         }
 
     } catch (e) {

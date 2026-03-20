@@ -171,31 +171,43 @@ export default function AdminProducts() {
                                     <tr key={product.id}>
                                         <td>
                                             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                <div
-                                                    style={{
-                                                        width: "40px",
-                                                        height: "40px",
-                                                        borderRadius: "8px",
-                                                        background: "rgba(255,255,255,0.05)",
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                    }}
-                                                >
-                                                    <svg
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        strokeWidth="1.5"
-                                                        width="20"
-                                                        height="20"
-                                                        style={{ color: "var(--text-muted)" }}
-                                                    >
-                                                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                                                        <circle cx="8.5" cy="8.5" r="1.5" />
-                                                        <path d="M21 15l-5-5L5 21" />
-                                                    </svg>
-                                                </div>
+                                                {(() => {
+                                                    let thumbSrc: string | null = null;
+                                                    try {
+                                                        const imgs = JSON.parse(product.images || '[]');
+                                                        if (imgs.length > 0) thumbSrc = imgs[0];
+                                                    } catch {}
+                                                    return thumbSrc ? (
+                                                        <img
+                                                            src={thumbSrc}
+                                                            alt=""
+                                                            style={{
+                                                                width: "40px",
+                                                                height: "40px",
+                                                                borderRadius: "8px",
+                                                                objectFit: "cover",
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <div
+                                                            style={{
+                                                                width: "40px",
+                                                                height: "40px",
+                                                                borderRadius: "8px",
+                                                                background: "rgba(255,255,255,0.05)",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                            }}
+                                                        >
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="20" height="20" style={{ color: "var(--text-muted)" }}>
+                                                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                                                <path d="M21 15l-5-5L5 21" />
+                                                            </svg>
+                                                        </div>
+                                                    );
+                                                })()}
                                                 <div>
                                                     <div style={{ color: "var(--text-main)", fontWeight: "500" }}>
                                                         {product.name}

@@ -21,12 +21,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     // Fetch categories — only needed columns
     const categoriesFromDb: any[] = await prisma.$queryRawUnsafe(`SELECT id, title, subtitle, image, "imagePos", link, "buttonText" FROM "Category" ORDER BY "order" ASC`);
 
-    // Fetch active products — TWO targeted queries with LIMIT 4 instead of loading ALL products
-    let womenProducts: any[] = [];
-    let kidsProducts: any[] = [];
+    // Fetch newest 8 products from ALL categories
+    let newProducts: any[] = [];
     try {
-      // Helper to map raw product rows to frontend shape
-      const mapProduct = (p: any, fallbackImg: string) => {
+      const mapProduct = (p: any) => {
         let imgs: string[] = [];
         try { imgs = JSON.parse(p.images || '[]'); } catch { }
         return {
@@ -35,37 +33,24 @@ export async function loader({ request }: Route.LoaderArgs) {
           category: p.category || p.shopPageSlug,
           price: Number(p.price),
           price_usd: Math.round(Number(p.price) / 40),
-          image: imgs[0] || fallbackImg,
+          image: imgs[0] || '/brand-sun.png',
           image2: imgs[1] || null,
-          is_new: p.createdAt ? (Date.now() - new Date(p.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000 : false,
+          is_new: true,
           is_sale: p.comparePrice ? Number(p.comparePrice) > Number(p.price) : false,
           sale_price: p.comparePrice && Number(p.comparePrice) > Number(p.price) ? Number(p.price) : undefined
         };
       };
 
-      // Only fetch 4 women products with lightweight columns
-      const [rawWomen, rawKids] = await Promise.all([
-        prisma.$queryRawUnsafe(
-          `SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", "createdAt"
-           FROM "Product"
-           WHERE ("shopPageSlug" = 'women' OR category = 'women') AND status = 'active'
-           ORDER BY "createdAt" DESC LIMIT 4`
-        ) as Promise<any[]>,
-        prisma.$queryRawUnsafe(
-          `SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", "createdAt"
-           FROM "Product"
-           WHERE ("shopPageSlug" = 'kids' OR category = 'kids') AND status = 'active'
-           ORDER BY "createdAt" DESC LIMIT 4`
-        ) as Promise<any[]>
-      ]);
-
-      womenProducts = rawWomen.map((p: any) => mapProduct(p, '/pics1cloths/IMG_6201.JPG'));
-      kidsProducts = rawKids.map((p: any) => mapProduct(p, '/pics2cloths/IMG_5222.JPG'));
+      const rawProducts: any[] = await prisma.$queryRawUnsafe(
+        `SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", "createdAt"
+         FROM "Product"
+         WHERE status = 'active'
+         ORDER BY "createdAt" DESC LIMIT 8`
+      );
+      newProducts = rawProducts.map(mapProduct);
     } catch (e) {
       console.error('Failed to load products:', e);
     }
-
-    // Fallback logic removed - if DB is empty, categories will just show no products, ensuring admin sync.
 
     return {
       slides: slides.map((s: any) => ({
@@ -78,34 +63,23 @@ export async function loader({ request }: Route.LoaderArgs) {
         image3: s.image3,
       })) as SlideData[],
       categories: categoriesFromDb.length > 0 ? categoriesFromDb : [
-        {
-          id: "1",
-          title: "Жінкам",
-          subtitle: "Колекція для неї",
-          image: "/pics1cloths/IMG_6201.JPG",
-          link: "/shop/women",
-          buttonText: "Переглянути все"
-        },
-        {
-          id: "2",
-          title: "Дітям",
-          subtitle: "Для малечі",
-          image: "/pics2cloths/IMG_5222.JPG",
-          link: "/shop/kids",
-          buttonText: "Дивитись товари"
-        }
+        { id: '1', title: 'YOGA', subtitle: 'Для гармонії тіла та духу', image: '/pics1cloths/IMG_6201.JPG', link: '/shop/yoga', buttonText: 'Переглянути' },
+        { id: '2', title: 'SPORT', subtitle: 'Для активних тренувань', image: '/pics1cloths/IMG_6210.JPG', link: '/shop/sport', buttonText: 'Переглянути' },
+        { id: '3', title: 'DANCE', subtitle: 'Свобода рухів', image: '/generalpics/595_131123.jpg', link: '/shop/dance', buttonText: 'Переглянути' },
+        { id: '4', title: 'CASUAL', subtitle: 'Повсякденний комфорт', image: '/generalpics/348_131123.jpg', link: '/shop/casual', buttonText: 'Переглянути' },
+        { id: '5', title: 'KIDS', subtitle: 'Для наймолодших', image: '/pics2cloths/IMG_5222.JPG', link: '/shop/kids', buttonText: 'Переглянути' },
+        { id: '6', title: 'YOGATOOLS', subtitle: 'Аксесуари та інвентар', image: '/generalpics/374_131123.jpg', link: '/shop/yogatools', buttonText: 'Переглянути' },
       ],
-      womenProducts,
-      kidsProducts,
+      newProducts,
     };
   } catch (error) {
     console.error("Failed to load home data:", error);
-    return { slides: [] as SlideData[], categories: [], womenProducts: [], kidsProducts: [] };
+    return { slides: [] as SlideData[], categories: [], newProducts: [] };
   }
 }
 
 export default function Home() {
-  const { slides, categories, womenProducts, kidsProducts } = useLoaderData<typeof loader>();
+  const { slides, categories, newProducts } = useLoaderData<typeof loader>();
 
   // Scroll logic for parallax and back-to-top button
   useEffect(() => {
@@ -158,63 +132,115 @@ export default function Home() {
     };
   }, []);
 
-
-
   return (
     <main>
       <HeroSlider slides={slides} />
+      {/* Premium Features Bar (500x cooler than reference) */}
+      <section className="premium-features-bar">
+        <div className="container" style={{ maxWidth: '1440px' }}>
+          <div className="features-bar__grid">
 
-      {/* Trust Bar */}
-      <section className="trust-bar">
-        <div className="container">
-          <div className="trust-bar__grid">
-            <div className="trust-bar__item">
-              <span className="trust-bar__icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2" /><polyline points="16 8 20 8 23 11 23 16 20 16" /><circle cx="18" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg>
-              </span>
-              <div className="trust-bar__text">
-                <strong>Швидка доставка</strong>
-                <span>Нова Пошта по всій Україні</span>
+            <div className="feature-item group">
+              <div className="feature-item__icon-wrapper">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"></path>
+                </svg>
+              </div>
+              <div className="feature-item__text">
+                <h4 className="feature-item__title">Українське виробництво</h4>
+                <p className="feature-item__desc">100% контроль якості у своєму цеху</p>
               </div>
             </div>
-            <div className="trust-bar__item">
-              <span className="trust-bar__icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><polyline points="23 20 23 14 17 14" /><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" /></svg>
-              </span>
-              <div className="trust-bar__text">
-                <strong>Повернення 14 днів</strong>
-                <span>Обмін та повернення без проблем</span>
+
+            <div className="feature-item group">
+              <div className="feature-item__icon-wrapper">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <div className="feature-item__text">
+                <h4 className="feature-item__title">Premium Supplex</h4>
+                <p className="feature-item__desc">Технологічні тканини, що дихають</p>
               </div>
             </div>
-            <div className="trust-bar__item">
-              <span className="trust-bar__icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg>
-              </span>
-              <div className="trust-bar__text">
-                <strong>Українське виробництво</strong>
-                <span>100% якість та контроль</span>
+
+            <div className="feature-item group">
+              <div className="feature-item__icon-wrapper">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 16l-4-4m0 0l4-4m-4 4h14m-10 8a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" />
+                </svg>
+              </div>
+              <div className="feature-item__text">
+                <h4 className="feature-item__title">Повернення 14 днів</h4>
+                <p className="feature-item__desc">Обмін та повернення без проблем</p>
               </div>
             </div>
-            <div className="trust-bar__item">
-              <span className="trust-bar__icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>
-              </span>
-              <div className="trust-bar__text">
-                <strong>Безпечна оплата</strong>
-                <span>Оплата карткою або при отриманні</span>
+
+            <div className="feature-item group">
+              <div className="feature-item__icon-wrapper">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.2">
+                  <rect x="3" y="5" width="18" height="14" rx="2" strokeLinecap="round" strokeLinejoin="round"></rect>
+                  <line x1="3" y1="10" x2="21" y2="10" strokeLinecap="round" strokeLinejoin="round"></line>
+                </svg>
+              </div>
+              <div className="feature-item__text">
+                <h4 className="feature-item__title">Швидка оплата</h4>
+                <p className="feature-item__desc">Безпечно карткою або при отриманні</p>
               </div>
             </div>
+
           </div>
         </div>
       </section>
-      {/* Categories */}
-      <section className="categories section" id="shop">
-        <div className="container">
-          <div className="section__header">
-            <h2 className="section__title">Обирайте свій стиль</h2>
-            <p className="section__subtitle">Колекції для активного способу життя</p>
+
+      {/* Unified Collections Group (Categories + New Arrivals) */}
+      <section className="section section--alt shop-collections-group">
+        <div className="logo-pattern-bg"></div>
+        {/* Sub-section: Categories */}
+        <div className="container" style={{ maxWidth: '1440px', paddingBottom: '100px' }} id="shop">
+          <div className="section__header section__header--center" style={{ marginBottom: '120px' }}>
+            <div style={{
+              fontFamily: "'Marcellus', serif",
+              fontSize: '13px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5em',
+              color: 'var(--color-primary)',
+              marginBottom: '30px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '20px'
+            }}>
+              <div style={{ width: '40px', height: '1px', background: 'rgba(0,0,0,0.1)' }}></div>
+              <span>Exclusive Collections</span>
+              <div style={{ width: '40px', height: '1px', background: 'rgba(0,0,0,0.1)' }}></div>
+            </div>
+            
+            <h2 className="section__title" style={{
+              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+              fontFamily: "'Prata', serif",
+              fontWeight: 400,
+              color: 'var(--color-text-primary)',
+              lineHeight: 1.2,
+              margin: '0',
+              letterSpacing: '-0.03em'
+            }}>Обирайте свій стиль</h2>
+            
+            <p className="section__subtitle" style={{
+              fontSize: '11px',
+              color: 'var(--color-text-primary)',
+              opacity: 0.4,
+              maxWidth: '450px',
+              margin: '25px auto 0',
+              fontFamily: "'Marcellus', serif",
+              fontWeight: 400,
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              lineHeight: 1.8
+            }}>Втілення ідеального балансу між <br /> функціональністю та бездоганною естетикою</p>
           </div>
-          <div className="categories__grid">
+          <div className="editorial-categories-grid">
             {categories.map((cat: any) => (
               <CategoryCard
                 key={cat.id}
@@ -228,52 +254,25 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
 
-      {/* New Collections - 8 Cards Grid */}
-      <section className="section section--alt new-arrivals" id="new-collections">
-        <div className="logo-pattern-bg"></div>
-        <div className="container">
+        {/* Sub-section: New Arrivals */}
+        <div className="container" id="new-collections">
           <div className="section__header section__header--center">
             <span className="section__badge">Новинки {new Date().getFullYear()}</span>
             <h2 className="section__title">Нові надходження</h2>
-            <p className="section__subtitle">Сезонні новинки колекції для всієї родини</p>
+            <p className="section__subtitle">Сезонні новинки з усіх колекцій</p>
           </div>
 
-          {/* Women's Row */}
-          <div className="arrivals-category">
-            <div className="collection-header">
-              <div className="collection-header__content">
-                <span className="collection-header__label">Жіноча колекція</span>
-              </div>
-              <Link to="/shop/women" className="collection-link">
-                <span className="collection-link__text">Переглянути колекцію</span>
-                <span className="collection-link__icon">→</span>
-              </Link>
-            </div>
-            <div className="products-grid-4">
-              {womenProducts.map((p: any) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
+          <div className="products-grid-4">
+            {newProducts.map((p: any) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
           </div>
 
-          {/* Kids Row */}
-          <div className="arrivals-category arrivals-category--kids">
-            <div className="collection-header">
-              <div className="collection-header__content">
-                <span className="collection-header__label">Дитяча колекція</span>
-              </div>
-              <Link to="/shop/kids" className="collection-link">
-                <span className="collection-link__text">Переглянути колекцію</span>
-                <span className="collection-link__icon">→</span>
-              </Link>
-            </div>
-            <div className="products-grid-4">
-              {kidsProducts.map((p: any) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
+          <div style={{ textAlign: 'center', marginTop: '60px' }}>
+            <Link to="/shop/yoga" className="btn btn--primary btn--large">
+              Переглянути всі колекції
+            </Link>
           </div>
         </div>
       </section>

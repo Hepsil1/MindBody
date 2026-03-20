@@ -23,8 +23,8 @@ export default function CategoryCard({ title, subtitle, image, imagePos, link, b
     const { position, scale } = parseImagePos();
 
     return (
-        <Link to={link} prefetch="intent" className="category-card">
-            <div className="category-card__image">
+        <Link to={link} prefetch="intent" className="category-card-editorial">
+            <div className="category-card-editorial__image-wrapper">
                 <img
                     src={image}
                     alt={title}
@@ -35,11 +35,13 @@ export default function CategoryCard({ title, subtitle, image, imagePos, link, b
                     }}
                 />
             </div>
-            <div className="category-card__overlay"></div>
-            <div className="category-card__content">
-                <p className="category-card__count">{subtitle}</p>
-                <h3 className="category-card__title">{title}</h3>
-                <div className="category-card__shop-now">{buttonText}</div>
+            <div className="category-card-editorial__overlay" />
+            <div className="category-card-editorial__content">
+                <p className="category-card-editorial__subtitle">{subtitle}</p>
+                <h3 className="category-card-editorial__title">{title}</h3>
+                <span className="category-card-editorial__link">
+                    {buttonText} <span>→</span>
+                </span>
             </div>
         </Link>
     );

@@ -29,10 +29,12 @@ export async function loader({ params }: LoaderFunctionArgs) {
     let shopPage = null;
     let products: any[] = [];
 
-    const [configResult, shopPageResult, rawProducts] = await Promise.all([
-        // 1. FilterConfig
-        prisma.$queryRawUnsafe(`SELECT config FROM "FilterConfig" WHERE id = 'global' LIMIT 1`)
-            .catch((e: any) => { console.error("FilterConfig fetch failed", e); return []; }) as Promise<any[]>,
+    const [configsResult, shopPageResult, rawProducts] = await Promise.all([
+        // 1. FilterConfigs (Specific + Global)
+        prisma.$queryRawUnsafe(
+            `SELECT id, config FROM "FilterConfig" WHERE id = $1 OR id = 'global'`,
+            categorySlug
+        ).catch((e: any) => { console.error("FilterConfig fetch failed", e); return []; }) as Promise<any[]>,
         // 2. ShopPage
         prisma.shopPage.findUnique({ where: { slug: categorySlug } })
             .catch((e: any) => { console.error("ShopPage fetch failed", e); return null; }),
@@ -46,8 +48,14 @@ export async function loader({ params }: LoaderFunctionArgs) {
         ).catch((e: any) => { console.warn("Product fetch failed:", e.message); return []; }) as Promise<any[]>
     ]);
 
-    if ((configResult as any[])[0]?.config) {
-        try { filterConfig = JSON.parse((configResult as any[])[0].config); } catch {}
+    const specificConfig = (configsResult as any[]).find(c => c.id === categorySlug);
+    const globalConfig = (configsResult as any[]).find(c => c.id === 'global');
+    
+    // Prioritize specific config, fallback to global
+    const configToParse = specificConfig?.config || globalConfig?.config;
+
+    if (configToParse) {
+        try { filterConfig = JSON.parse(configToParse); } catch {}
     }
     shopPage = shopPageResult;
     products = rawProducts as any[];

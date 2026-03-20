@@ -12,18 +12,18 @@ export async function loader({ request }: Route.LoaderArgs) {
             prisma.$queryRaw`SELECT id, name, type, link, image1, image2, image3, "image1Pos", "image2Pos", "image3Pos", page, "order", "isActive" FROM "Slide" ORDER BY "order" ASC` as Promise<any[]>,
             prisma.$queryRawUnsafe(`SELECT id, title, subtitle, image, "imagePos", link, "buttonText", "order" FROM "Category" ORDER BY "order" ASC`) as Promise<any[]>,
             prisma.shopPage.findMany(),
-            prisma.$queryRawUnsafe(`SELECT * FROM "FilterConfig" WHERE id = 'global' LIMIT 1`) as Promise<any[]>
+            prisma.$queryRawUnsafe(`SELECT * FROM "FilterConfig"`) as Promise<any[]>
         ]);
 
         const slides = allSlidesRaw.filter((s: any) => !s.page || s.page === "home");
         const aboutSlides = allSlidesRaw.filter((s: any) => s.page === "about");
         const categories = categoriesResult || [];
-        const filterConfig = filterConfigResult[0] || null;
+        const filterConfigs = filterConfigResult || [];
 
-        return { slides, categories, shopPages, filterConfig, aboutSlides };
+        return { slides, categories, shopPages, filterConfigs, aboutSlides };
     } catch (error) {
         console.error("Loader error:", error);
-        return { slides: [], categories: [], shopPages: [], filterConfig: null, aboutSlides: [] };
+        return { slides: [], categories: [], shopPages: [], filterConfigs: [], aboutSlides: [] };
     }
 }
 
@@ -181,12 +181,13 @@ export async function action({ request }: Route.ActionArgs) {
 
         if (intent === "update_filters") {
             const config = formData.get("config") as string;
+            const pageSlug = (formData.get("pageSlug") as string) || 'global';
             try {
                 // PostgreSQL UPSERT - always reliable
                 await prisma.$executeRawUnsafe(
-                    `INSERT INTO "FilterConfig" (id, config, "updatedAt") VALUES ('global', $1, CURRENT_TIMESTAMP)
-                 ON CONFLICT(id) DO UPDATE SET config = $1, "updatedAt" = CURRENT_TIMESTAMP`,
-                    config
+                    `INSERT INTO "FilterConfig" (id, config, "updatedAt") VALUES ($1, $2, CURRENT_TIMESTAMP)
+                 ON CONFLICT(id) DO UPDATE SET config = $2, "updatedAt" = CURRENT_TIMESTAMP`,
+                    pageSlug, config
                 );
             } catch (e) {
                 console.error("FilterConfig update failed:", e);
@@ -592,7 +593,7 @@ const ImageCropSelector = ({
 
 
 export default function AdminVisualEditor() {
-    const { slides, categories, shopPages, filterConfig, aboutSlides } = useLoaderData<typeof loader>();
+    const { slides, categories, shopPages, filterConfigs, aboutSlides } = useLoaderData<typeof loader>();
     const fetcher = useFetcher();
 
     // UI State
@@ -1618,14 +1619,14 @@ export default function AdminVisualEditor() {
                 )
             }
 
-            {/* Duplicate Categories Modal Removed */}
             {/* --- FILTER CONFIG EDITOR MODAL (New) --- */}
             {
                 filtersOpen && (
                     <FilterEditorModal
                         isOpen={filtersOpen}
                         onClose={() => setFiltersOpen(false)}
-                        currentConfig={filterConfig?.config}
+                        filterConfigs={filterConfigs}
+                        shopPages={shopPages}
                         fetcher={fetcher}
                     />
                 )
@@ -1647,7 +1648,9 @@ export default function AdminVisualEditor() {
 }
 
 // --- Filter Editor Modal Component ---
-function FilterEditorModal({ isOpen, onClose, currentConfig, fetcher }: any) {
+function FilterEditorModal({ isOpen, onClose, filterConfigs = [], shopPages = [], fetcher }: any) {
+    const [selectedPage, setSelectedPage] = useState('global');
+
     const defaultData = {
         categories: {
             "jumpsuit": "Комбінезони",
@@ -1677,19 +1680,28 @@ function FilterEditorModal({ isOpen, onClose, currentConfig, fetcher }: any) {
     };
 
     const [data, setData] = useState(() => {
-        if (!currentConfig) return defaultData;
-        try {
-            return JSON.parse(currentConfig);
-        } catch (e) {
-            return defaultData;
-        }
+        const configRow = filterConfigs.find((c: any) => c.id === 'global');
+        if (!configRow?.config) return defaultData;
+        try { return JSON.parse(configRow.config); } catch (e) { return defaultData; }
     });
+
+    useEffect(() => {
+        const configRow = filterConfigs.find((c: any) => c.id === selectedPage);
+        if (!configRow?.config) {
+            setData(defaultData);
+        } else {
+            try { setData(JSON.parse(configRow.config)); } catch (e) { setData(defaultData); }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedPage, filterConfigs]);
 
     const handleSave = () => {
         const formData = new FormData();
         formData.append("intent", "update_filters");
+        formData.append("pageSlug", selectedPage);
         formData.append("config", JSON.stringify(data));
         fetcher.submit(formData, { method: "post" });
+        // Don't close immediately so they see it saved, but for simplicity we close now:
         onClose();
     };
 
@@ -1789,9 +1801,29 @@ function FilterEditorModal({ isOpen, onClose, currentConfig, fetcher }: any) {
             }}>
                 {/* Header */}
                 <div style={{ padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#161b22' }}>
-                    <div>
-                        <h3 style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: 700 }}>Керування фільтрами</h3>
-                        <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '13px' }}>Повне налаштування категорій, кольорів та цін.</p>
+                    <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+                        <div>
+                            <h3 style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: 700 }}>Керування фільтрами</h3>
+                            <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '13px' }}>Повне налаштування категорій, кольорів та цін.</p>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ color: '#94a3b8', fontSize: '13px' }}>Для сторінки:</span>
+                            <select
+                                value={selectedPage}
+                                onChange={(e) => setSelectedPage(e.target.value)}
+                                style={{
+                                    background: '#0f1216', border: '1px solid rgba(255,255,255,0.1)', color: '#fff',
+                                    padding: '8px 12px', borderRadius: '8px', outline: 'none', cursor: 'pointer'
+                                }}
+                            >
+                                <option value="global">Всі сторінки (Global)</option>
+                                {(shopPages || []).map((p: any) => (
+                                    <option key={p.slug} value={p.slug}>
+                                        {p.title ? `${p.title} (${p.slug})` : p.slug}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     <button onClick={onClose} style={{ color: '#94a3b8', background: 'rgba(255,255,255,0.05)', border: 'none', cursor: 'pointer', padding: '10px', borderRadius: '12px' }}>✕</button>
                 </div>

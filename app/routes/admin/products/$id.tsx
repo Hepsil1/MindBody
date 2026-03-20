@@ -46,14 +46,16 @@ const emptyForm: ProductForm = {
 export async function loader({ params }: LoaderFunctionArgs) {
     const isNew = params.id === "new" || !params.id;
     let product = null;
-    let filterConfig: FilterConfigData | null = null;
+    let filterConfigs: Record<string, FilterConfigData> = {};
     let shopPages: { slug: string; title: string }[] = [];
 
     try {
         // 1. Fetch FilterConfig (Raw SQL)
-        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT config FROM "FilterConfig" WHERE id = 'global' LIMIT 1`);
-        if (configResult[0]?.config) {
-            filterConfig = JSON.parse(configResult[0].config);
+        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT id, config FROM "FilterConfig"`);
+        for (const row of configResult) {
+            try {
+                if (row.config) filterConfigs[row.id] = JSON.parse(row.config);
+            } catch (e) {}
         }
 
         // 2. Fetch ShopPages (Raw SQL)
@@ -94,7 +96,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         console.error("Loader failed:", e);
     }
 
-    return { product, filterConfig, shopPages, isNew };
+    return { product, filterConfigs, shopPages, isNew };
 }
 
 // --- Action ---
@@ -258,7 +260,7 @@ export function ErrorBoundary({ error }: { error: any }) {
 
 // --- Component ---
 export default function AdminProductEdit() {
-    const { product, filterConfig, shopPages, isNew } = useLoaderData<typeof loader>();
+    const { product, filterConfigs, shopPages, isNew } = useLoaderData<typeof loader>();
     const fetcher = useFetcher();
     const navigate = useNavigate();
 
@@ -270,6 +272,8 @@ export default function AdminProductEdit() {
             shopPageSlug: shopPages[0]?.slug || "women"
         };
     });
+
+    const filterConfig = filterConfigs[formData.shopPageSlug] || filterConfigs['global'];
 
     // Upload Handler
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -680,8 +684,8 @@ export default function AdminProductEdit() {
                                         onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}
                                     >
                                         <option value="">Оберіть категорію</option>
-                                        {filterConfig?.categories && Object.entries(filterConfig.categories).map(([key, label]) => (
-                                            <option key={key} value={key}>{label}</option>
+                                        {filterConfig?.categories && Object.entries(filterConfig.categories).map(([key, label]: [string, any]) => (
+                                            <option key={key} value={key}>{label as string}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -721,7 +725,7 @@ export default function AdminProductEdit() {
                             <div className="form-group">
                                 <label className="form-label">Доступні кольори (оберіть всі)</label>
                                 <div className="color-grid">
-                                    {filterConfig?.colors && Object.entries(filterConfig.colors).map(([key, label]) => (
+                                    {filterConfig?.colors && Object.entries(filterConfig.colors).map(([key, label]: [string, any]) => (
                                         <div
                                             key={key}
                                             onClick={() => toggleArrayItem('colors', key)}
@@ -729,7 +733,7 @@ export default function AdminProductEdit() {
                                             style={{
                                                 background: key === 'other' ? 'linear-gradient(45deg, #eee, #999)' : key
                                             }}
-                                            title={label}
+                                            title={label as string}
                                         >
                                             {formData.colors.includes(key) && <div className="check-mark">✓</div>}
                                         </div>
@@ -740,7 +744,7 @@ export default function AdminProductEdit() {
                             <div className="form-group">
                                 <label className="form-label">Доступні розміри</label>
                                 <div className="size-grid">
-                                    {(filterConfig?.sizes || []).map((size) => (
+                                    {(filterConfig?.sizes || []).map((size: string) => (
                                         <div
                                             key={size}
                                             onClick={() => toggleArrayItem('sizes', size)}
@@ -776,7 +780,7 @@ export default function AdminProductEdit() {
                                                             <tr key={key}>
                                                                 <td style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                                     <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: color }}></div>
-                                                                    <span style={{ fontWeight: 500 }}>{filterConfig?.colors[color] || color} / {size}</span>
+                                                                    <span style={{ fontWeight: 500 }}>{(filterConfig?.colors as any)?.[color] || color} / {size}</span>
                                                                 </td>
                                                                 <td style={{ width: '100px', textAlign: 'right' }}>
                                                                     <input
