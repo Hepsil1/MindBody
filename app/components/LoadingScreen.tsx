@@ -37,7 +37,6 @@ export function LoadingScreen() {
     return (
         <div className={`loading-screen ${!isVisible ? 'loading-screen--hidden' : ''}`}>
             <div className="loading-screen__container">
-                <div className="loading-screen__pulse"></div>
                 <img
                     src="/brand-sun.png"
                     alt="Loading..."
