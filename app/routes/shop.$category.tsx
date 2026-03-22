@@ -4,6 +4,7 @@ import { useLoaderData, Link } from "react-router";
 import ProductCard from "../components/ProductCard";
 import { useState, useMemo, useEffect } from "react";
 import { prisma } from "../db.server";
+import { parseAndMergeFilterConfig } from "../utils/filters";
 
 export function meta({ data }: { data: any }) {
     const shopPage = data?.shopPage;
@@ -53,10 +54,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     
     // Prioritize specific config, fallback to global
     const configToParse = specificConfig?.config || globalConfig?.config;
-
-    if (configToParse) {
-        try { filterConfig = JSON.parse(configToParse); } catch {}
-    }
+    filterConfig = parseAndMergeFilterConfig(configToParse);
     shopPage = shopPageResult;
     products = rawProducts as any[];
 
@@ -178,101 +176,42 @@ export default function ShopCategory() {
     // Check if we are inside an iframe (visual editor mode)
     const isIframe = typeof window !== 'undefined' && window.parent !== window;
 
-    const dynamicFilters = useMemo(() => {
-        // filterConfig is already a parsed object from loader (categories, colors, sizes, priceRanges)
-        if (!filterConfig) return null;
-        // If it's a string (shouldn't happen but be safe), parse it
-        if (typeof filterConfig === 'string') {
-            try { return JSON.parse(filterConfig); } catch { return null; }
-        }
-        // If it has a .config property (raw DB row), parse that
-        if (filterConfig.config) {
-            try { return JSON.parse(filterConfig.config); } catch { return null; }
-        }
-        // Already a parsed object with categories/colors/sizes
-        return filterConfig;
-    }, [filterConfig]);
+    const dynamicFilters = filterConfig as any;
 
     const categories = useMemo(() => {
-        // Use keys from dynamic configuration if available
-        if (dynamicFilters?.categories) {
-            return Object.keys(dynamicFilters.categories);
-        }
-        // Fallback to product-based categories
-        const cats = new Set<string>();
-        products.forEach((p: any) => { if (p.category) cats.add(p.category); });
-        return Array.from(cats);
-    }, [products, dynamicFilters]);
+        return dynamicFilters?.categories ? Object.keys(dynamicFilters.categories) : [];
+    }, [dynamicFilters]);
 
     const sizes = useMemo(() => {
-        // Use sizes from dynamic configuration if available
-        if (dynamicFilters?.sizes && dynamicFilters.sizes.length > 0) {
-            return [...dynamicFilters.sizes].sort((a, b) => {
-                const aNum = parseInt(a);
-                const bNum = parseInt(b);
-                if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
-                return a.localeCompare(b);
-            });
-        }
-        // Fallback to product-based sizes
-        const s = new Set<string>();
-        products.forEach((p: any) => { if (p.sizes) p.sizes.forEach((size: string) => s.add(size)); });
-        return Array.from(s).sort((a, b) => {
-            const aNum = parseInt(a);
-            const bNum = parseInt(b);
-            if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
-            return a.localeCompare(b);
-        });
-    }, [products, dynamicFilters]);
+        return dynamicFilters?.sizes || [];
+    }, [dynamicFilters]);
 
     const colors = useMemo(() => {
-        // Use keys from dynamic configuration if available
-        if (dynamicFilters?.colors) {
-            return Object.keys(dynamicFilters.colors);
-        }
-        // Fallback to product-based colors
-        const c = new Set<string>();
-        products.forEach((p: any) => { if (p.colors) p.colors.forEach((color: string) => c.add(color)); });
-        return Array.from(c);
-    }, [products, dynamicFilters]);
+        return dynamicFilters?.colors ? Object.keys(dynamicFilters.colors) : [];
+    }, [dynamicFilters]);
 
-    const priceRanges = dynamicFilters?.priceRanges || [
-        { id: 'low', label: 'До 1000 ₴', min: 0, max: 1000 },
-        { id: 'mid', label: '1000 - 3000 ₴', min: 1000, max: 3000 },
-        { id: 'high', label: '3000 - 5000 ₴', min: 3000, max: 5000 },
-        { id: 'premium', label: 'Від 5000 ₴', min: 5000, max: Infinity }
-    ];
-
-    const categoryLabels: Record<string, string> = dynamicFilters?.categories || {
-        "jumpsuit": "Комбінезони",
-        "leggings": "Легінси",
-        "tops": "Топи",
-        "shorts": "Шорти",
-        "jackets": "Куртки",
-        "sets": "Комплекти"
-    };
-
-    const colorLabels: Record<string, string> = dynamicFilters?.colors || {
-        'black': 'Чорний',
-        'white': 'Білий',
-        'blue': 'Синій',
-        'pink': 'Рожевий',
-        'green': 'Зелений',
-        'gray': 'Сірий',
-        'red': 'Червоний',
-        'other': 'Інші'
-    };
+    const priceRanges = dynamicFilters?.priceRanges || [];
+    const categoryLabels: Record<string, string> = dynamicFilters?.categories || {};
+    const colorLabels: Record<string, string> = dynamicFilters?.colors || {};
 
     const filteredProducts = useMemo(() => {
         let result = [...products];
         if (selectedCategories.length > 0) {
-            result = result.filter((p: any) => selectedCategories.includes(p.category));
+            result = result.filter((p: any) => {
+                if (selectedCategories.includes(p.category)) return true;
+                // Graceful fallback for legacy products storing the label instead of slug
+                return selectedCategories.some(cat => categoryLabels[cat] === p.category);
+            });
         }
         if (selectedSizes.length > 0) {
             result = result.filter((p: any) => p.sizes?.some((s: string) => selectedSizes.includes(s)));
         }
         if (selectedColors.length > 0) {
-            result = result.filter((p: any) => p.colors?.some((c: string) => selectedColors.includes(c)));
+            result = result.filter((p: any) => p.colors?.some((c: string) => {
+                if (selectedColors.includes(c)) return true;
+                // Graceful fallback for legacy products storing the color label
+                return selectedColors.some(sc => colorLabels[sc] === c);
+            }));
         }
         if (selectedPriceRange) {
             const range = priceRanges.find((r: any) => r.id === selectedPriceRange);
@@ -443,7 +382,7 @@ export default function ShopCategory() {
                                 <div className="accordion-content">
                                     <div className="filter-checkbox-list">
                                         {categories.map(cat => {
-                                            const count = products.filter((p: any) => p.category === cat).length;
+                                            const count = products.filter((p: any) => p.category === cat || p.category === categoryLabels[cat]).length;
                                             return (
                                                 <label key={cat} className="mb-checkbox-item">
                                                     <input
@@ -471,7 +410,7 @@ export default function ShopCategory() {
                                 </div>
                                 <div className="accordion-content">
                                     <div className="mb-size-grid">
-                                        {sizes.map(size => (
+                                        {sizes.map((size: string) => (
                                             <button
                                                 key={size}
                                                 className={`mb-size-chip ${selectedSizes.includes(size) ? 'active' : ''}`}
@@ -492,7 +431,7 @@ export default function ShopCategory() {
                                 </div>
                                 <div className="accordion-content">
                                     <div className="mb-color-grid">
-                                        {colors.map(color => (
+                                        {colors.map((color: string) => (
                                             <button
                                                 key={color}
                                                 className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? 'active' : ''}`}

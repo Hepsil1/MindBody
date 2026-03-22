@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useLoaderData, useFetcher, Link } from "react-router";
 import HeroSlider, { type SlideData } from "../../components/HeroSlider";
 import CategoryCard from "../../components/CategoryCard";
+import { parseAndMergeFilterConfig } from "../../utils/filters";
 
 export async function loader({ request }: Route.LoaderArgs) {
     try {
@@ -1618,46 +1619,20 @@ export default function AdminVisualEditor() {
 function FilterEditorModal({ isOpen, onClose, filterConfigs = [], shopPages = [], fetcher }: any) {
     const [selectedPage, setSelectedPage] = useState('global');
 
-    const defaultData = {
-        categories: {
-            "jumpsuit": "Комбінезони",
-            "leggings": "Легінси",
-            "tops": "Топи",
-            "shorts": "Шорти",
-            "jackets": "Куртки",
-            "sets": "Комплекти"
-        },
-        colors: {
-            'black': 'Чорний',
-            'white': 'Білий',
-            'blue': 'Синій',
-            'pink': 'Рожевий',
-            'green': 'Зелений',
-            'gray': 'Сірий',
-            'red': 'Червоний',
-            'other': 'Інші'
-        },
-        priceRanges: [
-            { id: 'low', label: 'До 1000 ₴', min: 0, max: 1000 },
-            { id: 'mid', label: '1000 - 3000 ₴', min: 1000, max: 3000 },
-            { id: 'high', label: '3000 - 5000 ₴', min: 3000, max: 5000 },
-            { id: 'premium', label: 'Від 5000 ₴', min: 5000, max: 999999 }
-        ],
-        sizes: ["L", "M", "S", "XL", "XS", "XXS", "34", "36", "38", "40", "42"]
-    };
-
     const [data, setData] = useState(() => {
-        const configRow = filterConfigs.find((c: any) => c.id === 'global');
-        if (!configRow?.config) return defaultData;
-        try { return JSON.parse(configRow.config); } catch (e) { return defaultData; }
+        const globalRow = filterConfigs.find((c: any) => c.id === 'global');
+        return parseAndMergeFilterConfig(globalRow?.config);
     });
 
     useEffect(() => {
         const configRow = filterConfigs.find((c: any) => c.id === selectedPage);
+        const globalRow = filterConfigs.find((c: any) => c.id === 'global');
+        const fallbackConfig = parseAndMergeFilterConfig(globalRow?.config);
+        
         if (!configRow?.config) {
-            setData(defaultData);
+            setData(fallbackConfig);
         } else {
-            try { setData(JSON.parse(configRow.config)); } catch (e) { setData(defaultData); }
+            setData(parseAndMergeFilterConfig(configRow.config));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedPage, filterConfigs]);

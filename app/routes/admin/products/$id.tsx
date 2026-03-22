@@ -3,6 +3,7 @@ import { useLoaderData, useFetcher, useNavigate, useParams, Link, isRouteErrorRe
 import { useState, useEffect } from "react";
 import { prisma } from "../../../db.server";
 import { uploadFile } from "../../../utils/upload.server";
+import { parseAndMergeFilterConfig } from "../../../utils/filters";
 
 // --- Types ---
 interface FilterConfigData {
@@ -54,9 +55,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
         // 1. Fetch FilterConfig (Raw SQL)
         const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT id, config FROM "FilterConfig"`);
         for (const row of configResult) {
-            try {
-                if (row.config) filterConfigs[row.id] = JSON.parse(row.config);
-            } catch (e) {}
+            filterConfigs[row.id] = parseAndMergeFilterConfig(row.config);
+        }
+        if (!filterConfigs['global']) {
+            filterConfigs['global'] = parseAndMergeFilterConfig(null);
         }
 
         // 2. Fetch ShopPages (Raw SQL)
