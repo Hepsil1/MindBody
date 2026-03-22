@@ -825,115 +825,7 @@ h3 {
 }
 
 /* === Hero Slider === */
-.hero-slider {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-  background-color: var(--color-primary-dark);
-}
-
-.hero-slider__slides {
-  position: absolute;
-  inset: 0;
-}
-
-.hero-slider__slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 1.2s ease, visibility 1.2s ease;
-}
-
-.hero-slider__slide.is-active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.hero-slider__triptych {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  gap: 0px;
-  /* Removed gaps between photos */
-}
-
-.hero-slider__triptych-item {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-}
-
-.hero-slider__triptych-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.hero-slider__overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 40%, rgba(0, 0, 0, 0.3) 100%);
-  pointer-events: none;
-  z-index: 5;
-}
-
-.hero-slider__content {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  color: #fff;
-  text-align: center;
-  padding: 0 20px;
-}
-
-/* Hero logo styles moved to hero.css */
-
-
-.hero-slider__title {
-  font-size: clamp(2.5rem, 10vw, 5.5rem);
-  /* Increased size */
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
-  margin-bottom: 15px;
-  font-weight: 200;
-}
-
-.hero-slider__tagline {
-  font-family: var(--font-script);
-  font-size: 2rem;
-  /* Increased from 1.5rem */
-  margin-bottom: 45px;
-  opacity: 0.9;
-}
-
-.hero-slider__nav {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  z-index: 20;
-}
-
-.hero-slider__dot {
-  width: 40px;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.3);
-  cursor: pointer;
-  border: none;
-}
-
-.hero-slider__dot.is-active {
-  background: #fff;
-}
+/* Hero Slider styles — see unified block at line ~11770+ */
 
 /* === Values Section - Premium Redesign === */
 .values {
@@ -11935,16 +11827,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
   object-fit: cover;
 }
 
-/* === Dark Overlay for Readability === */
-.hero-slider__overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top,
-      rgba(0, 0, 0, 0.65) 0%,
-      rgba(0, 0, 0, 0.2) 40%,
-      rgba(0, 0, 0, 0.35) 100%);
-  pointer-events: none;
-}
+/* Dark overlay — merged into .hero-slider__overlay above */
 
 /* === Content Layer === */
 .hero-slider__content {
@@ -12083,23 +11966,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
   animation: heroFadeUp 0.8s ease-out 0.7s forwards;
 }
 
-/* CTA Buttons */
-.hero-slider__cta {
-  display: flex;
-  gap: var(--space-md);
-  flex-wrap: wrap;
-  justify-content: center;
-  opacity: 0;
-  transform: translateY(20px);
-  animation: heroFadeUp 0.8s ease-out 0.9s forwards;
-}
-
-@keyframes heroFadeUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* Duplicate CTA removed — see primary .hero-slider__cta above */
 
 /* Primary CTA with glow effect */
 .btn--glow {
@@ -12692,17 +12559,17 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 /* === Scroll Reveal Animation === */
 .reveal-ready {
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(40px) scale(0.98);
   transition:
-    opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.5s ease,
     border-color 0.5s ease !important;
 }
 
 .reveal-ready.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 /* Stagger delays for grid items */
@@ -13618,7 +13485,6 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 
 /* ========================================
 /* ========================================
-/* ========================================
    PREMIUM FEATURES BAR (ICON + TEXT 4-COL GRID)
    ======================================== */
 .premium-features-bar {
@@ -14406,4 +14272,105 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     width: 100vw;
     max-width: 100vw;
   }
+}
+
+/* ========================================
+   COLLECTIONS SECTION (replaces inline styles)
+   ======================================== */
+.collections-container {
+  max-width: 1440px;
+  padding-bottom: 100px;
+}
+
+.collections-header {
+  margin-bottom: 120px;
+}
+
+.collections-badge {
+  font-family: 'Marcellus', serif;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5em;
+  color: var(--color-primary);
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.collections-badge__line {
+  width: 40px;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.collections-title {
+  font-size: clamp(2.5rem, 6vw, 4.5rem) !important;
+  font-family: 'Prata', serif !important;
+  font-weight: 400 !important;
+  color: var(--color-text-primary) !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.collections-subtitle {
+  font-size: 11px !important;
+  color: var(--color-text-primary) !important;
+  opacity: 0.4;
+  max-width: 450px;
+  margin: 25px auto 0 !important;
+  font-family: 'Marcellus', serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.2em !important;
+  text-transform: uppercase;
+  line-height: 1.8 !important;
+}
+
+.section__cta-center {
+  text-align: center;
+  margin-top: 60px;
+}
+
+/* ========================================
+   IMAGE SHIMMER PLACEHOLDER (Fix #9)
+   ======================================== */
+@keyframes shimmerLoad {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.product-card__img {
+  background: linear-gradient(
+    90deg,
+    #f0eded 25%,
+    #e8e5e1 37%,
+    #f0eded 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmerLoad 1.5s ease-in-out infinite;
+  min-height: 280px;
+  object-fit: cover;
+}
+
+.product-card__img[src] {
+  animation: none;
+  background: none;
+}
+
+.category-card-editorial__image-wrapper img {
+  background: linear-gradient(
+    90deg,
+    #f0eded 25%,
+    #e8e5e1 37%,
+    #f0eded 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmerLoad 1.5s ease-in-out infinite;
+}
+
+.category-card-editorial__image-wrapper img[src] {
+  animation: none;
+  background: none;
 }

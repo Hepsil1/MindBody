@@ -1,0 +1,115 @@
+/* ========================================
+   SIZE GUIDE PAGE
+   ======================================== */
+
+.size-guide-page .page-hero {
+    background: linear-gradient(135deg, var(--color-bg-cream) 0%, var(--color-bg-soft) 100%);
+    padding: 120px 0 60px;
+    text-align: center;
+}
+
+.size-guide-page .breadcrumb {
+    margin-bottom: 20px;
+}
+
+.size-guide-page .page-hero p {
+    color: var(--color-text-secondary);
+}
+
+/* Section */
+.sg-section {
+    background: #fff;
+}
+
+.sg-container {
+    max-width: 1000px;
+}
+
+/* Table Groups */
+.sg-table-group {
+    margin-bottom: 60px;
+}
+
+.sg-table-group h2 {
+    margin-bottom: 30px;
+}
+
+.sg-table-wrap {
+    overflow-x: auto;
+}
+
+/* Tables */
+.sg-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.sg-table th,
+.sg-table td {
+    padding: 15px;
+}
+
+.sg-table thead tr {
+    color: #fff;
+}
+
+.sg-table--women thead tr {
+    background: var(--color-primary);
+}
+
+.sg-table--kids thead tr {
+    background: var(--color-accent);
+}
+
+.sg-table tbody tr:nth-child(odd) {
+    background: var(--color-bg-cream);
+}
+
+.sg-table .sg-label {
+    font-weight: 600;
+}
+
+/* Tips Card */
+.sg-tips {
+    padding: 40px;
+    background: var(--color-bg-cream);
+    border-radius: 20px;
+}
+
+.sg-tips h3 {
+    margin-bottom: 20px;
+}
+
+.sg-tips-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+.sg-tips-grid h4 {
+    color: var(--color-primary);
+    margin-bottom: 10px;
+}
+
+.sg-tips-grid p {
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}
+
+/* CTA */
+.sg-cta {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.sg-cta p {
+    color: var(--color-text-secondary);
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .sg-tips-grid {
+        grid-template-columns: 1fr;
+    }
+}

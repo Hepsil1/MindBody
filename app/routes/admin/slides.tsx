@@ -27,40 +27,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     }
 }
 
-async function saveFile(file: any) {
-    if (!file || typeof file === "string" || file.size === 0) return null;
-    if (!(file instanceof Blob)) return null;
+import { uploadFile, sanitizeImageUrl } from "../../utils/upload.server";
 
-    try {
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        // @ts-ignore
-        const mimeType = file.type || "image/jpeg";
-        const ext = mimeType.replace("image/", "").replace("jpeg", "jpg").replace("svg+xml", "svg");
-        const filename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-        // Try to save as static file (works on localhost, fails on Vercel read-only FS)
-        try {
-            const path = await import("path");
-            const fs = await import("fs");
-            const uploadsDir = path.default.join(process.cwd(), "public", "uploads");
-            if (!fs.default.existsSync(uploadsDir)) {
-                fs.default.mkdirSync(uploadsDir, { recursive: true });
-            }
-            fs.default.writeFileSync(path.default.join(uploadsDir, filename), buffer);
-            console.log(`✅ Saved file: /uploads/${filename} (${(buffer.length / 1024).toFixed(0)} KB)`);
-            return `/uploads/${filename}`;
-        } catch {
-            // Fallback to base64 for Vercel (read-only filesystem)
-            console.log("⚠️ File system write failed (Vercel?), falling back to base64");
-            const base64 = buffer.toString("base64");
-            return `data:${mimeType};base64,${base64}`;
-        }
-    } catch (e) {
-        console.error("File processing failed:", e);
-        return null;
-    }
-}
+// Use centralized uploadFile — NEVER falls back to base64
+const saveFile = uploadFile;
 
 
 export async function action({ request }: Route.ActionArgs) {

@@ -3,6 +3,7 @@ import { prisma } from "../db.server";
 import { useLoaderData } from "react-router";
 import { useState, useEffect } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
+import "../styles/about-page.css";
 
 export async function loader({ request }: Route.LoaderArgs) {
     try {
@@ -20,14 +21,6 @@ export async function loader({ request }: Route.LoaderArgs) {
             image3: s.image3,
         }));
 
-        // If no slides, return default values format or empty to trigger default in HeroSlider? 
-        // HeroSlider handles empty slides by showing built-in defaults (which are Home slides).
-        // Since we want specific "About" behavior, we might want to manually handle default if empty.
-        // But for now, let's pass what we have. If empty, HeroSlider shows Teal Collection etc. 
-        // Maybe we want specific default for About? 
-        // Let's pass empty array if empty, and let HeroSlider decide or we provide fallback here.
-        // Given user wants "Like index.html", existing defaults are OK or we can inject one.
-
         return { slides: aboutSlides };
     } catch (error) {
         console.error("About loader error:", error);
@@ -38,117 +31,35 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function About() {
     const { slides } = useLoaderData<typeof loader>();
 
-    // Use HeroSlider with custom overlay content to match Homepage style but with About text
     return (
         <main className="about-dynamic">
             {/* Full-Screen Hero with Slides using HeroSlider */}
-            <HeroSlider slides={slides} showScroll={false}>
-                {/* Custom Overlay Content for About Page */}
-                {/* Custom Overlay Content for About Page */}
-                {/* Custom Overlay Content for About Page */}
-                <style dangerouslySetInnerHTML={{
-                    __html: `
-                    @keyframes breathe {
-                        0%, 100% { transform: scale(1); filter: brightness(0) invert(1) drop-shadow(0 0 15px rgba(255,255,255,0.3)); }
-                        50% { transform: scale(1.05); filter: brightness(0) invert(1) drop-shadow(0 0 25px rgba(255,255,255,0.5)); }
-                    }
-                `}} />
-
-                <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 10,
-                    pointerEvents: 'none'
-                }}>
-
+            <HeroSlider slides={slides}>
+                <div className="about-hero-overlay">
                     {/* Centered Brand Logo with Breathing Animation */}
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginTop: '-40px' // Visual optical centering
-                    }}>
+                    <div className="about-hero-logo-wrap">
                         <img
                             src="/pics/mind_body_logo.png"
                             alt="MIND BODY"
-                            style={{
-                                maxWidth: '75vw',
-                                width: '550px',
-                                height: 'auto',
-                                animation: 'breathe 4s ease-in-out infinite'
-                            }}
+                            className="about-hero-logo"
                         />
-                        {/* Removed redundant text since logo contains it */}
                     </div>
 
-                    {/* Bottom Left Subtitle - Vertical Layout (Mirrors Scroll) */}
-                    <div style={{
-                        position: 'absolute',
-                        left: '50px',
-                        bottom: '50px',
-                        display: 'flex',
-                        flexDirection: 'column', // Stack line and text
-                        alignItems: 'center',
-                        gap: '15px',
-                        opacity: 0.8,
-                    }}>
-                        <p style={{
-                            writingMode: 'vertical-rl',
-                            textOrientation: 'mixed',
-                            transform: 'rotate(180deg)',
-                            color: '#fff',
-                            fontSize: 'clamp(0.8rem, 1vw, 0.9rem)',
-                            fontFamily: "'Tenor Sans', sans-serif",
-                            letterSpacing: '0.15em',
-                            textTransform: 'uppercase',
-                            textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                            margin: 0,
-                            whiteSpace: 'nowrap'
-                        }}>
+                    {/* Bottom Left Subtitle */}
+                    <div className="about-hero-subtitle">
+                        <p className="about-hero-subtitle__text">
                             Одяг, який надихає тебе рухатись
                         </p>
-                        <div style={{ width: '1px', height: '40px', background: '#fff' }}></div>
+                        <div className="about-hero-subtitle__line"></div>
                     </div>
-                    {/* Right Side Scroll Indicator - Refined */}
-                    <div style={{
-                        position: 'absolute',
-                        right: '50px',
-                        bottom: '50px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '12px',
-                        opacity: 0.9
-                    }}>
-                        <span style={{
-                            writingMode: 'vertical-rl',
-                            textOrientation: 'mixed',
-                            color: '#fff',
-                            fontSize: '0.75rem',
-                            letterSpacing: '4px',
-                            textTransform: 'uppercase',
-                            fontWeight: 300,
-                            transform: 'rotate(180deg)'
-                        }}>
+
+                    {/* Right Side Scroll Indicator */}
+                    <div className="about-hero-scroll">
+                        <span className="about-hero-scroll__label">
                             Scroll
                         </span>
-                        <div style={{
-                            width: '1px',
-                            height: '50px',
-                            background: 'rgba(255,255,255,0.4)',
-                            overflow: 'hidden'
-                        }}>
-                            <div style={{
-                                width: '100%',
-                                height: '40%',
-                                background: '#fff',
-                                animation: 'scrollDown 2s cubic-bezier(0.77, 0, 0.175, 1) infinite'
-                            }}></div>
+                        <div className="about-hero-scroll__track">
+                            <div className="about-hero-scroll__thumb"></div>
                         </div>
                     </div>
                 </div>

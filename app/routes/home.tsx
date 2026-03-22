@@ -5,6 +5,7 @@ import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
 import ProductCard from "../components/ProductCard";
 import { prisma } from "../db.server";
+import { cachedFetch } from "../utils/cache.server";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -15,42 +16,43 @@ export function meta({ }: Route.MetaArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   try {
-    // Fetch HOME slides — only needed columns, not SELECT *
-    const slides = await prisma.$queryRaw`SELECT id, name, type, link, image1, image2, image3, "image1Pos", "image2Pos", "image3Pos" FROM "Slide" WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC` as any[];
+    // Cache TTL: 60 seconds — slides/categories rarely change
+    const CACHE_TTL = 60_000;
 
-    // Fetch categories — only needed columns
-    const categoriesFromDb: any[] = await prisma.$queryRawUnsafe(`SELECT id, title, subtitle, image, "imagePos", link, "buttonText" FROM "Category" ORDER BY "order" ASC`);
+    // All 3 queries run in parallel with 60s in-memory cache
+    const [slides, categoriesFromDb, rawProducts] = await Promise.all([
+      cachedFetch('home:slides', CACHE_TTL, () =>
+        prisma.$queryRaw`SELECT id, name, type, link, image1, image2, image3, "image1Pos", "image2Pos", "image3Pos" FROM "Slide" WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC` as Promise<any[]>
+      ),
+      cachedFetch('home:categories', CACHE_TTL, () =>
+        prisma.$queryRawUnsafe(`SELECT id, title, subtitle, image, "imagePos", link, "buttonText" FROM "Category" ORDER BY "order" ASC`) as Promise<any[]>
+      ),
+      cachedFetch('home:products', CACHE_TTL, () =>
+        prisma.$queryRawUnsafe(
+          `SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", "createdAt"
+           FROM "Product"
+           WHERE status = 'active'
+           ORDER BY "createdAt" DESC LIMIT 8`
+        ) as Promise<any[]>
+      ),
+    ]);
 
-    // Fetch newest 8 products from ALL categories
-    let newProducts: any[] = [];
-    try {
-      const mapProduct = (p: any) => {
-        let imgs: string[] = [];
-        try { imgs = JSON.parse(p.images || '[]'); } catch { }
-        return {
-          id: p.id,
-          name: p.name,
-          category: p.category || p.shopPageSlug,
-          price: Number(p.price),
-          price_usd: Math.round(Number(p.price) / 40),
-          image: imgs[0] || '/brand-sun.png',
-          image2: imgs[1] || null,
-          is_new: true,
-          is_sale: p.comparePrice ? Number(p.comparePrice) > Number(p.price) : false,
-          sale_price: p.comparePrice && Number(p.comparePrice) > Number(p.price) ? Number(p.price) : undefined
-        };
+    const mapProduct = (p: any) => {
+      let imgs: string[] = [];
+      try { imgs = JSON.parse(p.images || '[]'); } catch { }
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category || p.shopPageSlug,
+        price: Number(p.price),
+        price_usd: Math.round(Number(p.price) / 40),
+        image: imgs[0] || '/brand-sun.png',
+        image2: imgs[1] || null,
+        is_new: true,
+        is_sale: p.comparePrice ? Number(p.comparePrice) > Number(p.price) : false,
+        sale_price: p.comparePrice && Number(p.comparePrice) > Number(p.price) ? Number(p.price) : undefined
       };
-
-      const rawProducts: any[] = await prisma.$queryRawUnsafe(
-        `SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", "createdAt"
-         FROM "Product"
-         WHERE status = 'active'
-         ORDER BY "createdAt" DESC LIMIT 8`
-      );
-      newProducts = rawProducts.map(mapProduct);
-    } catch (e) {
-      console.error('Failed to load products:', e);
-    }
+    };
 
     return {
       slides: slides.map((s: any) => ({
@@ -70,7 +72,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         { id: '5', title: 'KIDS', subtitle: 'Для наймолодших', image: '/pics2cloths/IMG_5222.JPG', link: '/shop/kids', buttonText: 'Переглянути' },
         { id: '6', title: 'YOGATOOLS', subtitle: 'Аксесуари та інвентар', image: '/generalpics/374_131123.jpg', link: '/shop/yogatools', buttonText: 'Переглянути' },
       ],
-      newProducts,
+      newProducts: rawProducts.map(mapProduct),
     };
   } catch (error) {
     console.error("Failed to load home data:", error);
@@ -94,7 +96,6 @@ export default function Home() {
         const offset = (sectionCenter - viewportCenter) * 0.4;
         bgElement.style.transform = `translateY(${offset}px)`;
       }
-
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -118,10 +119,38 @@ export default function Home() {
     const observer = new IntersectionObserver(revealOnScroll, observerOptions);
 
     // Add reveal class to elements only when JS is ready
-    // Small delay to ensure all dynamic elements are rendered
     setTimeout(() => {
-      document.querySelectorAll('.section__header, .value-item, .product-card').forEach(el => {
+      // Section headers
+      document.querySelectorAll('.section__header').forEach(el => {
         el.classList.add('reveal-ready');
+        observer.observe(el);
+      });
+
+      // Category cards with stagger
+      document.querySelectorAll('.category-card-editorial').forEach((el, i) => {
+        el.classList.add('reveal-ready');
+        (el as HTMLElement).style.transitionDelay = `${i * 0.1}s`;
+        observer.observe(el);
+      });
+
+      // Product cards with stagger
+      document.querySelectorAll('.product-card').forEach((el, i) => {
+        el.classList.add('reveal-ready');
+        (el as HTMLElement).style.transitionDelay = `${(i % 4) * 0.12}s`;
+        observer.observe(el);
+      });
+
+      // Value items with stagger
+      document.querySelectorAll('.value-item').forEach((el, i) => {
+        el.classList.add('reveal-ready');
+        (el as HTMLElement).style.transitionDelay = `${i * 0.15}s`;
+        observer.observe(el);
+      });
+
+      // About section elements
+      document.querySelectorAll('.about-modern__image-side, .about-modern__content-side').forEach((el, i) => {
+        el.classList.add('reveal-ready');
+        (el as HTMLElement).style.transitionDelay = `${i * 0.2}s`;
         observer.observe(el);
       });
     }, 100);
@@ -135,7 +164,7 @@ export default function Home() {
   return (
     <main>
       <HeroSlider slides={slides} />
-      {/* Premium Features Bar (500x cooler than reference) */}
+      {/* Premium Features Bar */}
       <section className="premium-features-bar">
         <div className="container" style={{ maxWidth: '1440px' }}>
           <div className="features-bar__grid">
@@ -198,47 +227,17 @@ export default function Home() {
       <section className="section section--alt shop-collections-group">
         <div className="logo-pattern-bg"></div>
         {/* Sub-section: Categories */}
-        <div className="container" style={{ maxWidth: '1440px', paddingBottom: '100px' }} id="shop">
-          <div className="section__header section__header--center" style={{ marginBottom: '120px' }}>
-            <div style={{
-              fontFamily: "'Marcellus', serif",
-              fontSize: '13px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5em',
-              color: 'var(--color-primary)',
-              marginBottom: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '20px'
-            }}>
-              <div style={{ width: '40px', height: '1px', background: 'rgba(0,0,0,0.1)' }}></div>
+        <div className="container collections-container" id="shop">
+          <div className="section__header section__header--center collections-header">
+            <div className="collections-badge">
+              <div className="collections-badge__line"></div>
               <span>Exclusive Collections</span>
-              <div style={{ width: '40px', height: '1px', background: 'rgba(0,0,0,0.1)' }}></div>
+              <div className="collections-badge__line"></div>
             </div>
             
-            <h2 className="section__title" style={{
-              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
-              fontFamily: "'Prata', serif",
-              fontWeight: 400,
-              color: 'var(--color-text-primary)',
-              lineHeight: 1.2,
-              margin: '0',
-              letterSpacing: '-0.03em'
-            }}>Обирайте свій стиль</h2>
+            <h2 className="section__title collections-title">Обирайте свій стиль</h2>
             
-            <p className="section__subtitle" style={{
-              fontSize: '11px',
-              color: 'var(--color-text-primary)',
-              opacity: 0.4,
-              maxWidth: '450px',
-              margin: '25px auto 0',
-              fontFamily: "'Marcellus', serif",
-              fontWeight: 400,
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              lineHeight: 1.8
-            }}>Втілення ідеального балансу між <br /> функціональністю та бездоганною естетикою</p>
+            <p className="section__subtitle collections-subtitle">Втілення ідеального балансу між <br /> функціональністю та бездоганною естетикою</p>
           </div>
           <div className="editorial-categories-grid">
             {categories.map((cat: any) => (
@@ -269,7 +268,7 @@ export default function Home() {
             ))}
           </div>
 
-          <div style={{ textAlign: 'center', marginTop: '60px' }}>
+          <div className="section__cta-center">
             <Link to="/shop/yoga" className="btn btn--primary btn--large">
               Переглянути всі колекції
             </Link>

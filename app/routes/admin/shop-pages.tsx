@@ -2,6 +2,7 @@
 import { Form, useLoaderData, useActionData, useNavigation, useSubmit } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { prisma } from "../../db.server";
+import { uploadFile } from "../../utils/upload.server";
 import { Buffer } from "buffer";
 
 // --- Types ---
@@ -60,24 +61,8 @@ export async function action({ request }: { request: Request }) {
             const file = formData.get("heroImageFile") as File;
 
             if (file && file.size > 0 && file.name) {
-                try {
-                    const arrayBuffer = await file.arrayBuffer();
-                    let base64 = "";
-                    if (typeof Buffer !== "undefined") {
-                        base64 = Buffer.from(arrayBuffer).toString("base64");
-                    } else {
-                        const bytes = new Uint8Array(arrayBuffer);
-                        let binary = '';
-                        for (let i = 0; i < bytes.length; i += 8192) {
-                            binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 8192)));
-                        }
-                        base64 = btoa(binary);
-                    }
-                    const mimeType = file.type || "image/jpeg";
-                    heroImage = `data:${mimeType};base64,${base64}`;
-                } catch (e) {
-                    console.error("File upload failed:", e);
-                }
+                const uploadedUrl = await uploadFile(file);
+                if (uploadedUrl) heroImage = uploadedUrl;
             }
 
             // If ID is temp, create new record

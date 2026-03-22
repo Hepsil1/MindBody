@@ -106,6 +106,9 @@ export default function HeroSlider({ slides: propSlides, autoPlay = true, interv
                                         src={item.img}
                                         alt={`${slide.name} Image ${imgIndex + 1}`}
                                         style={{ objectPosition: item.pos }}
+                                        loading={index === 0 ? "eager" : "lazy"}
+                                        decoding={index === 0 ? "sync" : "async"}
+                                        fetchPriority={index === 0 ? "high" : "low"}
                                     />
                                 </div>
                             ))}

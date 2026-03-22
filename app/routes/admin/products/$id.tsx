@@ -2,6 +2,7 @@ import { type LoaderFunctionArgs, type ActionFunctionArgs } from "react-router";
 import { useLoaderData, useFetcher, useNavigate, useParams, Link, isRouteErrorResponse } from "react-router";
 import { useState, useEffect } from "react";
 import { prisma } from "../../../db.server";
+import { uploadFile } from "../../../utils/upload.server";
 
 // --- Types ---
 interface FilterConfigData {
@@ -106,26 +107,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
         const intent = formData.get("intent");
 
         if (intent === "upload_image") {
-            const file = formData.get("file") as File;
-            if (!file || file.size === 0) return { error: "No file selected" };
+            const file = formData.get("file");
+            if (!file) return { error: "No file selected" };
 
             try {
-                const buffer = await file.arrayBuffer();
-                let base64 = "";
-                if (typeof Buffer !== "undefined") {
-                    base64 = Buffer.from(buffer).toString("base64");
-                } else {
-                    const bytes = new Uint8Array(buffer);
-                    let binary = '';
-                    for (let i = 0; i < bytes.length; i += 8192) {
-                        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + 8192)));
-                    }
-                    base64 = btoa(binary);
-                }
-                const mimeType = file.type || "image/jpeg";
-                const dataUrl = `data:${mimeType};base64,${base64}`;
+                const uploadedUrl = await uploadFile(file);
+                if (!uploadedUrl) return { error: "Failed to process image" };
 
-                return { imageUrl: dataUrl };
+                return { imageUrl: uploadedUrl };
             } catch (e) {
                 console.error("Upload failed:", e);
                 return { error: "Failed to process image" };

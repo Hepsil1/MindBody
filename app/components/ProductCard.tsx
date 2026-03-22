@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import type { Product } from "../utils/api";
+import type { Product } from "../types/product";
 import { StorageUtils } from "../utils/storage";
 import { useToast } from "./Toast";
 
@@ -7,8 +7,8 @@ export default function ProductCard({ product }: { product: Product }) {
     const { showToast } = useToast();
     const { id, name, category, price, price_usd, image, image2, is_new, is_sale, sale_price, colors } = product;
 
-    // Use actual product colors if available, otherwise just use mock colors for demonstration of the UI
-    const mockColors = colors?.length ? colors : ['black', 'blue'];
+    // Use actual product colors if available
+    const displayColors = colors?.length ? colors : [];
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -34,25 +34,6 @@ export default function ProductCard({ product }: { product: Product }) {
         if (added) showToast('Додано до улюбленого!');
         else showToast('Вже у списку улюбленого', 'info');
     };
-
-    // Generate consistent mock reviews based on product ID
-    const getProductReviews = (id: string | number) => {
-        const numId = typeof id === 'string'
-            ? id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-            : id;
-
-        // Rating between 4.5 and 5.0
-        const rating = 4.5 + (numId % 6) * 0.1;
-        // Count between 12 and 145
-        const count = 12 + (numId % 134);
-
-        return {
-            rating: rating > 5 ? 5 : rating,
-            count
-        };
-    };
-
-    const reviews = getProductReviews(id);
 
     return (
         <div className="product-card" data-product-id={id}>
@@ -80,19 +61,13 @@ export default function ProductCard({ product }: { product: Product }) {
                     prefetch="intent"
                     className="product-card__quick-view"
                     aria-label="Quick view"
-                    onClick={(e) => { e.stopPropagation(); /* TODO: quick view modal logic */ }}
+                    onClick={(e) => { e.stopPropagation(); }}
                 >
                     Швидкий Перегляд
                 </Link>
             </div>
 
             <div className="product-card__details">
-                <div className="product-card__rating">
-                    <span>★</span><span>★</span><span>★</span><span>★</span>
-                    <span className={reviews.rating === 5 ? "" : "star-half"}>★</span>
-                    <span className="product-card__rating-count">({reviews.count})</span>
-                </div>
-
                 <h3 className="product-card__title">
                     <Link to={`/product/${id}`} prefetch="intent">{name}</Link>
                 </h3>
@@ -108,11 +83,13 @@ export default function ProductCard({ product }: { product: Product }) {
                     )}
                 </div>
 
-                <div className="product-card__colors">
-                    {mockColors.map((color, i) => (
-                        <span key={i} className="product-card__color-dot" style={{ backgroundColor: color === 'white' ? '#f5f5f5' : (color === 'black' ? '#222' : color) }} title={color}></span>
-                    ))}
-                </div>
+                {displayColors.length > 0 && (
+                    <div className="product-card__colors">
+                        {displayColors.map((color, i) => (
+                            <span key={i} className="product-card__color-dot" style={{ backgroundColor: color === 'white' ? '#f5f5f5' : (color === 'black' ? '#222' : color) }} title={color}></span>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

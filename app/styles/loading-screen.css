@@ -1,0 +1,67 @@
+/* ========================================
+   LOADING SCREEN
+   ======================================== */
+
+@keyframes loadingSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes loadingBreathe {
+    0% { transform: scale(0.9); opacity: 0.9; }
+    100% { transform: scale(1.05); opacity: 1; }
+}
+
+@keyframes loadingPulseRing {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.15;
+    }
+    100% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
+}
+
+.loading-screen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, #FFFFFF 0%, #F4F2ED 100%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.4s ease-in-out;
+}
+
+.loading-screen--hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-screen__container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: loadingBreathe 3s ease-in-out infinite alternate;
+}
+
+/* Pulse ring behind the logo */
+.loading-screen__pulse {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 1px solid var(--color-primary, #2a5a5a);
+    animation: loadingPulseRing 2.5s ease-out infinite;
+}
+
+.loading-screen__logo {
+    width: 90px;
+    height: 90px;
+    animation: loadingSpin 3s linear infinite;
+}
