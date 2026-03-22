@@ -27,13 +27,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     }
 }
 
-import { uploadFile, sanitizeImageUrl } from "../../utils/upload.server";
-
-// Use centralized uploadFile — NEVER falls back to base64
-const saveFile = uploadFile;
-
+import { uploadFile } from "../../utils/upload.server";
 
 export async function action({ request }: Route.ActionArgs) {
+    const saveFile = uploadFile;
     try {
         const formData = await request.formData();
 

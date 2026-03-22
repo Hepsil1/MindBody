@@ -13,15 +13,6 @@ export default defineConfig({
   build: {
     // Aggressive CSS minification
     cssMinify: 'esbuild',
-    // Better chunk splitting
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Keep vendor React separate for better caching
-          react: ['react', 'react-dom'],
-        },
-      },
-    },
   },
 
   server: {
