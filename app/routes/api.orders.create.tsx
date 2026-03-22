@@ -12,13 +12,94 @@ export async function action({ request }: ActionFunctionArgs) {
 
     try {
         const data = await request.json();
-        const { customer, items, total, shippingCost, paymentMethod, deliveryMethod, comment } = data;
+        const { customer, items, total, shippingCost, paymentMethod, deliveryMethod, comment, promoCode } = data;
 
         // Validation
         if (!customer || !customer.email || !items || items.length === 0) {
             return new Response(JSON.stringify({ success: false, error: "Missing required fields" }), {
                 status: 400, headers: { "Content-Type": "application/json" }
             });
+        }
+
+        // --- NEW: Server-Side Price & Stock Validation ---
+        let calculatedSubtotal = 0;
+        const validItems = [];
+
+        for (const item of items) {
+            const products: any[] = await prisma.$queryRawUnsafe(
+                 `SELECT name, price, inventory FROM "Product" WHERE id = $1`,
+                 String(item.id)
+            );
+            
+            if (products.length === 0) {
+                 return new Response(JSON.stringify({ success: false, error: `Товар не знайдено: ${item.name}` }), { status: 400, headers: { "Content-Type": "application/json" } });
+            }
+            
+            const product = products[0];
+            const realPrice = Number(product.price) || 0;
+            const qty = Number(item.quantity) || 1;
+            
+            let inventoryArr: any[] = [];
+            try { inventoryArr = JSON.parse(product.inventory || "[]"); } catch {}
+            
+            // Validate Stock
+            if (inventoryArr.length > 0) {
+                 let variantMatched = false;
+                 let stockAvailable = 0;
+                 for (const variant of inventoryArr) {
+                     // Check using loose equality or correct property existence 
+                     // since sometimes colors/sizes might not be defined for single variants
+                     if (variant.size === item.size && variant.color === item.color) {
+                         stockAvailable = variant.stock || 0;
+                         variantMatched = true;
+                         break;
+                     }
+                 }
+                 if (!variantMatched) {
+                      return new Response(JSON.stringify({ success: false, error: `Невірний розмір або колір для товару: ${product.name}` }), { status: 400, headers: { "Content-Type": "application/json" } });
+                 }
+                 if (stockAvailable < qty) {
+                      return new Response(JSON.stringify({ success: false, error: `Товару "${product.name}" (${item.size || 'стандарт'}, ${item.color || 'стандарт'}) немає в достатній кількості. Доступно: ${stockAvailable}` }), { status: 400, headers: { "Content-Type": "application/json" } });
+                 }
+            }
+            
+            calculatedSubtotal += (realPrice * qty);
+            validItems.push({
+                 id: String(item.id),
+                 name: product.name,
+                 price: realPrice,
+                 quantity: qty,
+                 size: item.size || null,
+                 color: item.color || null
+            });
+        }
+        
+        let finalTotal = calculatedSubtotal;
+        
+        // --- NEW: Promo Code Validation ---
+        if (promoCode) {
+            // Fetch internal promo API to validate
+            const baseUrl = new URL(request.url).origin;
+            const promoRes = await fetch(`${baseUrl}/api/promo?code=${encodeURIComponent(promoCode)}`);
+            if (promoRes.ok) {
+                 const promoData = await promoRes.json();
+                 if (promoData.valid) {
+                      if (promoData.minOrder > 0 && calculatedSubtotal < promoData.minOrder) {
+                           return new Response(JSON.stringify({ success: false, error: `Для промокоду ${promoCode} мінімальне замовлення складає ${promoData.minOrder} ₴` }), { status: 400, headers: { "Content-Type": "application/json" } });
+                      }
+                      const discount = promoData.discountType === 'percent'
+                          ? Math.round(calculatedSubtotal * promoData.discountValue / 100)
+                          : Math.min(promoData.discountValue, calculatedSubtotal);
+                      finalTotal = calculatedSubtotal - discount;
+                 } else {
+                     return new Response(JSON.stringify({ success: false, error: `Промокод ${promoCode} недійсно або закінчився` }), { status: 400, headers: { "Content-Type": "application/json" } });
+                 }
+            }
+        }
+        
+        // Check final total vs payload total (anti-fraud) to ensure cart totals mach server real totals
+        if (Math.abs(finalTotal - Number(total)) > 5) {
+             return new Response(JSON.stringify({ success: false, error: `Помилка сум замовлення. Сервер: ${finalTotal}, Клієнт: ${total}` }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
 
         // 1. Create or Update Customer
@@ -32,54 +113,49 @@ export async function action({ request }: ActionFunctionArgs) {
             create: { email: customer.email, firstName, lastName, phone: customer.phone || "" },
         });
 
-        // 2. Generate Order Number (fits in INT: max ~2.1 billion)
-        // Format: MMDDHHMMSS + random 2 digits = 12 digits max, but we use shorter
+        // 2. Generate Order Number
         const now = Date.now();
-        const orderNumberInt = Math.floor(now / 1000) % 1000000000; // Last 9 digits of unix timestamp
+        const orderNumberInt = Math.floor(now / 1000) % 1000000000;
 
 
-        // 3. Create Order with Items
+        // 3. Create Order
         const newOrder = await prisma.order.create({
             data: {
                 orderNumber: orderNumberInt,
                 customerId: dbCustomer.id,
                 status: "pending",
                 paymentStatus: "pending",
-                total: total,
+                total: finalTotal,
                 items: {
-                    create: items.map((item: any) => ({
-                        productId: String(item.id),
-                        quantity: Number(item.quantity) || 1,
-                        price: Number(item.price) || 0,
-                        size: item.size || null,
-                        color: item.color || null
+                    create: validItems.map((item: any) => ({
+                        productId: item.id,
+                        quantity: item.quantity,
+                        price: item.price,
+                        size: item.size,
+                        color: item.color
                     }))
                 }
             },
             include: { items: true, customer: true }
         });
 
-        // 4. Update Stock - handle ARRAY format: [{color, size, stock}, ...]
-        for (const item of items) {
+        // 4. Update Stock
+        for (const item of validItems) {
             try {
                 const products: any[] = await prisma.$queryRawUnsafe(
                     `SELECT stock, inventory FROM "Product" WHERE id = $1`,
-                    String(item.id)
+                    item.id
                 );
 
                 if (products.length > 0) {
                     const product = products[0];
                     let inventoryArr: any[] = [];
+                    try { inventoryArr = JSON.parse(product.inventory || "[]"); } catch {}
 
-                    try {
-                        inventoryArr = JSON.parse(product.inventory || "[]");
-                    } catch { inventoryArr = []; }
-
-                    // Find matching variant and decrement
                     let totalStock = 0;
                     for (const variant of inventoryArr) {
                         if (variant.size === item.size && variant.color === item.color) {
-                            variant.stock = Math.max(0, (variant.stock || 0) - (item.quantity || 1));
+                            variant.stock = Math.max(0, (variant.stock || 0) - item.quantity);
                         }
                         totalStock += (variant.stock || 0);
                     }
@@ -88,7 +164,7 @@ export async function action({ request }: ActionFunctionArgs) {
                         `UPDATE "Product" SET stock = $1, inventory = $2 WHERE id = $3`,
                         totalStock,
                         JSON.stringify(inventoryArr),
-                        String(item.id)
+                        item.id
                     );
                 }
             } catch (e) {
@@ -98,11 +174,11 @@ export async function action({ request }: ActionFunctionArgs) {
 
         // 5. Send Telegram Notification
         try {
-            const itemsList = items.map((item: any) =>
-                `📦 ${item.name || 'Товар'} (${item.size || '-'}/${item.color || '-'}) × ${item.quantity || 1}`
+            const itemsList = validItems.map((item: any) =>
+                `📦 ${item.name} (${item.size || '-'}/${item.color || '-'}) × ${item.quantity}`
             ).join('\n');
 
-            const message = `🛍 НОВЕ ЗАМОВЛЕННЯ #${orderNumberInt}\n👤 ${customer.name}\n📧 ${customer.email}\n📱 ${customer.phone}\n🏙 ${customer.city} / ${customer.warehouse}\n\n${itemsList}\n\n💰 ${total} ₴`;
+            const message = `🛍 НОВЕ ЗАМОВЛЕННЯ #${orderNumberInt}\n👤 ${customer.name}\n📧 ${customer.email}\n📱 ${customer.phone}\n🏙 ${customer.city} / ${customer.warehouse}\n\n${itemsList}\n\n💰 ${finalTotal} ₴`;
 
             await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
                 method: 'POST',

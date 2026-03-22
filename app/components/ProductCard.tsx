@@ -10,17 +10,6 @@ export default function ProductCard({ product }: { product: Product }) {
     // Use actual product colors if available
     const displayColors = colors?.length ? colors : [];
 
-    const handleAddToCart = (e: React.MouseEvent) => {
-        e.preventDefault();
-        StorageUtils.addToCart({
-            id,
-            name,
-            price: sale_price || price,
-            image,
-            quantity: 1
-        });
-        showToast('Додано до кошика!');
-    };
 
     const handleAddToWishlist = (e: React.MouseEvent) => {
         e.preventDefault();

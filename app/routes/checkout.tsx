@@ -337,81 +337,6 @@ export default function Checkout() {
         setCustomerInfo(prev => ({ ...prev, payment }));
     };
 
-    const generateOrderNumber = () => {
-        const date = new Date();
-        const num = Math.floor(Math.random() * 9000) + 1000;
-        return `MB-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${num}`;
-    };
-
-    const getPaymentLabel = (payment: PaymentMethod) => {
-        const labels: Record<PaymentMethod, string> = {
-            cash: 'Накладений платіж',
-            card: 'Оплата карткою',
-            apple_pay: 'Apple Pay',
-            google_pay: 'Google Pay'
-        };
-        return labels[payment];
-    };
-
-    const getDeliveryLabel = (delivery: DeliveryService) => {
-        return delivery === 'nova_poshta' ? 'Нова Пошта' : 'Укрпошта';
-    };
-
-    const sendToTelegram = async () => {
-        const order = generateOrderNumber();
-        setOrderNumber(order);
-
-        const itemsList = items.map(item =>
-            `📦 ${item.name}\n   Розмір: ${item.size || '-'} | Колір: ${item.color || '-'}\n   ${item.quantity} шт × ${item.price} ₴ = ${item.price * item.quantity} ₴`
-        ).join('\n\n');
-
-        const message = `
-🛍 *НОВЕ ЗАМОВЛЕННЯ*
-━━━━━━━━━━━━━━━━━
-📋 *Номер:* \`${order}\`
-📅 *Дата:* ${new Date().toLocaleString('uk-UA')}
-
-👤 *КЛІЄНТ*
-▫️ Ім'я: ${customerInfo.name}
-▫️ Телефон: ${customerInfo.phone}
-
-🚚 *ДОСТАВКА*
-▫️ Служба: ${getDeliveryLabel(customerInfo.delivery)}
-▫️ Місто: ${customerInfo.city}
-▫️ Відділення: ${customerInfo.warehouse}
-${customerInfo.comment ? `▫️ Коментар: ${customerInfo.comment}` : ''}
-
-💳 *Оплата:* ${getPaymentLabel(customerInfo.payment)}
-
-📦 *ТОВАРИ*
-${itemsList}
-
-━━━━━━━━━━━━━━━━━
-💰 *Товари:* ${subtotal.toLocaleString()} ₴
-${promoApplied ? `🏷️ *Промокод:* ${promoApplied.code} (-${promoDiscount.toLocaleString()} ₴)` : ''}
-🚚 *Доставка:* За тарифами перевізника
-✨ *РАЗОМ:* *${total.toLocaleString()} ₴*
-━━━━━━━━━━━━━━━━━
-        `.trim();
-
-        try {
-            const response = await fetch('/api/telegram/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
-            });
-
-            if (response.ok) {
-                StorageUtils.clearCart();
-                setStep('success');
-            } else {
-                throw new Error('Failed to send');
-            }
-        } catch (error) {
-            console.error('Telegram error:', error);
-            showToast('Помилка при відправці замовлення. Спробуйте ще раз.', 'error');
-        }
-    };
 
     const handleSubmitOrder = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -448,7 +373,8 @@ ${promoApplied ? `🏷️ *Промокод:* ${promoApplied.code} (-${promoDisc
                     shippingCost: 0,
                     paymentMethod: customerInfo.payment,
                     deliveryMethod: customerInfo.delivery,
-                    comment: customerInfo.comment
+                    comment: customerInfo.comment,
+                    promoCode: promoApplied?.code
                 })
             });
 

@@ -93,14 +93,20 @@ import { useSearchParams } from "react-router";
 
 export default function ShopCategory() {
     const { products, category, shopPage, filterConfig } = useLoaderData<typeof loader>();
-    const [searchParams] = useSearchParams();
-    const initialCat = searchParams.get('cat');
+    const [searchParams, setSearchParams] = useSearchParams();
+    
+    // Helper to read initial arrays from URL
+    const getListParam = (key: string) => {
+        const val = searchParams.get(key);
+        return val ? val.split(',') : [];
+    };
 
-    const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCat ? [initialCat] : []);
-    const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-    const [selectedColors, setSelectedColors] = useState<string[]>([]);
-    const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
-    const [sortBy, setSortBy] = useState("default");
+    const initialCat = searchParams.get('cat');
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCat ? [initialCat] : getListParam('categories'));
+    const [selectedSizes, setSelectedSizes] = useState<string[]>(getListParam('sizes'));
+    const [selectedColors, setSelectedColors] = useState<string[]>(getListParam('colors'));
+    const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(searchParams.get('priceRange'));
+    const [sortBy, setSortBy] = useState(searchParams.get('sort') || "default");
     const [displayCount, setDisplayCount] = useState(12);
     const [openSections, setOpenSections] = useState({
         category: true,
@@ -110,14 +116,41 @@ export default function ShopCategory() {
     });
     const LOAD_MORE_COUNT = 12;
 
+    // React to initial navigation with generic 'cat' param from homepage etc.
     useEffect(() => {
         const cat = searchParams.get('cat');
-        if (cat) {
+        if (cat && !selectedCategories.includes(cat)) {
             setSelectedCategories([cat]);
-        } else {
-            setSelectedCategories([]);
         }
-    }, [searchParams]);
+    }, [searchParams.get('cat')]);
+
+    // Sync state changes to URL Params
+    useEffect(() => {
+        const newParams = new URLSearchParams(searchParams);
+        
+        // Remove old generic cat
+        if (newParams.has('cat')) newParams.delete('cat');
+
+        if (selectedCategories.length > 0) newParams.set('categories', selectedCategories.join(','));
+        else newParams.delete('categories');
+        
+        if (selectedSizes.length > 0) newParams.set('sizes', selectedSizes.join(','));
+        else newParams.delete('sizes');
+        
+        if (selectedColors.length > 0) newParams.set('colors', selectedColors.join(','));
+        else newParams.delete('colors');
+        
+        if (selectedPriceRange) newParams.set('priceRange', selectedPriceRange);
+        else newParams.delete('priceRange');
+        
+        if (sortBy !== "default") newParams.set('sort', sortBy);
+        else newParams.delete('sort');
+        
+        // Apply only if something actually changed to avoid loop
+        if (newParams.toString() !== searchParams.toString()) {
+            setSearchParams(newParams, { replace: true, preventScrollReset: true });
+        }
+    }, [selectedCategories, selectedSizes, selectedColors, selectedPriceRange, sortBy, searchParams, setSearchParams]);
 
     const toggleSection = (section: 'category' | 'size' | 'color' | 'price') => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
