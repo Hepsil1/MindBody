@@ -1,9 +1,16 @@
 import { NavLink, Outlet, Link, redirect } from "react-router";
 import { useState } from "react";
-import "../../styles/admin.css";
-import "../../app.css";
+import adminCss from "../../styles/admin.css?url";
+import appCss from "../../app.css?url";
 import { isAuthenticated, adminSession } from "../../utils/admin.server";
 import type { Route } from "./+types/_layout";
+
+export function links() {
+    return [
+        { rel: "stylesheet", href: appCss },
+        { rel: "stylesheet", href: adminCss },
+    ];
+}
 
 export async function loader({ request }: Route.LoaderArgs) {
     const url = new URL(request.url);

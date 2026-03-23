@@ -4,7 +4,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "../components/Toast";
 import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
-import "../styles/product-page.css";
+import productStyles from "../styles/product-page.css?url";
+
+export function links() {
+    return [{ rel: "stylesheet", href: productStyles }];
+}
+
 export function meta({ data }: { data: any }) {
     const product = data?.product;
     if (!product) {

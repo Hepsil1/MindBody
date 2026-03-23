@@ -9,7 +9,8 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
-import "./app.css";
+import appCss from "./app.css?url";
+import loadingScreenCss from "./styles/loading-screen.css?url";
 import { Header } from "./components/Header";
 import Footer from "./components/Footer";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -39,6 +40,8 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Outfit:wght@300;400;500&family=Syncopate:wght@400;700&family=Manrope:wght@200;400;600&family=Bodoni+Moda:ital,wght@0,400;0,700;1,400&family=Prata&family=Marcellus&display=swap",
   },
+  { rel: "stylesheet", href: appCss },
+  { rel: "stylesheet", href: loadingScreenCss },
 ];
 
 // Wrapper component that can use hooks

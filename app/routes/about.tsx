@@ -3,7 +3,11 @@ import { prisma } from "../db.server";
 import { useLoaderData } from "react-router";
 import { useState, useEffect } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
-import "../styles/about-page.css";
+import aboutStyles from "../styles/about-page.css?url";
+
+export function links() {
+    return [{ rel: "stylesheet", href: aboutStyles }];
+}
 
 export function meta() {
     return [
