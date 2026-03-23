@@ -1,10 +1,15 @@
-// Server-side only — Telegram token is NEVER exposed to the client
-const TELEGRAM_BOT_TOKEN = "7516303735:AAFZtMq37IfEFmDzNTkNrZiKh8OOBjpiTQ0";
-const TELEGRAM_CHAT_ID = "5429418837";
+// Server-side only — Telegram token from env, NEVER hardcoded
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
 
 export async function action({ request }: { request: Request }) {
     if (request.method !== "POST") {
         return Response.json({ error: "Method not allowed" }, { status: 405 });
+    }
+
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        console.error("Telegram credentials not configured in env");
+        return Response.json({ success: false, error: "Telegram not configured" }, { status: 500 });
     }
 
     try {

@@ -18,11 +18,9 @@ export default [
     route("api/orders/list", "routes/api.orders.list.tsx"),
     route("api/telegram/send", "routes/api.telegram.send.tsx"),
     route("api/search", "routes/api.search.tsx"),
-    route("api/seed", "routes/api.seed.tsx"),
     route("api/reviews", "routes/api.reviews.tsx"),
     route("api/contact", "routes/api.contact.tsx"),
     route("api/promo", "routes/api/promo.tsx"),
-    route("debug-schema", "routes/debug-schema.tsx"),
 
     // Admin Login & Logout (Separate from layout)
     route("admin/login", "routes/admin/login.tsx"),

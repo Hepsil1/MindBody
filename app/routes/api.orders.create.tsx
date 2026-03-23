@@ -1,9 +1,9 @@
 import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
 
-// Telegram Configuration
-const TELEGRAM_BOT_TOKEN = "7516303735:AAFZtMq37IfEFmDzNTkNrZiKh8OOBjpiTQ0";
-const TELEGRAM_CHAT_ID = "5429418837";
+// Telegram Configuration — from environment variables
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
 
 export async function action({ request }: ActionFunctionArgs) {
     if (request.method !== "POST") {
@@ -113,9 +113,10 @@ export async function action({ request }: ActionFunctionArgs) {
             create: { email: customer.email, firstName, lastName, phone: customer.phone || "" },
         });
 
-        // 2. Generate Order Number
+        // 2. Generate Order Number (timestamp + random suffix to avoid collisions)
         const now = Date.now();
-        const orderNumberInt = Math.floor(now / 1000) % 1000000000;
+        const randomSuffix = Math.floor(Math.random() * 900) + 100; // 100-999
+        const orderNumberInt = Math.floor((now / 1000) % 100000000) * 1000 + randomSuffix;
 
 
         // 3. Create Order
@@ -172,21 +173,35 @@ export async function action({ request }: ActionFunctionArgs) {
             }
         }
 
-        // 5. Send Telegram Notification
-        try {
-            const itemsList = validItems.map((item: any) =>
-                `📦 ${item.name} (${item.size || '-'}/${item.color || '-'}) × ${item.quantity}`
-            ).join('\n');
+        // 5. Increment promo code usage if used
+        if (promoCode) {
+            try {
+                await prisma.$executeRawUnsafe(
+                    `UPDATE "PromoCode" SET "usedCount" = "usedCount" + 1 WHERE code = $1`,
+                    promoCode.trim().toUpperCase()
+                );
+            } catch (e) {
+                console.error("Promo increment failed:", e);
+            }
+        }
 
-            const message = `🛍 НОВЕ ЗАМОВЛЕННЯ #${orderNumberInt}\n👤 ${customer.name}\n📧 ${customer.email}\n📱 ${customer.phone}\n🏙 ${customer.city} / ${customer.warehouse}\n\n${itemsList}\n\n💰 ${finalTotal} ₴`;
+        // 6. Send Telegram Notification
+        if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+            try {
+                const itemsList = validItems.map((item: any) =>
+                    `📦 ${item.name} (${item.size || '-'}/${item.color || '-'}) × ${item.quantity}`
+                ).join('\n');
 
-            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message })
-            });
-        } catch (e) {
-            console.error("Telegram failed:", e);
+                const message = `🛍 НОВЕ ЗАМОВЛЕННЯ #${orderNumberInt}\n👤 ${customer.name}\n📧 ${customer.email}\n📱 ${customer.phone}\n🏙 ${customer.city} / ${customer.warehouse}\n\n${itemsList}\n\n💰 ${finalTotal} ₴`;
+
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message })
+                });
+            } catch (e) {
+                console.error("Telegram failed:", e);
+            }
         }
 
         return new Response(JSON.stringify({ success: true, orderId: newOrder.orderNumber }), {
