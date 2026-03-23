@@ -1269,27 +1269,24 @@ h3 {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  padding: 10px 44px;
-  border-radius: 100px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  padding: 10px 0;
+  border-radius: 0;
+  border: none;
   transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .header__nav:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-  padding: 10px 52px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .header.is-scrolled .header__nav,
 .header--static .header__nav {
-  background: rgba(42, 90, 104, 0.05);
-  border: 1px solid rgba(42, 90, 104, 0.1);
-  padding: 8px 32px;
+  background: transparent;
+  border: none;
+  padding: 8px 0;
 }
 
 .header__nav-list {

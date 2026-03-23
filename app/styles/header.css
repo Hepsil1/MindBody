@@ -30,7 +30,7 @@
 .top-bar__marquee {
     display: flex;
     width: max-content;
-    animation: marquee-scroll 30s linear infinite;
+    animation: marquee-scroll 45s linear infinite;
 }
 
 .top-bar__marquee:hover {
@@ -396,6 +396,29 @@
 
     .mega-menu__featured {
         display: none;
+    }
+
+    .header__container {
+        padding: 12px 20px;
+        gap: 12px;
+    }
+
+    .header__actions {
+        gap: 8px;
+    }
+
+    .header__action-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .header__action-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .header__logo-img {
+        height: 36px;
     }
 }
 
