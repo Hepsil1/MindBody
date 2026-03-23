@@ -1,5 +1,6 @@
 import { useLoaderData, useNavigate, Form, redirect } from "react-router";
 import { prisma } from "../../../db.server";
+import { isAuthenticated } from "../../../utils/admin.server";
 import { useState } from "react";
 
 interface LoaderArgs {
@@ -34,6 +35,9 @@ export async function loader({ params }: LoaderArgs) {
 }
 
 export async function action({ request, params }: ActionArgs) {
+    if (!(await isAuthenticated(request))) {
+        return redirect("/admin/login");
+    }
     const formData = await request.formData();
     const intent = formData.get("intent");
 

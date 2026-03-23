@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
+import { OrderCreateSchema, formatZodErrors } from "../utils/validation";
 
 // Telegram Configuration — from environment variables
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
@@ -12,14 +13,16 @@ export async function action({ request }: ActionFunctionArgs) {
 
     try {
         const data = await request.json();
-        const { customer, items, total, shippingCost, paymentMethod, deliveryMethod, comment, promoCode } = data;
 
-        // Validation
-        if (!customer || !customer.email || !items || items.length === 0) {
-            return new Response(JSON.stringify({ success: false, error: "Missing required fields" }), {
+        // Zod validation
+        const parsed = OrderCreateSchema.safeParse(data);
+        if (!parsed.success) {
+            return new Response(JSON.stringify({ success: false, error: formatZodErrors(parsed.error) }), {
                 status: 400, headers: { "Content-Type": "application/json" }
             });
         }
+
+        const { customer, items, total, shippingCost, paymentMethod, deliveryMethod, comment, promoCode } = parsed.data;
 
         // --- NEW: Server-Side Price & Stock Validation ---
         let calculatedSubtotal = 0;
@@ -113,63 +116,101 @@ export async function action({ request }: ActionFunctionArgs) {
             create: { email: customer.email, firstName, lastName, phone: customer.phone || "" },
         });
 
-        // 2. Generate Order Number (timestamp + random suffix to avoid collisions)
-        const now = Date.now();
-        const randomSuffix = Math.floor(Math.random() * 900) + 100; // 100-999
-        const orderNumberInt = Math.floor((now / 1000) % 100000000) * 1000 + randomSuffix;
+        // 2. Generate Order Number (YYMMDD + 4 random digits for readability + uniqueness)
+        const now = new Date();
+        const datePart = (now.getFullYear() % 100) * 10000 + (now.getMonth() + 1) * 100 + now.getDate(); // YYMMDD
+        const randomBytes = new Uint16Array(1);
+        crypto.getRandomValues(randomBytes);
+        const randomSuffix = (randomBytes[0] % 9000) + 1000; // 1000-9999
+        const orderNumberInt = datePart * 10000 + randomSuffix;
 
 
-        // 3. Create Order
-        const newOrder = await prisma.order.create({
-            data: {
-                orderNumber: orderNumberInt,
-                customerId: dbCustomer.id,
-                status: "pending",
-                paymentStatus: "pending",
-                total: finalTotal,
-                items: {
-                    create: validItems.map((item: any) => ({
-                        productId: item.id,
-                        quantity: item.quantity,
-                        price: item.price,
-                        size: item.size,
-                        color: item.color
-                    }))
-                }
-            },
-            include: { items: true, customer: true }
-        });
+        // 3. Create Order (retry once if collision on orderNumber)
+        let newOrder;
+        try {
+            newOrder = await prisma.order.create({
+                data: {
+                    orderNumber: orderNumberInt,
+                    customerId: dbCustomer.id,
+                    status: "pending",
+                    paymentStatus: "pending",
+                    total: finalTotal,
+                    items: {
+                        create: validItems.map((item: any) => ({
+                            productId: item.id,
+                            quantity: item.quantity,
+                            price: item.price,
+                            size: item.size,
+                            color: item.color
+                        }))
+                    }
+                },
+                include: { items: true, customer: true }
+            });
+        } catch (e: any) {
+            // Retry with different random suffix if unique constraint violation
+            if (e?.code === 'P2002') {
+                const retryBytes = new Uint16Array(1);
+                crypto.getRandomValues(retryBytes);
+                const retrySuffix = (retryBytes[0] % 9000) + 1000;
+                const retryOrderNumber = datePart * 10000 + retrySuffix;
+                newOrder = await prisma.order.create({
+                    data: {
+                        orderNumber: retryOrderNumber,
+                        customerId: dbCustomer.id,
+                        status: "pending",
+                        paymentStatus: "pending",
+                        total: finalTotal,
+                        items: {
+                            create: validItems.map((item: any) => ({
+                                productId: item.id,
+                                quantity: item.quantity,
+                                price: item.price,
+                                size: item.size,
+                                color: item.color
+                            }))
+                        }
+                    },
+                    include: { items: true, customer: true }
+                });
+            } else {
+                throw e;
+            }
+        }
 
-        // 4. Update Stock
+        // 4. Atomic Stock Update (transaction with row-level locking to prevent race conditions)
         for (const item of validItems) {
             try {
-                const products: any[] = await prisma.$queryRawUnsafe(
-                    `SELECT stock, inventory FROM "Product" WHERE id = $1`,
-                    item.id
-                );
-
-                if (products.length > 0) {
-                    const product = products[0];
-                    let inventoryArr: any[] = [];
-                    try { inventoryArr = JSON.parse(product.inventory || "[]"); } catch {}
-
-                    let totalStock = 0;
-                    for (const variant of inventoryArr) {
-                        if (variant.size === item.size && variant.color === item.color) {
-                            variant.stock = Math.max(0, (variant.stock || 0) - item.quantity);
-                        }
-                        totalStock += (variant.stock || 0);
-                    }
-
-                    await prisma.$executeRawUnsafe(
-                        `UPDATE "Product" SET stock = $1, inventory = $2 WHERE id = $3`,
-                        totalStock,
-                        JSON.stringify(inventoryArr),
+                await prisma.$transaction(async (tx) => {
+                    // Lock the product row to prevent concurrent updates
+                    const lockedProducts: any[] = await tx.$queryRawUnsafe(
+                        `SELECT stock, inventory FROM "Product" WHERE id = $1 FOR UPDATE`,
                         item.id
                     );
-                }
+
+                    if (lockedProducts.length > 0) {
+                        const product = lockedProducts[0];
+                        let inventoryArr: any[] = [];
+                        try { inventoryArr = JSON.parse(product.inventory || "[]"); } catch {}
+
+                        let totalStock = 0;
+                        for (const variant of inventoryArr) {
+                            if (variant.size === item.size && variant.color === item.color) {
+                                variant.stock = Math.max(0, (variant.stock || 0) - item.quantity);
+                            }
+                            totalStock += (variant.stock || 0);
+                        }
+
+                        await tx.$executeRawUnsafe(
+                            `UPDATE "Product" SET stock = $1, inventory = $2 WHERE id = $3`,
+                            totalStock,
+                            JSON.stringify(inventoryArr),
+                            item.id
+                        );
+                    }
+                });
             } catch (e) {
-                console.error(`Stock update failed for ${item.id}:`, e);
+                console.error(`Atomic stock update failed for ${item.id}:`, e);
             }
         }
 

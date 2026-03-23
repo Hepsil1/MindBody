@@ -1,4 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
+import { Link } from "react-router";
 
 // Define the Slide type that matches the database model
 export interface SlideData {
@@ -134,9 +135,9 @@ export default function HeroSlider({ slides: propSlides, autoPlay = true, interv
                         {/* CTA Button */}
                         <div className="hero-slider__footer-cta">
                             <div className="hero-slider__cta">
-                                <a href="#shop" className="btn btn--primary btn--glow hero-slider__cta-btn" id="cta-shop">
+                                <Link to="/shop/yoga" className="btn btn--primary btn--glow hero-slider__cta-btn" id="cta-shop">
                                     Переглянути колекцію
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     </>

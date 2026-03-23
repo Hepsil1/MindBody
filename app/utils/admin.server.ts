@@ -7,7 +7,7 @@ export const adminSession = createCookie("admin_session", {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    secrets: [process.env.SESSION_SECRET || "mindbody_admin_secret_default_123"],
+    secrets: [process.env.SESSION_SECRET || (() => { throw new Error('SESSION_SECRET env var is required'); })()],
 });
 
 export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";

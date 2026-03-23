@@ -95,7 +95,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                 <div key={`${item.id}-${item.size}-${item.color}-${index}`} className="cart-drawer__item">
                                     <div className="cart-drawer__item-image">
                                         <img
-                                            src={typeof item.image === 'string' && item.image.startsWith('http')
+                                            src={typeof item.image === 'string' && (item.image.startsWith('http') || item.image.startsWith('/'))
                                                 ? item.image
                                                 : `/uploads/${item.image}`}
                                             alt={item.name}
@@ -134,6 +134,27 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                         {/* Footer */}
                         <div className="cart-drawer__footer">
+                            {/* Free shipping progress bar */}
+                            {(() => {
+                                const FREE_SHIPPING = 2000;
+                                const remaining = Math.max(0, FREE_SHIPPING - total);
+                                const progress = Math.min(100, (total / FREE_SHIPPING) * 100);
+                                return remaining > 0 ? (
+                                    <div className="cart-drawer__shipping-progress">
+                                        <div className="cart-drawer__shipping-bar">
+                                            <div className="cart-drawer__shipping-fill" style={{ width: `${progress}%` }} />
+                                        </div>
+                                        <span className="cart-drawer__shipping-text">
+                                            До безкоштовної доставки ще <strong>{remaining.toLocaleString()} ₴</strong>
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="cart-drawer__shipping-free">
+                                        🎉 Безкоштовна доставка!
+                                    </div>
+                                );
+                            })()}
+
                             <div className="cart-drawer__total">
                                 <span>Разом:</span>
                                 <span className="cart-drawer__total-price">{total.toLocaleString()} ₴</span>

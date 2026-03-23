@@ -5,6 +5,18 @@ import { useState, useEffect } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import "../styles/about-page.css";
 
+export function meta() {
+    return [
+        { title: "Про бренд | MIND BODY" },
+        { name: "description", content: "MIND BODY — український бренд спортивного одягу для йоги, танців, гімнастики. Premium якість, ручна робота, еко-матеріали." },
+        { property: "og:title", content: "Про бренд MIND BODY" },
+        { property: "og:description", content: "Український бренд спортивного одягу. Premium якість, ручна робота, еко-матеріали." },
+        { property: "og:type", content: "website" },
+        { property: "og:image", content: "/brand-sun.png" },
+        { property: "og:locale", content: "uk_UA" },
+    ];
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
     try {
         // Fetch About slides using Raw SQL to bypass outdated client validation

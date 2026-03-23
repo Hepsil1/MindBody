@@ -29,8 +29,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 import { uploadFile } from "../../utils/upload.server";
+import { isAuthenticated } from "../../utils/admin.server";
+import { redirect } from "react-router";
 
 export async function action({ request }: Route.ActionArgs) {
+    if (!(await isAuthenticated(request))) {
+        return redirect("/admin/login");
+    }
     const saveFile = uploadFile;
     try {
         const formData = await request.formData();

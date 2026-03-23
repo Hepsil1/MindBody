@@ -34,14 +34,10 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap",
   },
-  // Secondary fonts — loaded async (non-blocking)
+  // Secondary fonts — display=swap ensures non-blocking rendering
   {
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Outfit:wght@300;400;500&family=Syncopate:wght@400;700&family=Manrope:wght@200;400;600&family=Bodoni+Moda:ital,wght@0,400;0,700;1,400&family=Prata&family=Marcellus&display=swap",
-    // @ts-ignore - media trick for async loading
-    media: "print",
-    // @ts-ignore
-    onLoad: "this.media='all'",
   },
 ];
 
@@ -54,7 +50,9 @@ function AppContent({ children }: { children: React.ReactNode }) {
     <ToastProvider>
       <LoadingScreen />
       {!isAdminRoute && <Header />}
-      {children}
+      <main id="main-content">
+        {children}
+      </main>
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <FloatingContact />}
     </ToastProvider>
@@ -73,6 +71,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <a href="#main-content" className="skip-link">Перейти до контенту</a>
         {children}
         <ScrollRestoration />
         <Scripts />

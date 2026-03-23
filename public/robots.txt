@@ -1,0 +1,9 @@
+# MindBody Robots
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /auth
+
+# Sitemap
+Sitemap: /sitemap.xml

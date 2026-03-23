@@ -14,9 +14,9 @@
 
 const NOVA_POSHTA_API_URL = "https://api.novaposhta.ua/v2.0/json/";
 
-// ⚠️ REPLACE THIS WITH YOUR ACTUAL API KEY!
+// API key MUST be set via environment variable NOVA_POSHTA_API_KEY
 // Get your key from: https://my.novaposhta.ua/ → Settings → Security → API Keys
-const NOVA_POSHTA_API_KEY = process.env.NOVA_POSHTA_API_KEY || "0aea11be1cc857201c8f4063e1b3a7a9";
+const NOVA_POSHTA_API_KEY = process.env.NOVA_POSHTA_API_KEY || "";
 
 export interface NovaPoshtaCity {
     Ref: string;
@@ -57,7 +57,7 @@ async function makeNovaPoshtaRequest<T>(
     methodProperties: Record<string, unknown>
 ): Promise<NovaPoshtaResponse<T>> {
     // Check if API key is configured
-    if (!NOVA_POSHTA_API_KEY || NOVA_POSHTA_API_KEY === "YOUR_API_KEY_HERE") {
+    if (!NOVA_POSHTA_API_KEY) {
         console.error('Nova Poshta API key is not configured! Please add your API key to app/utils/novaposhta.server.ts');
         return {
             success: false,

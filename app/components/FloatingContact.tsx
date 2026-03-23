@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 
-// Example phone numbers — replace with real ones later
-const PHONE = "380501234567";
+// Business contact numbers
+const PHONE = "380509656737";
 const VIBER_URL = `viber://chat?number=%2B${PHONE}`;
-const WHATSAPP_URL = `https://wa.me/${PHONE}`;
+const WHATSAPP_URL = `https://wa.me/380973542848`;
 const TELEGRAM_URL = `https://t.me/+${PHONE}`;
 
 export default function FloatingContact() {

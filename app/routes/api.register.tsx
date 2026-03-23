@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
+import { RegisterSchema, formatZodErrors } from "../utils/validation";
 
 export async function action({ request }: ActionFunctionArgs) {
     if (request.method !== "POST") {
@@ -8,11 +9,16 @@ export async function action({ request }: ActionFunctionArgs) {
 
     try {
         const data = await request.json();
-        const { name, email, phone } = data;
 
-        if (!name || !email) {
-            return new Response("Missing required fields", { status: 400 });
+        // Zod validation
+        const parsed = RegisterSchema.safeParse(data);
+        if (!parsed.success) {
+            return new Response(JSON.stringify({ error: formatZodErrors(parsed.error) }), {
+                status: 400, headers: { "Content-Type": "application/json" }
+            });
         }
+
+        const { name, email, phone } = parsed.data;
 
         // Split name into first and last
         const parts = name.trim().split(" ");
@@ -25,8 +31,6 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         if (existing) {
-            // Update existing? Or just return success?
-            // Let's update phone if provided
             if (phone) {
                 await prisma.customer.update({
                     where: { id: existing.id },

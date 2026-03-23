@@ -10,7 +10,17 @@ import { cachedFetch } from "../utils/cache.server";
 export function meta({ }: Route.MetaArgs) {
   return [
     { title: "MIND BODY — Спортивний одяг для йоги та активного життя" },
-    { name: "description", content: "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика." },
+    { name: "description", content: "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика. Безкоштовна доставка від 2000₴." },
+    { property: "og:title", content: "MIND BODY — Спортивний одяг" },
+    { property: "og:description", content: "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика." },
+    { property: "og:type", content: "website" },
+    { property: "og:image", content: "/brand-sun.png" },
+    { property: "og:locale", content: "uk_UA" },
+    { property: "og:site_name", content: "MIND BODY" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: "MIND BODY — Спортивний одяг" },
+    { name: "twitter:description", content: "Український бренд спортивного одягу для жінок та дітей." },
+    { name: "twitter:image", content: "/brand-sun.png" },
   ];
 }
 
@@ -37,20 +47,29 @@ export async function loader({ request }: Route.LoaderArgs) {
       ),
     ]);
 
+    const NOW = Date.now();
+    const NEW_THRESHOLD_DAYS = 14;
+
     const mapProduct = (p: any) => {
       let imgs: string[] = [];
       try { imgs = JSON.parse(p.images || '[]'); } catch { }
+      const price = Number(p.price);
+      const comparePrice = Number(p.comparePrice) || 0;
+      const isSale = comparePrice > price && price > 0;
+      const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+      const isNew = (NOW - createdAt) < NEW_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
+
       return {
         id: p.id,
         name: p.name,
         category: p.category || p.shopPageSlug,
-        price: Number(p.price),
-        price_usd: Math.round(Number(p.price) / 40),
+        price: isSale ? comparePrice : price, // comparePrice is the "original" price
         image: imgs[0] || '/brand-sun.png',
         image2: imgs[1] || null,
-        is_new: true,
-        is_sale: p.comparePrice ? Number(p.comparePrice) > Number(p.price) : false,
-        sale_price: p.comparePrice && Number(p.comparePrice) > Number(p.price) ? Number(p.price) : undefined
+        is_new: isNew,
+        is_sale: isSale,
+        sale_price: isSale ? price : undefined,
+        discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
       };
     };
 

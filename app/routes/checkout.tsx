@@ -381,14 +381,7 @@ export default function Checkout() {
             const result = await response.json();
 
             if (result.success) {
-                // Increment promo code usage
-                if (promoApplied) {
-                    fetch('/api/promo', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ code: promoApplied.code })
-                    }).catch(() => { });
-                }
+                // Promo code usage is already incremented server-side in api.orders.create
                 setOrderNumber(result.orderId);
                 StorageUtils.clearCart();
                 setStep('success');

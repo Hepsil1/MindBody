@@ -1,15 +1,21 @@
-import { Link, useLoaderData, Form } from "react-router";
+import { Link, useLoaderData, Form, redirect } from "react-router";
 import type { Route } from "./+types/index";
 import { prisma } from "../../../db.server";
+import { isAuthenticated } from "../../../utils/admin.server";
 import { useState } from "react";
 
 export async function action({ request }: Route.ActionArgs) {
+    if (!(await isAuthenticated(request))) {
+        return redirect("/admin/login");
+    }
     const formData = await request.formData();
     const intent = formData.get("intent");
 
     if (intent === "delete_all") {
         try {
-            await prisma.$executeRawUnsafe(`DELETE FROM "Product"`);
+            // Delete order items referencing products first, then products
+            await prisma.orderItem.deleteMany({});
+            await prisma.product.deleteMany({});
             return { success: true };
         } catch (e) {
             console.error("Failed to delete all products:", e);
@@ -20,8 +26,9 @@ export async function action({ request }: Route.ActionArgs) {
     if (intent === "delete_product") {
         const id = formData.get("id");
         try {
-            // Use raw SQL to avoid potential Prisma Client issues with the new schema if it's not regenerated
-            await prisma.$executeRawUnsafe(`DELETE FROM "Product" WHERE id = $1`, String(id));
+            // Delete order items referencing this product first, then the product
+            await prisma.orderItem.deleteMany({ where: { productId: String(id) } });
+            await prisma.product.delete({ where: { id: String(id) } });
             return { success: true };
         } catch (e) {
             console.error("Failed to delete product:", e);

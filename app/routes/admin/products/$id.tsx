@@ -1,9 +1,11 @@
-import { type LoaderFunctionArgs, type ActionFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs, type ActionFunctionArgs, redirect } from "react-router";
 import { useLoaderData, useFetcher, useNavigate, useParams, Link, isRouteErrorResponse } from "react-router";
 import { useState, useEffect } from "react";
 import { prisma } from "../../../db.server";
+import { isAuthenticated } from "../../../utils/admin.server";
 import { uploadFile } from "../../../utils/upload.server";
 import { parseAndMergeFilterConfig } from "../../../utils/filters";
+import { invalidateCache, invalidateAll } from "../../../utils/cache.server";
 
 // --- Types ---
 interface FilterConfigData {
@@ -104,6 +106,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 // --- Action ---
 export async function action({ request, params }: ActionFunctionArgs) {
+    if (!(await isAuthenticated(request))) {
+        return redirect("/admin/login");
+    }
     try {
         const formData = await request.formData();
         const intent = formData.get("intent");
@@ -171,6 +176,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
             } catch (e) {
                 console.error("Save failed:", e);
                 return { error: "Failed to save product" };
+            } finally {
+                // Invalidate caches so storefront shows fresh data
+                invalidateAll();
             }
         }
 

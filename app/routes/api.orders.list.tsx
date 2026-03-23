@@ -10,6 +10,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     try {
+        const { getSession } = await import("../utils/userSession.server");
+        const session = await getSession(request.headers.get("Cookie"));
+        const sessionEmail = session.get("email");
+
+        // Protect from IDOR (only allow fetching own orders)
+        if (!sessionEmail || sessionEmail !== email.toLowerCase().trim()) {
+            return new Response(JSON.stringify({ error: "Unauthorized access to orders" }), {
+                status: 403,
+                headers: { "Content-Type": "application/json" },
+            });
+        }
         // Use case-insensitive email matching 
         const emailLower = email.toLowerCase().trim();
 

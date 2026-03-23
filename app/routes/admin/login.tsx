@@ -2,11 +2,33 @@ import { Form, useActionData, redirect, useNavigation } from "react-router";
 import { adminSession, ADMIN_PASSWORD } from "../../utils/admin.server";
 import type { ActionFunctionArgs } from "react-router";
 
+// In-memory brute-force protection (resets on cold start, but protects within instance lifetime)
+const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
+
 export async function action({ request }: ActionFunctionArgs) {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+               request.headers.get("x-real-ip") || "unknown";
+    
+    // Check brute-force lockout
+    const attempts = loginAttempts.get(ip);
+    if (attempts && attempts.count >= MAX_ATTEMPTS) {
+        const elapsed = Date.now() - attempts.lastAttempt;
+        if (elapsed < LOCKOUT_MS) {
+            const minutesLeft = Math.ceil((LOCKOUT_MS - elapsed) / 60000);
+            return { error: `Забагато спроб. Спробуйте через ${minutesLeft} хв.` };
+        }
+        // Lockout expired — reset
+        loginAttempts.delete(ip);
+    }
+
     const formData = await request.formData();
     const password = formData.get("password");
 
     if (password === ADMIN_PASSWORD) {
+        // Success — clear attempts
+        loginAttempts.delete(ip);
         return redirect("/admin", {
             headers: {
                 "Set-Cookie": await adminSession.serialize("authenticated"),
@@ -14,7 +36,18 @@ export async function action({ request }: ActionFunctionArgs) {
         });
     }
 
-    return { error: "Невірний пароль" };
+    // Failed attempt — track it
+    const current = loginAttempts.get(ip) || { count: 0, lastAttempt: 0 };
+    current.count++;
+    current.lastAttempt = Date.now();
+    loginAttempts.set(ip, current);
+    
+    const remaining = MAX_ATTEMPTS - current.count;
+    if (remaining <= 0) {
+        return { error: "Забагато спроб. Спробуйте через 15 хв." };
+    }
+    
+    return { error: `Невірний пароль (залишилось спроб: ${remaining})` };
 }
 
 export default function AdminLogin() {

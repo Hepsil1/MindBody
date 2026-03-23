@@ -30,6 +30,11 @@ model Product {
   updatedAt   DateTime @updatedAt
   
   orderItems  OrderItem[]
+
+  @@index([status])
+  @@index([shopPageSlug])
+  @@index([category])
+  @@index([createdAt])
 }
 
 model Customer {
@@ -57,6 +62,10 @@ model Order {
   updatedAt     DateTime    @updatedAt
   
   items         OrderItem[]
+
+  @@index([customerId])
+  @@index([createdAt])
+  @@index([status])
 }
 
 model OrderItem {
@@ -69,6 +78,9 @@ model OrderItem {
   price     Decimal
   size      String?
   color     String?
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model Slide {
@@ -127,8 +139,11 @@ model Review {
   rating     Int      // 1-5
   text       String
   isVerified Boolean  @default(false)
-  isApproved Boolean  @default(true)
+  isApproved Boolean  @default(false)
   createdAt  DateTime @default(now())
+
+  @@index([productId])
+  @@index([isApproved])
 }
 
 model ContactRequest {

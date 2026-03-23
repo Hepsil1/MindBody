@@ -3,13 +3,16 @@ import type { Product } from "../types/product";
 import { StorageUtils } from "../utils/storage";
 import { useToast } from "./Toast";
 
-export default function ProductCard({ product }: { product: Product }) {
+interface ExtendedProduct extends Product {
+    discount_percent?: number;
+    image2?: string;
+}
+
+export default function ProductCard({ product }: { product: ExtendedProduct }) {
     const { showToast } = useToast();
-    const { id, name, category, price, price_usd, image, image2, is_new, is_sale, sale_price, colors } = product;
+    const { id, name, category, price, image, image2, is_new, is_sale, sale_price, colors, discount_percent } = product;
 
-    // Use actual product colors if available
     const displayColors = colors?.length ? colors : [];
-
 
     const handleAddToWishlist = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -24,6 +27,13 @@ export default function ProductCard({ product }: { product: Product }) {
         else showToast('Вже у списку улюбленого', 'info');
     };
 
+    // Badge priority: SALE > NEW (show only one to keep it clean)
+    const badge = is_sale && sale_price
+        ? { label: `-${discount_percent || Math.round((1 - sale_price / price) * 100)}%`, type: 'sale' as const }
+        : is_new
+            ? { label: 'NEW', type: 'new' as const }
+            : null;
+
     return (
         <div className="product-card" data-product-id={id}>
             <div className="product-card__image-wrapper">
@@ -33,7 +43,11 @@ export default function ProductCard({ product }: { product: Product }) {
                     <div className="product-card__overlay"></div>
                 </Link>
 
-                {is_new && <span className="product-card__tag product-card__tag--new">NEW</span>}
+                {badge && (
+                    <span className={`product-card__tag product-card__tag--${badge.type}`}>
+                        {badge.label}
+                    </span>
+                )}
 
                 <button
                     className="product-card__heart-btn"
@@ -62,12 +76,18 @@ export default function ProductCard({ product }: { product: Product }) {
                 </h3>
 
                 <div className="product-card__price-row">
-                    <span className="product-card__price-main">
-                        {is_sale && sale_price ? sale_price : price} ₴
-                    </span>
-                    {is_sale && sale_price && (
-                        <span className="product-card__price-old">
-                            {price} ₴
+                    {is_sale && sale_price ? (
+                        <>
+                            <span className="product-card__price-main product-card__price-main--sale">
+                                {sale_price.toLocaleString()} ₴
+                            </span>
+                            <span className="product-card__price-old">
+                                {price.toLocaleString()} ₴
+                            </span>
+                        </>
+                    ) : (
+                        <span className="product-card__price-main">
+                            {price.toLocaleString()} ₴
                         </span>
                     )}
                 </div>
@@ -83,3 +103,4 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
     );
 }
+

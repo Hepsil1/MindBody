@@ -199,7 +199,7 @@ export const AuthUtils = {
         // Send Telegram notification (NO password included!)
         await sendRegistrationNotification(user);
 
-        // SYNC WITH SERVER DB (PRISMA)
+        // SYNC WITH SERVER DB (PRISMA + SESSION)
         try {
             await fetch('/api/register', {
                 method: 'POST',
@@ -210,6 +210,12 @@ export const AuthUtils = {
                     phone: user.phone
                 })
             });
+            // Also sync session for IDOR protection
+            fetch('/api/auth/sync', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'login', email: user.email }) 
+            }).catch(console.error);
         } catch (e) {
             console.error('Failed to sync user with DB:', e);
             // Don't fail the registration flow if sync fails, just log it
@@ -241,6 +247,13 @@ export const AuthUtils = {
             token: generateId()
         };
         localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(authState));
+
+        // Sync session for server IDOR protection
+        fetch('/api/auth/sync', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'login', email: userData.user.email }) 
+        }).catch(console.error);
 
         // Dispatch event
         window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
@@ -293,6 +306,13 @@ export const AuthUtils = {
     logout: (): void => {
         localStorage.removeItem(STORAGE_KEYS.AUTH);
         window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
+        
+        // Sync logout to server
+        fetch('/api/auth/sync', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'logout' }) 
+        }).catch(console.error);
     },
 
     // Update user profile

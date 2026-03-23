@@ -14,11 +14,18 @@ export function meta({ data }: { data: any }) {
         kids: 'Дитяча колекція',
     };
     const title = shopPage?.title || titles[slug] || 'Каталог';
+    const heroImage = shopPage?.heroImage || "/brand-sun.png";
     return [
         { title: `${title} | MIND BODY` },
         { name: "description", content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика. Українське виробництво.` },
         { property: "og:title", content: `${title} | MIND BODY` },
+        { property: "og:description", content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика.` },
         { property: "og:type", content: "website" },
+        { property: "og:image", content: heroImage },
+        { property: "og:locale", content: "uk_UA" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${title} | MIND BODY` },
+        { name: "twitter:image", content: heroImage },
     ];
 }
 
@@ -61,6 +68,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
     // Removed fallback to local JSON files if DB is empty to ensure admin panel and storefront sync.
 
     // Map Raw DB Objects to Frontend Props
+    const NOW = Date.now();
+    const NEW_THRESHOLD_DAYS = 14; // Products created within 14 days = NEW
+
     const mappedProducts = products.map((p: any) => {
         const parseJson = (str: string, fallback: any) => {
             if (!str) return fallback;
@@ -68,19 +78,28 @@ export async function loader({ params }: LoaderFunctionArgs) {
         };
 
         const images = parseJson(p.images, []);
+        const price = Number(p.price);
+        const comparePrice = Number(p.comparePrice) || 0;
+        const isSale = comparePrice > price && price > 0;
+        const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+        const isNew = (NOW - createdAt) < NEW_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
+
         return {
             id: p.id,
             name: p.name,
             description: p.description,
-            price: Number(p.price),
-            comparePrice: Number(p.comparePrice),
-            image: images[0] || '/brand-sun.png', // Fallback to brand icon
+            price: isSale ? comparePrice : price, // ProductCard shows this as "original" (crossed out when sale)
+            comparePrice: comparePrice,
+            sale_price: isSale ? price : undefined, // ProductCard shows this as current (red) price
+            image: images[0] || '/brand-sun.png',
+            image2: images[1] || undefined, // Hover image for card
             images: images,
             category: p.category,
             colors: parseJson(p.colors, []),
             sizes: parseJson(p.sizes, []),
-            is_new: p.status === 'active',
-            is_sale: Number(p.comparePrice) > Number(p.price),
+            is_new: isNew,
+            is_sale: isSale,
+            discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
             status: p.status
         };
     });
@@ -381,10 +400,11 @@ export default function ShopCategory() {
                                 </div>
                                 <div className="accordion-content">
                                     <div className="filter-checkbox-list">
-                                        {categories.map(cat => {
+                                        {categories.map((cat, idx) => {
                                             const count = products.filter((p: any) => p.category === cat || p.category === categoryLabels[cat]).length;
+                                            if (count === 0) return null;
                                             return (
-                                                <label key={cat} className="mb-checkbox-item">
+                                                <label key={`cat-${cat}-${idx}`} className="mb-checkbox-item">
                                                     <input
                                                         type="checkbox"
                                                         checked={selectedCategories.includes(cat)}
@@ -410,15 +430,19 @@ export default function ShopCategory() {
                                 </div>
                                 <div className="accordion-content">
                                     <div className="mb-size-grid">
-                                        {sizes.map((size: string) => (
-                                            <button
-                                                key={size}
-                                                className={`mb-size-chip ${selectedSizes.includes(size) ? 'active' : ''}`}
-                                                onClick={() => toggleSize(size)}
-                                            >
-                                                {size}
-                                            </button>
-                                        ))}
+                                        {sizes.map((size: string, idx: number) => {
+                                            const count = products.filter((p: any) => p.sizes?.includes(size)).length;
+                                            if (count === 0) return null;
+                                            return (
+                                                <button
+                                                    key={`size-${size}-${idx}`}
+                                                    className={`mb-size-chip ${selectedSizes.includes(size) ? 'active' : ''}`}
+                                                    onClick={() => toggleSize(size)}
+                                                >
+                                                    {size}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
@@ -431,16 +455,20 @@ export default function ShopCategory() {
                                 </div>
                                 <div className="accordion-content">
                                     <div className="mb-color-grid">
-                                        {colors.map((color: string) => (
-                                            <button
-                                                key={color}
-                                                className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? 'active' : ''}`}
-                                                onClick={() => toggleColor(color)}
-                                                title={colorLabels[color]}
-                                            >
-                                                <span className="swatch-check">✓</span>
-                                            </button>
-                                        ))}
+                                        {colors.map((color: string, idx: number) => {
+                                            const count = products.filter((p: any) => p.colors?.includes(color) || (colorLabels[color] && p.colors?.includes(colorLabels[color]))).length;
+                                            if (count === 0) return null;
+                                            return (
+                                                <button
+                                                    key={`color-${color}-${idx}`}
+                                                    className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? 'active' : ''}`}
+                                                    onClick={() => toggleColor(color)}
+                                                    title={colorLabels[color] || color}
+                                                >
+                                                    <span className="swatch-check">✓</span>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
@@ -453,8 +481,8 @@ export default function ShopCategory() {
                                 </div>
                                 <div className="accordion-content">
                                     <div className="filter-checkbox-list">
-                                        {priceRanges.map((range: any) => (
-                                            <label key={range.id} className="mb-checkbox-item">
+                                        {priceRanges.map((range: any, idx: number) => (
+                                            <label key={range.id || `range-${idx}`} className="mb-checkbox-item">
                                                 <input
                                                     type="radio"
                                                     name="price-range"
@@ -515,8 +543,8 @@ export default function ShopCategory() {
                             {visibleProducts.length > 0 ? (
                                 <>
                                     <div className="luxe-product-grid">
-                                        {visibleProducts.map((product) => (
-                                            <div key={product.id} className="luxe-card-wrapper">
+                                        {visibleProducts.map((product, idx) => (
+                                            <div key={product.id || `product-${idx}`} className="luxe-card-wrapper">
                                                 <ProductCard product={product} />
                                             </div>
                                         ))}

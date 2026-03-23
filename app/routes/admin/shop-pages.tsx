@@ -1,7 +1,8 @@
 
-import { Form, useLoaderData, useActionData, useNavigation, useSubmit } from "react-router";
+import { Form, useLoaderData, useActionData, useNavigation, useSubmit, redirect } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { prisma } from "../../db.server";
+import { isAuthenticated } from "../../utils/admin.server";
 import { uploadFile } from "../../utils/upload.server";
 import { Buffer } from "buffer";
 
@@ -47,6 +48,9 @@ export async function loader() {
 
 // --- Action ---
 export async function action({ request }: { request: Request }) {
+    if (!(await isAuthenticated(request))) {
+        return redirect("/admin/login");
+    }
     try {
         const formData = await request.formData();
         const intent = formData.get("intent");

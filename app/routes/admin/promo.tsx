@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { useLoaderData, useSubmit, useNavigate } from "react-router";
+import { useLoaderData, useSubmit, useNavigate, redirect } from "react-router";
 import { prisma } from "../../db.server";
+import { isAuthenticated } from "../../utils/admin.server";
 import { useState } from "react";
 
 export async function loader() {
@@ -11,6 +12,9 @@ export async function loader() {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+    if (!(await isAuthenticated(request))) {
+        return redirect("/admin/login");
+    }
     try {
         const formData = await request.formData();
         const intent = formData.get("intent");

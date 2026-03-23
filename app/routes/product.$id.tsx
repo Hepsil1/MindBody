@@ -12,13 +12,22 @@ export function meta({ data }: { data: any }) {
     }
     const desc = (product.description || `${product.name} — купити в MIND BODY`).substring(0, 160);
     const image = product.images?.[0] || '/brand-sun.png';
+    const price = Number(product.price) || 0;
     return [
         { title: `${product.name} | MIND BODY` },
         { name: "description", content: desc },
+        // Open Graph
         { property: "og:title", content: product.name },
         { property: "og:description", content: desc },
         { property: "og:image", content: image },
         { property: "og:type", content: "product" },
+        { property: "product:price:amount", content: String(price) },
+        { property: "product:price:currency", content: "UAH" },
+        // Twitter Card
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: product.name },
+        { name: "twitter:description", content: desc },
+        { name: "twitter:image", content: image },
     ];
 }
 
@@ -52,10 +61,16 @@ export async function loader({ params }: LoaderFunctionArgs) {
     let relatedProducts: any[] = [];
 
     try {
-        const productResult: any[] = await prisma.$queryRawUnsafe(
-            `SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, inventory, status, "shopPageSlug", "createdAt"
-             FROM "Product" WHERE id = $1`, id
-        );
+        // Run product + filterConfig queries in parallel
+        const [productResult, configResult] = await Promise.all([
+            prisma.$queryRawUnsafe(
+                `SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, inventory, status, "shopPageSlug", "createdAt"
+                 FROM "Product" WHERE id = $1`, id
+            ) as Promise<any[]>,
+            prisma.$queryRawUnsafe(
+                `SELECT id, config FROM "FilterConfig" WHERE id = 'global'`
+            ) as Promise<any[]>
+        ]);
 
         if (productResult[0]) {
             const p = productResult[0];
@@ -79,21 +94,27 @@ export async function loader({ params }: LoaderFunctionArgs) {
                 }
             }
 
+            const price = Number(p.price);
+            const comparePrice = Number(p.comparePrice) || 0;
+            const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+            const isNew = (Date.now() - createdAt) < 14 * 24 * 60 * 60 * 1000;
+
             product = {
                 id: p.id,
                 name: p.name,
                 description: p.description,
-                price: Number(p.price),
-                comparePrice: Number(p.comparePrice),
+                price: price,
+                comparePrice: comparePrice,
                 images: images,
                 category: p.category,
                 shopPageSlug: p.shopPageSlug,
-                // Use inventory-derived colors/sizes if available, fallback to stored arrays
                 colors: availableColors.size > 0 ? Array.from(availableColors) : parseJson(p.colors, []),
                 sizes: availableSizes.size > 0 ? Array.from(availableSizes) : parseJson(p.sizes, []),
-                inventory: inventory, // Full inventory array for checking combinations
+                inventory: inventory,
                 status: p.status,
-                is_new: p.status === 'active'
+                is_new: isNew,
+                is_sale: comparePrice > price && price > 0,
+                discount_percent: comparePrice > price ? Math.round((1 - price / comparePrice) * 100) : 0
             };
 
             const relatedResult: any[] = await prisma.$queryRawUnsafe(
@@ -109,16 +130,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
             }));
         }
 
-        const configResult: any[] = await prisma.$queryRawUnsafe(
-            `SELECT id, config FROM "FilterConfig" WHERE id = $1 OR id = 'global'`, 
-            product?.shopPageSlug || 'global'
-        );
-        const specificConfig = configResult.find(c => c.id === product?.shopPageSlug);
-        const globalConfig = configResult.find(c => c.id === 'global');
-        const configToParse = specificConfig?.config || globalConfig?.config;
-        
-        if (configToParse) {
-            try { filterConfig = JSON.parse(configToParse); } catch {}
+        // configResult already fetched in parallel above
+        const globalConfig = configResult.find((c: any) => c.id === 'global');
+        if (globalConfig?.config) {
+            try { filterConfig = JSON.parse(globalConfig.config); } catch {}
         }
 
     } catch (e) {
@@ -178,14 +193,16 @@ function ReviewsSection({ productId }: { productId: string }) {
                 })
             });
             if (res.ok) {
-                showToast('Дякуємо за ваш відгук! ✨');
+                const data = await res.json();
+                showToast(data.message || 'Дякуємо за ваш відгук! ✨');
                 setFormName('');
                 setFormText('');
                 setFormRating(5);
                 setShowForm(false);
-                fetchReviews();
+                // Don't refetch — review is pending moderation and won't appear yet
             } else {
-                showToast('Помилка при збереженні', 'error');
+                const data = await res.json().catch(() => null);
+                showToast(data?.error || 'Помилка при збереженні', 'error');
             }
         } catch {
             showToast('Помилка з\'єднання', 'error');
@@ -235,7 +252,7 @@ function ReviewsSection({ productId }: { productId: string }) {
                     ))}
                 </div>
             ) : (
-                <p style={{ color: '#999', fontSize: '0.9rem', textAlign: 'center', padding: '32px 0' }}>
+                <p className="reviews-empty">
                     Поки що немає відгуків. Будьте першими! ✨
                 </p>
             )}
@@ -243,20 +260,7 @@ function ReviewsSection({ productId }: { productId: string }) {
             {!showForm ? (
                 <button
                     onClick={() => setShowForm(true)}
-                    style={{
-                        marginTop: '24px',
-                        padding: '12px 32px',
-                        background: 'transparent',
-                        border: '2px solid #2a5a5a',
-                        borderRadius: '10px',
-                        color: '#2a5a5a',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase' as const,
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease'
-                    }}
+                    className="review-write-btn"
                 >
                     Написати відгук
                 </button>
@@ -299,7 +303,7 @@ function ReviewsSection({ productId }: { productId: string }) {
                         />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div className="review-form__actions">
                         <button type="submit" className="review-form__submit" disabled={submitting}>
                             {submitting ? 'Відправка...' : 'Надіслати відгук'}
                         </button>
@@ -459,7 +463,13 @@ export default function ProductDetail() {
                                 />
                             </div>
                             {/* Badge integrated into image */}
-                            {product.is_new && <span className="visual-badge">New</span>}
+                            {product.is_sale && product.discount_percent ? (
+                                <span className="visual-badge" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#fff' }}>
+                                    -{product.discount_percent}%
+                                </span>
+                            ) : product.is_new ? (
+                                <span className="visual-badge">New</span>
+                            ) : null}
                         </div>
 
                         {/* Zoom Lightbox */}
@@ -496,8 +506,10 @@ export default function ProductDetail() {
                             <div className="product-header">
                                 <h1 className="product-title">{product.name}</h1>
                                 <div className="product-price-block">
-                                    <span className="current-price">{Number(product.price).toLocaleString()} ₴</span>
-                                    {product.comparePrice > 0 && (
+                                    <span className="current-price" style={product.is_sale ? { color: '#dc2626' } : undefined}>
+                                        {Number(product.price).toLocaleString()} ₴
+                                    </span>
+                                    {product.is_sale && product.comparePrice > 0 && (
                                         <span className="old-price">{Number(product.comparePrice).toLocaleString()} ₴</span>
                                     )}
                                 </div>
@@ -556,16 +568,7 @@ export default function ProductDetail() {
 
                             {/* Stock indicator — enhanced urgency */}
                             {selectedSize && selectedColor && product.inventory?.length > 0 && (
-                                <div className="stock-indicator" style={{
-                                    fontSize: '13px',
-                                    padding: '10px 16px',
-                                    borderRadius: '10px',
-                                    marginBottom: '14px',
-                                    background: isInStock ? (currentStock <= 3 ? 'rgba(245, 158, 11, 0.08)' : 'rgba(34, 197, 94, 0.06)') : 'rgba(239, 68, 68, 0.06)',
-                                    border: `1px solid ${isInStock ? (currentStock <= 3 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(34, 197, 94, 0.15)') : 'rgba(239, 68, 68, 0.15)'}`,
-                                    color: isInStock ? (currentStock <= 3 ? '#b45309' : '#16a34a') : '#dc2626',
-                                    fontWeight: 500
-                                }}>
+                                <div className={`stock-indicator ${isInStock ? (currentStock <= 3 ? 'stock-indicator--low' : 'stock-indicator--ok') : 'stock-indicator--out'}`}>
                                     {isInStock
                                         ? (currentStock <= 3
                                             ? `🔥 Залишилось лише ${currentStock} шт — поспішіть!`
@@ -575,17 +578,10 @@ export default function ProductDetail() {
                             )}
 
                             {/* Trust badges — shipping & returns */}
-                            <div className="trust-badges-inline" style={{
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                gap: '10px',
-                                marginBottom: '16px',
-                                fontSize: '12px',
-                                color: '#6b7280'
-                            }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>🚚 Швидка доставка по Україні</span>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>🔄 14 днів на повернення</span>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>🇺🇦 Українське виробництво</span>
+                            <div className="trust-badges-inline">
+                                <span>🚚 Швидка доставка по Україні</span>
+                                <span>🔄 14 днів на повернення</span>
+                                <span>🇺🇦 Українське виробництво</span>
                             </div>
 
                             <div className="actions-row">

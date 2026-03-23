@@ -1,6 +1,7 @@
 import { prisma } from "../db.server";
+import { ReviewSchema, formatZodErrors } from "../utils/validation";
 
-// GET — fetch reviews for a product
+// GET — fetch reviews for a product (only approved ones for public)
 export async function loader({ request }: { request: Request }) {
     const url = new URL(request.url);
     const productId = url.searchParams.get("productId");
@@ -30,7 +31,7 @@ export async function loader({ request }: { request: Request }) {
     }
 }
 
-// POST — submit a new review
+// POST — submit a new review (isApproved: false — requires admin moderation)
 export async function action({ request }: { request: Request }) {
     if (request.method !== "POST") {
         return Response.json({ error: "Method not allowed" }, { status: 405 });
@@ -38,29 +39,27 @@ export async function action({ request }: { request: Request }) {
 
     try {
         const body = await request.json();
-        const { productId, authorName, rating, text } = body;
 
-        // Validate
-        if (!productId || !authorName || !text) {
-            return Response.json({ error: "Всі поля обов'язкові" }, { status: 400 });
+        // Zod validation
+        const parsed = ReviewSchema.safeParse(body);
+        if (!parsed.success) {
+            return Response.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
         }
 
-        const ratingNum = Number(rating);
-        if (ratingNum < 1 || ratingNum > 5) {
-            return Response.json({ error: "Оцінка має бути від 1 до 5" }, { status: 400 });
-        }
+        const { productId, authorName, rating, text } = parsed.data;
 
-        const trimmedName = authorName.trim().substring(0, 50);
-        const trimmedText = text.trim().substring(0, 1000);
+        const review = await prisma.review.create({
+            data: {
+                productId,
+                authorName,
+                rating,
+                text,
+                isVerified: false,
+                isApproved: false,
+            }
+        });
 
-        const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        await prisma.$executeRawUnsafe(
-            `INSERT INTO "Review" (id, "productId", "authorName", rating, text, "isVerified", "isApproved", "createdAt") 
-             VALUES ($1, $2, $3, $4, $5, false, true, CURRENT_TIMESTAMP)`,
-            id, productId, trimmedName, ratingNum, trimmedText
-        );
-
-        return Response.json({ success: true, id });
+        return Response.json({ success: true, id: review.id, message: "Дякуємо! Ваш відгук буде опубліковано після модерації." });
     } catch (e) {
         console.error("Review create error:", e);
         return Response.json({ error: "Помилка збереження" }, { status: 500 });

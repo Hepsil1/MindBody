@@ -20,7 +20,9 @@ export default [
     route("api/search", "routes/api.search.tsx"),
     route("api/reviews", "routes/api.reviews.tsx"),
     route("api/contact", "routes/api.contact.tsx"),
+    route("api/auth/sync", "routes/api.auth.sync.tsx"),
     route("api/promo", "routes/api/promo.tsx"),
+    route("sitemap.xml", "routes/sitemap[.]xml.tsx"),
 
     // Admin Login & Logout (Separate from layout)
     route("admin/login", "routes/admin/login.tsx"),
@@ -41,6 +43,7 @@ export default [
         route("admin/customers/:id", "routes/admin/customers/$id.tsx"),
         route("admin/shop-pages", "routes/admin/shop-pages.tsx"),
         route("admin/promo", "routes/admin/promo.tsx"),
+        route("admin/reviews", "routes/admin/reviews.tsx"),
     ]),
 ] satisfies RouteConfig;
 
