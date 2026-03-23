@@ -360,7 +360,7 @@ export default function Home() {
                   <img src="/generalpics/338_131123.jpg" alt="MIND BODY Lifestyle" className="about-modern__image" />
                   <div className="about-modern__image-overlay"></div>
                   <div className="about-modern__floating-badge">
-                    <span className="about-modern__badge-text">Est. 2024</span>
+                    <span className="about-modern__badge-text">Since 2024</span>
                   </div>
                 </div>
               </div>
