@@ -119,9 +119,7 @@ export async function action({ request }: ActionFunctionArgs) {
         // 2. Generate Order Number (YYMMDD + 4 random digits for readability + uniqueness)
         const now = new Date();
         const datePart = (now.getFullYear() % 100) * 10000 + (now.getMonth() + 1) * 100 + now.getDate(); // YYMMDD
-        const randomBytes = new Uint16Array(1);
-        crypto.getRandomValues(randomBytes);
-        const randomSuffix = (randomBytes[0] % 9000) + 1000; // 1000-9999
+        const randomSuffix = (require('node:crypto').randomBytes(2).readUInt16LE(0) % 9000) + 1000; // 1000-9999
         const orderNumberInt = datePart * 10000 + randomSuffix;
 
 
@@ -150,9 +148,7 @@ export async function action({ request }: ActionFunctionArgs) {
         } catch (e: any) {
             // Retry with different random suffix if unique constraint violation
             if (e?.code === 'P2002') {
-                const retryBytes = new Uint16Array(1);
-                crypto.getRandomValues(retryBytes);
-                const retrySuffix = (retryBytes[0] % 9000) + 1000;
+                const retrySuffix = (require('node:crypto').randomBytes(2).readUInt16LE(0) % 9000) + 1000;
                 const retryOrderNumber = datePart * 10000 + retrySuffix;
                 newOrder = await prisma.order.create({
                     data: {

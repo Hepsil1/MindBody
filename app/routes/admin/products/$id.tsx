@@ -5,7 +5,6 @@ import { prisma } from "../../../db.server";
 import { isAuthenticated } from "../../../utils/admin.server";
 import { uploadFile } from "../../../utils/upload.server";
 import { parseAndMergeFilterConfig } from "../../../utils/filters";
-import { invalidateCache, invalidateAll } from "../../../utils/cache.server";
 
 // --- Types ---
 interface FilterConfigData {
@@ -178,6 +177,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
                 return { error: "Failed to save product" };
             } finally {
                 // Invalidate caches so storefront shows fresh data
+                const { invalidateAll } = await import("../../../utils/cache.server");
                 invalidateAll();
             }
         }
