@@ -11200,7 +11200,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 }
 
 .shop-luxe .product-card__price-main--sale {
-  color: #dc2626 !important;
+  color: var(--color-primary) !important;
 }
 
 /* Luxe Pagination */
@@ -12489,7 +12489,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 }
 
 .product-card__price-main--sale {
-  color: #dc2626 !important;
+  color: var(--color-primary) !important;
 }
 
 /* Subtle emphasis on hover */
