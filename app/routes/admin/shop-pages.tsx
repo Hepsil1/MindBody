@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { prisma } from "../../db.server";
 import { isAuthenticated } from "../../utils/admin.server";
 import { uploadFile } from "../../utils/upload.server";
-import { Buffer } from "buffer";
 
 // --- Types ---
 type ShopPageSettings = {
