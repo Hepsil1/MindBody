@@ -1,6 +1,8 @@
 import type { ActionFunctionArgs } from "react-router";
+import { randomBytes } from "node:crypto";
 import { prisma } from "../db.server";
 import { OrderCreateSchema, formatZodErrors } from "../utils/validation";
+import { checkRateLimit } from "../utils/rateLimit.server";
 
 // Telegram Configuration — from environment variables
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
@@ -12,6 +14,10 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     try {
+        // Rate limit: 3 order creations per minute
+        const rateLimited = checkRateLimit(request, "orders", 3, 60_000);
+        if (rateLimited) return rateLimited;
+
         const data = await request.json();
 
         // Zod validation
@@ -79,25 +85,29 @@ export async function action({ request }: ActionFunctionArgs) {
         
         let finalTotal = calculatedSubtotal;
         
-        // --- NEW: Promo Code Validation ---
+        // --- Promo Code Validation (direct DB, no self-fetch) ---
         if (promoCode) {
-            // Fetch internal promo API to validate
-            const baseUrl = new URL(request.url).origin;
-            const promoRes = await fetch(`${baseUrl}/api/promo?code=${encodeURIComponent(promoCode)}`);
-            if (promoRes.ok) {
-                 const promoData = await promoRes.json();
-                 if (promoData.valid) {
-                      if (promoData.minOrder > 0 && calculatedSubtotal < promoData.minOrder) {
-                           return new Response(JSON.stringify({ success: false, error: `Для промокоду ${promoCode} мінімальне замовлення складає ${promoData.minOrder} ₴` }), { status: 400, headers: { "Content-Type": "application/json" } });
-                      }
-                      const discount = promoData.discountType === 'percent'
-                          ? Math.round(calculatedSubtotal * promoData.discountValue / 100)
-                          : Math.min(promoData.discountValue, calculatedSubtotal);
-                      finalTotal = calculatedSubtotal - discount;
-                 } else {
-                     return new Response(JSON.stringify({ success: false, error: `Промокод ${promoCode} недійсно або закінчився` }), { status: 400, headers: { "Content-Type": "application/json" } });
-                 }
+            const promoResults = await prisma.$queryRawUnsafe(
+                `SELECT * FROM "PromoCode" WHERE code = $1 LIMIT 1`,
+                promoCode.trim().toUpperCase()
+            ) as any[];
+            const p = promoResults[0];
+            if (!p || !p.isActive) {
+                return new Response(JSON.stringify({ success: false, error: `Промокод ${promoCode} недійсний або закінчився` }), { status: 400, headers: { "Content-Type": "application/json" } });
             }
+            if (p.expiresAt && new Date(p.expiresAt) < new Date()) {
+                return new Response(JSON.stringify({ success: false, error: `Термін дії промокоду минув` }), { status: 400, headers: { "Content-Type": "application/json" } });
+            }
+            if (p.maxUses && p.usedCount >= p.maxUses) {
+                return new Response(JSON.stringify({ success: false, error: `Промокод вичерпано` }), { status: 400, headers: { "Content-Type": "application/json" } });
+            }
+            if (p.minOrder > 0 && calculatedSubtotal < p.minOrder) {
+                return new Response(JSON.stringify({ success: false, error: `Для промокоду ${promoCode} мінімальне замовлення складає ${p.minOrder} ₴` }), { status: 400, headers: { "Content-Type": "application/json" } });
+            }
+            const discount = p.discountType === 'percent'
+                ? Math.round(calculatedSubtotal * p.discountValue / 100)
+                : Math.min(p.discountValue, calculatedSubtotal);
+            finalTotal = calculatedSubtotal - discount;
         }
         
         // Check final total vs payload total (anti-fraud) to ensure cart totals mach server real totals
@@ -110,16 +120,18 @@ export async function action({ request }: ActionFunctionArgs) {
         const firstName = nameParts[0] || "Customer";
         const lastName = nameParts.slice(1).join(" ") || "";
 
+        // If email is empty (optional), generate a placeholder so upsert works
+        const customerEmail = customer.email || `guest_${Date.now()}@mindbody.local`;
         const dbCustomer = await prisma.customer.upsert({
-            where: { email: customer.email },
+            where: { email: customerEmail },
             update: { firstName, lastName, phone: customer.phone || "" },
-            create: { email: customer.email, firstName, lastName, phone: customer.phone || "" },
+            create: { email: customerEmail, firstName, lastName, phone: customer.phone || "" },
         });
 
         // 2. Generate Order Number (YYMMDD + 4 random digits for readability + uniqueness)
         const now = new Date();
         const datePart = (now.getFullYear() % 100) * 10000 + (now.getMonth() + 1) * 100 + now.getDate(); // YYMMDD
-        const randomSuffix = (require('node:crypto').randomBytes(2).readUInt16LE(0) % 9000) + 1000; // 1000-9999
+        const randomSuffix = (randomBytes(2).readUInt16LE(0) % 9000) + 1000; // 1000-9999
         const orderNumberInt = datePart * 10000 + randomSuffix;
 
 
@@ -148,7 +160,7 @@ export async function action({ request }: ActionFunctionArgs) {
         } catch (e: any) {
             // Retry with different random suffix if unique constraint violation
             if (e?.code === 'P2002') {
-                const retrySuffix = (require('node:crypto').randomBytes(2).readUInt16LE(0) % 9000) + 1000;
+                const retrySuffix = (randomBytes(2).readUInt16LE(0) % 9000) + 1000;
                 const retryOrderNumber = datePart * 10000 + retrySuffix;
                 newOrder = await prisma.order.create({
                     data: {

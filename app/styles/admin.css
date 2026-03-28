@@ -102,6 +102,7 @@ body {
     color: var(--text-main);
     background: linear-gradient(to right, #fff, #94a3b8);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -224,6 +225,7 @@ body {
     letter-spacing: -0.03em;
     background: linear-gradient(to right, #fff, #cbd5e1);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -303,6 +305,7 @@ body {
 .admin-stat__value--accent {
     background: linear-gradient(to right, var(--accent-primary), #fff);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -489,6 +492,16 @@ body {
 
 /* Ensure visual editor looks correct - remove padding on main container when editor is active */
 .admin-main:has(.visual-editor-container) {
+    padding: 0 !important;
+    max-width: none !important;
+}
+
+/* When visual editor (slides.tsx) is loaded, hide the layout sidebar and let the editor own the full viewport */
+.admin-layout:has(.visual-editor-fullscreen) .admin-sidebar {
+    display: none !important;
+}
+.admin-layout:has(.visual-editor-fullscreen) .admin-main {
+    margin-left: 0 !important;
     padding: 0 !important;
     max-width: none !important;
 }

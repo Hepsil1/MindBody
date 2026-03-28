@@ -1,0 +1,140 @@
+
+.wishlist-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FAFAFA 0%, #FFFFFF 100%);
+}
+
+.wishlist-empty {
+  text-align: center;
+  padding: 80px 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.wishlist-empty__icon {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-cream);
+  border-radius: 50%;
+  color: var(--color-text-secondary);
+}
+
+.wishlist-empty h2 {
+  margin-bottom: 15px;
+}
+
+.wishlist-empty p {
+  color: var(--color-text-secondary);
+  margin-bottom: 30px;
+}
+
+.wishlist-page {
+  min-height: 100vh;
+  background: #f8f9fa;
+  color: #1a1a1a;
+}
+
+.wishlist-hero {
+  background: linear-gradient(135deg, #0d3838 0%, #051b21 100%);
+  padding: 140px 0 80px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.wishlist-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M30 0L60 30L30 60L0 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-size: 60px 60px;
+  opacity: 0.5;
+}
+
+.wishlist-hero .container {
+  position: relative;
+  z-index: 1;
+}
+
+.wishlist-hero__content h1 {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 400;
+  color: white;
+  margin: 0 0 12px 0;
+}
+
+.wishlist-hero__content h1 em {
+  font-family: var(--font-script);
+  font-style: normal;
+  color: var(--color-primary);
+}
+
+.wishlist-empty {
+  text-align: center;
+  padding: 80px 40px;
+  max-width: 500px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.05);
+}
+
+.wishlist-empty__visual {
+  margin-bottom: 32px;
+}
+
+.wishlist-empty__circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  color: var(--color-primary);
+  animation: pulse-heart 2s ease-in-out infinite;
+}
+
+.wishlist-empty h2 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 400;
+  color: #1a1a1a;
+  margin: 0 0 16px 0;
+}
+
+.wishlist-empty h2 em {
+  font-family: var(--font-script);
+  font-style: normal;
+  color: var(--color-primary);
+}
+
+.wishlist-empty p {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0 0 32px 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .wishlist-hero {
+    padding: 120px 0 60px;
+  }
+
+  .wishlist-hero__content h1 {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .wishlist-empty {
+    padding: 60px 24px;
+  }
+}

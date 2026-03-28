@@ -1,0 +1,255 @@
+
+
+.mb-shop-sidebar {
+  padding-top: 80px;
+  /* High-end breathing room */
+  position: sticky;
+  top: 100px;
+  align-self: flex-start;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.mb-shop-sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.mb-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+
+.mb-checkbox-item input {
+  display: none;
+}
+
+.mb-checkbox-item:hover .checkbox-visual {
+  border-color: var(--color-primary);
+}
+
+.mb-checkbox-item input:checked+.checkbox-visual {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.mb-checkbox-item input:checked+.checkbox-visual.radio::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  border: none;
+  transform: none;
+}
+
+.mb-checkbox-item input:checked+.checkbox-visual::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.mb-checkbox-item:hover .label-text {
+  color: var(--color-primary);
+}
+
+.mb-size-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.mb-size-chip {
+  height: 44px;
+  background: transparent;
+  border: 1px solid #e0e0e0;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.mb-size-chip:hover {
+  border-color: #333;
+  transform: translateY(-1px);
+}
+
+.mb-size-chip.active {
+  background: #333;
+  border-color: #333;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.mb-color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.mb-color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: var(--transition-base);
+  background-color: #eee;
+}
+
+.mb-color-swatch:hover {
+  transform: scale(1.1);
+  border-color: var(--color-primary);
+}
+
+.mb-color-swatch.active {
+  transform: scale(1.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px white, 0 0 0 4px var(--color-primary);
+}
+
+.mb-color-swatch .swatch-check {
+  color: white;
+  font-size: 14px;
+  opacity: 0;
+  transition: var(--transition-fast);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.mb-color-swatch.active .swatch-check {
+  opacity: 1;
+}
+
+.mb-color-swatch.white {
+  background-color: #ffffff;
+}
+
+.mb-color-swatch.white .swatch-check {
+  color: #000;
+  text-shadow: none;
+}
+
+.mb-color-swatch.black {
+  background-color: #1a1a1a;
+}
+
+.mb-color-swatch.blue {
+  background-color: #1e40af;
+}
+
+.mb-color-swatch.pink {
+  background-color: #db2777;
+}
+
+.mb-color-swatch.green {
+  background-color: #15803d;
+}
+
+.mb-color-swatch.gray {
+  background-color: #4b5563;
+}
+
+.mb-color-swatch.red {
+  background-color: #b91c1c;
+}
+
+.mb-color-swatch.other {
+  background: linear-gradient(135deg, #1e40af, #db2777, #15803d);
+}
+
+.mb-reset-filters {
+  margin-top: 40px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  color: var(--color-text-light);
+  cursor: pointer;
+  padding: 0;
+}
+
+.mb-shop-content {
+  padding-top: 80px;
+}
+
+.mb-toolbar {
+  margin-bottom: 40px;
+}
+
+@media (max-width: 900px) {
+
+  .mb-shop-sidebar {
+    display: none;
+  }
+}
+/* Sort Chips (migrated from app.css) */
+.sort-chips {
+  display: flex;
+  gap: 8px;
+  flex-grow: 1;
+}
+.sort-chip {
+  padding: 8px 18px;
+  background: transparent;
+  border: 1px solid transparent;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+}
+.sort-chip:hover {
+  background: rgba(0, 0, 0, 0.03);
+  color: #333;
+}
+.sort-chip.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 10px rgba(42, 90, 90, 0.2);
+}
+.sort-chip .close-x {
+  font-size: 10px;
+  opacity: 0.8;
+}
+.product-count {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--color-text-light);
+}
+@media (max-width: 900px) {
+  .sort-chips {
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+}

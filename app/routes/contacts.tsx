@@ -1,4 +1,6 @@
 import { Link } from "react-router";
+import styles from "../styles/contacts.css?url";
+
 
 export default function Contacts() {
     return (
@@ -107,4 +109,8 @@ export default function Contacts() {
             </section>
         </main>
     );
+}
+
+export function links() {
+  return [{ rel: "stylesheet", href: styles }];
 }

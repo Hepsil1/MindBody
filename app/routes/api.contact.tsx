@@ -1,9 +1,14 @@
 import { prisma } from "../db.server";
+import { checkRateLimit } from "../utils/rateLimit.server";
 
 export async function action({ request }: { request: Request }) {
     if (request.method !== "POST") {
         return Response.json({ error: "Method not allowed" }, { status: 405 });
     }
+
+    // Rate limit: 5 requests per minute
+    const rateLimited = checkRateLimit(request, "contact", 5, 60_000);
+    if (rateLimited) return rateLimited;
 
     try {
         const body = await request.json();

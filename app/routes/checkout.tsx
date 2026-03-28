@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { StorageUtils, type CartItem } from "../utils/storage";
 import { AuthUtils } from "../utils/auth";
 import { useToast } from "../components/Toast";
+import styles from "../styles/checkout.css?url";
+
 
 export function meta() {
     return [
@@ -1034,4 +1036,8 @@ export default function Checkout() {
             </div>
         </main>
     );
+}
+
+export function links() {
+  return [{ rel: "stylesheet", href: styles }];
 }

@@ -33,6 +33,7 @@ export default [
         route("admin", "routes/admin/index.tsx"),
         route("admin/slides", "routes/admin/slides.tsx"),
         route("admin/products", "routes/admin/products/index.tsx"),
+        route("admin/products/new", "routes/admin/products/new.tsx"),
         route("admin/products/:id", "routes/admin/products/$id.tsx"),
 
         // Orders

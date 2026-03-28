@@ -1,5 +1,6 @@
 import { prisma } from "../db.server";
 import { ReviewSchema, formatZodErrors } from "../utils/validation";
+import { checkRateLimit } from "../utils/rateLimit.server";
 
 // GET — fetch reviews for a product (only approved ones for public)
 export async function loader({ request }: { request: Request }) {
@@ -38,6 +39,10 @@ export async function action({ request }: { request: Request }) {
     }
 
     try {
+        // Rate limit: 5 reviews per minute
+        const rateLimited = checkRateLimit(request, "reviews", 5, 60_000);
+        if (rateLimited) return rateLimited;
+
         const body = await request.json();
 
         // Zod validation

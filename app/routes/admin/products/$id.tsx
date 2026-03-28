@@ -1,5 +1,5 @@
 import { type LoaderFunctionArgs, type ActionFunctionArgs, redirect } from "react-router";
-import { useLoaderData, useFetcher, useNavigate, useParams, Link, isRouteErrorResponse } from "react-router";
+import { useLoaderData, useFetcher, useNavigate, Link, isRouteErrorResponse } from "react-router";
 import { useState, useEffect } from "react";
 import { prisma } from "../../../db.server";
 import { isAuthenticated } from "../../../utils/admin.server";
@@ -128,7 +128,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
         }
 
         if (intent === "save_product") {
-            const id = params.id === "new" ? generateUUID() : params.id;
+            const isNew = params.id === "new" || !params.id;
+            const id = isNew ? generateUUID() : params.id;
 
             // Basic Fields
             const name = (formData.get("name") as string) || "Новий товар";

@@ -4,9 +4,15 @@ import { useLoaderData } from "react-router";
 import { useState, useEffect } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import aboutStyles from "../styles/about-page.css?url";
+import homeStyles from "../styles/home.css?url";
+import contactStyles from "../styles/contacts.css?url";
 
 export function links() {
-    return [{ rel: "stylesheet", href: aboutStyles }];
+    return [
+        { rel: "stylesheet", href: aboutStyles },
+        { rel: "stylesheet", href: homeStyles },
+        { rel: "stylesheet", href: contactStyles }
+    ];
 }
 
 export function meta() {

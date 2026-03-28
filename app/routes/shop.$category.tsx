@@ -8,24 +8,28 @@ import { parseAndMergeFilterConfig } from "../utils/filters";
 
 export function meta({ data }: { data: any }) {
     const shopPage = data?.shopPage;
-    const slug = data?.categorySlug || 'women';
+    const slug = data?.category || 'women';
     const titles: Record<string, string> = {
         women: 'Жіноча колекція',
         kids: 'Дитяча колекція',
     };
     const title = shopPage?.title || titles[slug] || 'Каталог';
     const heroImage = shopPage?.heroImage || "/brand-sun.png";
+    const siteUrl = "https://mindbody.com.ua";
+    const canonicalUrl = `${siteUrl}/shop/${slug}`;
     return [
         { title: `${title} | MIND BODY` },
         { name: "description", content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика. Українське виробництво.` },
+        { tagName: "link", rel: "canonical", href: canonicalUrl },
+        { property: "og:url", content: canonicalUrl },
         { property: "og:title", content: `${title} | MIND BODY` },
         { property: "og:description", content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика.` },
         { property: "og:type", content: "website" },
-        { property: "og:image", content: heroImage },
+        { property: "og:image", content: heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}` },
         { property: "og:locale", content: "uk_UA" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: `${title} | MIND BODY` },
-        { name: "twitter:image", content: heroImage },
+        { name: "twitter:image", content: heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}` },
     ];
 }
 
@@ -107,6 +111,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
     return { products: mappedProducts, category: categorySlug, shopPage, filterConfig };
 }
 import { useSearchParams } from "react-router";
+import styles from "../styles/shop.css?url";
+
 
 export default function ShopCategory() {
     const { products, category, shopPage, filterConfig } = useLoaderData<typeof loader>();
@@ -580,4 +586,8 @@ export default function ShopCategory() {
             </div>
         </div>
     );
+}
+
+export function links() {
+  return [{ rel: "stylesheet", href: styles }];
 }

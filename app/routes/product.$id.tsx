@@ -15,16 +15,21 @@ export function meta({ data }: { data: any }) {
     if (!product) {
         return [{ title: "Товар не знайдено | MIND BODY" }];
     }
+    const siteUrl = "https://mindbody.com.ua";
     const desc = (product.description || `${product.name} — купити в MIND BODY`).substring(0, 160);
     const image = product.images?.[0] || '/brand-sun.png';
+    const fullImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
     const price = Number(product.price) || 0;
+    const canonicalUrl = `${siteUrl}/product/${product.id}`;
     return [
         { title: `${product.name} | MIND BODY` },
         { name: "description", content: desc },
+        { tagName: "link", rel: "canonical", href: canonicalUrl },
         // Open Graph
+        { property: "og:url", content: canonicalUrl },
         { property: "og:title", content: product.name },
         { property: "og:description", content: desc },
-        { property: "og:image", content: image },
+        { property: "og:image", content: fullImage },
         { property: "og:type", content: "product" },
         { property: "product:price:amount", content: String(price) },
         { property: "product:price:currency", content: "UAH" },
@@ -32,7 +37,26 @@ export function meta({ data }: { data: any }) {
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: product.name },
         { name: "twitter:description", content: desc },
-        { name: "twitter:image", content: image },
+        { name: "twitter:image", content: fullImage },
+        // JSON-LD Product
+        {
+            "script:ld+json": {
+                "@context": "https://schema.org",
+                "@type": "Product",
+                "name": product.name,
+                "description": desc,
+                "image": fullImage,
+                "brand": { "@type": "Brand", "name": "MIND BODY" },
+                "offers": {
+                    "@type": "Offer",
+                    "url": canonicalUrl,
+                    "priceCurrency": "UAH",
+                    "price": price,
+                    "availability": "https://schema.org/InStock",
+                    "seller": { "@type": "Organization", "name": "MIND BODY" }
+                }
+            }
+        },
     ];
 }
 

@@ -18,7 +18,7 @@ export const ReviewSchema = z.object({
 // ===== Order Create API =====
 const OrderCustomerSchema = z.object({
     name: z.string().min(2).max(100).trim(),
-    email: z.string().email().max(100).trim().toLowerCase(),
+    email: z.string().email().max(100).trim().toLowerCase().optional().default(''),
     phone: z.string().min(10).max(20).trim(),
     city: z.string().min(1).max(100).trim(),
     warehouse: z.string().min(1).max(200).trim(),

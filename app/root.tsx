@@ -1,3 +1,4 @@
+import cartStyles from './styles/cart.css?url';
 import {
   isRouteErrorResponse,
   Links,
@@ -35,12 +36,13 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap",
   },
-  // Secondary fonts — display=swap ensures non-blocking rendering
+  // Secondary fonts — reduced set (Montserrat + Outfit only), others use system fallback
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Outfit:wght@300;400;500&family=Syncopate:wght@400;700&family=Manrope:wght@200;400;600&family=Bodoni+Moda:ital,wght@0,400;0,700;1,400&family=Prata&family=Marcellus&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Outfit:wght@300;400;500&display=swap",
   },
   { rel: "stylesheet", href: appCss },
+  { rel: "stylesheet", href: cartStyles },
   { rel: "stylesheet", href: loadingScreenCss },
 ];
 
@@ -70,6 +72,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#2a5a68" />
         <Meta />
         <Links />
       </head>

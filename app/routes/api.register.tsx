@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
 import { RegisterSchema, formatZodErrors } from "../utils/validation";
+import { checkRateLimit } from "../utils/rateLimit.server";
 
 export async function action({ request }: ActionFunctionArgs) {
     if (request.method !== "POST") {
@@ -8,6 +9,10 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     try {
+        // Rate limit: 5 registrations per minute
+        const rateLimited = checkRateLimit(request, "register", 5, 60_000);
+        if (rateLimited) return rateLimited;
+
         const data = await request.json();
 
         // Zod validation

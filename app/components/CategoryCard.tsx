@@ -28,6 +28,7 @@ export default function CategoryCard({ title, subtitle, image, imagePos, link, b
                 <img
                     src={image}
                     alt={title}
+                    loading="lazy"
                     style={{
                         objectPosition: position,
                         transform: scale !== 1 ? `scale(${scale})` : undefined,

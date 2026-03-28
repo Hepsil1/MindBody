@@ -5,6 +5,11 @@ import { useLoaderData, useFetcher, Link } from "react-router";
 import HeroSlider, { type SlideData } from "../../components/HeroSlider";
 import CategoryCard from "../../components/CategoryCard";
 import { parseAndMergeFilterConfig } from "../../utils/filters";
+import homeStyles from "../../styles/home.css?url";
+
+export function links() {
+    return [{ rel: "stylesheet", href: homeStyles }];
+}
 
 export async function loader({ request }: Route.LoaderArgs) {
     try {
@@ -676,7 +681,7 @@ export default function AdminVisualEditor() {
     }, [fetcher.state, fetcher.data]);
 
     return (
-        <div style={{ background: '#000', height: '100vh', overflow: 'hidden' }}>
+        <div className="visual-editor-fullscreen" style={{ background: '#000', height: '100vh', overflow: 'hidden' }}>
             {/* Sidebar - Fixed Position */}
             <div style={{
                 position: 'fixed',
