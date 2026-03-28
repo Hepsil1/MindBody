@@ -58,8 +58,10 @@ async function main() {
     });
 
     // Create an order for 1st customer
-    await prisma.order.create({
-        data: {
+    await prisma.order.upsert({
+        where: { orderNumber: 1001 },
+        update: {},
+        create: {
             orderNumber: 1001,
             customerId: customer1.id,
             status: "delivered",

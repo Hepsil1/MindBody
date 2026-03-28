@@ -49,8 +49,10 @@ const defaultSlides: SlideData[] = [
     {
         id: "default-5",
         name: "Hero Banner",
-        type: "single",
-        image1: "/Slides/Example.png",
+        type: "triptych",
+        image1: "/generalpics/585_131123.jpg",
+        image2: "/generalpics/588_131123.jpg",
+        image3: "/generalpics/602_131123.jpg",
     },
 ];
 

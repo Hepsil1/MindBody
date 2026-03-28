@@ -129,10 +129,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 const FALLBACK_INSTAGRAM_POSTS = [
-  { id: "1", mediaUrl: "/generalpics/ig1.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" },
-  { id: "2", mediaUrl: "/generalpics/ig2.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" },
-  { id: "3", mediaUrl: "/generalpics/ig3.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" },
-  { id: "4", mediaUrl: "/generalpics/ig4.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" }
+  { id: "1", mediaUrl: "/generalpics/333_131123.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" },
+  { id: "2", mediaUrl: "/generalpics/347_131123.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" },
+  { id: "3", mediaUrl: "/generalpics/374_131123.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" },
+  { id: "4", mediaUrl: "/generalpics/595_131123.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" }
 ];
 
 export default function Home() {

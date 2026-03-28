@@ -211,6 +211,8 @@ const filterConfig = {
 
 async function main() {
     console.log('🗑️  Clearing old data...');
+    await prisma.orderItem.deleteMany({});
+    await prisma.order.deleteMany({});
     await prisma.product.deleteMany({});
     await prisma.shopPage.deleteMany({});
     await prisma.category.deleteMany({});
