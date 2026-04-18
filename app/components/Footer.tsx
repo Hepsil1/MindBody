@@ -76,8 +76,9 @@ export default function Footer() {
                                 <h5 className="footer-puma__col-header">Зв'язатись</h5>
                                 <ul className="footer-puma__nav-list">
                                     <li>
-                                        <a href="tel:+380966650855">
-                                            📞 +38 (096) 665-08-55
+                                        <a href="tel:+380966650855" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                            +38 (096) 665-08-55
                                         </a>
                                     </li>
                                     <li>
@@ -147,7 +148,10 @@ export default function Footer() {
             <div className="footer-puma__container">
                 <div className="footer-puma__bottom-row">
                     <div className="footer-puma__country-select">
-                        <span className="footer-puma__flag">🇺🇦</span>
+                        <svg className="footer-puma__flag" aria-hidden="true" width="20" height="14" viewBox="0 0 20 14" fill="none">
+                            <rect width="20" height="7" fill="#0057B7"/>
+                            <rect y="7" width="20" height="7" fill="#FFD700"/>
+                        </svg>
                         <span className="footer-puma__country-name">УКРАЇНА (УКРАЇНСЬКА)</span>
                         <span className="footer-puma__arrow">▼</span>
                     </div>

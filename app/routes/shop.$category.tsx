@@ -15,7 +15,8 @@ export function meta({ data }: { data: any }) {
     };
     const title = shopPage?.title || titles[slug] || 'Каталог';
     const heroImage = shopPage?.heroImage || "/brand-sun.png";
-    const siteUrl = "https://mindbody.com.ua";
+    const siteUrl = data?.siteUrl || "https://mindbody.com.ua";
+
     const canonicalUrl = `${siteUrl}/shop/${slug}`;
     return [
         { title: `${title} | MIND BODY` },
@@ -31,6 +32,12 @@ export function meta({ data }: { data: any }) {
         { name: "twitter:title", content: `${title} | MIND BODY` },
         { name: "twitter:image", content: heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}` },
     ];
+}
+
+export function headers() {
+    return {
+        "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+    };
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -108,7 +115,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
         };
     });
 
-    return { products: mappedProducts, category: categorySlug, shopPage, filterConfig };
+    return { products: mappedProducts, category: categorySlug, shopPage, filterConfig, siteUrl: process.env.SITE_URL || "https://mindbody.com.ua" };
+
 }
 import { useSearchParams } from "react-router";
 import styles from "../styles/shop.css?url";

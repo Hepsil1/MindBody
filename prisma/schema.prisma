@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Product {
@@ -34,15 +33,16 @@ model Product {
 }
 
 model Customer {
-  id           String   @id @default(uuid())
-  firstName    String
-  lastName     String
-  email        String   @unique
-  phone        String?
-  passwordHash String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  orders       Order[]
+  id              String   @id @default(uuid())
+  supabaseAuthId  String?  @unique
+  firstName       String
+  lastName        String
+  email           String   @unique
+  phone           String?
+  avatar          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  orders          Order[]
 }
 
 model Order {

@@ -1,7 +1,7 @@
 /**
  * Simple in-memory rate limiter for API routes.
  * Limits requests per IP address within a sliding window.
- * Resets on cold start (acceptable for Vercel serverless).
+ * Resets on server restart.
  */
 
 interface RateLimitEntry {

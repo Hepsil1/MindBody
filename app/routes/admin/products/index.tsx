@@ -2,12 +2,15 @@ import { Link, useLoaderData, Form, redirect } from "react-router";
 import type { Route } from "./+types/index";
 import { prisma } from "../../../db.server";
 import { isAuthenticated } from "../../../utils/admin.server";
+import { invalidateAll } from "../../../utils/cache.server";
 import { useState } from "react";
 
 export async function action({ request }: Route.ActionArgs) {
     if (!(await isAuthenticated(request))) {
         return redirect("/admin/login");
     }
+    // Clear cache so storefront shows updated product list immediately
+    invalidateAll();
     const formData = await request.formData();
     const intent = formData.get("intent");
 

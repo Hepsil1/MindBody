@@ -31,16 +31,17 @@
   border-color: var(--color-primary);
 }
 
-.mb-checkbox-item input:checked+.checkbox-visual {
+.mb-checkbox-item input:checked + .checkbox-visual {
   border-color: var(--color-primary);
   background: var(--color-primary);
 }
 
-.mb-checkbox-item input:checked+.checkbox-visual.radio::after {
+/* Radio dot (price filter) */
+.mb-checkbox-item input:checked + .checkbox-visual.radio::after {
   content: '';
   position: absolute;
-  left: 5px;
-  top: 5px;
+  left: 4px;
+  top: 4px;
   width: 6px;
   height: 6px;
   background: white;
@@ -49,11 +50,12 @@
   transform: none;
 }
 
-.mb-checkbox-item input:checked+.checkbox-visual::after {
+/* White checkmark only when checked — NOT on unchecked state */
+.mb-checkbox-item input:checked + .checkbox-visual:not(.radio)::after {
   content: '';
   position: absolute;
-  left: 5px;
-  top: 2px;
+  left: 4px;
+  top: 1px;
   width: 5px;
   height: 9px;
   border: solid white;

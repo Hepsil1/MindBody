@@ -9,37 +9,49 @@ import { cachedFetch } from "../utils/cache.server";
 import styles from "../styles/home.css?url";
 
 
-const SITE_URL = "https://mindbody.com.ua";
+const DEFAULT_SITE_URL = "https://mindbody.com.ua";
 
-export function meta({ }: Route.MetaArgs) {
+
+export function meta({ data }: Route.MetaArgs) {
+  const siteUrl = data?.siteUrl || DEFAULT_SITE_URL;
   return [
     { title: "MIND BODY — Спортивний одяг для йоги та активного життя" },
     { name: "description", content: "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика. Безкоштовна доставка від 2000₴." },
-    { tagName: "link", rel: "canonical", href: SITE_URL },
-    { property: "og:url", content: SITE_URL },
+    { tagName: "link", rel: "canonical", href: siteUrl },
+    { property: "og:url", content: siteUrl },
     { property: "og:title", content: "MIND BODY — Спортивний одяг" },
     { property: "og:description", content: "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика." },
     { property: "og:type", content: "website" },
-    { property: "og:image", content: `${SITE_URL}/brand-sun.png` },
+    { property: "og:image", content: `${siteUrl}/brand-sun.png` },
     { property: "og:locale", content: "uk_UA" },
     { property: "og:site_name", content: "MIND BODY" },
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: "MIND BODY — Спортивний одяг" },
     { name: "twitter:description", content: "Український бренд спортивного одягу для жінок та дітей." },
-    { name: "twitter:image", content: `${SITE_URL}/brand-sun.png` },
+    { name: "twitter:image", content: `${siteUrl}/brand-sun.png` },
+    // Preload first hero slide images — critical for LCP
+    { tagName: "link", rel: "preload", as: "image", href: "/generalpics/333_131123.webp", fetchPriority: "high" },
+    { tagName: "link", rel: "preload", as: "image", href: "/generalpics/374_131123.webp" },
+    { tagName: "link", rel: "preload", as: "image", href: "/generalpics/338_131123.webp" },
     {
       "script:ld+json": {
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "MIND BODY",
-        "url": SITE_URL,
-        "logo": `${SITE_URL}/brand-sun.png`,
+        "url": siteUrl,
+        "logo": `${siteUrl}/brand-sun.png`,
         "description": "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика.",
         "address": { "@type": "PostalAddress", "addressCountry": "UA" },
         "sameAs": ["https://www.instagram.com/mindbody_ua"]
       }
     },
   ];
+}
+
+export function headers() {
+  return {
+    "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+  };
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -102,12 +114,12 @@ export async function loader({ request }: Route.LoaderArgs) {
         image3: s.image3,
       })) as SlideData[],
       categories: categoriesFromDb.length > 0 ? categoriesFromDb : [
-        { id: '1', title: 'YOGA', subtitle: 'Для гармонії тіла та духу', image: '/pics1cloths/IMG_6201.JPG', link: '/shop/yoga', buttonText: 'Переглянути' },
-        { id: '2', title: 'SPORT', subtitle: 'Для активних тренувань', image: '/pics1cloths/IMG_6210.JPG', link: '/shop/sport', buttonText: 'Переглянути' },
-        { id: '3', title: 'DANCE', subtitle: 'Свобода рухів', image: '/generalpics/595_131123.jpg', link: '/shop/dance', buttonText: 'Переглянути' },
-        { id: '4', title: 'CASUAL', subtitle: 'Повсякденний комфорт', image: '/generalpics/348_131123.jpg', link: '/shop/casual', buttonText: 'Переглянути' },
-        { id: '5', title: 'KIDS', subtitle: 'Для наймолодших', image: '/pics2cloths/IMG_5222.JPG', link: '/shop/kids', buttonText: 'Переглянути' },
-        { id: '6', title: 'YOGATOOLS', subtitle: 'Аксесуари та інвентар', image: '/generalpics/374_131123.jpg', link: '/shop/yogatools', buttonText: 'Переглянути' },
+        { id: '1', title: 'YOGA', subtitle: 'Для гармонії тіла та духу', image: '/pics1cloths/IMG_6201.webp', link: '/shop/yoga', buttonText: 'Переглянути' },
+        { id: '2', title: 'SPORT', subtitle: 'Для активних тренувань', image: '/pics1cloths/IMG_6210.webp', link: '/shop/sport', buttonText: 'Переглянути' },
+        { id: '3', title: 'DANCE', subtitle: 'Свобода рухів', image: '/generalpics/595_131123.webp', link: '/shop/dance', buttonText: 'Переглянути' },
+        { id: '4', title: 'CASUAL', subtitle: 'Повсякденний комфорт', image: '/generalpics/348_131123.webp', link: '/shop/casual', buttonText: 'Переглянути' },
+        { id: '5', title: 'KIDS', subtitle: 'Для наймолодших', image: '/pics2cloths/IMG_5222.webp', link: '/shop/kids', buttonText: 'Переглянути' },
+        { id: '6', title: 'YOGATOOLS', subtitle: 'Аксесуари та інвентар', image: '/generalpics/374_131123.webp', link: '/shop/yogatools', buttonText: 'Переглянути' },
       ],
       newProducts: rawProducts.map(mapProduct),
       instagramData: {
@@ -120,7 +132,8 @@ export async function loader({ request }: Route.LoaderArgs) {
           { id: "3", mediaUrl: "https://behold.pictures/su4XpNQnryeiB8O203eV2KgONDk2/gGjqxmmbHMaeKvF1NJYz/18238941487231477/medium.jpg", permalink: "https://www.instagram.com/p/CyRAuqaoe79/" },
           { id: "4", mediaUrl: "https://behold.pictures/su4XpNQnryeiB8O203eV2KgONDk2/gGjqxmmbHMaeKvF1NJYz/17913473309737851/medium.jpg", permalink: "https://www.instagram.com/p/CrvCs5qoWDY/" }
         ]
-      } as any
+      } as any,
+      siteUrl: process.env.SITE_URL || DEFAULT_SITE_URL
     };
   } catch (error) {
     console.error("Failed to load home data:", error);
@@ -129,8 +142,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 const FALLBACK_INSTAGRAM_POSTS = [
-  { id: "1", mediaUrl: "/generalpics/333_131123.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" },
-  { id: "2", mediaUrl: "/generalpics/347_131123.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" },
+  { id: "1", mediaUrl: "/generalpics/333_131123.webp", permalink: "https://www.instagram.com/mindbody_sportwear/" },
+  { id: "2", mediaUrl: "/generalpics/347_131123.webp", permalink: "https://www.instagram.com/mindbody_sportwear/" },
   { id: "3", mediaUrl: "/generalpics/374_131123.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" },
   { id: "4", mediaUrl: "/generalpics/595_131123.jpg", permalink: "https://www.instagram.com/mindbody_sportwear/" }
 ];
@@ -141,25 +154,8 @@ export default function Home() {
   const igUsername = instagramData?.username || "mindbody_sportwear";
   const igProfilePic = instagramData?.profilePictureUrl || "/logo-sun.png";
 
-  // Scroll logic for parallax and back-to-top button
+  // Scroll reveal animation
   useEffect(() => {
-    const handleScroll = () => {
-      // Parallax for values background
-      const section = document.querySelector('.values-modern') as HTMLElement;
-      const bgElement = document.querySelector('.values-modern .values-premium__bg-image') as HTMLElement;
-      if (section && bgElement) {
-        const rect = section.getBoundingClientRect();
-        const sectionCenter = rect.top + rect.height / 2;
-        const viewportCenter = window.innerHeight / 2;
-        const offset = (sectionCenter - viewportCenter) * 0.4;
-        bgElement.style.transform = `translateY(${offset}px)`;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
-    // IntersectionObserver for scroll-reveal animations
     const observerOptions = {
       root: null,
       rootMargin: '0px 0px -100px 0px',
@@ -176,9 +172,8 @@ export default function Home() {
 
     const observer = new IntersectionObserver(revealOnScroll, observerOptions);
 
-    // Add reveal class to elements only when JS is ready
     setTimeout(() => {
-      // Section headers
+      // General elements
       document.querySelectorAll('.section__header').forEach(el => {
         el.classList.add('reveal-ready');
         observer.observe(el);
@@ -198,23 +193,21 @@ export default function Home() {
         observer.observe(el);
       });
 
-      // Value items with stagger
-      document.querySelectorAll('.value-item').forEach((el, i) => {
+      // Brand World intro grid
+      document.querySelectorAll('.bw-intro__grid').forEach(el => {
         el.classList.add('reveal-ready');
-        (el as HTMLElement).style.transitionDelay = `${i * 0.15}s`;
         observer.observe(el);
       });
 
-      // About section elements
-      document.querySelectorAll('.about-modern__image-side, .about-modern__content-side').forEach((el, i) => {
+      // Brand World bento tiles with stagger
+      document.querySelectorAll('.bw-tile').forEach((el, i) => {
         el.classList.add('reveal-ready');
-        (el as HTMLElement).style.transitionDelay = `${i * 0.2}s`;
+        (el as HTMLElement).style.transitionDelay = `${i * 0.13}s`;
         observer.observe(el);
       });
     }, 100);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
       observer.disconnect();
     };
   }, []);
@@ -334,310 +327,320 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section values-modern" id="values">
+
+      {/* ===== BRAND WORLD — Unified Philosophy & About ===== */}
+      <section className="brand-world section" id="about">
         <div className="logo-pattern-bg"></div>
 
-        <div className="container">
-          <div className="values-modern__header">
-            <span className="values-modern__signature">Натхнення для активного життя</span>
-            <h3 className="values-modern__title">Що робить нас особливими</h3>
-          </div>
+        {/* INTRO: Cinematic two-column manifesto */}
+        <div className="bw-intro">
+          <div className="container">
+            <div className="bw-intro__grid">
 
-          <div className="values-modern__grid">
-            <div className="value-item">
-              <div className="value-item__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+              {/* Left: Brand manifesto */}
+              <div className="bw-manifesto">
+                <div className="bw-accent-line" aria-hidden="true">
+                  <div className="bw-accent-glow"></div>
+                </div>
+                <span className="bw-eyebrow">MIND BODY® — Philosophy</span>
+                <h2 className="bw-heading">
+                  Рух<br />що <em>перетворює</em>
+                </h2>
+                <p className="bw-body">
+                  Ми не просто шиємо одяг — ми створюємо другу шкіру, що слідує за кожним рухом.
+                  Кожна колекція народжується в Україні з глибокою увагою до деталей та любов'ю&nbsp;до&nbsp;руху.
+                </p>
+                <div className="bw-mission-block">
+                  <span className="bw-mission-eyebrow">Місія</span>
+                  <p className="bw-mission-text">Подаруй собі <em>комфорт</em> — і ти подаруєш собі крила</p>
+                </div>
+                <div className="bw-metrics">
+                  <div className="bw-metric">
+                    <span className="bw-metric__num">63K<em>+</em></span>
+                    <span className="bw-metric__lbl">підписників</span>
+                  </div>
+                  <div className="bw-metric-sep"></div>
+                  <div className="bw-metric">
+                    <span className="bw-metric__num">2168<em>+</em></span>
+                    <span className="bw-metric__lbl">публікацій</span>
+                  </div>
+                  <div className="bw-metric-sep"></div>
+                  <div className="bw-metric">
+                    <span className="bw-metric__num">100<em>%</em></span>
+                    <span className="bw-metric__lbl">🇺🇦 виробництво</span>
+                  </div>
+                </div>
+                <Link to="/about" className="btn btn--primary btn--large bw-cta">
+                  Дізнатись більше
+                </Link>
               </div>
-              <div className="value-item__content">
-                <h4 className="value-item__title">Виробництво в Україні</h4>
-                <p className="value-item__text">Власний цех. 100% контроль якості на кожному етапі</p>
-              </div>
-            </div>
 
-            <div className="value-item">
-              <div className="value-item__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20.38 3.46L16 2 12 3.46 8 2 3.62 3.46a2 2 0 0 0-1.34 1.89v13.3a2 2 0 0 0 1.34 1.89L8 22l4-1.46L16 22l4.38-1.46a2 2 0 0 0 1.34-1.89V5.35a2 2 0 0 0-1.34-1.89z" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
-              </div>
-              <div className="value-item__content">
-                <h4 className="value-item__title">Преміум тканини</h4>
-                <p className="value-item__text">Supplex® + Lycra® — дихаючий матеріал, що тримає форму 50+ прань</p>
-              </div>
-            </div>
+              {/* Right: Futuristic Kinetic Core */}
+              <div className="bw-visual">
+                <div className="bw-kinetic-core">
+                  {/* Surrounding orbit rings */}
+                  <div className="bw-core-ring bw-core-ring-1"></div>
+                  <div className="bw-core-ring bw-core-ring-2"></div>
+                  <div className="bw-core-ring bw-core-ring-3"></div>
 
-            <div className="value-item">
-              <div className="value-item__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" /><path d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83M16.62 12l-5.74 9.94" /></svg>
-              </div>
-              <div className="value-item__content">
-                <h4 className="value-item__title">Еко-пакування</h4>
-                <p className="value-item__text">Recycled матеріали. Zero waste підхід до крою</p>
-              </div>
-            </div>
+                  {/* Central glowing orb with star */}
+                  <div className="bw-orb-center">
+                    <svg viewBox="0 0 100 100" className="bw-orb-star">
+                      <polygon points="50,0 55,40 100,50 55,60 50,100 45,60 0,50 45,40" fill="currentColor" />
+                    </svg>
+                  </div>
 
-            <div className="value-item">
-              <div className="value-item__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
-              </div>
-              <div className="value-item__content">
-                <h4 className="value-item__title">4-way stretch</h4>
-                <p className="value-item__text">Еластичність у всіх напрямках. Ідеальна посадка для йоги та фітнесу</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-      {/* About Section - Professional Modern Redesign */}
-      <section className="about-modern section" id="about">
-        <div className="logo-pattern-bg"></div>
-        <div className="container">
-          <div className="about-modern__wrapper">
-            <div className="about-modern__grid">
-              <div className="about-modern__image-side">
-                <div className="about-modern__image-container about-modern__image-container--fade">
-                  <img src="/generalpics/338_131123.jpg" alt="MIND BODY Lifestyle" className="about-modern__image" loading="lazy" />
-                  <div className="about-modern__image-overlay"></div>
-                  <div className="about-modern__floating-badge">
-                    <span className="about-modern__badge-text">Since 2024</span>
+                  {/* Glassmorphic floating badge */}
+                  <div className="bw-floating-badge" aria-hidden="true">
+                    <span>MIND BODY</span>
+                    <strong>Energy</strong>
                   </div>
                 </div>
               </div>
-              <div className="about-modern__content-side">
-                <div className="about-modern__header">
-                  <span className="about-modern__tagline">Про бренд</span>
-                  <h2 className="about-modern__title">
-                    Подаруй собі <span>комфорт</span>
-                  </h2>
-                </div>
-                <div className="about-modern__text-block">
-                  <p className="about-modern__description">
-                    MIND BODY &mdash; це більше, ніж просто одяг. Це філософія гармонії між тілом та розумом,
-                    втілена в преміальних тканинах та продуманому дизайні.
-                  </p>
-                  <p className="about-modern__description">
-                    Ми створюємо кожну колекцію в Україні, обираючи найкращі матеріали,
-                    що забезпечують ідеальну посадку та безкомпромісну зручність під час йоги,
-                    фітнесу чи щоденного життя.
-                  </p>
-                </div>
-                <div className="about-modern__features">
-                  <div className="about-modern__feature">
-                    <div className="about-modern__feature-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M20 6L9 17l-5-5" />
-                      </svg>
-                    </div>
-                    <div className="about-modern__feature-info">
-                      <h5 className="about-modern__feature-title">Преміум якість</h5>
-                      <p className="about-modern__feature-text">Тільки сертифіковані європейські тканини</p>
-                    </div>
-                  </div>
-                  <div className="about-modern__feature">
-                    <div className="about-modern__feature-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                      </svg>
-                    </div>
-                    <div className="about-modern__feature-info">
-                      <h5 className="about-modern__feature-title">Зроблено з любов'ю</h5>
-                      <p className="about-modern__feature-text">Увага до кожного шва та деталі</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="about-modern__actions">
-                  <Link to="/about" className="btn btn--primary btn--large">
-                    Дізнатись історію
-                  </Link>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
 
-      {/* Instagram Premium Section (Merged visually into the About section logic) */}
-      <div className="ig-hyper" id="instagram">
-        {/* Infinite Photo Background Wall */}
-        <div className="ig-hyper__wall">
-          <div className="ig-hyper__marquee ig-hyper__marquee--left">
-            {[...postsToRender, ...postsToRender, ...postsToRender].map((post: any, i: number) => (
-              <div key={`left-${i}`} className="ig-hyper__photo" style={{ backgroundImage: `url(${post.mediaUrl})` }} />
-            ))}
-          </div>
-          <div className="ig-hyper__marquee ig-hyper__marquee--right">
-            {[...postsToRender, ...postsToRender, ...postsToRender].reverse().map((post: any, i: number) => (
-              <div key={`right-${i}`} className="ig-hyper__photo" style={{ backgroundImage: `url(${post.mediaUrl})` }} />
-            ))}
+        {/* FEATURES: Asymmetric Bento grid */}
+        <div className="bw-features">
+          <div className="container">
+            <div className="bw-bento">
+
+              {/* Tile 1: Tall portrait */}
+              <div className="bw-tile bw-tile--tall">
+                <div className="bw-tile__bg" style={{ backgroundImage: "url('/pics1cloths/IMG_6201.webp')" }}></div>
+                <div className="bw-tile__veil"></div>
+                <div className="bw-tile__content">
+                  <span className="bw-tile__num">01</span>
+                  <h3 className="bw-tile__h">Дихаючі<br />тканини</h3>
+                  <p className="bw-tile__p">Преміальні матеріали, що забезпечують ідеальну терморегуляцію та свободу кожного руху.</p>
+                </div>
+              </div>
+
+              {/* Tile 2: Wide horizontal */}
+              <div className="bw-tile bw-tile--wide">
+                <div className="bw-tile__bg" style={{ backgroundImage: "url('/generalpics/595_131123.webp')" }}></div>
+                <div className="bw-tile__veil"></div>
+                <div className="bw-tile__content">
+                  <span className="bw-tile__num">02</span>
+                  <h3 className="bw-tile__h">Ексклюзивні<br />дизайни</h3>
+                  <p className="bw-tile__p">Стильні рішення для тих, хто цінує естетику навіть під час важких тренувань.</p>
+                </div>
+              </div>
+
+              {/* Tile 3: Square */}
+              <div className="bw-tile">
+                <div className="bw-tile__bg" style={{ backgroundImage: "url('/generalpics/374_131123.webp')" }}></div>
+                <div className="bw-tile__veil"></div>
+                <div className="bw-tile__content">
+                  <span className="bw-tile__num">03</span>
+                  <h3 className="bw-tile__h">Ідеальна<br />посадка</h3>
+                  <p className="bw-tile__p">Анатомічний крій, що бездоганно підкреслює фігуру та дарує впевненість.</p>
+                </div>
+              </div>
+
+              {/* Tile 4: Dark CTA */}
+              <div className="bw-tile bw-tile--dark">
+                <div className="bw-tile__content">
+                  <span className="bw-tile__num bw-tile__num--inv">04</span>
+                  <h3 className="bw-tile__h bw-tile__h--inv">Українське<br />виробництво</h3>
+                  <p className="bw-tile__p bw-tile__p--inv">100% контроль якості. Кожна деталь створюється з увагою до вашого комфорту.</p>
+                  <a href="/shop" className="bw-tile__btn">Переглянути каталог →</a>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
 
-        {/* The center content container */}
-        <div className="ig-hyper__content container">
-          <div className="ig-hyper__header">
-            <h2 className="ig-hyper__title">Світ <em>Mind Body</em></h2>
-            <p className="ig-hyper__subtitle">
-              Більше, ніж просто одяг. Світ естетики, мотивації та щоденного натхнення.<br/>Будь в курсі нових колекцій першою.
-            </p>
+
+
+
+
+        {/* Instagram Premium Section (Merged visually into the About section logic) */}
+        <div className="ig-hyper" id="instagram">
+          {/* Infinite Photo Background Wall */}
+          <div className="ig-hyper__wall">
+            <div className="ig-hyper__marquee ig-hyper__marquee--left">
+              {[...postsToRender, ...postsToRender, ...postsToRender].map((post: any, i: number) => (
+                <div key={`left-${i}`} className="ig-hyper__photo" style={{ backgroundImage: `url(${post.mediaUrl})` }} />
+              ))}
+            </div>
+            <div className="ig-hyper__marquee ig-hyper__marquee--right">
+              {[...postsToRender, ...postsToRender, ...postsToRender].reverse().map((post: any, i: number) => (
+                <div key={`right-${i}`} className="ig-hyper__photo" style={{ backgroundImage: `url(${post.mediaUrl})` }} />
+              ))}
+            </div>
           </div>
 
-          <div className="ig-hyper__centerpiece">
-            {/* The majestic iPhone mockup */}
-            <div className="ig-premium__phone-wrap">
-              <div className="ig-premium__phone-glow" />
-              <div className="ig-premium__phone">
-                
-                {/* Realistic iPhone Hardware Buttons */}
-                <div className="ig-premium__btn-action"></div>
-                <div className="ig-premium__btn-vol-up"></div>
-                <div className="ig-premium__btn-vol-down"></div>
-                <div className="ig-premium__btn-power"></div>
+          {/* The center content container */}
+          <div className="ig-hyper__content container">
+            <div className="ig-hyper__header">
+              <h2 className="ig-hyper__title">Світ <em>Mind Body</em></h2>
+              <p className="ig-hyper__subtitle">
+                Більше, ніж просто одяг. Світ естетики, мотивації та щоденного натхнення.<br />Будь в курсі нових колекцій першою.
+              </p>
+            </div>
 
-                {/* Screen content */}
-                <div className="ig-premium__screen">
-                  <div className="ig-ui-wrapper">
-                    
-                    {/* iOS Status Bar */}
-                    <div className="ig-ui-statusbar">
-                      <div className="ig-ui-time">04:54</div>
-                      <div className="ig-ui-island">
-                        <div className="ig-ui-island-cam"></div>
-                      </div>
-                      <div className="ig-ui-status-icons">
-                        <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor">
-                          <rect x="1" y="8" width="3" height="4" rx="1" />
-                          <rect x="6" y="5" width="3" height="7" rx="1" />
-                          <rect x="11" y="2" width="3" height="10" rx="1" />
-                          <rect x="16" y="0" width="3" height="12" rx="1" fillOpacity="0.3"/>
-                        </svg>
-                        <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 8.5C4.5 5.5 11.5 5.5 15 8.5" />
-                          <path d="M4 11C6.5 9 9.5 9 12 11" />
-                        </svg>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '-0.5px' }}>28</span>
-                          <svg width="24" height="13" viewBox="0 0 24 13" fill="none" stroke="currentColor">
-                            <rect x="1" y="1" width="20" height="11" rx="3" strokeWidth="1" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.4)" />
-                            <rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor" stroke="none" />
-                            <path d="M22 4.5v4" strokeWidth="2" strokeLinecap="round" stroke="rgba(255,255,255,0.4)" />
+            <div className="ig-hyper__centerpiece">
+              {/* The majestic iPhone mockup */}
+              <div className="ig-premium__phone-wrap">
+                <div className="ig-premium__phone-glow" />
+                <div className="ig-premium__phone">
+
+                  {/* Realistic iPhone Hardware Buttons */}
+                  <div className="ig-premium__btn-action"></div>
+                  <div className="ig-premium__btn-vol-up"></div>
+                  <div className="ig-premium__btn-vol-down"></div>
+                  <div className="ig-premium__btn-power"></div>
+
+                  {/* Screen content */}
+                  <div className="ig-premium__screen">
+                    <div className="ig-ui-wrapper">
+
+                      {/* iOS Status Bar */}
+                      <div className="ig-ui-statusbar">
+                        <div className="ig-ui-time">{new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}</div>
+                        <div className="ig-ui-island">
+                          <div className="ig-ui-island-cam"></div>
+                        </div>
+                        <div className="ig-ui-status-icons">
+                          <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor">
+                            <rect x="1" y="8" width="3" height="4" rx="1" />
+                            <rect x="6" y="5" width="3" height="7" rx="1" />
+                            <rect x="11" y="2" width="3" height="10" rx="1" />
+                            <rect x="16" y="0" width="3" height="12" rx="1" fillOpacity="0.3" />
                           </svg>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Top Navbar */}
-                    <div className="ig-ui-topbar">
-                      <div className="ig-ui-topleft">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
-                        <span className="ig-ui-username">{igUsername}</span>
-                      </div>
-                      <div className="ig-ui-topright">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
-                      </div>
-                    </div>
-
-                    {/* Scrollable Content */}
-                    <div className="ig-ui-content">
-                      {/* Header: Avatar & Stats */}
-                      <div className="ig-ui-header">
-                        <div className="ig-ui-avatar-wrap">
-                          <img src={igProfilePic} alt={igUsername} className="ig-ui-avatar" />
-                        </div>
-                        <div className="ig-ui-stats">
-                          <div className="ig-ui-stat"><span className="num">2168</span><span className="lbl">публикации</span></div>
-                          <div className="ig-ui-stat"><span className="num">63,9 тыс.</span><span className="lbl">подписчики</span></div>
-                          <div className="ig-ui-stat"><span className="num">1257</span><span className="lbl">подписки</span></div>
-                        </div>
-                      </div>
-
-                      {/* Bio Section */}
-                      <div className="ig-ui-bio">
-                        <div className="ig-ui-name">MIND BODY sport wear <span style={{ fontWeight: 400 }}>одяг для йоги та фітнесу</span></div>
-                        <div className="ig-ui-text">
-                          Комбінезон твоєї мрії!✨<br />
-                          Найбільший вибір,найкраща якість<br />
-                          для маленьких 👸 <span className="ig-ui-mention">@mindbody_kidswear</span><br />
-                          casual одяг <span className="ig-ui-mention">@fluid_feel_free</span> &nbsp;<span style={{ color: '#a8a8a8' }}>ещё</span><br />
-                          <span style={{ fontWeight: 600 }}>Показать перевод</span>
-                        </div>
-                        <a href="/" className="ig-ui-link">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px', verticalAlign: '-2px' }}>
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                          <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 8.5C4.5 5.5 11.5 5.5 15 8.5" />
+                            <path d="M4 11C6.5 9 9.5 9 12 11" />
                           </svg>
-                          t.me/mindbody_sportwear
-                        </a>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="ig-ui-actions">
-                        <div className="ig-ui-btn">
-                          Вы подписаны
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: '4px' }}><path d="M6 9l6 6 6-6" /></svg>
-                        </div>
-                        <div className="ig-ui-btn">Сообщение</div>
-                        <div className="ig-ui-btn icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg></div>
-                      </div>
-
-                      {/* Highlights */}
-                      <div className="ig-ui-highlights">
-                        {['SALE', 'SALE FLUID', 'SALE SET', 'ВІДГУКИ 11'].map((name, idx) => (
-                          <div key={idx} className="ig-ui-highlight">
-                            <div className="ig-ui-hl-ring">
-                              <div className="ig-ui-hl-img" style={{ backgroundImage: `url(${postsToRender[idx % postsToRender.length]?.mediaUrl})` }}></div>
-                            </div>
-                            <span>{name}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '-0.5px' }}>28</span>
+                            <svg width="24" height="13" viewBox="0 0 24 13" fill="none" stroke="currentColor">
+                              <rect x="1" y="1" width="20" height="11" rx="3" strokeWidth="1" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.4)" />
+                              <rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor" stroke="none" />
+                              <path d="M22 4.5v4" strokeWidth="2" strokeLinecap="round" stroke="rgba(255,255,255,0.4)" />
+                            </svg>
                           </div>
-                        ))}
+                        </div>
                       </div>
 
-                      {/* Tabs */}
-                      <div className="ig-ui-tabs">
-                        <div className="ig-ui-tab active"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><path d="M3 9h18M3 15h18M9 3v18M15 3v18" /></svg></div>
-                        <div className="ig-ui-tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="4" y="2" width="16" height="20" rx="2" ry="2" /><path d="M4 6h16M4 18h16M8 2v4M16 2v4M12 18v4" /></svg></div>
-                        <div className="ig-ui-tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></div>
+                      {/* Top Navbar */}
+                      <div className="ig-ui-topbar">
+                        <div className="ig-ui-topleft">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+                          <span className="ig-ui-username">{igUsername}</span>
+                        </div>
+                        <div className="ig-ui-topright">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
+                        </div>
                       </div>
 
-                      {/* 3-Column Grid Feed */}
-                      <div className="ig-ui-feed">
-                        {Array.from({ length: 9 }).map((_, i) => {
-                          const post = postsToRender[i % postsToRender.length];
-                          return (
-                            <a key={`ig-${i}`} href={post.permalink} target="_blank" rel="noopener noreferrer" className="ig-ui-feed-post">
-                              <img src={post.mediaUrl} alt={`Post ${i + 1}`} loading="lazy" />
-                            </a>
-                          );
-                        })}
+                      {/* Scrollable Content */}
+                      <div className="ig-ui-content">
+                        {/* Header: Avatar & Stats */}
+                        <div className="ig-ui-header">
+                          <div className="ig-ui-avatar-wrap">
+                            <img src={igProfilePic} alt={igUsername} className="ig-ui-avatar" />
+                          </div>
+                          <div className="ig-ui-stats">
+                            <div className="ig-ui-stat"><span className="num">2168</span><span className="lbl">публікації</span></div>
+                            <div className="ig-ui-stat"><span className="num">63,9 тис.</span><span className="lbl">підписники</span></div>
+                            <div className="ig-ui-stat"><span className="num">1257</span><span className="lbl">підписки</span></div>
+                          </div>
+                        </div>
+
+                        {/* Bio Section */}
+                        <div className="ig-ui-bio">
+                          <div className="ig-ui-name">MIND BODY sport wear <span style={{ fontWeight: 400 }}>одяг для йоги та фітнесу</span></div>
+                          <div className="ig-ui-text">
+                            Комбінезон твоєї мрії!✨<br />
+                            Найбільший вибір,найкраща якість<br />
+                            для маленьких 👸 <span className="ig-ui-mention">@mindbody_kidswear</span><br />
+                            casual одяг <span className="ig-ui-mention">@fluid_feel_free</span> &nbsp;<span style={{ color: '#a8a8a8' }}>ще</span><br />
+                            <span style={{ fontWeight: 600 }}>Показати переклад</span>
+                          </div>
+                          <a href="/" className="ig-ui-link">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px', verticalAlign: '-2px' }}>
+                              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                            t.me/mindbody_sportwear
+                          </a>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="ig-ui-actions">
+                          <div className="ig-ui-btn">
+                            Ви підписані
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: '4px' }}><path d="M6 9l6 6 6-6" /></svg>
+                          </div>
+                          <div className="ig-ui-btn">Повідомлення</div>
+                          <div className="ig-ui-btn icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg></div>
+                        </div>
+
+                        {/* Highlights */}
+                        <div className="ig-ui-highlights">
+                          {['SALE', 'SALE FLUID', 'SALE SET', 'ВІДГУКИ 11'].map((name, idx) => (
+                            <div key={idx} className="ig-ui-highlight">
+                              <div className="ig-ui-hl-ring">
+                                <div className="ig-ui-hl-img" style={{ backgroundImage: `url(${postsToRender[idx % postsToRender.length]?.mediaUrl})` }}></div>
+                              </div>
+                              <span>{name}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="ig-ui-tabs">
+                          <div className="ig-ui-tab active"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><path d="M3 9h18M3 15h18M9 3v18M15 3v18" /></svg></div>
+                          <div className="ig-ui-tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="4" y="2" width="16" height="20" rx="2" ry="2" /><path d="M4 6h16M4 18h16M8 2v4M16 2v4M12 18v4" /></svg></div>
+                          <div className="ig-ui-tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></div>
+                        </div>
+
+                        {/* 3-Column Grid Feed */}
+                        <div className="ig-ui-feed">
+                          {Array.from({ length: 9 }).map((_, i) => {
+                            const post = postsToRender[i % postsToRender.length];
+                            return (
+                              <a key={`ig-${i}`} href={post.permalink} target="_blank" rel="noopener noreferrer" className="ig-ui-feed-post">
+                                <img src={post.mediaUrl} alt={`Post ${i + 1}`} loading="lazy" />
+                              </a>
+                            );
+                          })}
+                        </div>
                       </div>
+
+                      {/* Bottom Navbar */}
+                      <div className="ig-ui-navbar">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="4" ry="4" /><path d="M10 8l6 4-6 4V8z" /></svg>
+                        <div className="ig-ui-nav-avatar"><img src={igProfilePic} alt="Profile" /></div>
+                      </div>
+
                     </div>
-
-                    {/* Bottom Navbar */}
-                    <div className="ig-ui-navbar">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="4" ry="4" /><path d="M10 8l6 4-6 4V8z" /></svg>
-                      <div className="ig-ui-nav-avatar"><img src={igProfilePic} alt="Profile" /></div>
-                    </div>
-
                   </div>
                 </div>
-              </div>
 
-              {/* Minimal floating badge */}
-              <div className="ig-hyper__float">
-                <div className="ig-hyper__live-dot" /> LIVE
+                {/* Minimal floating badge */}
+                <div className="ig-hyper__float">
+                  <div className="ig-hyper__live-dot" /> LIVE
+                </div>
               </div>
             </div>
-          </div>
 
-          <a href="https://www.instagram.com/mindbody_sportwear/" target="_blank" rel="noopener noreferrer" className="ig-hyper__cta">
+            <a href="https://www.instagram.com/mindbody_sportwear/" target="_blank" rel="noopener noreferrer" className="ig-hyper__cta">
               Відкрити Instagram
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: 6 }}><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: 6 }}><path d="M5 12h14M12 5l7 7-7 7" /></svg>
             </a>
           </div>
 
-      </div>
+        </div>
       </section>
 
     </main>

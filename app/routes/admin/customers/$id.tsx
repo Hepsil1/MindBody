@@ -89,48 +89,12 @@ export async function action({ request, params }: ActionArgs) {
             phone: phone || null
         };
 
-        // If new password provided, hash it
-        if (newPassword && newPassword.trim()) {
-            // Simple hash for demo - in production use bcrypt
-            let hash = 0;
-            for (let i = 0; i < newPassword.length; i++) {
-                const char = newPassword.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
-            }
-            updateData.passwordHash = hash.toString();
-        }
-
         await prisma.customer.update({
             where: { id: params.id },
             data: updateData
         });
 
-        return { success: true, message: newPassword ? "Дані та пароль оновлено!" : "Дані оновлено!" };
-    }
-
-    if (intent === "generate-password") {
-        // Generate random password
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-        let password = '';
-        for (let i = 0; i < 10; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-
-        // Hash it
-        let hash = 0;
-        for (let i = 0; i < password.length; i++) {
-            const char = password.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-
-        await prisma.customer.update({
-            where: { id: params.id },
-            data: { passwordHash: hash.toString() }
-        });
-
-        return { success: true, generatedPassword: password, message: `Новий пароль: ${password}` };
+        return { success: true, message: "Дані оновлено!" };
     }
 
     return null;
@@ -333,55 +297,6 @@ export default function CustomerDetail() {
                             </div>
                         </div>
 
-                        {/* Password Section */}
-                        <div style={{
-                            marginTop: "24px",
-                            paddingTop: "24px",
-                            borderTop: "1px solid var(--border-subtle)"
-                        }}>
-                            <h4 style={{ color: "var(--text-main)", marginBottom: "16px", fontSize: "14px", fontWeight: "600" }}>
-                                🔐 Управління паролем
-                            </h4>
-
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-                                <div>
-                                    <label style={{ display: "block", marginBottom: "6px", color: "var(--text-muted)", fontSize: "13px" }}>
-                                        Поточний хеш пароля
-                                    </label>
-                                    <div style={{
-                                        padding: "12px",
-                                        background: "rgba(255,255,255,0.02)",
-                                        border: "1px solid var(--border-subtle)",
-                                        borderRadius: "8px",
-                                        color: "var(--text-muted)",
-                                        fontSize: "13px",
-                                        fontFamily: "monospace"
-                                    }}>
-                                        {(customer as any).passwordHash ? `••••••••` : "Не встановлено"}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label style={{ display: "block", marginBottom: "6px", color: "var(--text-muted)", fontSize: "13px" }}>
-                                        Новий пароль (залиште пустим щоб не змінювати)
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="newPassword"
-                                        placeholder="Введіть новий пароль..."
-                                        style={{
-                                            width: "100%",
-                                            padding: "12px",
-                                            background: "rgba(255,255,255,0.05)",
-                                            border: "1px solid var(--border-subtle)",
-                                            borderRadius: "8px",
-                                            color: "var(--text-main)",
-                                            fontSize: "14px"
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
                         <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
                             <button
                                 type="submit"
@@ -406,31 +321,6 @@ export default function CustomerDetail() {
                                 Зберегти зміни
                             </button>
                         </div>
-                    </Form>
-
-                    {/* Generate Password Button - Separate form */}
-                    <Form method="post" style={{ marginTop: "16px" }}>
-                        <input type="hidden" name="intent" value="generate-password" />
-                        <button
-                            type="submit"
-                            style={{
-                                background: "rgba(139, 92, 246, 0.2)",
-                                border: "1px solid rgba(139, 92, 246, 0.3)",
-                                color: "#a78bfa",
-                                padding: "10px 20px",
-                                borderRadius: "8px",
-                                cursor: "pointer",
-                                fontSize: "13px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px"
-                            }}
-                        >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-                            </svg>
-                            Згенерувати новий пароль автоматично
-                        </button>
                     </Form>
                 </div>
             )}

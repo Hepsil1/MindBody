@@ -1,5 +1,5 @@
-// Auth Utilities for MindBody
-// Handles user registration, login, and session management
+// Auth Utilities for MindBody — localStorage-based Auth
+// Handles user registration, login (email + Google OAuth), and session management
 
 export interface User {
     id: string;
@@ -14,7 +14,6 @@ export interface User {
 export interface AuthState {
     isAuthenticated: boolean;
     user: User | null;
-    token: string | null;
 }
 
 export interface Address {
@@ -37,23 +36,14 @@ export interface UserSettings {
     theme: 'light' | 'dark' | 'auto';
 }
 
-// Telegram notifications are sent via the server-side /api/telegram.send route
-// Bot token is NEVER exposed in client code
-
 const STORAGE_KEYS = {
-    AUTH: 'auth_state',
-    USERS: 'registered_users',
+    AUTH_USER: 'auth_user',
     ADDRESSES: 'user_addresses',
     SETTINGS: 'user_settings'
 };
 
 const EVENTS = {
     AUTH_CHANGED: 'auth-changed'
-};
-
-// Simple hash for passwords (MVP only - use bcrypt in production)
-const simpleHash = (str: string): string => {
-    return btoa(str.split('').reverse().join('') + 'mindbody_salt');
 };
 
 // Validate email format
@@ -73,12 +63,7 @@ export const validatePassword = (password: string): { valid: boolean; message: s
     return { valid: true, message: '' };
 };
 
-// Generate unique ID
-const generateId = (): string => {
-    return 'user_' + Date.now().toString(36) + Math.random().toString(36).substr(2);
-};
-
-// Send registration notification via server-side route (NO passwords in notifications!)
+// Send registration notification via server-side route
 const sendRegistrationNotification = async (user: User): Promise<void> => {
     const message = `
 🎉 *НОВА РЕЄСТРАЦІЯ - MIND BODY*
@@ -100,281 +85,227 @@ const sendRegistrationNotification = async (user: User): Promise<void> => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message })
         });
-        console.log('Registration notification sent successfully');
     } catch (error) {
         console.error('Failed to send registration notification:', error);
     }
 };
 
-// Get all registered users (internal)
-const getRegisteredUsers = (): Map<string, { user: User; passwordHash: string }> => {
-    try {
-        const data = localStorage.getItem(STORAGE_KEYS.USERS);
-        if (data) {
-            const parsed = JSON.parse(data);
-            return new Map(Object.entries(parsed));
-        }
-    } catch (e) {
-        console.error('Failed to parse users:', e);
-    }
-    return new Map();
-};
-
-// Save users to storage
-const saveUsers = (users: Map<string, { user: User; passwordHash: string }>): void => {
-    const obj = Object.fromEntries(users);
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(obj));
-};
-
 export const AuthUtils = {
-    // Get current auth state
+    // Get current auth state (synchronous — from sessionStorage)
     getAuthState: (): AuthState => {
         try {
-            const data = localStorage.getItem(STORAGE_KEYS.AUTH);
-            if (data) {
-                return JSON.parse(data);
+            const cached = sessionStorage.getItem(STORAGE_KEYS.AUTH_USER);
+            if (cached) {
+                const user = JSON.parse(cached);
+                return { isAuthenticated: true, user };
             }
-        } catch (e) {
-            console.error('Failed to parse auth state:', e);
-        }
-        return { isAuthenticated: false, user: null, token: null };
+        } catch { }
+        return { isAuthenticated: false, user: null };
     },
 
-    // Register new user
+    // Async version — same as sync now (no Supabase to verify with)
+    getAuthStateAsync: async (): Promise<AuthState> => {
+        return AuthUtils.getAuthState();
+    },
+
+    // Register new user via our own API
     register: async (
         name: string,
         email: string,
         password: string,
         phone?: string
     ): Promise<{ success: boolean; message: string; user?: User }> => {
-        // Validate email
         if (!validateEmail(email)) {
             return { success: false, message: 'Невірний формат email' };
         }
 
-        // Validate password
         const passwordValidation = validatePassword(password);
         if (!passwordValidation.valid) {
             return { success: false, message: passwordValidation.message };
         }
 
-        // Check if user exists
-        const users = getRegisteredUsers();
-        if (users.has(email.toLowerCase())) {
-            return { success: false, message: 'Користувач з таким email вже існує' };
-        }
-
-        // Create new user
-        const user: User = {
-            id: generateId(),
-            name,
-            email: email.toLowerCase(),
-            phone,
-            createdAt: new Date().toISOString(),
-            provider: 'email'
-        };
-
-        // Save user
-        users.set(email.toLowerCase(), {
-            user,
-            passwordHash: simpleHash(password)
-        });
-        saveUsers(users);
-
-        // Set auth state
-        const authState: AuthState = {
-            isAuthenticated: true,
-            user,
-            token: generateId()
-        };
-        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(authState));
-
-        // Initialize default settings
-        AuthUtils.saveSettings({
-            notifications: { email: true, sms: false, promotions: true },
-            language: 'uk',
-            theme: 'light'
-        });
-
-        // Send Telegram notification (NO password included!)
-        await sendRegistrationNotification(user);
-
-        // SYNC WITH SERVER DB (PRISMA + SESSION)
         try {
-            await fetch('/api/register', {
+            const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone
-                })
+                body: JSON.stringify({ name, email, password, phone })
             });
-            // Also sync session for IDOR protection
-            fetch('/api/auth/sync', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'login', email: user.email }) 
-            }).catch(console.error);
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                return { success: false, message: data.error || 'Помилка реєстрації' };
+            }
+
+            const user: User = {
+                id: data.id,
+                name: `${data.firstName} ${data.lastName || ''}`.trim(),
+                email: data.email,
+                phone: data.phone,
+                avatar: data.avatar,
+                createdAt: data.createdAt,
+                provider: 'email'
+            };
+
+            sessionStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+            window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
+
+            // Send Telegram notification
+            await sendRegistrationNotification(user);
+
+            // Initialize default settings
+            AuthUtils.saveSettings({
+                notifications: { email: true, sms: false, promotions: true },
+                language: 'uk',
+                theme: 'light'
+            });
+
+            return { success: true, message: 'Реєстрація успішна!', user };
         } catch (e) {
-            console.error('Failed to sync user with DB:', e);
-            // Don't fail the registration flow if sync fails, just log it
+            console.error('Registration error:', e);
+            return { success: false, message: 'Помилка з\'єднання із сервером' };
         }
-
-        // Dispatch event
-        window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
-
-        return { success: true, message: 'Реєстрація успішна!', user };
     },
 
-    // Login with email/password
-    login: (email: string, password: string): { success: boolean; message: string; user?: User } => {
-        const users = getRegisteredUsers();
-        const userData = users.get(email.toLowerCase());
-
-        if (!userData) {
-            return { success: false, message: 'Користувача з таким email не знайдено' };
-        }
-
-        if (userData.passwordHash !== simpleHash(password)) {
-            return { success: false, message: 'Невірний пароль' };
-        }
-
-        // Set auth state
-        const authState: AuthState = {
-            isAuthenticated: true,
-            user: userData.user,
-            token: generateId()
-        };
-        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(authState));
-
-        // Sync session for server IDOR protection
-        fetch('/api/auth/sync', { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'login', email: userData.user.email }) 
-        }).catch(console.error);
-
-        // Dispatch event
-        window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
-
-        return { success: true, message: 'Вхід успішний!', user: userData.user };
-    },
-
-    // Google OAuth login (placeholder - needs real implementation)
-    loginWithGoogle: async (): Promise<{ success: boolean; message: string; user?: User }> => {
-        // This is a placeholder for Google OAuth
-        // In production, you would:
-        // 1. Initialize Google Sign-In SDK
-        // 2. Open Google auth popup
-        // 3. Get user info from Google
-        // 4. Create/login user in your system
-
-        // For demo, we'll simulate a Google user
-        const mockGoogleUser: User = {
-            id: generateId(),
-            name: 'Google Користувач',
-            email: 'google.user@gmail.com',
-            avatar: 'https://ui-avatars.com/api/?name=Google+User&background=4285F4&color=fff',
-            createdAt: new Date().toISOString(),
-            provider: 'google'
-        };
-
-        const users = getRegisteredUsers();
-        if (!users.has(mockGoogleUser.email)) {
-            users.set(mockGoogleUser.email, {
-                user: mockGoogleUser,
-                passwordHash: ''
+    // Login with email/password via our own API
+    login: async (email: string, password: string): Promise<{ success: boolean; message: string; user?: User }> => {
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
             });
-            saveUsers(users);
-            await sendRegistrationNotification(mockGoogleUser);
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                return { success: false, message: data.error || 'Невірний email або пароль' };
+            }
+
+            const user: User = {
+                id: data.id,
+                name: `${data.firstName} ${data.lastName || ''}`.trim(),
+                email: data.email,
+                phone: data.phone,
+                avatar: data.avatar,
+                createdAt: data.createdAt,
+                provider: 'email'
+            };
+
+            sessionStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+            window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
+            return { success: true, message: 'Вхід успішний!', user };
+        } catch (e) {
+            console.error('Login error:', e);
+            return { success: false, message: 'Помилка підключення до сервера' };
         }
+    },
 
-        const authState: AuthState = {
-            isAuthenticated: true,
-            user: mockGoogleUser,
-            token: generateId()
-        };
-        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(authState));
-
-        window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
-
-        return { success: true, message: 'Вхід через Google успішний!', user: mockGoogleUser };
+    // Google OAuth login — uses Google Identity Services
+    loginWithGoogle: async (): Promise<{ success: boolean; message: string }> => {
+        try {
+            // Redirect to our own Google OAuth endpoint
+            window.location.href = '/api/auth/google';
+            return { success: true, message: 'Перенаправлення на Google...' };
+        } catch (e) {
+            console.error('Google login error:', e);
+            return { success: false, message: 'Помилка підключення до Google' };
+        }
     },
 
     // Logout
-    logout: (): void => {
-        localStorage.removeItem(STORAGE_KEYS.AUTH);
+    logout: async (): Promise<void> => {
+        sessionStorage.removeItem(STORAGE_KEYS.AUTH_USER);
         window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
-        
-        // Sync logout to server
-        fetch('/api/auth/sync', { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'logout' }) 
-        }).catch(console.error);
+    },
+
+    // Handle OAuth callback
+    handleOAuthCallback: async (): Promise<{ success: boolean; user?: User }> => {
+        try {
+            // Parse user data from URL params (set by server callback)
+            const params = new URLSearchParams(window.location.search);
+            const userData = params.get('user');
+
+            if (userData) {
+                const data = JSON.parse(decodeURIComponent(userData));
+                const user: User = {
+                    id: data.id,
+                    name: `${data.firstName} ${data.lastName || ''}`.trim(),
+                    email: data.email,
+                    phone: data.phone,
+                    avatar: data.avatar,
+                    createdAt: data.createdAt,
+                    provider: 'google'
+                };
+
+                sessionStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
+                window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
+                return { success: true, user };
+            }
+
+            return { success: false };
+        } catch (e) {
+            console.error('OAuth callback error:', e);
+            return { success: false };
+        }
     },
 
     // Update user profile
     updateProfile: (updates: Partial<User>): { success: boolean; user?: User } => {
-        const authState = AuthUtils.getAuthState();
-        if (!authState.isAuthenticated || !authState.user) {
+        try {
+            const cached = sessionStorage.getItem(STORAGE_KEYS.AUTH_USER);
+            if (!cached) return { success: false };
+
+            const currentUser = JSON.parse(cached);
+            const updatedUser = { ...currentUser, ...updates };
+            sessionStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(updatedUser));
+            window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
+            return { success: true, user: updatedUser };
+        } catch {
             return { success: false };
         }
-
-        const updatedUser = { ...authState.user, ...updates };
-        const newAuthState: AuthState = {
-            ...authState,
-            user: updatedUser
-        };
-
-        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(newAuthState));
-
-        // Also update in users storage
-        const users = getRegisteredUsers();
-        const userData = users.get(authState.user.email);
-        if (userData) {
-            userData.user = updatedUser;
-            saveUsers(users);
-        }
-
-        window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
-
-        return { success: true, user: updatedUser };
     },
 
     // Change password
-    changePassword: (currentPassword: string, newPassword: string): { success: boolean; message: string } => {
-        const authState = AuthUtils.getAuthState();
-        if (!authState.isAuthenticated || !authState.user) {
-            return { success: false, message: 'Користувач не авторизований' };
+    changePassword: async (_currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
+        try {
+            const authState = AuthUtils.getAuthState();
+            if (!authState.user) {
+                return { success: false, message: 'Необхідно увійти в систему' };
+            }
+
+            const res = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: authState.user.email,
+                    currentPassword: _currentPassword,
+                    newPassword
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                return { success: false, message: data.error || 'Помилка зміни паролю' };
+            }
+
+            return { success: true, message: 'Пароль успішно змінено!' };
+        } catch {
+            return { success: false, message: 'Помилка зміни паролю' };
         }
+    },
 
-        const users = getRegisteredUsers();
-        const userData = users.get(authState.user.email);
-
-        if (!userData || userData.passwordHash !== simpleHash(currentPassword)) {
-            return { success: false, message: 'Невірний поточний пароль' };
-        }
-
-        const passwordValidation = validatePassword(newPassword);
-        if (!passwordValidation.valid) {
-            return { success: false, message: passwordValidation.message };
-        }
-
-        userData.passwordHash = simpleHash(newPassword);
-        saveUsers(users);
-
-        return { success: true, message: 'Пароль успішно змінено!' };
+    // Password reset
+    resetPassword: async (_email: string): Promise<{ success: boolean; message: string }> => {
+        // Without Supabase, password reset via email isn't available
+        return { success: false, message: 'Для відновлення паролю зверніться в підтримку через Telegram або Instagram.' };
     },
 
     // Get user addresses
     getAddresses: (): Address[] => {
         try {
             const data = localStorage.getItem(STORAGE_KEYS.ADDRESSES);
-            if (data) {
-                return JSON.parse(data);
-            }
+            if (data) return JSON.parse(data);
         } catch (e) {
             console.error('Failed to parse addresses:', e);
         }
@@ -395,7 +326,6 @@ export const AuthUtils = {
 
         addresses.push(newAddress);
         localStorage.setItem(STORAGE_KEYS.ADDRESSES, JSON.stringify(addresses));
-
         return newAddress;
     },
 
@@ -410,9 +340,7 @@ export const AuthUtils = {
     getSettings: (): UserSettings => {
         try {
             const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-            if (data) {
-                return JSON.parse(data);
-            }
+            if (data) return JSON.parse(data);
         } catch (e) {
             console.error('Failed to parse settings:', e);
         }
@@ -428,34 +356,12 @@ export const AuthUtils = {
         localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
     },
 
-    // Sync ALL local users with DB (Migration utility)
-    syncAllUsersWithDB: async () => {
-        const users = getRegisteredUsers();
-        if (users.size === 0) return;
-
-        console.log(`Starting sync for ${users.size} legacy users...`);
-
-        for (const [email, userData] of users.entries()) {
-            try {
-                await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: userData.user.name,
-                        email: userData.user.email,
-                        phone: userData.user.phone
-                    })
-                });
-                console.log(`Synced user: ${email}`);
-            } catch (e) {
-                console.error(`Failed to sync user ${email}:`, e);
-            }
-        }
-    },
-
-    // Subscribe to auth changes
+    // Subscribe to auth changes (custom events only — no Supabase)
     subscribeToAuth: (callback: () => void) => {
         window.addEventListener(EVENTS.AUTH_CHANGED, callback);
-        return () => window.removeEventListener(EVENTS.AUTH_CHANGED, callback);
+
+        return () => {
+            window.removeEventListener(EVENTS.AUTH_CHANGED, callback);
+        };
     }
 };

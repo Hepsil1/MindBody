@@ -21,10 +21,13 @@ export default function Auth() {
 
     // Check if already logged in
     useEffect(() => {
-        const authState = AuthUtils.getAuthState();
-        if (authState.isAuthenticated) {
-            navigate('/profile');
-        }
+        const checkAuth = async () => {
+            const authState = await AuthUtils.getAuthStateAsync();
+            if (authState.isAuthenticated) {
+                navigate('/profile');
+            }
+        };
+        checkAuth();
     }, [navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -35,7 +38,7 @@ export default function Auth() {
 
         try {
             if (mode === 'login') {
-                const result = AuthUtils.login(email, password);
+                const result = await AuthUtils.login(email, password);
                 if (result.success) {
                     setSuccess(result.message);
                     setTimeout(() => navigate('/profile'), 1000);
@@ -98,7 +101,7 @@ export default function Auth() {
             const result = await AuthUtils.loginWithGoogle();
             if (result.success) {
                 setSuccess(result.message);
-                setTimeout(() => navigate('/profile'), 1000);
+                // Will redirect to Google — no manual navigation needed
             } else {
                 setError(result.message);
             }
@@ -107,6 +110,23 @@ export default function Auth() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleForgotPassword = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (!email) {
+            setError('Введіть email для відновлення паролю');
+            return;
+        }
+        setIsLoading(true);
+        setError('');
+        const result = await AuthUtils.resetPassword(email);
+        if (result.success) {
+            setSuccess(result.message);
+        } else {
+            setError(result.message);
+        }
+        setIsLoading(false);
     };
 
     const switchMode = (newMode: AuthMode) => {
@@ -182,16 +202,25 @@ export default function Auth() {
                             </div>
                         )}
 
-                        {/* Google Login Button - TEMPORARILY DISABLED
+                        {/* Google Login Button */}
                         <button
                             type="button"
                             className="auth-google-btn"
                             onClick={handleGoogleLogin}
-...
+                            disabled={isLoading}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                            </svg>
+                            {mode === 'login' ? 'Увійти через Google' : 'Зареєструватися через Google'}
+                        </button>
+
                         <div className="auth-divider">
                             <span>або</span>
                         </div>
-                        */}
 
                         {/* Form */}
                         <form className="auth-form" onSubmit={handleSubmit}>
@@ -282,7 +311,7 @@ export default function Auth() {
 
                             {mode === 'login' && (
                                 <div className="auth-forgot">
-                                    <a href="#">Забули пароль?</a>
+                                    <a href="#" onClick={handleForgotPassword}>Забули пароль?</a>
                                 </div>
                             )}
 

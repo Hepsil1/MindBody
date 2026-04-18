@@ -50,40 +50,31 @@ export default function Profile() {
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     useEffect(() => {
-        const authState = AuthUtils.getAuthState();
-        if (!authState.isAuthenticated || !authState.user) {
-            navigate('/auth');
-            return;
-        }
-        setUser(authState.user);
-        setEditName(authState.user.name);
-        setEditPhone(authState.user.phone || '');
+        const initProfile = async () => {
+            const authState = await AuthUtils.getAuthStateAsync();
+            if (!authState.isAuthenticated || !authState.user) {
+                navigate('/auth');
+                return;
+            }
+            setUser(authState.user);
+            setEditName(authState.user.name);
+            setEditPhone(authState.user.phone || '');
 
-        // Self-healing: Sync legacy/unsynced users to DB
-        if (authState.user) {
-            fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: authState.user.name,
-                    email: authState.user.email,
-                    phone: authState.user.phone
-                })
-            }).catch(console.error);
-        }
+            // Load data
+            setAddresses(AuthUtils.getAddresses());
+            setSettings(AuthUtils.getSettings());
+            setWishlistCount(StorageUtils.getWishlist().length);
 
-        // Load data
-        setAddresses(AuthUtils.getAddresses());
-        setSettings(AuthUtils.getSettings());
-        setWishlistCount(StorageUtils.getWishlist().length);
+            // Load orders
+            if (authState.user) {
+                fetch(`/api/orders/list?email=${authState.user.email}`)
+                    .then(res => res.json())
+                    .then(data => setOrders(data))
+                    .catch(err => console.error('Failed to fetch orders:', err));
+            }
+        };
 
-        // Load orders
-        if (authState.user) {
-            fetch(`/api/orders/list?email=${authState.user.email}`)
-                .then(res => res.json())
-                .then(data => setOrders(data))
-                .catch(err => console.error('Failed to fetch orders:', err));
-        }
+        initProfile();
 
         // Subscribe to changes
         const unsubAuth = AuthUtils.subscribeToAuth(() => {
@@ -110,8 +101,8 @@ export default function Profile() {
         setTimeout(() => setToast(null), 3000);
     };
 
-    const handleLogout = () => {
-        AuthUtils.logout();
+    const handleLogout = async () => {
+        await AuthUtils.logout();
         navigate('/');
     };
 
@@ -124,7 +115,7 @@ export default function Profile() {
         }
     };
 
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         setPasswordError('');
         setPasswordSuccess('');
 
@@ -133,7 +124,7 @@ export default function Profile() {
             return;
         }
 
-        const result = AuthUtils.changePassword(currentPassword, newPassword);
+        const result = await AuthUtils.changePassword(currentPassword, newPassword);
         if (result.success) {
             setPasswordSuccess(result.message);
             setTimeout(() => {
@@ -316,7 +307,7 @@ export default function Profile() {
                                 <div className="quick-actions">
                                     <h3 className="section-title">Швидкі дії</h3>
                                     <div className="quick-actions__grid">
-                                        <Link to="/shop/women" className="action-card">
+                                        <Link to="/shop/yoga" className="action-card">
                                             <div className="action-card__icon">
                                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                     <circle cx="9" cy="21" r="1" />
@@ -506,14 +497,18 @@ export default function Profile() {
                                 <h3>Мої замовлення</h3>
                                 {orders.length === 0 ? (
                                     <div className="empty-state">
-                                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                                            <line x1="3" y1="6" x2="21" y2="6" />
-                                            <path d="M16 10a4 4 0 0 1-8 0" />
-                                        </svg>
+                                        <div className="empty-state__visual">
+                                            <div className="empty-state__circle">
+                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                                                    <line x1="3" y1="6" x2="21" y2="6" />
+                                                    <path d="M16 10a4 4 0 0 1-8 0" />
+                                                </svg>
+                                            </div>
+                                        </div>
                                         <h4>У вас ще немає замовлень</h4>
                                         <p>Перейдіть до каталогу, щоб зробити перше замовлення</p>
-                                        <Link to="/shop/women" className="btn-primary">Перейти до каталогу</Link>
+                                        <Link to="/shop/yoga" className="btn-primary">Перейти до каталогу</Link>
                                     </div>
                                 ) : (
                                     <div className="orders-list">
@@ -572,10 +567,14 @@ export default function Profile() {
                                 </div>
                                 {addresses.length === 0 ? (
                                     <div className="empty-state">
-                                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                            <circle cx="12" cy="10" r="3" />
-                                        </svg>
+                                        <div className="empty-state__visual">
+                                            <div className="empty-state__circle">
+                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                                    <circle cx="12" cy="10" r="3" />
+                                                </svg>
+                                            </div>
+                                        </div>
                                         <h4>Немає збережених адрес</h4>
                                         <p>Додайте адресу доставки для швидкого оформлення замовлень</p>
                                     </div>

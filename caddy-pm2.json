@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "name": "caddy",
+      "script": "c:\\mindbody\\caddy.exe",
+      "args": "run --config c:\\mindbody\\Caddyfile",
+      "interpreter": "none"
+    }
+  ]
+}

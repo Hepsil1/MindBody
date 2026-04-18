@@ -1094,82 +1094,78 @@ h3 {
    LAYOUT STYLES FROM LEGACY
    ================================================ */
 
-/* === Top Bar — Premium Marquee === */
+/* === Top Bar — Ultra-Premium Editorial Style === */
 .top-bar {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
-  color: rgba(255, 255, 255, 0.9);
-  padding: 0;
-  overflow: hidden;
+  background: #ffffff;
+  color: #111;
+  height: 32px; /* Полегшуємо інтерфейс */
+  width: 100%;
+  display: flex;
+  align-items: center;
   position: relative;
-  height: 36px;
-  display: flex;
-  align-items: center;
   z-index: 2000;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.top-bar::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(61, 122, 140, 0.4), rgba(200, 170, 110, 0.3), transparent);
-  pointer-events: none;
-}
-
-.top-bar__marquee {
+.top-bar__container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  width: 100%;
   display: flex;
-  width: max-content;
-  animation: marquee-scroll 30s linear infinite;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.top-bar__marquee:hover {
-  animation-play-state: paused;
-}
-
-.top-bar__track {
+.top-bar__left {
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  gap: 24px; /* Більше "повітря" між логотипами */
 }
 
-.top-bar__item {
-  display: inline-flex;
+.top-bar__chip {
+  height: 14px; /* Робимо логотипи ще витонченішими */
+  width: auto;
+  opacity: 0.4;
+  filter: grayscale(1);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.top-bar__chip:hover {
+  opacity: 1;
+  filter: grayscale(0);
+}
+
+.top-bar__right {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 28px;
-  font-family: var(--font-display, 'Inter', sans-serif);
-  letter-spacing: 0.1em;
+  gap: 20px; /* Чистий простір замість розділювачів */
+}
+
+.top-bar__link {
+  font-size: 10px; /* Мікро-типографіка */
   text-transform: uppercase;
-  font-weight: 400;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.85);
-  white-space: nowrap;
-  line-height: 36px;
-}
-
-.top-bar__item a {
-  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.08em; /* Високий трекинг для преміальності */
+  font-weight: 500;
+  color: #666; /* Софт-колір для звичайного стану */
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
-.top-bar__item a:hover {
-  color: rgba(200, 170, 110, 1);
+.top-bar__link:hover {
+  color: #000;
 }
 
-.top-bar__separator {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(61, 122, 140, 0.5);
-  flex-shrink: 0;
+/* Прибираємо старі розділювачі, якщо вони залишилися в коді як span */
+.top-bar__pipe {
+  height: 12px;
+  background: #ccc;
 }
 
-@keyframes marquee-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+@media (max-width: 768px) {
+  .top-bar { height: 40px; }
+  .top-bar__left { display: none; }
+  .top-bar__container { justify-content: center; }
 }
 
 /* === Header === */
@@ -9224,7 +9220,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
   inset: 0;
   z-index: 5;
   pointer-events: none;
-  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   opacity: 0.15;
   mix-blend-mode: overlay;
 }
@@ -11973,3 +11969,16 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     scroll-behavior: auto !important;
   }
 }
+
+/* Global Accessibility: Disable animations for prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.empty-state__visual { display: flex; justify-content: center; margin-bottom: 24px; }
+.empty-state__circle { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, rgba(61, 122, 140, 0.1), rgba(200, 170, 110, 0.1)); display: flex; align-items: center; justify-content: center; color: var(--color-primary); box-shadow: inset 0 0 0 1px rgba(61, 122, 140, 0.1), 0 8px 24px rgba(0, 0, 0, 0.04); }

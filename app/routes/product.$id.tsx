@@ -15,7 +15,8 @@ export function meta({ data }: { data: any }) {
     if (!product) {
         return [{ title: "Товар не знайдено | MIND BODY" }];
     }
-    const siteUrl = "https://mindbody.com.ua";
+    const siteUrl = data?.siteUrl || "https://mindbody.com.ua";
+
     const desc = (product.description || `${product.name} — купити в MIND BODY`).substring(0, 160);
     const image = product.images?.[0] || '/brand-sun.png';
     const fullImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
@@ -58,6 +59,12 @@ export function meta({ data }: { data: any }) {
             }
         },
     ];
+}
+
+export function headers() {
+    return {
+        "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+    };
 }
 
 // --- Types ---
@@ -174,7 +181,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
         throw new Response("Not Found", { status: 404 });
     }
 
-    return { product, filterConfig, relatedProducts };
+    return { product, filterConfig, relatedProducts, siteUrl: process.env.SITE_URL || "https://mindbody.com.ua" };
+
 }
 
 // ===== REVIEWS SECTION COMPONENT =====
@@ -299,11 +307,14 @@ function ReviewsSection({ productId }: { productId: string }) {
 
                     <div className="review-form__field">
                         <label>Оцінка</label>
-                        <div className="review-form__stars-input">
+                        <div className="review-form__stars-input" role="radiogroup" aria-label="Оцінка товару">
                             {[1, 2, 3, 4, 5].map(n => (
                                 <button
                                     key={n}
                                     type="button"
+                                    role="radio"
+                                    aria-checked={n <= formRating}
+                                    aria-label={`Оцінка ${n} з 5`}
                                     className={n <= formRating ? 'active' : ''}
                                     onClick={() => setFormRating(n)}
                                 >★</button>
@@ -323,8 +334,9 @@ function ReviewsSection({ productId }: { productId: string }) {
                     </div>
 
                     <div className="review-form__field">
-                        <label>Ваш відгук</label>
+                        <label htmlFor="review-text">Ваш відгук</label>
                         <textarea
+                            id="review-text"
                             value={formText}
                             onChange={e => setFormText(e.target.value)}
                             placeholder="Розкажіть про свій досвід із цим товаром..."
@@ -364,6 +376,16 @@ export default function ProductDetail() {
     const [quickBuyPhone, setQuickBuyPhone] = useState('');
     const [quickBuyName, setQuickBuyName] = useState('');
     const [quickBuySending, setQuickBuySending] = useState(false);
+
+    // Scroll lock for modals
+    useEffect(() => {
+        if (quickBuyOpen || zoomOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [quickBuyOpen, zoomOpen]);
 
     // Helper: Get stock for a specific size/color combination
     const getVariantStock = (size: string, color: string): number => {
@@ -420,7 +442,16 @@ export default function ProductDetail() {
             quantity: 1
         });
 
-        showToast('Додано у кошик ✨');
+        showToast(
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontWeight: 600 }}>Додано у кошик! ✨</span>
+                <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                    {product.name} {selectedSize ? `(${selectedSize})` : ''}
+                </span>
+            </div>,
+            'success',
+            product.images[0]
+        );
     };
 
     const addToWishlist = () => {
@@ -518,9 +549,13 @@ export default function ProductDetail() {
                                 />
                                 {product.images.length > 1 && (
                                     <div className="zoom-overlay__nav">
-                                        <button onClick={e => { e.stopPropagation(); setActiveImage(i => (i - 1 + product.images.length) % product.images.length); }}>‹</button>
+                                        <button aria-label="Попереднє фото" onClick={e => { e.stopPropagation(); setActiveImage(i => (i - 1 + product.images.length) % product.images.length); }}>
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+                                        </button>
                                         <span>{activeImage + 1} / {product.images.length}</span>
-                                        <button onClick={e => { e.stopPropagation(); setActiveImage(i => (i + 1) % product.images.length); }}>›</button>
+                                        <button aria-label="Наступне фото" onClick={e => { e.stopPropagation(); setActiveImage(i => (i + 1) % product.images.length); }}>
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -561,7 +596,8 @@ export default function ProductDetail() {
                                                         className={`color-swatch ${selectedColor === color ? 'selected' : ''} ${!available ? 'unavailable' : ''}`}
                                                         onClick={() => setSelectedColor(color)}
                                                         style={{ backgroundColor: getColorHex(color), opacity: available ? 1 : 0.4 }}
-                                                        title={available ? '' : 'Немає в наявності'}
+                                                        aria-label={`${getColorLabel(color)}${!available ? ' — немає в наявності' : ''}`}
+                                                        aria-disabled={!available}
                                                     />
                                                 );
                                             })}
@@ -600,7 +636,7 @@ export default function ProductDetail() {
                                 <div className={`stock-indicator ${isInStock ? (currentStock <= 3 ? 'stock-indicator--low' : 'stock-indicator--ok') : 'stock-indicator--out'}`}>
                                     {isInStock
                                         ? (currentStock <= 3
-                                            ? `🔥 Залишилось лише ${currentStock} шт — поспішіть!`
+                                            ? <><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '4px', color: '#ef4444', verticalAlign: '-3px'}}><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path></svg> Залишилось лише {currentStock} шт — поспішіть!</>
                                             : `✓ В наявності: ${currentStock} шт`)
                                         : '✕ Немає в наявності'}
                                 </div>
@@ -608,9 +644,9 @@ export default function ProductDetail() {
 
                             {/* Trust badges — shipping & returns */}
                             <div className="trust-badges-inline">
-                                <span>🚚 Швидка доставка по Україні</span>
-                                <span>🔄 14 днів на повернення</span>
-                                <span>🇺🇦 Українське виробництво</span>
+                                <span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px', verticalAlign: '-3px'}}><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg> Швидка доставка по Україні</span>
+                                <span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px', verticalAlign: '-3px'}}><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg> 14 днів на повернення</span>
+                                <span><svg aria-hidden="true" width="16" height="12" viewBox="0 0 20 14" fill="none" style={{marginRight: '6px', display: 'inline-block', verticalAlign: '-1px'}}><rect width="20" height="7" fill="#0057B7"/><rect y="7" width="20" height="7" fill="#FFD700"/></svg> Українське виробництво</span>
                             </div>
 
                             <div className="actions-row">
@@ -626,7 +662,7 @@ export default function ProductDetail() {
                                     className="btn-quick-buy"
                                     onClick={() => setQuickBuyOpen(true)}
                                 >
-                                    ⚡ Купити в 1 клік
+                                    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px', verticalAlign: '-3px'}}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Купити в 1 клік
                                 </button>
                                 <button className="btn-wishlist hover-scale" onClick={addToWishlist}>
                                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
@@ -636,8 +672,8 @@ export default function ProductDetail() {
                             {/* Quick Buy Modal */}
                             {quickBuyOpen && (
                                 <div className="quick-buy-overlay" onClick={() => setQuickBuyOpen(false)}>
-                                    <div className="quick-buy-modal" onClick={e => e.stopPropagation()}>
-                                        <h3 className="quick-buy-modal__title">⚡ Швидке замовлення</h3>
+                                    <div className="quick-buy-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="quick-buy-title">
+                                        <h3 id="quick-buy-title" className="quick-buy-modal__title"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px', verticalAlign: '-3px'}}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Швидке замовлення</h3>
                                         <p className="quick-buy-modal__product">
                                             {product.name} &mdash; {product.comparePrice > product.price ? product.price : product.price} ₴
                                             {selectedSize ? ` · ${selectedSize}` : ''}
@@ -645,6 +681,7 @@ export default function ProductDetail() {
                                         </p>
                                         <input
                                             type="text"
+                                            aria-label="Ваше ім'я"
                                             placeholder="Ваше ім'я"
                                             value={quickBuyName}
                                             onChange={e => setQuickBuyName(e.target.value)}
@@ -653,6 +690,7 @@ export default function ProductDetail() {
                                         />
                                         <input
                                             type="tel"
+                                            aria-label="Ваш телефон"
                                             placeholder="+380 __ ___ __ __"
                                             value={quickBuyPhone}
                                             onChange={e => setQuickBuyPhone(e.target.value)}
