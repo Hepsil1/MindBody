@@ -55,9 +55,9 @@ function AppContent({ children }: { children: React.ReactNode }) {
     <ToastProvider>
       <LoadingScreen />
       {!isAdminRoute && <Header />}
-      <main id="main-content">
+      <div id="main-content">
         {children}
-      </main>
+      </div>
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <FloatingContact />}
     </ToastProvider>

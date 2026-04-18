@@ -22,6 +22,7 @@ export function Header() {
     const [user, setUser] = useState<User | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
 
+
     // Search state
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -44,8 +45,10 @@ export function Header() {
             setUser(authState.user);
         };
 
-        updateCounts();
+        // Initial auth check
         updateAuth();
+
+        updateCounts();
 
         const unsubCart = StorageUtils.subscribeToCart(updateCounts);
         const unsubWishlist = StorageUtils.subscribeToWishlist(updateCounts);
@@ -129,23 +132,21 @@ export function Header() {
     return (
         <>
             <div className="top-bar">
-                <div className="top-bar__marquee">
-                    {[0, 1].map((i) => (
-                        <div className="top-bar__track" key={i}>
-                            <div className="top-bar__item">🇺🇦 Українське виробництво</div>
-                            <div className="top-bar__separator" />
-                            <div className="top-bar__item">✨ –5% на перше замовлення</div>
-                            <div className="top-bar__separator" />
-                            <div className="top-bar__item">📦 Безкоштовна доставка від 2000₴</div>
-                            <div className="top-bar__separator" />
-                            <div className="top-bar__item">
-                                <NavLink to="/about" prefetch="intent">Про бренд MIND BODY →</NavLink>
-                            </div>
-                            <div className="top-bar__separator" />
-                            <div className="top-bar__item">🧘‍♀️ Yoga · Sport · Dance · Casual</div>
-                            <div className="top-bar__separator" />
-                        </div>
-                    ))}
+                <div className="top-bar__container">
+                    <div className="top-bar__left">
+                        <img src="/pics/mind_body_logo_sun.webp" alt="MB Sun" className="top-bar__chip" />
+                        <img src="/pics/mind_body_sportwear.webp" alt="MB Sportswear" className="top-bar__chip" />
+                    </div>
+
+                    <div className="top-bar__right">
+                        <NavLink to="/about" className="top-bar__link">Про бренд</NavLink>
+                        <span className="top-bar__pipe" />
+                        <NavLink to="/shipping" className="top-bar__link">Доставка</NavLink>
+                        <span className="top-bar__pipe" />
+                        <NavLink to={user ? "/profile" : "/auth"} className="top-bar__link">
+                            {user ? "Профіль" : "Увійти"}
+                        </NavLink>
+                    </div>
                 </div>
             </div>
 
@@ -177,7 +178,7 @@ export function Header() {
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img src="/pics1cloths/IMG_6201.JPG" alt="Yoga Collection" loading="lazy" />
+                                                <img src="/pics1cloths/IMG_6201.webp" alt="Yoga Collection" loading="lazy" />
                                                 <div className="mega-menu__featured-badge">YOGA</div>
                                             </div>
                                             <div className="mega-menu__featured-content">
@@ -209,7 +210,7 @@ export function Header() {
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img src="/generalpics/333_131123.jpg" alt="Sport Collection" loading="lazy" />
+                                                <img src="/generalpics/333_131123.webp" alt="Sport Collection" loading="lazy" />
                                                 <div className="mega-menu__featured-badge">SPORT</div>
                                             </div>
                                             <div className="mega-menu__featured-content">
@@ -237,7 +238,7 @@ export function Header() {
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img src="/generalpics/374_131123.jpg" alt="Dance Collection" loading="lazy" />
+                                                <img src="/generalpics/374_131123.webp" alt="Dance Collection" loading="lazy" />
                                                 <div className="mega-menu__featured-badge">DANCE</div>
                                             </div>
                                             <div className="mega-menu__featured-content">
@@ -273,7 +274,7 @@ export function Header() {
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img src="/generalpics/595_131123.jpg" alt="Casual Collection" loading="lazy" />
+                                                <img src="/generalpics/595_131123.webp" alt="Casual Collection" loading="lazy" />
                                                 <div className="mega-menu__featured-badge">CASUAL</div>
                                             </div>
                                             <div className="mega-menu__featured-content">
@@ -299,7 +300,7 @@ export function Header() {
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img src="/pics2cloths/IMG_5222.JPG" alt="Kids Collection" loading="lazy" />
+                                                <img src="/pics2cloths/IMG_5222.webp" alt="Kids Collection" loading="lazy" />
                                             </div>
                                             <div className="mega-menu__featured-content">
                                                 <h5>Дитяча Колекція</h5>
@@ -342,19 +343,19 @@ export function Header() {
                                 </svg>
                             )}
                         </button>
-                        <Link to="/wishlist" className="header__action-btn" aria-label="Улюблені">
+                        <Link to="/wishlist" className="header__action-btn" aria-label={`Улюблені${wishlistCount > 0 ? `: ${wishlistCount}` : ''}`}>
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                             </svg>
-                            <span className="header__wishlist-count">{wishlistCount}</span>
+                            {wishlistCount > 0 && <span className="header__wishlist-count" aria-hidden="true">{wishlistCount}</span>}
                         </Link>
-                        <button className="header__action-btn" aria-label="Кошик" onClick={() => setIsCartOpen(true)}>
+                        <button className="header__action-btn" aria-label={`Кошик${cartCount > 0 ? `: ${cartCount} товарів` : ''}`} onClick={() => setIsCartOpen(true)}>
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                                 <line x1="3" y1="6" x2="21" y2="6" />
                                 <path d="M16 10a4 4 0 0 1-8 0" />
                             </svg>
-                            <span className="header__cart-count">{cartCount}</span>
+                            {cartCount > 0 && <span className="header__cart-count" aria-hidden="true">{cartCount}</span>}
                         </button>
                         <button
                             className={`header__burger ${isMenuOpen ? "header__burger--active" : ""}`}

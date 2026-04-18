@@ -1,10 +1,11 @@
 import { createCookie } from "react-router";
 
 // Simple admin session cookie
+// secure: only true when SITE_URL uses https (prevents broken auth if HTTPS isn't set up yet)
 export const adminSession = createCookie("admin_session", {
     maxAge: 604800, // 7 days
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: (process.env.SITE_URL || "").startsWith("https://"),
     sameSite: "lax",
     path: "/",
     secrets: [process.env.SESSION_SECRET || "default_dev_secret_replace_me_in_prod"],

@@ -5,5 +5,5 @@ Disallow: /admin
 Disallow: /api
 Disallow: /auth
 
-# Sitemap
-Sitemap: /sitemap.xml
+# Sitemap (must be absolute URL per specification)
+Sitemap: https://mindbody.com.ua/sitemap.xml

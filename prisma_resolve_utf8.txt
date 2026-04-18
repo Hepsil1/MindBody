@@ -1,0 +1,29 @@
+﻿Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "mindbody_db", schema "public" at "localhost:5432"
+node.exe : Error: P3017
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (Err  
+  or: P3017:String) [],    
+ RemoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+
+The migration 0_init could 
+not be found. Please make 
+sure that the migration 
+exists, and that you 
+included the whole name of 
+the directory. (example: "2
+0201207184859_initial_migra
+tion")
+

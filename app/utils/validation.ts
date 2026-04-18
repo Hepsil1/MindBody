@@ -5,6 +5,7 @@ export const RegisterSchema = z.object({
     name: z.string().min(2, 'Ім\'я занадто коротке').max(100).trim(),
     email: z.string().email('Невірний формат email').max(100).trim().toLowerCase(),
     phone: z.string().max(20).optional().nullable(),
+    password: z.string().min(6, 'Пароль занадто короткий').max(100),
 });
 
 // ===== Review API =====

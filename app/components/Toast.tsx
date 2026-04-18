@@ -2,12 +2,13 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 
 interface ToastMessage {
     id: number;
-    text: string;
+    text: ReactNode;
     type: "success" | "error" | "info" | "warning";
+    image?: string;
 }
 
 interface ToastContextType {
-    showToast: (text: string, type?: ToastMessage["type"]) => void;
+    showToast: (text: ReactNode, type?: ToastMessage["type"], image?: string) => void;
 }
 
 const ToastContext = createContext<ToastContextType | null>(null);
@@ -23,9 +24,9 @@ export function useToast() {
 export function ToastProvider({ children }: { children: ReactNode }) {
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-    const showToast = useCallback((text: string, type: ToastMessage["type"] = "success") => {
+    const showToast = useCallback((text: ReactNode, type: ToastMessage["type"] = "success", image?: string) => {
         const id = ++toastId;
-        setToasts((prev) => [...prev, { id, text, type }]);
+        setToasts((prev) => [...prev, { id, text, type, image }]);
         setTimeout(() => {
             setToasts((prev) => prev.filter((t) => t.id !== id));
         }, 3500);
@@ -95,26 +96,31 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                         onClick={() => dismiss(toast.id)}
                     >
                         <span style={{
-                            width: "28px",
-                            height: "28px",
-                            borderRadius: "50%",
+                            width: toast.image ? "40px" : "28px",
+                            height: toast.image ? "50px" : "28px",
+                            borderRadius: toast.image ? "6px" : "50%",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             fontSize: "0.85rem",
                             fontWeight: 700,
                             flexShrink: 0,
-                            background: toast.type === "success"
+                            overflow: "hidden",
+                            background: toast.image ? "#1e293b" : (
+                                toast.type === "success"
                                 ? "rgba(16, 185, 129, 0.3)"
                                 : toast.type === "error"
                                     ? "rgba(239, 68, 68, 0.3)"
                                     : toast.type === "warning"
                                         ? "rgba(245, 158, 11, 0.3)"
-                                        : "rgba(59, 130, 246, 0.3)",
+                                        : "rgba(59, 130, 246, 0.3)"
+                            ),
                         }}>
-                            {icons[toast.type]}
+                            {toast.image ? (
+                                <img src={toast.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : icons[toast.type]}
                         </span>
-                        <span style={{ flex: 1 }}>{toast.text}</span>
+                        <span style={{ flex: 1, lineHeight: "1.4" }}>{toast.text}</span>
                     </div>
                 ))}
             </div>

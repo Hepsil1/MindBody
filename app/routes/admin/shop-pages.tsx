@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { prisma } from "../../db.server";
 import { isAuthenticated } from "../../utils/admin.server";
 import { uploadFile } from "../../utils/upload.server";
+import { invalidateAll } from "../../utils/cache.server";
 
 // --- Types ---
 type ShopPageSettings = {
@@ -50,6 +51,8 @@ export async function action({ request }: { request: Request }) {
     if (!(await isAuthenticated(request))) {
         return redirect("/admin/login");
     }
+    // Clear cache so updated shop page data is shown immediately
+    invalidateAll();
     try {
         const formData = await request.formData();
         const intent = formData.get("intent");

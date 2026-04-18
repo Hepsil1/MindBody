@@ -1,0 +1,113 @@
+﻿=========================================
+  MINDBODY VPS AUDIT - 2026-03-28T23:01:07.115Z
+=========================================
+
+=== 1. DATABASE SCHEMA ===
+  Tables: Category, ContactRequest, Customer, FilterConfig, Order, OrderItem, Product, PromoCode, Review, ShopPage, Slide
+
+  Review columns: id, productId, authorName, rating, text, isVerified, isApproved, createdAt
+  Review has "status" column: false
+  ΓÜá∩╕Å  PROBLEM: Review table missing "status" column - review moderation will break!
+
+  User columns: 
+
+=== 2. DATA COUNTS ===
+  Product (total): 34
+  Product (active): 34
+  Slide (total): 0 ΓÜá∩╕Å  EMPTY - hero slider will be blank!
+  Slide (home): 0 ΓÜá∩╕Å  EMPTY - hero slider will be blank!
+  Category: 6
+  Order: 0
+  ShopPage: 6
+  FilterConfig: 1
+  Review: 0
+  PromoCode: 0
+  User: ERROR - 
+Invalid `prisma.$queryRawUnsafe()` invocation:
+
+
+Raw query failed. Code: `42P01
+
+=== 3. PRODUCT INTEGRITY ===
+  Products with no images: 0
+  Products with D: drive paths: 0
+  Products with C: drive absolute paths: 0
+  Products without shopPageSlug: 0
+  Products with zero/null price: 0
+
+  Sample products:
+    - ╨Ü╨╛╨╝╨▒╤û╨╜╨╡╨╖╨╛╨╜ Yoga Sport ╨á╤â╨║╨░╨▓: 3 images, first: /pics1cloths/IMG_6201.JPG
+    - ╨Ü╨╛╨╝╨▒╤û╨╜╨╡╨╖╨╛╨╜ Yoga Cotton ╨á╤â╨║╨░╨▓: 3 images, first: /pics1cloths/IMG_6204.JPG
+    - ╨¢╨╛╤ü╨╕╨╜╨╕ Yoga Sport: 2 images, first: /pics1cloths/IMG_6207.JPG
+
+=== 4. SHOP PAGES ===
+  yoga: title="YOGA", heroImage=Γ£à, pos=50% 50% 1
+  sport: title="SPORT", heroImage=Γ£à, pos=50% 50% 1
+  dance: title="DANCE", heroImage=Γ£à, pos=50% 50% 1
+  casual: title="CASUAL", heroImage=Γ£à, pos=50% 50% 1
+  kids: title="KIDS", heroImage=Γ£à, pos=50% 50% 1
+  yogatools: title="YOGATOOLS", heroImage=Γ£à, pos=50% 50% 1
+
+=== 5. CATEGORIES ===
+  YOGA: link=/shop/yoga, image=/pics1cloths/IMG_6201.JPG
+  SPORT: link=/shop/sport, image=/pics1cloths/IMG_6210.JPG
+  DANCE: link=/shop/dance, image=/generalpics/595_131123.jpg
+  CASUAL: link=/shop/casual, image=/generalpics/348_131123.jpg
+  KIDS: link=/shop/kids, image=/pics2cloths/IMG_5222.JPG
+  YOGATOOLS: link=/shop/yogatools, image=/generalpics/374_131123.jpg
+
+=== 6. FILTER CONFIGS ===
+  global: 18 categories, 11 colors, 0 sizes
+
+=== 7. FILE SYSTEM ===
+  Γ£à build/server/index.js 806KB
+  Γ¥î build/client/index.html 
+  Γ£à public/brand-sun.png 58KB
+  Γ£à public/robots.txt 0KB
+  Γ£à public/uploads DIR
+  Γ£à .env 0KB
+  Γ£à ecosystem.config.cjs 1KB
+  Γ£à node_modules/@prisma/client DIR
+  Γ£à prisma/schema.prisma 4KB
+  ≡ƒôü public/uploads: 81 files
+
+=== 8. HTTP ENDPOINT TESTS ===
+  Γ£à Home page (/): 200, 20549 bytes
+  Γ£à Shop yoga (/shop/yoga): 200, 14549 bytes
+  Γ£à Shop sport (/shop/sport): 200, 14049 bytes
+  Γ£à Admin login (/admin/login): 200, 3284 bytes
+  Γ£à Search API (/api/search?q=test): 200, 15 bytes
+  Γ£à Sitemap (/sitemap.xml): 200, 500 bytes
+  Γ£à Robots.txt (/robots.txt): 200, 131 bytes
+
+=== 9. ENV FILE CHECK ===
+  Γ¥î DATABASE_URL = MISSING!
+  Γ£à SESSION_SECRET = [SET, 64 chars]
+  Γ£à ADMIN_PASSWORD = [SET, 18 chars]
+  Γ£à TELEGRAM_BOT_TOKEN = [SET, 46 chars]
+  Γ£à TELEGRAM_CHAT_ID = 5429418837
+  Γ£à NOVA_POSHTA_API_KEY = [SET, 32 chars]
+  Γ£à SITE_URL = https://mindbody.com.ua
+
+=== 10. ECOSYSTEM CONFIG ===
+  name: mindbody
+  script: node_modules/@react-router/serve/dist/cli.js
+  args: ./build/server/index.js
+  cwd: C:\mindbody
+  NODE_ENV: production
+  PORT: 3000
+  DATABASE_URL: [SET]
+  SESSION_SECRET: [SET]
+  SITE_URL: https://mindbody.com.ua
+
+=== 11. PRISMA SCHEMA SYNC ===
+  Schema models: Product, Customer, Order, OrderItem, Slide, Category, ShopPage, FilterConfig, Review, ContactRequest, PromoCode
+  Error: 
+Invalid `prisma.$queryRawUnsafe()` invocation:
+
+
+Raw query failed. Code: `42P01`. Message: `relation "_prisma_migrations" does not exist`
+
+=========================================
+  AUDIT COMPLETE
+=========================================

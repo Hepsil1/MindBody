@@ -1,9 +1,11 @@
 import path from "path";
 import fs from "fs";
+import sharp from "sharp";
 
 /**
  * Upload a file to the server's public/uploads directory.
- * Returns the URL path (e.g., "/uploads/slide_1234.jpg").
+ * Automatically resizes and converts most images to WebP via Sharp for SEO.
+ * Returns the URL path (e.g., "/uploads/upload_1234.webp").
  * 
  * NEVER falls back to base64 — this prevents multi-MB strings
  * from being stored in the database, which kills query performance.
@@ -22,25 +24,33 @@ export async function uploadFile(file: any): Promise<string | null> {
             return null;
         }
 
-        // Determine extension from MIME type
         const mimeType = (file as File).type || "image/jpeg";
-        const ext = mimeType
-            .replace("image/", "")
-            .replace("jpeg", "jpg")
-            .replace("svg+xml", "svg")
-            .replace("webp", "webp")
-            .replace("png", "png");
-
+        const isSvg = mimeType.includes("svg");
+        const isImage = mimeType.startsWith("image/");
+        
+        // Define extension (webp for converted images, svg for icons, else fallback)
+        const ext = isSvg ? "svg" : (isImage ? "webp" : "jpg");
         const filename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-        // Save to public/uploads/
         const uploadsDir = path.join(process.cwd(), "public", "uploads");
         if (!fs.existsSync(uploadsDir)) {
             fs.mkdirSync(uploadsDir, { recursive: true });
         }
 
         const filePath = path.join(uploadsDir, filename);
-        fs.writeFileSync(filePath, buffer);
+
+        // Compress and convert Raster Images to WebP using sharp
+        if (isImage && !isSvg) {
+            await sharp(buffer)
+                // Максимально возможное разрешение для 4K/Retina (3500px). Площадь до 12 Мегапикселей.
+                // Apple iOS безопасно рендерит WebP только до 16.7 Мегапикселей. Это сохраняет 100% визуального качества.
+                .resize({ width: 3500, height: 3500, withoutEnlargement: true, fit: 'inside' }) 
+                .webp({ quality: 95, effort: 4 }) // Ultra-high HQ
+                .toFile(filePath);
+        } else {
+            // SVGs or other files saved directly
+            fs.writeFileSync(filePath, buffer);
+        }
 
         const sizeKB = (buffer.length / 1024).toFixed(0);
         console.log(`✅ Uploaded: /uploads/${filename} (${sizeKB} KB)`);

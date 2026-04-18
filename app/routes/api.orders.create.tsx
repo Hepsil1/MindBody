@@ -32,7 +32,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
         // --- NEW: Server-Side Price & Stock Validation ---
         let calculatedSubtotal = 0;
-        const validItems = [];
+        const validItems: any[] = [];
 
         for (const item of items) {
             const products: any[] = await prisma.$queryRawUnsafe(
@@ -186,10 +186,10 @@ export async function action({ request }: ActionFunctionArgs) {
             }
         }
 
-        // 4. Atomic Stock Update (transaction with row-level locking to prevent race conditions)
-        for (const item of validItems) {
-            try {
-                await prisma.$transaction(async (tx) => {
+        // 4. Atomic Stock Update (Single transaction with row-level locking to prevent race conditions)
+        try {
+            await prisma.$transaction(async (tx) => {
+                for (const item of validItems) {
                     // Lock the product row to prevent concurrent updates
                     const lockedProducts: any[] = await tx.$queryRawUnsafe(
                         `SELECT stock, inventory FROM "Product" WHERE id = $1 FOR UPDATE`,
@@ -216,10 +216,10 @@ export async function action({ request }: ActionFunctionArgs) {
                             item.id
                         );
                     }
-                });
-            } catch (e) {
-                console.error(`Atomic stock update failed for ${item.id}:`, e);
-            }
+                }
+            });
+        } catch (e) {
+            console.error(`Atomic stock update transaction failed:`, e);
         }
 
         // 5. Increment promo code usage if used

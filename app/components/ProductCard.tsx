@@ -1,14 +1,22 @@
 import { Link } from "react-router";
-import type { Product } from "../types/product";
 import { StorageUtils } from "../utils/storage";
 import { useToast } from "./Toast";
 
-interface ExtendedProduct extends Product {
+export interface Product {
+    id: string;
+    name: string;
+    category?: string;
+    price: number;
+    image: string;
+    image2?: string | null;
+    is_new?: boolean;
+    is_sale?: boolean;
+    sale_price?: number;
+    colors?: string[];
     discount_percent?: number;
-    image2?: string;
 }
 
-export default function ProductCard({ product }: { product: ExtendedProduct }) {
+export default function ProductCard({ product }: { product: Product }) {
     const { showToast } = useToast();
     const { id, name, category, price, image, image2, is_new, is_sale, sale_price, colors, discount_percent } = product;
 
@@ -21,7 +29,7 @@ export default function ProductCard({ product }: { product: ExtendedProduct }) {
             name,
             price: sale_price || price,
             image,
-            category
+            category: category || ''
         });
         if (added) showToast('Додано до улюбленого!');
         else showToast('Вже у списку улюбленого', 'info');

@@ -100,7 +100,7 @@ export default function Wishlist() {
                             </div>
                             <h2>Список улюбленого <em>порожній</em></h2>
                             <p>Збережіть товари, які вам сподобалися, щоб повернутися до них пізніше</p>
-                            <Link to="/shop/women" className="wishlist-btn wishlist-btn--primary">
+                            <Link to="/shop/yoga" className="wishlist-btn wishlist-btn--primary">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                                     <line x1="3" y1="6" x2="21" y2="6" />
@@ -212,7 +212,7 @@ export default function Wishlist() {
                                 </div>
 
                                 {/* Continue Shopping */}
-                                <Link to="/shop/women" className="wishlist-continue-link">
+                                <Link to="/shop/yoga" className="wishlist-continue-link">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <polyline points="15 18 9 12 15 6" />
                                     </svg>

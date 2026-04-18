@@ -108,6 +108,8 @@ export default function Checkout() {
         delivery: 'nova_poshta'
     });
 
+    const [errors, setErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({});
+
     useEffect(() => {
         const updateItems = () => {
             setItems(StorageUtils.getCart());
@@ -343,17 +345,26 @@ export default function Checkout() {
     const handleSubmitOrder = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!customerInfo.name || !customerInfo.phone || !customerInfo.city || !customerInfo.warehouse) {
-            showToast('Будь ласка, заповніть всі обов\'язкові поля', 'warning');
+        const newErrors: Partial<Record<keyof CustomerInfo, string>> = {};
+        if (!customerInfo.name.trim()) newErrors.name = "Введіть ваше ім'я";
+        if (!customerInfo.phone) newErrors.phone = "Введіть номер телефону";
+        else if (getPhoneDigits(customerInfo.phone).length < 12) newErrors.phone = "Введіть коректний номер";
+
+        if (customerInfo.delivery === 'nova_poshta') {
+            if (!customerInfo.cityRef) newErrors.city = "Оберіть місто зі списку";
+            if (!customerInfo.warehouseRef) newErrors.warehouse = "Оберіть відділення зі списку";
+        } else {
+            if (!customerInfo.city.trim()) newErrors.city = "Введіть місто";
+            if (!customerInfo.warehouse.trim()) newErrors.warehouse = "Введіть адресу відділення";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            showToast('Будь ласка, перевірте правильність заповнення полів', 'warning');
             return;
         }
 
-        // Phone validation: must have 12 digits (380XXXXXXXXX)
-        const phoneDigits = getPhoneDigits(customerInfo.phone);
-        if (phoneDigits.length < 12) {
-            showToast('Введіть коректний номер телефону', 'warning');
-            return;
-        }
+        setErrors({});
 
         setIsSubmitting(true);
 
@@ -434,7 +445,7 @@ export default function Checkout() {
                     <nav className="breadcrumb">
                         <Link to="/">Головна</Link>
                         <span>/</span>
-                        <Link to="/shop/women">Каталог</Link>
+                        <Link to="/shop/yoga">Каталог</Link>
                         <span>/</span>
                         {breadcrumbExtra}
                         <span className="active">{step === 'cart' ? 'Кошик' : step === 'info' ? 'Оформлення' : 'Успішно'}</span>
@@ -506,7 +517,7 @@ export default function Checkout() {
                             </div>
                             <h2>Ваш кошик <em>порожній</em></h2>
                             <p>Здається, ви ще нічого не додали. Наш каталог чекає на вас!</p>
-                            <Link to="/shop/women" className="cart-btn cart-btn--primary" style={{ maxWidth: '300px', margin: '0 auto' }}>
+                            <Link to="/shop/yoga" className="cart-btn cart-btn--primary" style={{ maxWidth: '300px', margin: '0 auto' }}>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '10px' }}>
                                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                                     <line x1="3" y1="6" x2="21" y2="6" />
@@ -547,6 +558,7 @@ export default function Checkout() {
                                             placeholder="Олена Шевченко"
                                             required
                                         />
+                                        {errors.name && <span className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.name}</span>}
                                     </div>
                                     <div className="form-group">
                                         <label htmlFor="email">Email <span style={{ color: '#999', fontWeight: 400 }}>(необов'язково)</span></label>
@@ -573,6 +585,7 @@ export default function Checkout() {
                                             placeholder="+380 (XX) XXX-XX-XX"
                                             required
                                         />
+                                        {errors.phone && <span className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.phone}</span>}
                                     </div>
                                 </div>
 
@@ -643,8 +656,8 @@ export default function Checkout() {
                                                     onFocus={() => setShowCitiesDropdown(true)}
                                                     placeholder="Почніть вводити назву міста..."
                                                     autoComplete="off"
-                                                    required
                                                 />
+                                                {errors.city && <span className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.city}</span>}
                                                 {showCitiesDropdown && (cities.length > 0 || isLoadingCities) && (
                                                     <div className="autocomplete-dropdown">
                                                         {isLoadingCities ? (
@@ -681,8 +694,8 @@ export default function Checkout() {
                                                     placeholder={customerInfo.cityRef ? "Оберіть відділення..." : "Спочатку оберіть місто"}
                                                     disabled={!customerInfo.cityRef}
                                                     autoComplete="off"
-                                                    required
                                                 />
+                                                {errors.warehouse && <span className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.warehouse}</span>}
                                                 {showWarehousesDropdown && customerInfo.cityRef && (warehouses.length > 0 || isLoadingWarehouses) && (
                                                     <div className="autocomplete-dropdown">
                                                         {isLoadingWarehouses ? (
@@ -715,8 +728,8 @@ export default function Checkout() {
                                                     value={customerInfo.city}
                                                     onChange={(e) => setCustomerInfo(prev => ({ ...prev, city: e.target.value }))}
                                                     placeholder="Введіть назву міста"
-                                                    required
                                                 />
+                                                {errors.city && <span className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.city}</span>}
                                             </div>
                                             <div className="form-group">
                                                 <label htmlFor="warehouse-ukr">Адреса відділення або індекс *</label>
@@ -726,8 +739,8 @@ export default function Checkout() {
                                                     value={customerInfo.warehouse}
                                                     onChange={(e) => setCustomerInfo(prev => ({ ...prev, warehouse: e.target.value }))}
                                                     placeholder="вул. Хрещатик, 1 або 01001"
-                                                    required
                                                 />
+                                                {errors.warehouse && <span className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.warehouse}</span>}
                                             </div>
                                         </>
                                     )}
@@ -1026,7 +1039,7 @@ export default function Checkout() {
                                 >
                                     Оформити замовлення
                                 </button>
-                                <Link to="/shop/women" className="cart-btn cart-btn--ghost cart-btn--full">
+                                <Link to="/shop/yoga" className="cart-btn cart-btn--ghost cart-btn--full">
                                     Продовжити покупки
                                 </Link>
                             </div>

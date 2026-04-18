@@ -12,6 +12,7 @@ export default [
     route("size-guide", "routes/size-guide.tsx"),
     route("profile", "routes/profile.tsx"),
     route("auth", "routes/auth.tsx"),
+    route("auth/callback", "routes/auth.callback.tsx"),
     route("api/novaposhta", "routes/api.novaposhta.tsx"),
     route("api/register", "routes/api.register.tsx"),
     route("api/orders/create", "routes/api.orders.create.tsx"),
@@ -20,7 +21,7 @@ export default [
     route("api/search", "routes/api.search.tsx"),
     route("api/reviews", "routes/api.reviews.tsx"),
     route("api/contact", "routes/api.contact.tsx"),
-    route("api/auth/sync", "routes/api.auth.sync.tsx"),
+    route("api/auth/login", "routes/api.auth.login.tsx"),
     route("api/promo", "routes/api/promo.tsx"),
     route("sitemap.xml", "routes/sitemap[.]xml.tsx"),
 
