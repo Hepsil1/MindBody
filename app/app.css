@@ -4,6 +4,14 @@
 
 /* @import "tailwindcss"; */
 
+/* === Anchor scroll offset for sticky header === */
+html {
+  scroll-padding-top: 112px;
+}
+@media (max-width: 768px) {
+  html { scroll-padding-top: 72px; }
+}
+
 /* === Accessibility: Skip to content link === */
 .skip-link {
   position: absolute;
@@ -21,6 +29,46 @@
 }
 .skip-link:focus {
   top: 0;
+}
+
+/* Programmatic focus on main (from skip-link) — no visible ring */
+#main-content:focus {
+  outline: none;
+}
+
+/* === Global keyboard-only focus indicator ===
+   Uses the brand primary color, only shown for keyboard users via :focus-visible.
+   Buttons/links keep their existing :hover behavior unchanged. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-primary, #2a5a5a);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Hero-context buttons/links — switch to white outline for contrast against imagery */
+.header--hero a:focus-visible,
+.header--hero button:focus-visible,
+.hero-slider a:focus-visible,
+.hero-slider button:focus-visible {
+  outline-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Screen-reader-only utility */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 :root {
@@ -519,13 +567,20 @@ h3 {
   opacity: 0;
 }
 
-.product-card:hover .product-card__img--main {
-  opacity: 0;
+/* Only enable hover-swap on devices that actually support hover (desktop) */
+@media (hover: hover) and (pointer: fine) {
+  .product-card:hover .product-card__img--main {
+    opacity: 0;
+  }
+  .product-card:hover .product-card__img--hover {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }
-
-.product-card:hover .product-card__img--hover {
-  opacity: 1;
-  transform: scale(1.05);
+/* On touch devices, hide the hover-only image entirely so it doesn't load
+   layout space or fire animations on tap. */
+@media (hover: none), (pointer: coarse) {
+  .product-card__img--hover { display: none; }
 }
 
 .product-card__overlay {
@@ -564,6 +619,24 @@ h3 {
   backdrop-filter: blur(4px);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
+}
+
+.product-card__tag--outofstock {
+  background: rgba(40, 40, 40, 0.78);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4px);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+}
+
+.product-card--out-of-stock .product-card__img--main {
+  opacity: 0.55;
+  filter: grayscale(0.2);
+}
+.product-card--out-of-stock .product-card__price-main,
+.product-card--out-of-stock .product-card__title a {
+  color: var(--color-text-light);
 }
 
 /* === Wishlist Heart (always top-right) === */
@@ -1239,6 +1312,15 @@ h3 {
 
 .header--hero .header__burger span {
   background: var(--color-text-white);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.header--hero .header__action-btn {
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+}
+
+.header--hero .header__nav-link {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 .header__container {

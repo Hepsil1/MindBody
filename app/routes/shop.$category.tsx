@@ -16,8 +16,39 @@ export function meta({ data }: { data: any }) {
     const title = shopPage?.title || titles[slug] || 'Каталог';
     const heroImage = shopPage?.heroImage || "/brand-sun.png";
     const siteUrl = data?.siteUrl || "https://mindbody.com.ua";
+    const products = (data?.products || []) as any[];
 
     const canonicalUrl = `${siteUrl}/shop/${slug}`;
+    const fullHeroImage = heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}`;
+
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Головна", "item": siteUrl },
+            { "@type": "ListItem", "position": 2, "name": title, "item": canonicalUrl }
+        ]
+    };
+
+    const collectionSchema = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": title,
+        "url": canonicalUrl,
+        "inLanguage": "uk-UA",
+        "isPartOf": { "@type": "WebSite", "name": "MIND BODY", "url": siteUrl },
+        "mainEntity": {
+            "@type": "ItemList",
+            "numberOfItems": products.length,
+            "itemListElement": products.slice(0, 10).map((p, i) => ({
+                "@type": "ListItem",
+                "position": i + 1,
+                "url": `${siteUrl}/product/${p.id}`,
+                "name": p.name
+            }))
+        }
+    };
+
     return [
         { title: `${title} | MIND BODY` },
         { name: "description", content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика. Українське виробництво.` },
@@ -26,11 +57,15 @@ export function meta({ data }: { data: any }) {
         { property: "og:title", content: `${title} | MIND BODY` },
         { property: "og:description", content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика.` },
         { property: "og:type", content: "website" },
-        { property: "og:image", content: heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}` },
+        { property: "og:image", content: fullHeroImage },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
         { property: "og:locale", content: "uk_UA" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: `${title} | MIND BODY` },
-        { name: "twitter:image", content: heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}` },
+        { name: "twitter:image", content: fullHeroImage },
+        { "script:ld+json": breadcrumbSchema },
+        { "script:ld+json": collectionSchema },
     ];
 }
 
@@ -59,7 +94,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
             .catch((e: any) => { console.error("ShopPage fetch failed", e); return null; }),
         // 3. Products — only needed columns, no SELECT *
         prisma.$queryRawUnsafe(
-            `SELECT id, name, price, "comparePrice", category, images, colors, sizes, "shopPageSlug", status, "createdAt"
+            `SELECT id, name, price, "comparePrice", category, images, colors, sizes, inventory, "shopPageSlug", status, "createdAt"
              FROM "Product"
              WHERE "shopPageSlug" = $1 AND status = 'active'
              ORDER BY "createdAt" DESC`,
@@ -94,6 +129,12 @@ export async function loader({ params }: LoaderFunctionArgs) {
         const isSale = comparePrice > price && price > 0;
         const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : 0;
         const isNew = (NOW - createdAt) < NEW_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
+        const inventory = parseJson(p.inventory, {});
+        const invValues = Object.values(inventory);
+        const inStock = p.status === 'active' && (
+            invValues.length === 0 ||
+            invValues.some((q: any) => Number(q) > 0)
+        );
 
         return {
             id: p.id,
@@ -111,7 +152,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
             is_new: isNew,
             is_sale: isSale,
             discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
-            status: p.status
+            status: p.status,
+            inStock
         };
     });
 
@@ -559,7 +601,7 @@ export default function ShopCategory() {
                                     <div className="luxe-product-grid">
                                         {visibleProducts.map((product, idx) => (
                                             <div key={product.id || `product-${idx}`} className="luxe-card-wrapper">
-                                                <ProductCard product={product} />
+                                                <ProductCard product={product} index={idx} />
                                             </div>
                                         ))}
                                     </div>

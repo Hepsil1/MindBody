@@ -18,6 +18,8 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { ToastProvider } from "./components/Toast";
 import FloatingContact from "./components/FloatingContact";
 
+const SITE_URL = "https://mindbody.com.ua";
+
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/png", href: "/logo-sun.png" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -26,6 +28,9 @@ export const links: Route.LinksFunction = () => [
     href: "https://fonts.gstatic.com",
     crossOrigin: "anonymous",
   },
+  // hreflang for Ukrainian locale
+  { rel: "alternate", hrefLang: "uk", href: SITE_URL },
+  { rel: "alternate", hrefLang: "x-default", href: SITE_URL },
   // Critical fonts — preloaded for fastest LCP
   {
     rel: "preload",
@@ -46,6 +51,31 @@ export const links: Route.LinksFunction = () => [
   { rel: "stylesheet", href: loadingScreenCss },
 ];
 
+const GLOBAL_JSONLD = {
+  organization: {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "MIND BODY",
+    "url": SITE_URL,
+    "logo": `${SITE_URL}/brand-sun.png`,
+    "description": "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика.",
+    "address": { "@type": "PostalAddress", "addressCountry": "UA" },
+    "sameAs": ["https://www.instagram.com/mindbody_ua"]
+  },
+  website: {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "MIND BODY",
+    "url": SITE_URL,
+    "inLanguage": "uk-UA",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": { "@type": "EntryPoint", "urlTemplate": `${SITE_URL}/search?q={search_term_string}` },
+      "query-input": "required name=search_term_string"
+    }
+  }
+};
+
 // Wrapper component that can use hooks
 function AppContent({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -55,9 +85,9 @@ function AppContent({ children }: { children: React.ReactNode }) {
     <ToastProvider>
       <LoadingScreen />
       {!isAdminRoute && <Header />}
-      <div id="main-content">
+      <main id="main-content" tabIndex={-1}>
         {children}
-      </div>
+      </main>
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <FloatingContact />}
     </ToastProvider>
@@ -68,17 +98,27 @@ function AppContent({ children }: { children: React.ReactNode }) {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="uk">
+    <html lang="uk" dir="ltr">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#2a5a68" />
+        <meta name="robots" content="index, follow, max-image-preview:large" />
+        <meta name="format-detection" content="telephone=no" />
         <Meta />
         <Links />
       </head>
       <body>
         <a href="#main-content" className="skip-link">Перейти до контенту</a>
         {children}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(GLOBAL_JSONLD.organization) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(GLOBAL_JSONLD.website) }}
+        />
         <ScrollRestoration />
         <Scripts />
       </body>

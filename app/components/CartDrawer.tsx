@@ -60,15 +60,21 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             />
 
             {/* Drawer */}
-            <aside className={`cart-drawer ${isOpen ? "cart-drawer--open" : ""}`}>
+            <aside
+                className={`cart-drawer ${isOpen ? "cart-drawer--open" : ""}`}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="cart-drawer-title"
+                aria-hidden={!isOpen}
+            >
                 {/* Header */}
                 <div className="cart-drawer__header">
-                    <h3 className="cart-drawer__title">
+                    <h3 className="cart-drawer__title" id="cart-drawer-title">
                         Кошик
-                        {itemCount > 0 && <span className="cart-drawer__count">{itemCount}</span>}
+                        {itemCount > 0 && <span className="cart-drawer__count" aria-live="polite">{itemCount}</span>}
                     </h3>
                     <button className="cart-drawer__close" onClick={onClose} aria-label="Закрити кошик">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <line x1="18" y1="6" x2="6" y2="18" />
                             <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -78,7 +84,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 {/* Cart Items */}
                 {cart.length === 0 ? (
                     <div className="cart-drawer__empty">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                        <svg aria-hidden="true" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                             <line x1="3" y1="6" x2="21" y2="6" />
                             <path d="M16 10a4 4 0 0 1-8 0" />
@@ -109,9 +115,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                         </div>
                                         <div className="cart-drawer__item-bottom">
                                             <div className="cart-drawer__qty">
-                                                <button onClick={() => handleQuantity(item, -1)} aria-label="Зменшити">−</button>
-                                                <span>{item.quantity}</span>
-                                                <button onClick={() => handleQuantity(item, 1)} aria-label="Збільшити">+</button>
+                                                <button onClick={() => handleQuantity(item, -1)} aria-label={`Зменшити кількість ${item.name}`}>−</button>
+                                                <span aria-live="polite" aria-atomic="true">{item.quantity}</span>
+                                                <button onClick={() => handleQuantity(item, 1)} aria-label={`Збільшити кількість ${item.name}`}>+</button>
                                             </div>
                                             <span className="cart-drawer__item-price">
                                                 {(item.price * item.quantity).toLocaleString()} ₴
@@ -123,7 +129,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                         onClick={() => handleRemove(item)}
                                         aria-label="Видалити"
                                     >
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <line x1="18" y1="6" x2="6" y2="18" />
                                             <line x1="6" y1="6" x2="18" y2="18" />
                                         </svg>

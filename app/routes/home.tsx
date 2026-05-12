@@ -33,18 +33,9 @@ export function meta({ data }: Route.MetaArgs) {
     { tagName: "link", rel: "preload", as: "image", href: "/generalpics/333_131123.webp", fetchPriority: "high" },
     { tagName: "link", rel: "preload", as: "image", href: "/generalpics/374_131123.webp" },
     { tagName: "link", rel: "preload", as: "image", href: "/generalpics/338_131123.webp" },
-    {
-      "script:ld+json": {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "MIND BODY",
-        "url": siteUrl,
-        "logo": `${siteUrl}/brand-sun.png`,
-        "description": "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика.",
-        "address": { "@type": "PostalAddress", "addressCountry": "UA" },
-        "sameAs": ["https://www.instagram.com/mindbody_ua"]
-      }
-    },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+    // Organization + WebSite JSON-LD live in root.tsx (global)
   ];
 }
 
@@ -69,7 +60,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       ),
       cachedFetch('home:products', CACHE_TTL, () =>
         prisma.$queryRawUnsafe(
-          `SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", "createdAt"
+          `SELECT id, name, price, "comparePrice", category, images, inventory, status, "shopPageSlug", "createdAt"
            FROM "Product"
            WHERE status = 'active'
            ORDER BY "createdAt" DESC LIMIT 8`
@@ -83,6 +74,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     const mapProduct = (p: any) => {
       let imgs: string[] = [];
       try { imgs = JSON.parse(p.images || '[]'); } catch { }
+      let inventory: Record<string, number> = {};
+      try { inventory = JSON.parse(p.inventory || '{}'); } catch { }
+      const invValues = Object.values(inventory);
+      const inStock = p.status === 'active' && (
+        invValues.length === 0 || invValues.some((q: any) => Number(q) > 0)
+      );
       const price = Number(p.price);
       const comparePrice = Number(p.comparePrice) || 0;
       const isSale = comparePrice > price && price > 0;
@@ -100,6 +97,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         is_sale: isSale,
         sale_price: isSale ? price : undefined,
         discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
+        inStock,
       };
     };
 
@@ -314,8 +312,8 @@ export default function Home() {
           </div>
 
           <div className="products-grid-4">
-            {newProducts.map((p: any) => (
-              <ProductCard key={p.id} product={p} />
+            {newProducts.map((p: any, idx: number) => (
+              <ProductCard key={p.id} product={p} index={idx} />
             ))}
           </div>
 

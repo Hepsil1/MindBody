@@ -906,6 +906,12 @@
 }
 
 @media (max-width: 768px) {
+    /* Hide the inline desktop "Add to cart / Wishlist" row on mobile —
+       the sticky bottom bar takes over. Avoids two competing CTAs. */
+    .actions-row { display: none; }
+    /* Reserve space so the sticky bar doesn't overlap last content */
+    .product-page { padding-bottom: 96px; }
+
     .mobile-sticky-cta {
         display: flex;
         position: fixed;
@@ -915,6 +921,7 @@
         background: #fff;
         border-top: 1px solid #e5e7eb;
         padding: 12px 16px;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
         z-index: 999;
         align-items: center;
         justify-content: space-between;
