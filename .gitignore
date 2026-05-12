@@ -5,3 +5,15 @@
 # React Router
 /.react-router/
 /build/
+
+# Logs (Caddy, build, vite, typescript)
+*.log
+logs/
+caddy_access.log
+build_output.txt
+
+# Local tooling
+/.claude/
+/tmp/
+/tmp_repos/
+/.tmp_repos/
