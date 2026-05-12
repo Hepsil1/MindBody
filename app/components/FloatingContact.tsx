@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 const PHONE = "380509656737";
 const VIBER_URL = `viber://chat?number=%2B${PHONE}`;
 const WHATSAPP_URL = `https://wa.me/380973542848`;
-const TELEGRAM_URL = `https://t.me/+${PHONE}`;
+const TELEGRAM_URL = `https://t.me/Juliamindbody`;
 
 export default function FloatingContact() {
     const [isOpen, setIsOpen] = useState(false);

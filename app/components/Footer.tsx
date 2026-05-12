@@ -135,7 +135,7 @@ export default function Footer() {
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="https://t.me/+380509656737" target="_blank" rel="noopener noreferrer">
+                                        <a href="https://t.me/Juliamindbody" target="_blank" rel="noopener noreferrer">
                                             Telegram
                                         </a>
                                     </li>
