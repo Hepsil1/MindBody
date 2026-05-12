@@ -55,7 +55,6 @@ textarea:focus-visible,
 .hero-slider a:focus-visible,
 .hero-slider button:focus-visible {
   outline-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Screen-reader-only utility */
