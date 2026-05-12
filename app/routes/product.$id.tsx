@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "../components/Toast";
 import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
+import { COLOR_MAP } from "../utils/colors";
 import productStyles from "../styles/product-page.css?url";
 
 export function links() {
@@ -22,6 +23,55 @@ export function meta({ data }: { data: any }) {
     const fullImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
     const price = Number(product.price) || 0;
     const canonicalUrl = `${siteUrl}/product/${product.id}`;
+
+    const hasStock = product.status === 'active' && (
+        !product.inventory ||
+        Object.keys(product.inventory).length === 0 ||
+        Object.values(product.inventory).some((q: any) => Number(q) > 0)
+    );
+    const availability = hasStock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock";
+
+    const priceValidUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+        .toISOString().split('T')[0];
+
+    const productSchema: any = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": product.name,
+        "description": desc,
+        "image": fullImage,
+        "sku": String(product.id),
+        "brand": { "@type": "Brand", "name": "MIND BODY" },
+        "offers": {
+            "@type": "Offer",
+            "url": canonicalUrl,
+            "priceCurrency": "UAH",
+            "price": price,
+            "priceValidUntil": priceValidUntil,
+            "availability": availability,
+            "seller": { "@type": "Organization", "name": "MIND BODY" }
+        }
+    };
+    if (data?.aggregateRating && data.aggregateRating.count > 0) {
+        productSchema.aggregateRating = {
+            "@type": "AggregateRating",
+            "ratingValue": data.aggregateRating.avg,
+            "reviewCount": data.aggregateRating.count
+        };
+    }
+
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Головна", "item": siteUrl },
+            { "@type": "ListItem", "position": 2, "name": product.shopPageSlug === 'kids' ? "Дітям" : "Жінкам", "item": `${siteUrl}/shop/${product.shopPageSlug || 'women'}` },
+            { "@type": "ListItem", "position": 3, "name": product.name, "item": canonicalUrl }
+        ]
+    };
+
     return [
         { title: `${product.name} | MIND BODY` },
         { name: "description", content: desc },
@@ -31,33 +81,21 @@ export function meta({ data }: { data: any }) {
         { property: "og:title", content: product.name },
         { property: "og:description", content: desc },
         { property: "og:image", content: fullImage },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
         { property: "og:type", content: "product" },
         { property: "product:price:amount", content: String(price) },
         { property: "product:price:currency", content: "UAH" },
+        { property: "product:availability", content: hasStock ? "in stock" : "out of stock" },
         // Twitter Card
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: product.name },
         { name: "twitter:description", content: desc },
         { name: "twitter:image", content: fullImage },
         // JSON-LD Product
-        {
-            "script:ld+json": {
-                "@context": "https://schema.org",
-                "@type": "Product",
-                "name": product.name,
-                "description": desc,
-                "image": fullImage,
-                "brand": { "@type": "Brand", "name": "MIND BODY" },
-                "offers": {
-                    "@type": "Offer",
-                    "url": canonicalUrl,
-                    "priceCurrency": "UAH",
-                    "price": price,
-                    "availability": "https://schema.org/InStock",
-                    "seller": { "@type": "Organization", "name": "MIND BODY" }
-                }
-            }
-        },
+        { "script:ld+json": productSchema },
+        // JSON-LD BreadcrumbList
+        { "script:ld+json": breadcrumbSchema },
     ];
 }
 
@@ -71,24 +109,6 @@ export function headers() {
 interface FilterConfigData {
     colors: Record<string, string>;
 }
-
-const COLOR_MAP: Record<string, string> = {
-    'black': '#1a1a1a',
-    'white': '#ffffff',
-    'blue': '#3b82f6',
-    'pink': '#ec4899',
-    'green': '#22c55e',
-    'gray': '#6b7280',
-    'red': '#ef4444',
-    'purple': '#a855f7',
-    'yellow': '#eab308',
-    'orange': '#f97316',
-    'teal': '#14b8a6',
-    'brown': '#78350f',
-    'navy': '#1e3a8a',
-    'beige': '#f5f5dc',
-    'marsala': '#722F37'
-};
 
 export async function loader({ params }: LoaderFunctionArgs) {
     const id = params.id;
@@ -181,7 +201,32 @@ export async function loader({ params }: LoaderFunctionArgs) {
         throw new Response("Not Found", { status: 404 });
     }
 
-    return { product, filterConfig, relatedProducts, siteUrl: process.env.SITE_URL || "https://mindbody.com.ua" };
+    // Aggregate rating for JSON-LD (approved reviews only)
+    let aggregateRating: { avg: number; count: number } | null = null;
+    try {
+        const stats: any[] = await prisma.$queryRawUnsafe(
+            `SELECT AVG(rating)::float AS avg, COUNT(*)::int AS count
+             FROM "Review" WHERE "productId" = $1 AND "isApproved" = true`,
+            id
+        );
+        const row = stats?.[0];
+        if (row && Number(row.count) > 0) {
+            aggregateRating = {
+                avg: Math.round(Number(row.avg) * 10) / 10,
+                count: Number(row.count)
+            };
+        }
+    } catch (e) {
+        // schema.org allows omitting aggregateRating, ignore failures
+    }
+
+    return {
+        product,
+        filterConfig,
+        relatedProducts,
+        aggregateRating,
+        siteUrl: process.env.SITE_URL || "https://mindbody.com.ua"
+    };
 
 }
 

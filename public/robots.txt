@@ -1,9 +1,19 @@
 # MindBody Robots
 User-agent: *
 Allow: /
+Allow: /shop/
+Allow: /product/
+
 Disallow: /admin
-Disallow: /api
+Disallow: /admin/
+Disallow: /api/
 Disallow: /auth
+Disallow: /auth/
+Disallow: /profile
+Disallow: /checkout
+
+# Politeness
+Crawl-delay: 1
 
 # Sitemap (must be absolute URL per specification)
 Sitemap: https://mindbody.com.ua/sitemap.xml
