@@ -8,15 +8,15 @@
 }
 
 @keyframes loadingBreathe {
-    0% { transform: scale(0.9); opacity: 0.9; }
-    100% { transform: scale(1.05); opacity: 1; }
+    0% { opacity: 0.85; }
+    100% { opacity: 1; }
 }
 
 /* Removed loadingPulseRing animation */
 .loading-screen {
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at center, #FFFFFF 0%, #F4F2ED 100%);
+    background: #faf8f6;
     z-index: 9999;
     display: flex;
     align-items: center;
@@ -43,4 +43,8 @@
     width: 90px;
     height: 90px;
     animation: loadingSpin 3s linear infinite;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
+    transform-origin: center;
+    backface-visibility: hidden;
 }
