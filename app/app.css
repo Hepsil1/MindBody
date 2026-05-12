@@ -10581,10 +10581,22 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
   .footer-newsletter__btn { transition: none; }
 }
 
+/* === Mobile header: drop the empty profile button when not signed-in to free space === */
+@media (max-width: 600px) {
+  .header__action-btn--profile:not(.header__action-btn--avatar) {
+    display: none;
+  }
+  /* Hide the top-bar entirely on the smallest screens — it's redundant with header */
+  .top-bar { display: none; }
+  /* Re-anchor header to top since top-bar is gone */
+  .header { top: 0 !important; }
+}
+
 /* === Cookie Consent Banner === */
 .cookie-banner {
   position: fixed;
-  bottom: 24px;
+  /* Sit above the floating-contact widget (bottom: 24, ~56px tall) */
+  bottom: 96px;
   left: 24px;
   right: 24px;
   max-width: 560px;
@@ -10659,7 +10671,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
   border-color: var(--color-primary-dark, #1e4444);
 }
 @media (max-width: 560px) {
-  .cookie-banner { left: 12px; right: 12px; bottom: 12px; padding: 16px; }
+  .cookie-banner { left: 12px; right: 12px; bottom: 92px; padding: 16px; }
   .cookie-banner__actions { width: 100%; }
   .cookie-banner__btn { flex: 1; }
 }

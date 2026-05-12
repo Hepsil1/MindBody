@@ -329,7 +329,11 @@ export function Header() {
                             </svg>
                         </button>
 
-                        <button className={`header__action-btn ${user ? 'header__action-btn--avatar' : ''}`} aria-label="Профіль" onClick={handleProfileClick}>
+                        <button
+                            className={`header__action-btn header__action-btn--profile ${user ? 'header__action-btn--avatar' : ''}`}
+                            aria-label="Профіль"
+                            onClick={handleProfileClick}
+                        >
                             {user ? (
                                 <span className="header__user-avatar">
                                     {user.avatar ? (

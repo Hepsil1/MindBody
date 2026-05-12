@@ -4,6 +4,7 @@ export default [
     index("routes/home.tsx"),
     route("shop/:category", "routes/shop.$category.tsx"),
     route("product/:id", "routes/product.$id.tsx"),
+    route("p/:slug", "routes/p.$slug.tsx"),
     route("wishlist", "routes/wishlist.tsx"),
     route("checkout", "routes/checkout.tsx"),
     route("about", "routes/about.tsx"),
