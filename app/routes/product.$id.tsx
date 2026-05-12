@@ -18,11 +18,19 @@ export function meta({ data }: { data: any }) {
     }
     const siteUrl = data?.siteUrl || "https://mindbody.com.ua";
 
-    const desc = (product.description || `${product.name} — купити в MIND BODY`).substring(0, 160);
+    // Prefer admin-set SEO fields, fall back to derived from name/description
+    const seoTitle = product.metaTitle?.trim() || `${product.name} | MIND BODY`;
+    const desc = (
+        product.metaDescription?.trim() ||
+        product.description ||
+        `${product.name} — купити в MIND BODY`
+    ).substring(0, 160);
     const image = product.images?.[0] || '/brand-sun.png';
     const fullImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
     const price = Number(product.price) || 0;
-    const canonicalUrl = `${siteUrl}/product/${product.id}`;
+    // Canonical: use slug-based URL if slug exists, otherwise id
+    const canonicalPath = product.slug ? `/p/${product.slug}` : `/product/${product.id}`;
+    const canonicalUrl = `${siteUrl}${canonicalPath}`;
 
     const hasStock = product.status === 'active' && (
         !product.inventory ||
@@ -73,7 +81,7 @@ export function meta({ data }: { data: any }) {
     };
 
     return [
-        { title: `${product.name} | MIND BODY` },
+        { title: seoTitle },
         { name: "description", content: desc },
         { tagName: "link", rel: "canonical", href: canonicalUrl },
         // Open Graph
@@ -120,7 +128,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         // Run product + filterConfig queries in parallel
         const [productResult, configResult] = await Promise.all([
             prisma.$queryRawUnsafe(
-                `SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, inventory, status, "shopPageSlug", "createdAt"
+                `SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, inventory, status, "shopPageSlug", slug, "metaTitle", "metaDescription", "createdAt"
                  FROM "Product" WHERE id = $1`, id
             ) as Promise<any[]>,
             prisma.$queryRawUnsafe(
@@ -164,6 +172,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
                 images: images,
                 category: p.category,
                 shopPageSlug: p.shopPageSlug,
+                slug: p.slug,
+                metaTitle: p.metaTitle,
+                metaDescription: p.metaDescription,
                 colors: availableColors.size > 0 ? Array.from(availableColors) : parseJson(p.colors, []),
                 sizes: availableSizes.size > 0 ? Array.from(availableSizes) : parseJson(p.sizes, []),
                 inventory: inventory,

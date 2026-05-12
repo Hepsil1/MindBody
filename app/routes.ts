@@ -10,6 +10,12 @@ export default [
     route("contacts", "routes/contacts.tsx"),
     route("delivery", "routes/delivery.tsx"),
     route("size-guide", "routes/size-guide.tsx"),
+    route("privacy", "routes/privacy.tsx"),
+    route("terms", "routes/terms.tsx"),
+    route("return-policy", "routes/return-policy.tsx"),
+    route("faq", "routes/faq.tsx"),
+    route("care-guide", "routes/care-guide.tsx"),
+    route("search", "routes/search.tsx"),
     route("profile", "routes/profile.tsx"),
     route("auth", "routes/auth.tsx"),
     route("auth/callback", "routes/auth.callback.tsx"),
@@ -23,6 +29,7 @@ export default [
     route("api/contact", "routes/api.contact.tsx"),
     route("api/auth/login", "routes/api.auth.login.tsx"),
     route("api/promo", "routes/api/promo.tsx"),
+    route("api/newsletter", "routes/api.newsletter.tsx"),
     route("sitemap.xml", "routes/sitemap[.]xml.tsx"),
 
     // Admin Login & Logout (Separate from layout)

@@ -6,6 +6,8 @@ export default function Footer() {
     const { showToast } = useToast();
     const [contact, setContact] = useState('');
     const [sending, setSending] = useState(false);
+    const [newsletterEmail, setNewsletterEmail] = useState('');
+    const [newsletterSending, setNewsletterSending] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,6 +42,34 @@ export default function Footer() {
         setSending(false);
     };
 
+    const handleNewsletterSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmed = newsletterEmail.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmed)) {
+            showToast('Введіть коректний email', 'error');
+            return;
+        }
+        setNewsletterSending(true);
+        try {
+            const res = await fetch('/api/newsletter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: trimmed, source: 'footer' })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                showToast('Дякуємо! Ви у нашому списку ✨');
+                setNewsletterEmail('');
+            } else {
+                showToast(data?.error || 'Не вдалось підписатись', 'error');
+            }
+        } catch {
+            showToast('Помилка з\'єднання', 'error');
+        }
+        setNewsletterSending(false);
+    };
+
     return (
         <footer className="footer-puma">
             <div className="footer-puma__container">
@@ -58,6 +88,9 @@ export default function Footer() {
                                     <li><Link to="/contacts">Контакти</Link></li>
                                     <li><Link to="/size-guide">Таблиця розмірів</Link></li>
                                     <li><Link to="/delivery">Доставка та оплата</Link></li>
+                                    <li><Link to="/return-policy">Повернення</Link></li>
+                                    <li><Link to="/care-guide">Догляд за виробами</Link></li>
+                                    <li><Link to="/faq">Часті запитання</Link></li>
                                 </ul>
                             </div>
 
@@ -77,6 +110,8 @@ export default function Footer() {
                                 <h5 className="footer-puma__col-header">Про компанію</h5>
                                 <ul className="footer-puma__nav-list">
                                     <li><Link to="/about">Про нас</Link></li>
+                                    <li><Link to="/privacy">Політика конфіденційності</Link></li>
+                                    <li><Link to="/terms">Умови користування</Link></li>
                                 </ul>
                             </div>
 
@@ -119,8 +154,8 @@ export default function Footer() {
                         <div className="mind-feedback">
                             <div className="mind-feedback__header">
                                 <div className="mind-feedback__title-wrap">
-                                    <h4 className="mind-feedback__title">ШВИДКЕ ЗАПИТАННЯ</h4>
-                                    <span className="mind-feedback__subtitle">(ЗВОРОТНІЙ ЗВ'ЯЗОК)</span>
+                                    <h4 className="mind-feedback__title">Давай поговоримо</h4>
+                                    <span className="mind-feedback__subtitle">маєш запитання — напиши</span>
                                 </div>
                                 <a href="https://instagram.com/mindbody.sportwear" target="_blank" rel="noopener noreferrer" className="mind-feedback__social-link" aria-label="Instagram">
                                     <div className="insta-icon-wrapper">
@@ -152,6 +187,47 @@ export default function Footer() {
                                 </button>
                             </form>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* NEWSLETTER BAND */}
+            <div className="footer-newsletter">
+                <div className="footer-puma__container">
+                    <div className="footer-newsletter__inner">
+                        <div className="footer-newsletter__copy">
+                            <h4 className="footer-newsletter__title">Будь у грі першою</h4>
+                            <p className="footer-newsletter__desc">
+                                Нові колекції, лімітовані дропи та приватні знижки — раз на місяць.
+                                Без спаму, обіцяємо.
+                            </p>
+                        </div>
+                        <form className="footer-newsletter__form" onSubmit={handleNewsletterSubmit} noValidate>
+                            <label htmlFor="footer-newsletter-email" className="visually-hidden">
+                                Ваш email
+                            </label>
+                            <input
+                                id="footer-newsletter-email"
+                                type="email"
+                                inputMode="email"
+                                autoComplete="email"
+                                placeholder="ваш@email.ua"
+                                className="footer-newsletter__input"
+                                value={newsletterEmail}
+                                onChange={e => setNewsletterEmail(e.target.value)}
+                                disabled={newsletterSending}
+                                required
+                                aria-required="true"
+                            />
+                            <button
+                                type="submit"
+                                className="footer-newsletter__btn"
+                                disabled={newsletterSending}
+                                aria-busy={newsletterSending}
+                            >
+                                {newsletterSending ? 'Підписуємо…' : 'Підписатись'}
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

@@ -17,6 +17,7 @@ import Footer from "./components/Footer";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { ToastProvider } from "./components/Toast";
 import FloatingContact from "./components/FloatingContact";
+import CookieBanner from "./components/CookieBanner";
 
 const SITE_URL = "https://mindbody.com.ua";
 
@@ -90,6 +91,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
       </main>
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <FloatingContact />}
+      {!isAdminRoute && <CookieBanner />}
     </ToastProvider>
   );
 }

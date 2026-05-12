@@ -257,14 +257,16 @@ export default function Home() {
 
             <div className="feature-item group">
               <div className="feature-item__icon-wrapper">
-                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.2">
-                  <rect x="3" y="5" width="18" height="14" rx="2" strokeLinecap="round" strokeLinejoin="round"></rect>
-                  <line x1="3" y1="10" x2="21" y2="10" strokeLinecap="round" strokeLinejoin="round"></line>
+                <svg aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.2">
+                  <rect x="1" y="3" width="15" height="13" rx="1" strokeLinecap="round" strokeLinejoin="round"></rect>
+                  <path d="M16 8h4l3 3v5h-7V8z" strokeLinecap="round" strokeLinejoin="round"></path>
+                  <circle cx="6" cy="19" r="2"></circle>
+                  <circle cx="18" cy="19" r="2"></circle>
                 </svg>
               </div>
               <div className="feature-item__text">
-                <h4 className="feature-item__title">Швидка оплата</h4>
-                <p className="feature-item__desc">Безпечно карткою або при отриманні</p>
+                <h4 className="feature-item__title">Безкоштовна доставка</h4>
+                <p className="feature-item__desc">Від 2000₴ — по всій Україні</p>
               </div>
             </div>
 

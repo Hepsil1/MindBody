@@ -8,28 +8,33 @@ datasource db {
 }
 
 model Product {
-  id           String      @id @default(uuid())
-  name         String
-  description  String?
-  price        Decimal
-  comparePrice Decimal?
-  sku          String?     @unique
-  stock        Int         @default(0)
-  status       String      @default("draft")
-  category     String?
-  images       String?
-  colors       String?
-  sizes        String?
-  inventory    String?
-  shopPageSlug String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  orderItems   OrderItem[]
+  id              String      @id @default(uuid())
+  name            String
+  description     String?
+  price           Decimal
+  comparePrice    Decimal?
+  sku             String?     @unique
+  stock           Int         @default(0)
+  status          String      @default("draft")
+  category        String?
+  images          String?
+  colors          String?
+  sizes           String?
+  inventory       String?
+  shopPageSlug    String?
+  // SEO fields — optional, fall back to name/description if empty
+  slug            String?     @unique
+  metaTitle       String?
+  metaDescription String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  orderItems      OrderItem[]
 
   @@index([status])
   @@index([shopPageSlug])
   @@index([category])
   @@index([createdAt])
+  @@index([slug])
 }
 
 model Customer {
@@ -157,4 +162,18 @@ model PromoCode {
   isActive      Boolean   @default(true)
   expiresAt     DateTime?
   createdAt     DateTime  @default(now())
+}
+
+model NewsletterSubscriber {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  source       String?  // 'footer', 'cookie-banner', 'checkout', 'popup'
+  consent      Boolean  @default(true)
+  unsubscribed Boolean  @default(false)
+  unsubKey     String   @unique @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([email])
+  @@index([createdAt])
 }
