@@ -383,12 +383,21 @@ export function Header() {
                             </svg>
                             <input
                                 ref={searchInputRef}
-                                type="text"
+                                type="search"
                                 className="search-overlay__input"
                                 placeholder="Пошук товарів..."
                                 value={searchQuery}
                                 onChange={handleSearchInput}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && searchQuery.trim().length >= 2) {
+                                        e.preventDefault();
+                                        const q = searchQuery.trim();
+                                        closeSearch();
+                                        navigate(`/search?q=${encodeURIComponent(q)}`);
+                                    }
+                                }}
                                 autoComplete="off"
+                                aria-label="Пошук товарів"
                             />
                             <button className="search-overlay__close" onClick={closeSearch} aria-label="Закрити">
                                 <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -404,25 +413,41 @@ export function Header() {
                                 {isSearching ? (
                                     <div className="search-overlay__loading">Пошук...</div>
                                 ) : searchResults.length > 0 ? (
-                                    <div className="search-overlay__list">
-                                        {searchResults.map((item) => (
-                                            <Link
-                                                key={item.id}
-                                                to={`/product/${item.id}`}
-                                                className="search-result-item"
-                                                onClick={closeSearch}
-                                            >
-                                                <img src={item.image} alt={item.name} className="search-result-item__img" />
-                                                <div className="search-result-item__info">
-                                                    <span className="search-result-item__name">{item.name}</span>
-                                                    <span className="search-result-item__price">{item.price.toLocaleString()} ₴</span>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                    </div>
+                                    <>
+                                        <div className="search-overlay__list">
+                                            {searchResults.map((item) => (
+                                                <Link
+                                                    key={item.id}
+                                                    to={`/product/${item.id}`}
+                                                    className="search-result-item"
+                                                    onClick={closeSearch}
+                                                >
+                                                    <img src={item.image} alt={item.name} className="search-result-item__img" />
+                                                    <div className="search-result-item__info">
+                                                        <span className="search-result-item__name">{item.name}</span>
+                                                        <span className="search-result-item__price">{item.price.toLocaleString()} ₴</span>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                        <Link
+                                            to={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                                            className="search-overlay__see-all"
+                                            onClick={closeSearch}
+                                        >
+                                            Показати всі результати →
+                                        </Link>
+                                    </>
                                 ) : (
                                     <div className="search-overlay__empty">
-                                        Нічого не знайдено за запитом «{searchQuery}»
+                                        <p>Нічого не знайдено за запитом «{searchQuery}»</p>
+                                        <Link
+                                            to={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                                            className="search-overlay__see-all"
+                                            onClick={closeSearch}
+                                        >
+                                            Перейти на сторінку пошуку →
+                                        </Link>
                                     </div>
                                 )}
                             </div>

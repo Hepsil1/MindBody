@@ -428,6 +428,25 @@ export default function ProductDetail() {
     const [openAccordion, setOpenAccordion] = useState<string | null>('desc');
     const [activeImage, setActiveImage] = useState(0);
     const [zoomOpen, setZoomOpen] = useState(false);
+
+    // Touch-swipe helpers for mobile gallery
+    const swipeStartXRef = useRef<number | null>(null);
+    const handleTouchStart = useCallback((e: React.TouchEvent) => {
+        swipeStartXRef.current = e.touches[0].clientX;
+    }, []);
+    const handleTouchEnd = useCallback((e: React.TouchEvent, total: number) => {
+        const startX = swipeStartXRef.current;
+        if (startX == null) return;
+        const endX = e.changedTouches[0].clientX;
+        const dx = endX - startX;
+        swipeStartXRef.current = null;
+        if (Math.abs(dx) < 40 || total < 2) return;
+        if (dx < 0) {
+            setActiveImage(i => (i + 1) % total);
+        } else {
+            setActiveImage(i => (i - 1 + total) % total);
+        }
+    }, []);
     const [quickBuyOpen, setQuickBuyOpen] = useState(false);
     const [quickBuyPhone, setQuickBuyPhone] = useState('');
     const [quickBuyName, setQuickBuyName] = useState('');
@@ -571,12 +590,48 @@ export default function ProductDetail() {
 
                         {/* Right Area: Main Visual */}
                         <div className="main-visual-puma">
-                            <div className="main-img-wrap" onClick={() => setZoomOpen(true)} style={{ cursor: 'zoom-in' }}>
+                            <div
+                                className="main-img-wrap"
+                                onClick={() => setZoomOpen(true)}
+                                onTouchStart={handleTouchStart}
+                                onTouchEnd={(e) => handleTouchEnd(e, product.images.length)}
+                                style={{ cursor: 'zoom-in' }}
+                            >
                                 <img
                                     src={product.images[activeImage] || product.images[0]}
                                     alt={product.name}
                                     className="main-img"
                                 />
+
+                                {/* Mobile swipe affordance: prev/next chevrons + dots */}
+                                {product.images.length > 1 && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            aria-label="Попереднє фото"
+                                            className="pdp-swipe pdp-swipe--prev"
+                                            onClick={(e) => { e.stopPropagation(); setActiveImage(i => (i - 1 + product.images.length) % product.images.length); }}
+                                        >
+                                            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            aria-label="Наступне фото"
+                                            className="pdp-swipe pdp-swipe--next"
+                                            onClick={(e) => { e.stopPropagation(); setActiveImage(i => (i + 1) % product.images.length); }}
+                                        >
+                                            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+                                        </button>
+                                        <div className="pdp-dots" aria-hidden="true">
+                                            {product.images.map((_: string, idx: number) => (
+                                                <span
+                                                    key={idx}
+                                                    className={`pdp-dot ${activeImage === idx ? 'is-active' : ''}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                             {/* Badge integrated into image */}
                             {product.is_sale && product.discount_percent ? (
@@ -602,6 +657,8 @@ export default function ProductDetail() {
                                     alt={product.name}
                                     className="zoom-overlay__img"
                                     onClick={e => e.stopPropagation()}
+                                    onTouchStart={(e) => { e.stopPropagation(); handleTouchStart(e); }}
+                                    onTouchEnd={(e) => { e.stopPropagation(); handleTouchEnd(e, product.images.length); }}
                                 />
                                 {product.images.length > 1 && (
                                     <div className="zoom-overlay__nav">
