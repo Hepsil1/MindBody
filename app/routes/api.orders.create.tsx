@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { prisma } from "../db.server";
 import { OrderCreateSchema, formatZodErrors } from "../utils/validation";
 import { checkRateLimit } from "../utils/rateLimit.server";
+import { sendEmail, renderOrderConfirmation } from "../utils/email.server";
 
 // Telegram Configuration — from environment variables
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
@@ -234,7 +235,7 @@ export async function action({ request }: ActionFunctionArgs) {
             }
         }
 
-        // 6. Send Telegram Notification
+        // 6. Send Telegram Notification (admin)
         if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
             try {
                 const itemsList = validItems.map((item: any) =>
@@ -251,6 +252,39 @@ export async function action({ request }: ActionFunctionArgs) {
             } catch (e) {
                 console.error("Telegram failed:", e);
             }
+        }
+
+        // 7. Send Order Confirmation Email to customer (only if real email provided)
+        const customerHasEmail = customer.email && !customerEmail.endsWith("@mindbody.local");
+        if (customerHasEmail) {
+            const deliveryLabel = deliveryMethod === "nova_poshta" ? "Нова Пошта" : deliveryMethod === "ukrposhta" ? "Укрпошта" : (deliveryMethod || "Доставка");
+            const paymentLabel = paymentMethod === "cash" ? "Накладений платіж" : paymentMethod === "card" ? "Картка онлайн" : paymentMethod === "apple_pay" ? "Apple Pay" : paymentMethod === "google_pay" ? "Google Pay" : (paymentMethod || "");
+            const deliveryAddress = [customer.city, customer.warehouse].filter(Boolean).join(", ");
+
+            sendEmail({
+                to: customer.email!,
+                subject: `Замовлення №${orderNumberInt} прийнято · MIND BODY`,
+                html: renderOrderConfirmation({
+                    orderNumber: orderNumberInt,
+                    customerName: customer.name || "",
+                    customerEmail: customer.email,
+                    items: validItems.map(it => ({
+                        name: it.name,
+                        quantity: it.quantity,
+                        price: it.price,
+                        size: it.size || undefined,
+                        color: it.color || undefined,
+                    })),
+                    total: finalTotal,
+                    deliveryMethod: deliveryLabel,
+                    deliveryAddress,
+                    paymentMethod: paymentLabel,
+                }),
+                tags: [
+                    { name: "type", value: "order-confirmation" },
+                    { name: "order", value: String(orderNumberInt) },
+                ],
+            }).catch((e) => console.error("[email] order confirmation failed:", e));
         }
 
         return new Response(JSON.stringify({ success: true, orderId: newOrder.orderNumber }), {

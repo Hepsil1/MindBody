@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
+import { sendEmail, renderNewsletterWelcome } from "../utils/email.server";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -53,11 +54,20 @@ export async function action({ request }: ActionFunctionArgs) {
 
     try {
         // Idempotent upsert — re-subscribing flips the unsubscribed flag back.
-        await prisma.newsletterSubscriber.upsert({
+        const sub = await prisma.newsletterSubscriber.upsert({
             where: { email: rawEmail },
             create: { email: rawEmail, source, consent: true },
             update: { unsubscribed: false, consent: true }
         });
+
+        // Fire-and-forget welcome email. Don't block the response on email delivery.
+        sendEmail({
+            to: rawEmail,
+            subject: "Ласкаво просимо у MIND BODY ✨",
+            html: renderNewsletterWelcome({ email: rawEmail, unsubKey: sub.unsubKey }),
+            tags: [{ name: "type", value: "newsletter-welcome" }],
+        }).catch((e) => console.error("[newsletter] welcome email failed:", e));
+
         return Response.json({ success: true });
     } catch (e) {
         console.error("Newsletter subscribe failed", e);
