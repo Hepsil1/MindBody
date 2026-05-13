@@ -61,10 +61,13 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         // Fire-and-forget welcome email. Don't block the response on email delivery.
+        const siteUrl = process.env.SITE_URL || "https://saleid.icu";
+        const unsubscribeUrl = `${siteUrl}/api/newsletter?unsub=${sub.unsubKey}`;
         sendEmail({
             to: rawEmail,
-            subject: "Ласкаво просимо у MIND BODY ✨",
+            subject: "Ласкаво просимо у MIND BODY",
             html: renderNewsletterWelcome({ email: rawEmail, unsubKey: sub.unsubKey }),
+            unsubscribeUrl,
             tags: [{ name: "type", value: "newsletter-welcome" }],
         }).catch((e) => console.error("[newsletter] welcome email failed:", e));
 

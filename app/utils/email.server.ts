@@ -30,6 +30,29 @@ export interface SendEmailArgs {
     text?: string;
     replyTo?: string;
     tags?: Array<{ name: string; value: string }>;
+    // List-Unsubscribe link (per RFC 2369) — Gmail uses this for one-click unsubscribe.
+    // Significantly improves deliverability + reduces spam folder risk.
+    unsubscribeUrl?: string;
+}
+
+// Strip HTML to a plain-text fallback. Email clients that can't render HTML
+// (or that score messages) prefer having both. Spam filters explicitly look
+// for HTML-only messages and penalise them.
+function htmlToText(html: string): string {
+    return html
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/<\/?(p|div|h[1-6]|li|tr|td|br)[^>]*>/gi, "\n")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/[ \t]+\n/g, "\n")
+        .trim();
 }
 
 export async function sendEmail(args: SendEmailArgs): Promise<{ ok: boolean; id?: string; error?: string }> {
@@ -38,14 +61,24 @@ export async function sendEmail(args: SendEmailArgs): Promise<{ ok: boolean; id?
         return { ok: false, error: "not_configured" };
     }
     try {
+        // Build standard mail headers that improve deliverability.
+        const headers: Record<string, string> = {};
+        if (args.unsubscribeUrl) {
+            // Gmail / Apple Mail / Outlook honour List-Unsubscribe-Post for
+            // one-click unsubscribe (RFC 8058) — a key signal for inbox vs spam.
+            headers["List-Unsubscribe"] = `<${args.unsubscribeUrl}>`;
+            headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+        }
+
         const res = await resend.emails.send({
             from: `${FROM_NAME} <${FROM_EMAIL}>`,
             to: args.to,
             subject: args.subject,
             html: args.html,
-            text: args.text,
+            text: args.text || htmlToText(args.html),
             replyTo: args.replyTo ?? REPLY_TO,
             tags: args.tags,
+            headers: Object.keys(headers).length ? headers : undefined,
         });
         if (res.error) {
             console.error("[email] Resend error:", res.error);
