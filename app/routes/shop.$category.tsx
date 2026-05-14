@@ -1,10 +1,10 @@
 import { type LoaderFunctionArgs } from "react-router";
 import { useLoaderData, Link } from "react-router";
-// import { ApiService } from "../utils/api";
 import ProductCard from "../components/ProductCard";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { prisma } from "../db.server";
 import { parseAndMergeFilterConfig } from "../utils/filters";
+import { labelToSlug, slugToLabel } from "../utils/categoryMap";
 
 export function meta({ data }: { data: any }) {
     const shopPage = data?.shopPage;
@@ -16,39 +16,8 @@ export function meta({ data }: { data: any }) {
     const title = shopPage?.title || titles[slug] || 'Каталог';
     const heroImage = shopPage?.heroImage || "/brand-sun.png";
     const siteUrl = data?.siteUrl || "https://mindbody.com.ua";
-    const products = (data?.products || []) as any[];
 
     const canonicalUrl = `${siteUrl}/shop/${slug}`;
-    const fullHeroImage = heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}`;
-
-    const breadcrumbSchema = {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Головна", "item": siteUrl },
-            { "@type": "ListItem", "position": 2, "name": title, "item": canonicalUrl }
-        ]
-    };
-
-    const collectionSchema = {
-        "@context": "https://schema.org",
-        "@type": "CollectionPage",
-        "name": title,
-        "url": canonicalUrl,
-        "inLanguage": "uk-UA",
-        "isPartOf": { "@type": "WebSite", "name": "MIND BODY", "url": siteUrl },
-        "mainEntity": {
-            "@type": "ItemList",
-            "numberOfItems": products.length,
-            "itemListElement": products.slice(0, 10).map((p, i) => ({
-                "@type": "ListItem",
-                "position": i + 1,
-                "url": `${siteUrl}/product/${p.id}`,
-                "name": p.name
-            }))
-        }
-    };
-
     return [
         { title: `${title} | MIND BODY` },
         { name: "description", content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика. Українське виробництво.` },
@@ -57,15 +26,21 @@ export function meta({ data }: { data: any }) {
         { property: "og:title", content: `${title} | MIND BODY` },
         { property: "og:description", content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика.` },
         { property: "og:type", content: "website" },
-        { property: "og:image", content: fullHeroImage },
-        { property: "og:image:width", content: "1200" },
-        { property: "og:image:height", content: "630" },
+        { property: "og:image", content: heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}` },
         { property: "og:locale", content: "uk_UA" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: `${title} | MIND BODY` },
-        { name: "twitter:image", content: fullHeroImage },
-        { "script:ld+json": breadcrumbSchema },
-        { "script:ld+json": collectionSchema },
+        { name: "twitter:image", content: heroImage.startsWith('http') ? heroImage : `${siteUrl}${heroImage}` },
+        {
+            "script:ld+json": {
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Головна", "item": siteUrl },
+                    { "@type": "ListItem", "position": 2, "name": title, "item": canonicalUrl }
+                ]
+            }
+        },
     ];
 }
 
@@ -94,7 +69,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
             .catch((e: any) => { console.error("ShopPage fetch failed", e); return null; }),
         // 3. Products — only needed columns, no SELECT *
         prisma.$queryRawUnsafe(
-            `SELECT id, name, price, "comparePrice", category, images, colors, sizes, inventory, "shopPageSlug", status, "createdAt"
+            `SELECT id, name, price, "comparePrice", category, images, colors, sizes, "shopPageSlug", status, "createdAt"
              FROM "Product"
              WHERE "shopPageSlug" = $1 AND status = 'active'
              ORDER BY "createdAt" DESC`,
@@ -129,12 +104,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
         const isSale = comparePrice > price && price > 0;
         const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : 0;
         const isNew = (NOW - createdAt) < NEW_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
-        const inventory = parseJson(p.inventory, {});
-        const invValues = Object.values(inventory);
-        const inStock = p.status === 'active' && (
-            invValues.length === 0 ||
-            invValues.some((q: any) => Number(q) > 0)
-        );
 
         return {
             id: p.id,
@@ -152,8 +121,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
             is_new: isNew,
             is_sale: isSale,
             discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
-            status: p.status,
-            inStock
+            status: p.status
         };
     });
 
@@ -161,7 +129,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 }
 import { useSearchParams } from "react-router";
-import styles from "../styles/shop.css?url";
+import "../styles/shop.css";
 
 
 export default function ShopCategory() {
@@ -174,8 +142,13 @@ export default function ShopCategory() {
         return val ? val.split(',') : [];
     };
 
+    // Legacy ?cat= may be a Ukrainian label — convert to slug on mount
     const initialCat = searchParams.get('cat');
-    const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCat ? [initialCat] : getListParam('categories'));
+    const initialCatSlug = initialCat ? (labelToSlug(initialCat) ?? initialCat) : null;
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(
+        initialCatSlug ? [initialCatSlug] : getListParam('categories')
+    );
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [selectedSizes, setSelectedSizes] = useState<string[]>(getListParam('sizes'));
     const [selectedColors, setSelectedColors] = useState<string[]>(getListParam('colors'));
     const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(searchParams.get('priceRange'));
@@ -189,11 +162,14 @@ export default function ShopCategory() {
     });
     const LOAD_MORE_COUNT = 12;
 
-    // React to initial navigation with generic 'cat' param from homepage etc.
+    // Legacy ?cat= redirect: convert Cyrillic label to slug
     useEffect(() => {
         const cat = searchParams.get('cat');
-        if (cat && !selectedCategories.includes(cat)) {
-            setSelectedCategories([cat]);
+        if (cat) {
+            const slug = labelToSlug(cat) ?? cat;
+            if (!selectedCategories.includes(slug)) {
+                setSelectedCategories([slug]);
+            }
         }
     }, [searchParams.get('cat')]);
 
@@ -439,6 +415,126 @@ export default function ShopCategory() {
                 </div>
             </section>
 
+            {/* Mobile Filter Button */}
+            <div className="mobile-filter-bar">
+                <button
+                    className="mobile-filter-btn"
+                    onClick={() => setIsFilterOpen(true)}
+                    aria-label="Відкрити фільтри"
+                >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/>
+                    </svg>
+                    ФІЛЬТРИ
+                    {(selectedCategories.length + selectedSizes.length + selectedColors.length + (selectedPriceRange ? 1 : 0)) > 0 && (
+                        <span className="mobile-filter-badge">
+                            {selectedCategories.length + selectedSizes.length + selectedColors.length + (selectedPriceRange ? 1 : 0)}
+                        </span>
+                    )}
+                </button>
+                <div className="mobile-product-count">
+                    {filteredProducts.length} товарів
+                </div>
+            </div>
+
+            {/* Mobile Filter Drawer Overlay */}
+            {isFilterOpen && (
+                <div className="filter-drawer-overlay" onClick={() => setIsFilterOpen(false)}>
+                    <div className="filter-drawer" onClick={e => e.stopPropagation()}>
+                        <div className="filter-drawer__header">
+                            <span>ФІЛЬТРИ</span>
+                            <button className="filter-drawer__close" onClick={() => setIsFilterOpen(false)} aria-label="Закрити">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="filter-drawer__body">
+                            {/* Same filter content rendered inside drawer */}
+                            <div className="filter-accordion active">
+                                <div className="accordion-trigger" onClick={() => toggleSection('category')}>
+                                    <span>КАТЕГОРІЯ</span>
+                                    <span className="icon">{openSections.category ? '−' : '+'}</span>
+                                </div>
+                                <div className="accordion-content">
+                                    <div className="filter-checkbox-list">
+                                        {categories.map((cat, idx) => {
+                                            const count = products.filter((p: any) => p.category === cat || p.category === categoryLabels[cat]).length;
+                                            if (count === 0) return null;
+                                            return (
+                                                <label key={`dcatfil-${cat}-${idx}`} className="mb-checkbox-item">
+                                                    <input type="checkbox" checked={selectedCategories.includes(cat)} onChange={() => toggleCategory(cat)} />
+                                                    <span className="checkbox-visual"></span>
+                                                    <span className="label-text">{categoryLabels[cat] || cat} <span style={{ marginLeft: '6px', opacity: 0.4, fontSize: '11px' }}>({count})</span></span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="filter-accordion active">
+                                <div className="accordion-trigger" onClick={() => toggleSection('size')}>
+                                    <span>РОЗМІР</span><span className="icon">{openSections.size ? '−' : '+'}</span>
+                                </div>
+                                <div className="accordion-content">
+                                    <div className="mb-size-grid">
+                                        {sizes.map((size: string, idx: number) => {
+                                            const count = products.filter((p: any) => p.sizes?.includes(size)).length;
+                                            if (count === 0) return null;
+                                            return (
+                                                <button key={`dsz-${size}-${idx}`} className={`mb-size-chip ${selectedSizes.includes(size) ? 'active' : ''}`} onClick={() => toggleSize(size)}>{size}</button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="filter-accordion active">
+                                <div className="accordion-trigger" onClick={() => toggleSection('color')}>
+                                    <span>КОЛІР</span><span className="icon">{openSections.color ? '−' : '+'}</span>
+                                </div>
+                                <div className="accordion-content">
+                                    <div className="mb-color-grid">
+                                        {colors.map((color: string, idx: number) => {
+                                            const count = products.filter((p: any) => p.colors?.includes(color) || (colorLabels[color] && p.colors?.includes(colorLabels[color]))).length;
+                                            if (count === 0) return null;
+                                            return (
+                                                <button key={`dcol-${color}-${idx}`} className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? 'active' : ''}`} onClick={() => toggleColor(color)} title={colorLabels[color] || color}>
+                                                    <span className="swatch-check">✓</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="filter-accordion active">
+                                <div className="accordion-trigger" onClick={() => toggleSection('price')}>
+                                    <span>ЦІНА</span><span className="icon">{openSections.price ? '−' : '+'}</span>
+                                </div>
+                                <div className="accordion-content">
+                                    <div className="filter-checkbox-list">
+                                        {priceRanges.map((range: any, idx: number) => (
+                                            <label key={range.id || `dr-${idx}`} className="mb-checkbox-item">
+                                                <input type="radio" name="price-range-drawer" checked={selectedPriceRange === range.id} onChange={() => { setSelectedPriceRange(range.id); setDisplayCount(12); }} />
+                                                <span className="checkbox-visual radio"></span>
+                                                <span className="label-text">{range.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="filter-drawer__footer">
+                            {(selectedCategories.length > 0 || selectedSizes.length > 0 || selectedColors.length > 0 || selectedPriceRange) && (
+                                <button onClick={() => { clearFilters(); }} className="filter-drawer__reset">Скинути фільтри</button>
+                            )}
+                            <button onClick={() => setIsFilterOpen(false)} className="filter-drawer__apply">
+                                Показати {filteredProducts.length} товарів
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="shop-main-layout">
                 <div className="container">
                     <div className="luxe-grid">
@@ -601,7 +697,7 @@ export default function ShopCategory() {
                                     <div className="luxe-product-grid">
                                         {visibleProducts.map((product, idx) => (
                                             <div key={product.id || `product-${idx}`} className="luxe-card-wrapper">
-                                                <ProductCard product={product} index={idx} />
+                                                <ProductCard product={product} />
                                             </div>
                                         ))}
                                     </div>
@@ -638,6 +734,4 @@ export default function ShopCategory() {
     );
 }
 
-export function links() {
-  return [{ rel: "stylesheet", href: styles }];
-}
+ 

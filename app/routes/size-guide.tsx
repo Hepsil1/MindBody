@@ -1,9 +1,5 @@
 import { Link } from "react-router";
-import sizeGuideStyles from "../styles/size-guide.css?url";
-
-export function links() {
-    return [{ rel: "stylesheet", href: sizeGuideStyles }];
-}
+import "../styles/size-guide.css";
 
 export default function SizeGuide() {
     return (

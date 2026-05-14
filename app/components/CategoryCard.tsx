@@ -38,11 +38,17 @@ export default function CategoryCard({ title, subtitle, image, imagePos, link, b
             </div>
             <div className="category-card-editorial__overlay" />
             <div className="category-card-editorial__content">
-                <p className="category-card-editorial__subtitle">{subtitle}</p>
-                <h3 className="category-card-editorial__title">{title}</h3>
-                <span className="category-card-editorial__link">
-                    {buttonText} <span>→</span>
-                </span>
+                <div className="category-card-editorial__text-group">
+                    <h3 className="category-card-editorial__title">{title}</h3>
+                    <div className="category-card-editorial__reveal-wrap">
+                        <div className="category-card-editorial__reveal-inner">
+                            <p className="category-card-editorial__subtitle">{subtitle}</p>
+                            <span className="category-card-editorial__link">
+                                {buttonText} <span>→</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </Link>
     );

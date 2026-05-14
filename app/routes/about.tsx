@@ -3,17 +3,9 @@ import { prisma } from "../db.server";
 import { useLoaderData } from "react-router";
 import { useState, useEffect } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
-import aboutStyles from "../styles/about-page.css?url";
-import homeStyles from "../styles/home.css?url";
-import contactStyles from "../styles/contacts.css?url";
-
-export function links() {
-    return [
-        { rel: "stylesheet", href: aboutStyles },
-        { rel: "stylesheet", href: homeStyles },
-        { rel: "stylesheet", href: contactStyles }
-    ];
-}
+import "../styles/about-page.css";
+import "../styles/home.css";
+import "../styles/contacts.css";
 
 export function meta() {
     return [
@@ -91,7 +83,10 @@ export default function About() {
             <section className="story-premium">
                 <div className="story-premium__left">
                     <div className="story-premium__overlay"></div>
-                    <img src="/pics1cloths/IMG_6215.JPG" alt="MIND BODY" className="story-premium__image" />
+                    <picture>
+                        <source srcSet="/pics1cloths/IMG_6215.webp" type="image/webp" />
+                        <img src="/pics1cloths/IMG_6215.JPG" alt="MIND BODY" className="story-premium__image" />
+                    </picture>
                     <div className="story-premium__badge">
                         <span>Est. 2020</span>
                     </div>
@@ -174,7 +169,7 @@ export default function About() {
                         <div className="process-wide__card">
                             <div className="process-wide__number">01</div>
                             <div className="process-wide__image">
-                                <img src="/pics1cloths/IMG_6203.JPG" alt="Idea" />
+                                <picture><source srcSet="/pics1cloths/IMG_6203.webp" type="image/webp" /><img src="/pics1cloths/IMG_6203.JPG" alt="Idea" /></picture>
                             </div>
                             <div className="process-wide__content">
                                 <h3 className="process-wide__name">Ідея</h3>
@@ -184,7 +179,7 @@ export default function About() {
                         <div className="process-wide__card">
                             <div className="process-wide__number">02</div>
                             <div className="process-wide__image">
-                                <img src="/pics1cloths/IMG_6209.JPG" alt="Materials" />
+                                <picture><source srcSet="/pics1cloths/IMG_6209.webp" type="image/webp" /><img src="/pics1cloths/IMG_6209.JPG" alt="Materials" /></picture>
                             </div>
                             <div className="process-wide__content">
                                 <h3 className="process-wide__name">Матеріали</h3>
@@ -194,7 +189,7 @@ export default function About() {
                         <div className="process-wide__card">
                             <div className="process-wide__number">03</div>
                             <div className="process-wide__image">
-                                <img src="/pics1cloths/IMG_6212.JPG" alt="Sewing" />
+                                <picture><source srcSet="/pics1cloths/IMG_6212.webp" type="image/webp" /><img src="/pics1cloths/IMG_6212.JPG" alt="Sewing" /></picture>
                             </div>
                             <div className="process-wide__content">
                                 <h3 className="process-wide__name">Пошив</h3>
@@ -204,7 +199,7 @@ export default function About() {
                         <div className="process-wide__card">
                             <div className="process-wide__number">04</div>
                             <div className="process-wide__image">
-                                <img src="/pics1cloths/IMG_6201.JPG" alt="Result" />
+                                <picture><source srcSet="/pics1cloths/IMG_6201.webp" type="image/webp" /><img src="/pics1cloths/IMG_6201.JPG" alt="Result" /></picture>
                             </div>
                             <div className="process-wide__content">
                                 <h3 className="process-wide__name">Результат</h3>
@@ -216,7 +211,7 @@ export default function About() {
             </section>
 
             {/* Contact Section - Premium with Flying Logos */}
-            <section className="contact-premium">
+            <section className="contact-premium" id="contact-premium">
                 <div className="contact-premium__left">
                     <div className="contact-premium__logos">
                         <div className="flying-logo flying-logo--1"></div>

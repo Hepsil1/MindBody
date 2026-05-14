@@ -134,15 +134,23 @@ export function Header() {
             <div className="top-bar">
                 <div className="top-bar__container">
                     <div className="top-bar__left">
-                        <img src="/pics/mind_body_logo_sun.webp" alt="MB Sun" className="top-bar__chip" />
-                        <img src="/pics/mind_body_sportwear.webp" alt="MB Sportswear" className="top-bar__chip" />
+                        <a href="tel:+380671234567" className="top-bar__phone">
+                            <svg className="top-bar__phone-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M16.5 12.69v2.25a1.5 1.5 0 01-1.635 1.5 14.843 14.843 0 01-6.472-2.302 14.625 14.625 0 01-4.5-4.5A14.843 14.843 0 011.59 3.135 1.5 1.5 0 013.082 1.5H5.33a1.5 1.5 0 011.5 1.29 9.63 9.63 0 00.525 2.108 1.5 1.5 0 01-.337 1.582l-.953.953a12 12 0 004.5 4.5l.953-.952a1.5 1.5 0 011.582-.338 9.63 9.63 0 002.108.525 1.5 1.5 0 011.29 1.522z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            <span>+380 67 123 45 67</span>
+                        </a>
+                    </div>
+
+                    <div className="top-bar__center">
+                        <Link to="/" className="top-bar__logo-link" prefetch="intent">
+                            <img src="/pics/mind_body_logo_sun.png" alt="Mind Body" className="top-bar__logo-icon" />
+                        </Link>
                     </div>
 
                     <div className="top-bar__right">
                         <NavLink to="/about" className="top-bar__link">Про бренд</NavLink>
-                        <span className="top-bar__pipe" />
-                        <NavLink to="/shipping" className="top-bar__link">Доставка</NavLink>
-                        <span className="top-bar__pipe" />
+                        <NavLink to="/about#contact-premium" className="top-bar__link">Контакти</NavLink>
                         <NavLink to={user ? "/profile" : "/auth"} className="top-bar__link">
                             {user ? "Профіль" : "Увійти"}
                         </NavLink>
@@ -168,13 +176,13 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
                                             <Link to="/shop/yoga" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                            <Link to="/shop/yoga?cat=Комбінезони" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
-                                            <Link to="/shop/yoga?cat=Лосини" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Лосини</Link>
-                                            <Link to="/shop/yoga?cat=VELO" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>VELO</Link>
-                                            <Link to="/shop/yoga?cat=Топи" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Топи</Link>
-                                            <Link to="/shop/yoga?cat=Шорти" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
-                                            <Link to="/shop/yoga?cat=Лонгсліви" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Лонгсліви</Link>
-                                            <Link to="/shop/yoga?cat=Футболки, майки" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Футболки, майки</Link>
+                                                            <Link to="/shop/yoga?categories=jumpsuit" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
+                                            <Link to="/shop/yoga?categories=leggings" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Легінси</Link>
+                                            <Link to="/shop/yoga?categories=velo" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>VELO</Link>
+                                            <Link to="/shop/yoga?categories=tops" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Топи</Link>
+                                            <Link to="/shop/yoga?categories=shorts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
+                                            <Link to="/shop/yoga?categories=longsleeve" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Лонгсліви</Link>
+                                            <Link to="/shop/yoga?categories=tshirts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Футболки</Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
@@ -200,13 +208,13 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
                                             <Link to="/shop/sport" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                            <Link to="/shop/sport?cat=Комбінезони" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
-                                            <Link to="/shop/sport?cat=Лосини" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Лосини</Link>
-                                            <Link to="/shop/sport?cat=VELO" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>VELO</Link>
-                                            <Link to="/shop/sport?cat=Топи" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Топи</Link>
-                                            <Link to="/shop/sport?cat=Шорти" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
-                                            <Link to="/shop/sport?cat=Лонгсліви" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Лонгсліви</Link>
-                                            <Link to="/shop/sport?cat=Dance" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Dance</Link>
+                                                            <Link to="/shop/sport?categories=jumpsuit" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
+                                            <Link to="/shop/sport?categories=leggings" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Легінси</Link>
+                                            <Link to="/shop/sport?categories=velo" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>VELO</Link>
+                                            <Link to="/shop/sport?categories=tops" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Топи</Link>
+                                            <Link to="/shop/sport?categories=shorts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
+                                            <Link to="/shop/sport?categories=longsleeve" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Лонгсліви</Link>
+                                            <Link to="/shop/sport?categories=sets" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комплекти</Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
@@ -232,9 +240,9 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
                                             <Link to="/shop/dance" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                            <Link to="/shop/dance?cat=Комбінезони" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
-                                            <Link to="/shop/dance?cat=Моделі із сітки" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Моделі із сітки</Link>
-                                            <Link to="/shop/dance?cat=Комплекти пілон" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комплекти пілон</Link>
+                                                            <Link to="/shop/dance?categories=jumpsuit" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
+                                            <Link to="/shop/dance?categories=net-models" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Моделі із сітки</Link>
+                                            <Link to="/shop/dance?categories=pole-sets" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комплекти пілон</Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
@@ -260,17 +268,17 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
                                             <Link to="/shop/casual" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                            <Link to="/shop/casual?cat=Костюми" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Костюми</Link>
-                                            <Link to="/shop/casual?cat=Сорочки" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Сорочки</Link>
-                                            <Link to="/shop/casual?cat=Футболки" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Футболки</Link>
-                                            <Link to="/shop/casual?cat=Майки" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Майки</Link>
+                                                            <Link to="/shop/casual?categories=suits" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Костюми</Link>
+                                            <Link to="/shop/casual?categories=shirts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Сорочки</Link>
+                                            <Link to="/shop/casual?categories=tshirts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Футболки</Link>
+                                            <Link to="/shop/casual?categories=singlets" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Майки</Link>
                                         </div>
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Ще</h4>
-                                            <Link to="/shop/casual?cat=Шорти" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
-                                            <Link to="/shop/casual?cat=Термо" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Термо</Link>
-                                            <Link to="/shop/casual?cat=Худі/світшоти" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Худі / Світшоти</Link>
-                                            <Link to="/shop/casual?cat=Джогери" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Джоггери</Link>
+                                            <Link to="/shop/casual?categories=shorts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
+                                            <Link to="/shop/casual?categories=thermo" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Термо</Link>
+                                            <Link to="/shop/casual?categories=hoodies" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Худі / Світшоти</Link>
+                                            <Link to="/shop/casual?categories=joggers" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Джоггери</Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
@@ -296,7 +304,7 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
                                             <Link to="/shop/kids" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                            <Link to="/shop/kids?cat=Комбінезони" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
+                                                            <Link to="/shop/kids?categories=jumpsuit" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
@@ -323,17 +331,13 @@ export function Header() {
                     <div className="header__actions">
                         {/* Search Button */}
                         <button className="header__action-btn" aria-label="Пошук" onClick={openSearch}>
-                            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="11" cy="11" r="8" />
                                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
                             </svg>
                         </button>
 
-                        <button
-                            className={`header__action-btn header__action-btn--profile ${user ? 'header__action-btn--avatar' : ''}`}
-                            aria-label="Профіль"
-                            onClick={handleProfileClick}
-                        >
+                        <button className={`header__action-btn ${user ? 'header__action-btn--avatar' : ''}`} aria-label="Профіль" onClick={handleProfileClick}>
                             {user ? (
                                 <span className="header__user-avatar">
                                     {user.avatar ? (
@@ -341,20 +345,20 @@ export function Header() {
                                     ) : getInitials(user.name)}
                                 </span>
                             ) : (
-                                <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                     <circle cx="12" cy="7" r="4" />
                                 </svg>
                             )}
                         </button>
                         <Link to="/wishlist" className="header__action-btn" aria-label={`Улюблені${wishlistCount > 0 ? `: ${wishlistCount}` : ''}`}>
-                            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                             </svg>
                             {wishlistCount > 0 && <span className="header__wishlist-count" aria-hidden="true">{wishlistCount}</span>}
                         </Link>
                         <button className="header__action-btn" aria-label={`Кошик${cartCount > 0 ? `: ${cartCount} товарів` : ''}`} onClick={() => setIsCartOpen(true)}>
-                            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                                 <line x1="3" y1="6" x2="21" y2="6" />
                                 <path d="M16 10a4 4 0 0 1-8 0" />
@@ -377,30 +381,21 @@ export function Header() {
                 <div className="search-overlay" onClick={closeSearch}>
                     <div className="search-overlay__content" onClick={(e) => e.stopPropagation()}>
                         <div className="search-overlay__input-wrap">
-                            <svg className="search-overlay__icon" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg className="search-overlay__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="11" cy="11" r="8" />
                                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
                             </svg>
                             <input
                                 ref={searchInputRef}
-                                type="search"
+                                type="text"
                                 className="search-overlay__input"
                                 placeholder="Пошук товарів..."
                                 value={searchQuery}
                                 onChange={handleSearchInput}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter" && searchQuery.trim().length >= 2) {
-                                        e.preventDefault();
-                                        const q = searchQuery.trim();
-                                        closeSearch();
-                                        navigate(`/search?q=${encodeURIComponent(q)}`);
-                                    }
-                                }}
                                 autoComplete="off"
-                                aria-label="Пошук товарів"
                             />
                             <button className="search-overlay__close" onClick={closeSearch} aria-label="Закрити">
-                                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <line x1="18" y1="6" x2="6" y2="18" />
                                     <line x1="6" y1="6" x2="18" y2="18" />
                                 </svg>
@@ -413,41 +408,25 @@ export function Header() {
                                 {isSearching ? (
                                     <div className="search-overlay__loading">Пошук...</div>
                                 ) : searchResults.length > 0 ? (
-                                    <>
-                                        <div className="search-overlay__list">
-                                            {searchResults.map((item) => (
-                                                <Link
-                                                    key={item.id}
-                                                    to={`/product/${item.id}`}
-                                                    className="search-result-item"
-                                                    onClick={closeSearch}
-                                                >
-                                                    <img src={item.image} alt={item.name} className="search-result-item__img" />
-                                                    <div className="search-result-item__info">
-                                                        <span className="search-result-item__name">{item.name}</span>
-                                                        <span className="search-result-item__price">{item.price.toLocaleString()} ₴</span>
-                                                    </div>
-                                                </Link>
-                                            ))}
-                                        </div>
-                                        <Link
-                                            to={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
-                                            className="search-overlay__see-all"
-                                            onClick={closeSearch}
-                                        >
-                                            Показати всі результати →
-                                        </Link>
-                                    </>
+                                    <div className="search-overlay__list">
+                                        {searchResults.map((item) => (
+                                            <Link
+                                                key={item.id}
+                                                to={`/product/${item.id}`}
+                                                className="search-result-item"
+                                                onClick={closeSearch}
+                                            >
+                                                <img src={item.image} alt={item.name} className="search-result-item__img" />
+                                                <div className="search-result-item__info">
+                                                    <span className="search-result-item__name">{item.name}</span>
+                                                    <span className="search-result-item__price">{item.price.toLocaleString()} ₴</span>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
                                 ) : (
                                     <div className="search-overlay__empty">
-                                        <p>Нічого не знайдено за запитом «{searchQuery}»</p>
-                                        <Link
-                                            to={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
-                                            className="search-overlay__see-all"
-                                            onClick={closeSearch}
-                                        >
-                                            Перейти на сторінку пошуку →
-                                        </Link>
+                                        Нічого не знайдено за запитом «{searchQuery}»
                                     </div>
                                 )}
                             </div>

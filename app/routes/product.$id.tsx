@@ -4,12 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "../components/Toast";
 import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
-import { COLOR_MAP } from "../utils/colors";
-import productStyles from "../styles/product-page.css?url";
-
-export function links() {
-    return [{ rel: "stylesheet", href: productStyles }];
-}
+import "../styles/product-page.css";
 
 export function meta({ data }: { data: any }) {
     const product = data?.product;
@@ -18,70 +13,13 @@ export function meta({ data }: { data: any }) {
     }
     const siteUrl = data?.siteUrl || "https://mindbody.com.ua";
 
-    // Prefer admin-set SEO fields, fall back to derived from name/description
-    const seoTitle = product.metaTitle?.trim() || `${product.name} | MIND BODY`;
-    const desc = (
-        product.metaDescription?.trim() ||
-        product.description ||
-        `${product.name} — купити в MIND BODY`
-    ).substring(0, 160);
+    const desc = (product.description || `${product.name} — купити в MIND BODY`).substring(0, 160);
     const image = product.images?.[0] || '/brand-sun.png';
     const fullImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
     const price = Number(product.price) || 0;
-    // Canonical: use slug-based URL if slug exists, otherwise id
-    const canonicalPath = product.slug ? `/p/${product.slug}` : `/product/${product.id}`;
-    const canonicalUrl = `${siteUrl}${canonicalPath}`;
-
-    const hasStock = product.status === 'active' && (
-        !product.inventory ||
-        Object.keys(product.inventory).length === 0 ||
-        Object.values(product.inventory).some((q: any) => Number(q) > 0)
-    );
-    const availability = hasStock
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock";
-
-    const priceValidUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-        .toISOString().split('T')[0];
-
-    const productSchema: any = {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": product.name,
-        "description": desc,
-        "image": fullImage,
-        "sku": String(product.id),
-        "brand": { "@type": "Brand", "name": "MIND BODY" },
-        "offers": {
-            "@type": "Offer",
-            "url": canonicalUrl,
-            "priceCurrency": "UAH",
-            "price": price,
-            "priceValidUntil": priceValidUntil,
-            "availability": availability,
-            "seller": { "@type": "Organization", "name": "MIND BODY" }
-        }
-    };
-    if (data?.aggregateRating && data.aggregateRating.count > 0) {
-        productSchema.aggregateRating = {
-            "@type": "AggregateRating",
-            "ratingValue": data.aggregateRating.avg,
-            "reviewCount": data.aggregateRating.count
-        };
-    }
-
-    const breadcrumbSchema = {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Головна", "item": siteUrl },
-            { "@type": "ListItem", "position": 2, "name": product.shopPageSlug === 'kids' ? "Дітям" : "Жінкам", "item": `${siteUrl}/shop/${product.shopPageSlug || 'women'}` },
-            { "@type": "ListItem", "position": 3, "name": product.name, "item": canonicalUrl }
-        ]
-    };
-
+    const canonicalUrl = `${siteUrl}/product/${product.id}`;
     return [
-        { title: seoTitle },
+        { title: `${product.name} | MIND BODY` },
         { name: "description", content: desc },
         { tagName: "link", rel: "canonical", href: canonicalUrl },
         // Open Graph
@@ -89,21 +27,44 @@ export function meta({ data }: { data: any }) {
         { property: "og:title", content: product.name },
         { property: "og:description", content: desc },
         { property: "og:image", content: fullImage },
-        { property: "og:image:width", content: "1200" },
-        { property: "og:image:height", content: "630" },
         { property: "og:type", content: "product" },
         { property: "product:price:amount", content: String(price) },
         { property: "product:price:currency", content: "UAH" },
-        { property: "product:availability", content: hasStock ? "in stock" : "out of stock" },
         // Twitter Card
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: product.name },
         { name: "twitter:description", content: desc },
         { name: "twitter:image", content: fullImage },
         // JSON-LD Product
-        { "script:ld+json": productSchema },
-        // JSON-LD BreadcrumbList
-        { "script:ld+json": breadcrumbSchema },
+        {
+            "script:ld+json": {
+                "@context": "https://schema.org",
+                "@type": "Product",
+                "name": product.name,
+                "description": desc,
+                "image": fullImage,
+                "brand": { "@type": "Brand", "name": "MIND BODY" },
+                "offers": {
+                    "@type": "Offer",
+                    "url": canonicalUrl,
+                    "priceCurrency": "UAH",
+                    "price": price,
+                    "availability": "https://schema.org/InStock",
+                    "seller": { "@type": "Organization", "name": "MIND BODY" }
+                }
+            }
+        },
+        {
+            "script:ld+json": {
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    { "@type": "ListItem", "position": 1, "name": "Головна", "item": siteUrl },
+                    ...(product.shopPageSlug ? [{ "@type": "ListItem", "position": 2, "name": product.shopPageSlug.charAt(0).toUpperCase() + product.shopPageSlug.slice(1), "item": `${siteUrl}/shop/${product.shopPageSlug}` }] : []),
+                    { "@type": "ListItem", "position": product.shopPageSlug ? 3 : 2, "name": product.name, "item": canonicalUrl }
+                ]
+            }
+        },
     ];
 }
 
@@ -118,6 +79,24 @@ interface FilterConfigData {
     colors: Record<string, string>;
 }
 
+const COLOR_MAP: Record<string, string> = {
+    'black': '#1a1a1a',
+    'white': '#ffffff',
+    'blue': '#3b82f6',
+    'pink': '#ec4899',
+    'green': '#22c55e',
+    'gray': '#6b7280',
+    'red': '#ef4444',
+    'purple': '#a855f7',
+    'yellow': '#eab308',
+    'orange': '#f97316',
+    'teal': '#14b8a6',
+    'brown': '#78350f',
+    'navy': '#1e3a8a',
+    'beige': '#f5f5dc',
+    'marsala': '#722F37'
+};
+
 export async function loader({ params }: LoaderFunctionArgs) {
     const id = params.id;
     let product: any = null;
@@ -128,7 +107,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         // Run product + filterConfig queries in parallel
         const [productResult, configResult] = await Promise.all([
             prisma.$queryRawUnsafe(
-                `SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, inventory, status, "shopPageSlug", slug, "metaTitle", "metaDescription", "createdAt"
+                `SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, inventory, status, "shopPageSlug", "createdAt"
                  FROM "Product" WHERE id = $1`, id
             ) as Promise<any[]>,
             prisma.$queryRawUnsafe(
@@ -172,9 +151,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
                 images: images,
                 category: p.category,
                 shopPageSlug: p.shopPageSlug,
-                slug: p.slug,
-                metaTitle: p.metaTitle,
-                metaDescription: p.metaDescription,
                 colors: availableColors.size > 0 ? Array.from(availableColors) : parseJson(p.colors, []),
                 sizes: availableSizes.size > 0 ? Array.from(availableSizes) : parseJson(p.sizes, []),
                 inventory: inventory,
@@ -212,32 +188,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         throw new Response("Not Found", { status: 404 });
     }
 
-    // Aggregate rating for JSON-LD (approved reviews only)
-    let aggregateRating: { avg: number; count: number } | null = null;
-    try {
-        const stats: any[] = await prisma.$queryRawUnsafe(
-            `SELECT AVG(rating)::float AS avg, COUNT(*)::int AS count
-             FROM "Review" WHERE "productId" = $1 AND "isApproved" = true`,
-            id
-        );
-        const row = stats?.[0];
-        if (row && Number(row.count) > 0) {
-            aggregateRating = {
-                avg: Math.round(Number(row.avg) * 10) / 10,
-                count: Number(row.count)
-            };
-        }
-    } catch (e) {
-        // schema.org allows omitting aggregateRating, ignore failures
-    }
-
-    return {
-        product,
-        filterConfig,
-        relatedProducts,
-        aggregateRating,
-        siteUrl: process.env.SITE_URL || "https://mindbody.com.ua"
-    };
+    return { product, filterConfig, relatedProducts, siteUrl: process.env.SITE_URL || "https://mindbody.com.ua" };
 
 }
 
@@ -428,25 +379,6 @@ export default function ProductDetail() {
     const [openAccordion, setOpenAccordion] = useState<string | null>('desc');
     const [activeImage, setActiveImage] = useState(0);
     const [zoomOpen, setZoomOpen] = useState(false);
-
-    // Touch-swipe helpers for mobile gallery
-    const swipeStartXRef = useRef<number | null>(null);
-    const handleTouchStart = useCallback((e: React.TouchEvent) => {
-        swipeStartXRef.current = e.touches[0].clientX;
-    }, []);
-    const handleTouchEnd = useCallback((e: React.TouchEvent, total: number) => {
-        const startX = swipeStartXRef.current;
-        if (startX == null) return;
-        const endX = e.changedTouches[0].clientX;
-        const dx = endX - startX;
-        swipeStartXRef.current = null;
-        if (Math.abs(dx) < 40 || total < 2) return;
-        if (dx < 0) {
-            setActiveImage(i => (i + 1) % total);
-        } else {
-            setActiveImage(i => (i - 1 + total) % total);
-        }
-    }, []);
     const [quickBuyOpen, setQuickBuyOpen] = useState(false);
     const [quickBuyPhone, setQuickBuyPhone] = useState('');
     const [quickBuyName, setQuickBuyName] = useState('');
@@ -590,48 +522,12 @@ export default function ProductDetail() {
 
                         {/* Right Area: Main Visual */}
                         <div className="main-visual-puma">
-                            <div
-                                className="main-img-wrap"
-                                onClick={() => setZoomOpen(true)}
-                                onTouchStart={handleTouchStart}
-                                onTouchEnd={(e) => handleTouchEnd(e, product.images.length)}
-                                style={{ cursor: 'zoom-in' }}
-                            >
+                            <div className="main-img-wrap" onClick={() => setZoomOpen(true)} style={{ cursor: 'zoom-in' }}>
                                 <img
                                     src={product.images[activeImage] || product.images[0]}
                                     alt={product.name}
                                     className="main-img"
                                 />
-
-                                {/* Mobile swipe affordance: prev/next chevrons + dots */}
-                                {product.images.length > 1 && (
-                                    <>
-                                        <button
-                                            type="button"
-                                            aria-label="Попереднє фото"
-                                            className="pdp-swipe pdp-swipe--prev"
-                                            onClick={(e) => { e.stopPropagation(); setActiveImage(i => (i - 1 + product.images.length) % product.images.length); }}
-                                        >
-                                            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            aria-label="Наступне фото"
-                                            className="pdp-swipe pdp-swipe--next"
-                                            onClick={(e) => { e.stopPropagation(); setActiveImage(i => (i + 1) % product.images.length); }}
-                                        >
-                                            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
-                                        </button>
-                                        <div className="pdp-dots" aria-hidden="true">
-                                            {product.images.map((_: string, idx: number) => (
-                                                <span
-                                                    key={idx}
-                                                    className={`pdp-dot ${activeImage === idx ? 'is-active' : ''}`}
-                                                />
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
                             </div>
                             {/* Badge integrated into image */}
                             {product.is_sale && product.discount_percent ? (
@@ -657,8 +553,6 @@ export default function ProductDetail() {
                                     alt={product.name}
                                     className="zoom-overlay__img"
                                     onClick={e => e.stopPropagation()}
-                                    onTouchStart={(e) => { e.stopPropagation(); handleTouchStart(e); }}
-                                    onTouchEnd={(e) => { e.stopPropagation(); handleTouchEnd(e, product.images.length); }}
                                 />
                                 {product.images.length > 1 && (
                                     <div className="zoom-overlay__nav">

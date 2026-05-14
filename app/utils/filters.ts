@@ -1,40 +1,33 @@
+import { buildFilterCategories } from "./categoryMap";
+
 export const DEFAULT_FILTER_CONFIG = {
-    categories: {
-        "jumpsuit": "Комбінезони",
-        "leggings": "Легінси",
-        "tops": "Топи",
-        "shorts": "Шорти",
-        "jackets": "Куртки",
-        "sets": "Комплекти",
-        "Комбінезони": "Комбінезони",
-        "Легінси": "Легінси",
-        "Топи": "Топи",
-        "Шорти": "Шорти",
-        "Куртки": "Куртки",
-        "Комплекти": "Комплекти"
-    },
+    categories: buildFilterCategories([
+        "jumpsuit", "leggings", "tops", "shorts",
+        "longsleeve", "tshirts", "singlets", "sets",
+        "jackets", "velo", "net-models", "pole-sets",
+        "suits", "shirts", "thermo", "hoodies", "joggers"
+    ]),
     colors: {
-        'black': 'Чорний',
-        'white': 'Білий',
-        'blue': 'Синій',
-        'pink': 'Рожевий',
-        'green': 'Зелений',
-        'gray': 'Сірий',
-        'red': 'Червоний',
-        'other': 'Інші'
+        'black':  'Чорний',
+        'white':  'Білий',
+        'blue':   'Синій',
+        'pink':   'Рожевий',
+        'green':  'Зелений',
+        'gray':   'Сірий',
+        'red':    'Червоний',
+        'other':  'Інші'
     },
     sizes: ["XS", "S", "M", "L", "XL"],
     priceRanges: [
-        { id: 'low', label: 'До 1000 ₴', min: 0, max: 1000 },
-        { id: 'mid', label: '1000 - 3000 ₴', min: 1000, max: 3000 },
-        { id: 'high', label: '3000 - 5000 ₴', min: 3000, max: 5000 },
-        { id: 'premium', label: 'Від 5000 ₴', min: 5000, max: 999999 }
+        { id: 'low',     label: 'До 1000 ₴',     min: 0,    max: 1000   },
+        { id: 'mid',     label: '1000 - 3000 ₴', min: 1000, max: 3000   },
+        { id: 'high',    label: '3000 - 5000 ₴', min: 3000, max: 5000   },
+        { id: 'premium', label: 'Від 5000 ₴',    min: 5000, max: 999999 }
     ]
 };
 
-// Helper function to safely merge a database filter config string with the defaults
 export function parseAndMergeFilterConfig(dbConfigString: string | null | undefined) {
-    let parsedConfig = {};
+    let parsedConfig: any = {};
     if (dbConfigString) {
         try {
             parsedConfig = JSON.parse(dbConfigString);
@@ -46,10 +39,9 @@ export function parseAndMergeFilterConfig(dbConfigString: string | null | undefi
     return {
         ...DEFAULT_FILTER_CONFIG,
         ...parsedConfig,
-        // Ensure deeply nested objects also fallback if missing
-        categories: (parsedConfig as any).categories || DEFAULT_FILTER_CONFIG.categories,
-        colors: (parsedConfig as any).colors || DEFAULT_FILTER_CONFIG.colors,
-        sizes: (parsedConfig as any).sizes || DEFAULT_FILTER_CONFIG.sizes,
-        priceRanges: (parsedConfig as any).priceRanges || DEFAULT_FILTER_CONFIG.priceRanges
+        categories: parsedConfig.categories || DEFAULT_FILTER_CONFIG.categories,
+        colors:     parsedConfig.colors     || DEFAULT_FILTER_CONFIG.colors,
+        sizes:      parsedConfig.sizes      || DEFAULT_FILTER_CONFIG.sizes,
+        priceRanges: parsedConfig.priceRanges || DEFAULT_FILTER_CONFIG.priceRanges
     };
 }

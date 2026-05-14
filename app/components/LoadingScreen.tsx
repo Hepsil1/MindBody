@@ -6,28 +6,31 @@ export function LoadingScreen() {
     const [shouldRender, setShouldRender] = useState(true);
 
     useEffect(() => {
-        // Hide immediately once React hydrates — the page is ready
-        // Use requestAnimationFrame to ensure at least one paint happened
-        requestAnimationFrame(() => {
-            setIsVisible(false);
-        });
+        const hide = () => setIsVisible(false);
 
-        // Absolute failsafe: 1.5s max (was 3s)
-        const maxTimer = setTimeout(() => {
-            setIsVisible(false);
-        }, 1500);
+        // Hide after hydration — double-rAF guarantees at least one paint
+        requestAnimationFrame(() => requestAnimationFrame(hide));
+
+        // Hard cap: if page takes longer than 2.5s, force-hide anyway
+        const maxTimer = setTimeout(hide, 2500);
+
+        // Also hide if the document becomes interactive (handles slow loaders)
+        const onReady = () => {
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                hide();
+            }
+        };
+        document.addEventListener('readystatechange', onReady);
 
         return () => {
             clearTimeout(maxTimer);
+            document.removeEventListener('readystatechange', onReady);
         };
     }, []);
 
     useEffect(() => {
         if (!isVisible) {
-            // Shorter fade: 400ms (was 800ms)
-            const timer = setTimeout(() => {
-                setShouldRender(false);
-            }, 400);
+            const timer = setTimeout(() => setShouldRender(false), 350);
             return () => clearTimeout(timer);
         }
     }, [isVisible]);
@@ -38,8 +41,10 @@ export function LoadingScreen() {
         <div className={`loading-screen ${!isVisible ? 'loading-screen--hidden' : ''}`}>
             <div className="loading-screen__container">
                 <img
-                    src="/brand-sun.png"
-                    alt="Loading..."
+                    src="/brand-sun.webp"
+                    alt=""
+                    width={72}
+                    height={72}
                     className="loading-screen__logo"
                 />
             </div>

@@ -1,14 +1,40 @@
 import { Link } from "react-router";
-import styles from "../styles/contacts.css?url";
-
+import { useState } from "react";
+import "../styles/contacts.css";
 
 export default function Contacts() {
+    const [form, setForm] = useState({ name: "", contact: "", message: "" });
+    const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!form.name.trim() || !form.contact.trim() || !form.message.trim()) return;
+        setStatus("sending");
+        try {
+            const text = `📩 *Нове повідомлення з сайту*\n\n👤 *Ім'я:* ${form.name}\n📞 *Контакт:* ${form.contact}\n💬 *Повідомлення:* ${form.message}`;
+            const res = await fetch("/api/telegram/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text }),
+            });
+            if (!res.ok) throw new Error("send failed");
+            setStatus("sent");
+            setForm({ name: "", contact: "", message: "" });
+        } catch {
+            setStatus("error");
+        }
+    };
+
     return (
         <main className="contacts-page">
             {/* Hero Section */}
             <section className="contacts-hero">
                 <div className="container">
-                    <nav className="breadcrumb">
+                    <nav className="breadcrumb" aria-label="Breadcrumb">
                         <Link to="/">Головна</Link>
                         <span> / </span>
                         <span>Контакти</span>
@@ -77,40 +103,83 @@ export default function Contacts() {
                     <div id="contact-form" className="contacts-form-section">
                         <div className="contacts-form-container">
                             <h2>Напишіть нам</h2>
-                            <p>Маєте питання? Заповніть форму, і наші консультанти зв'яжуться з вами якнайшвидше для допомоги.</p>
+                            <p>Маєте питання? Заповніть форму, і наші консультанти зв'яжуться з вами якнайшвидше.</p>
 
-                            <form className="contacts-form" onSubmit={(e) => e.preventDefault()}>
-                                <div className="form-field">
-                                    <label htmlFor="name">Ім'я</label>
-                                    <input type="text" id="name" placeholder="Ваше ім'я" />
+                            {status === "sent" ? (
+                                <div className="contacts-form-success">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                        <polyline points="22 4 12 14.01 9 11.01" />
+                                    </svg>
+                                    <h3>Повідомлення надіслано!</h3>
+                                    <p>Ми зв'яжемося з вами найближчим часом.</p>
+                                    <button className="btn-submit" onClick={() => setStatus("idle")}>Надіслати ще</button>
                                 </div>
+                            ) : (
+                                <form className="contacts-form" onSubmit={handleSubmit} noValidate>
+                                    <div className="form-field">
+                                        <label htmlFor="name">Ім'я *</label>
+                                        <input
+                                            type="text"
+                                            id="name"
+                                            name="name"
+                                            value={form.name}
+                                            onChange={handleChange}
+                                            placeholder="Ваше ім'я"
+                                            required
+                                        />
+                                    </div>
 
-                                <div className="form-field">
-                                    <label htmlFor="email">Email / Телефон</label>
-                                    <input type="text" id="email" placeholder="Как нам з вами зв'язатися" />
-                                </div>
+                                    <div className="form-field">
+                                        <label htmlFor="contact">Email / Телефон *</label>
+                                        <input
+                                            type="text"
+                                            id="contact"
+                                            name="contact"
+                                            value={form.contact}
+                                            onChange={handleChange}
+                                            placeholder="Як нам з вами зв'язатися"
+                                            required
+                                        />
+                                    </div>
 
-                                <div className="form-field">
-                                    <label htmlFor="message">Повідомлення</label>
-                                    <textarea id="message" rows={4} placeholder="Ваше запитання або побажання..."></textarea>
-                                </div>
+                                    <div className="form-field">
+                                        <label htmlFor="message">Повідомлення *</label>
+                                        <textarea
+                                            id="message"
+                                            name="message"
+                                            rows={4}
+                                            value={form.message}
+                                            onChange={handleChange}
+                                            placeholder="Ваше запитання або побажання..."
+                                            required
+                                        />
+                                    </div>
 
-                                <button type="submit" className="btn-submit">
-                                    Надіслати повідомлення
-                                </button>
-                            </form>
+                                    {status === "error" && (
+                                        <p className="contacts-form-error">Помилка надсилання. Спробуйте ще раз або зателефонуйте нам.</p>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        className="btn-submit"
+                                        disabled={status === "sending"}
+                                    >
+                                        {status === "sending" ? "Надсилання..." : "Надіслати повідомлення"}
+                                    </button>
+                                </form>
+                            )}
                         </div>
 
                         <div className="contacts-image-container">
-                            <img src="/pics1cloths/IMG_6212.JPG" alt="MIND BODY Collection" />
+                            <picture>
+                                <source srcSet="/pics1cloths/IMG_6212.webp" type="image/webp" />
+                                <img src="/pics1cloths/IMG_6212.JPG" alt="MIND BODY Collection" />
+                            </picture>
                         </div>
                     </div>
                 </div>
             </section>
         </main>
     );
-}
-
-export function links() {
-  return [{ rel: "stylesheet", href: styles }];
 }

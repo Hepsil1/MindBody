@@ -2,8 +2,7 @@ import { Link } from "react-router";
 import { useState, useEffect } from "react";
 import { StorageUtils, type WishlistItem } from "../utils/storage";
 import { useToast } from "../components/Toast";
-import styles from "../styles/wishlist.css?url";
-
+import "../styles/wishlist.css";
 
 export default function Wishlist() {
     const { showToast } = useToast();
@@ -226,7 +225,4 @@ export default function Wishlist() {
         </main>
     );
 }
-
-export function links() {
-  return [{ rel: "stylesheet", href: styles }];
-}
+ 

@@ -216,9 +216,9 @@ export default function Search() {
 
                     {hasQuery && products.length > 0 && (
                         <div className="luxe-product-grid">
-                            {products.map((p, idx) => (
+                            {products.map((p) => (
                                 <div key={p.id} className="luxe-card-wrapper">
-                                    <ProductCard product={p} index={idx} />
+                                    <ProductCard product={p} />
                                 </div>
                             ))}
                         </div>

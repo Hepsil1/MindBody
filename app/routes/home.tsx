@@ -1,14 +1,12 @@
 import type { Route } from "./+types/home";
 import { Link, useLoaderData } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
 import ProductCard from "../components/ProductCard";
 import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
-import styles from "../styles/home.css?url";
-
-
+import "../styles/home.css";
 const DEFAULT_SITE_URL = "https://mindbody.com.ua";
 
 
@@ -33,9 +31,18 @@ export function meta({ data }: Route.MetaArgs) {
     { tagName: "link", rel: "preload", as: "image", href: "/generalpics/333_131123.webp", fetchPriority: "high" },
     { tagName: "link", rel: "preload", as: "image", href: "/generalpics/374_131123.webp" },
     { tagName: "link", rel: "preload", as: "image", href: "/generalpics/338_131123.webp" },
-    { property: "og:image:width", content: "1200" },
-    { property: "og:image:height", content: "630" },
-    // Organization + WebSite JSON-LD live in root.tsx (global)
+    {
+      "script:ld+json": {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "MIND BODY",
+        "url": siteUrl,
+        "logo": `${siteUrl}/brand-sun.png`,
+        "description": "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика.",
+        "address": { "@type": "PostalAddress", "addressCountry": "UA" },
+        "sameAs": ["https://www.instagram.com/mindbody_ua"]
+      }
+    },
   ];
 }
 
@@ -60,10 +67,10 @@ export async function loader({ request }: Route.LoaderArgs) {
       ),
       cachedFetch('home:products', CACHE_TTL, () =>
         prisma.$queryRawUnsafe(
-          `SELECT id, name, price, "comparePrice", category, images, inventory, status, "shopPageSlug", "createdAt"
+          `SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", "createdAt"
            FROM "Product"
            WHERE status = 'active'
-           ORDER BY "createdAt" DESC LIMIT 8`
+           ORDER BY "createdAt" DESC LIMIT 12`
         ) as Promise<any[]>
       ),
     ]);
@@ -74,12 +81,6 @@ export async function loader({ request }: Route.LoaderArgs) {
     const mapProduct = (p: any) => {
       let imgs: string[] = [];
       try { imgs = JSON.parse(p.images || '[]'); } catch { }
-      let inventory: Record<string, number> = {};
-      try { inventory = JSON.parse(p.inventory || '{}'); } catch { }
-      const invValues = Object.values(inventory);
-      const inStock = p.status === 'active' && (
-        invValues.length === 0 || invValues.some((q: any) => Number(q) > 0)
-      );
       const price = Number(p.price);
       const comparePrice = Number(p.comparePrice) || 0;
       const isSale = comparePrice > price && price > 0;
@@ -97,7 +98,6 @@ export async function loader({ request }: Route.LoaderArgs) {
         is_sale: isSale,
         sale_price: isSale ? price : undefined,
         discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
-        inStock,
       };
     };
 
@@ -151,6 +151,104 @@ export default function Home() {
   const postsToRender = instagramData?.posts?.length ? instagramData.posts : FALLBACK_INSTAGRAM_POSTS;
   const igUsername = instagramData?.username || "mindbody_sportwear";
   const igProfilePic = instagramData?.profilePictureUrl || "/logo-sun.png";
+
+  const [currentPlaylistIdx, setCurrentPlaylistIdx] = useState(0);
+
+  /* NEW ARRIVALS INFINITE CAROUSEL */
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const CARD_WIDTH = 300; // approximate, updated on layout
+  const VISIBLE = 4;
+
+  const scrollCarousel = useCallback((dir: 'prev' | 'next') => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const cardEl = el.querySelector('.product-card') as HTMLElement;
+    const cardW = cardEl ? cardEl.offsetWidth + 24 : CARD_WIDTH + 24; // 24 = gap
+    el.scrollBy({ left: dir === 'next' ? cardW * VISIBLE : -cardW * VISIBLE, behavior: 'smooth' });
+  }, []);
+
+  // Touch swipe support
+  const touchStartX = useRef(0);
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) scrollCarousel(diff > 0 ? 'next' : 'prev');
+  };
+  const videoPlaylist = [
+    "/uploads/brand-hero.mp4",
+    "/uploads/brand-video-2.mp4",
+    "/uploads/brand-video-3.mp4"
+  ];
+
+  /* ZENITH MAGNETIC LOGO LOGIC */
+  const magneticRef = useRef<HTMLDivElement>(null);
+  
+  const handleMagneticMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!magneticRef.current) return;
+    const { left, top, width, height } = magneticRef.current.getBoundingClientRect();
+    const centerX = left + width / 2;
+    const centerY = top + height / 2;
+    // Calculate cursor distance from center
+    const deltaX = e.clientX - centerX;
+    const deltaY = e.clientY - centerY;
+    
+    // Magnetic Pull (max distance tilt effect)
+    const rotateX = -(deltaY / height) * 35; // 35 deg max tilt
+    const rotateY = (deltaX / width) * 35;
+    const translateX = deltaX * 0.25; // 25% pull ratio
+    const translateY = deltaY * 0.25;
+
+    magneticRef.current.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translate3d(${translateX}px, ${translateY}px, 0)`;
+  };
+
+  const handleMagneticLeave = () => {
+    if (!magneticRef.current) return;
+    // Spring back to rest state smoothly
+    magneticRef.current.style.transform = `perspective(800px) rotateX(0deg) rotateY(0deg) translate3d(0px, 0px, 0)`;
+  };
+
+  // Animated counters — trigger when section enters viewport
+  useEffect(() => {
+    const animateCounter = (el: HTMLElement) => {
+      const target = parseInt(el.dataset.count || '0', 10);
+      const suffix = el.dataset.suffix || '';
+      const isLarge = target >= 1000;
+      const duration = 1800;
+      const start = performance.now();
+      const numEl = el.querySelector('.stat-number') as HTMLElement;
+      if (!numEl) return;
+
+      const tick = (now: number) => {
+        const elapsed = Math.min((now - start) / duration, 1);
+        // ease-out cubic
+        const eased = 1 - Math.pow(1 - elapsed, 3);
+        const value = Math.round(eased * target);
+        if (isLarge && target >= 10000) {
+          numEl.textContent = (value / 1000).toFixed(1) + 'K' + suffix;
+        } else {
+          numEl.textContent = value.toLocaleString('uk-UA') + suffix;
+        }
+        if (elapsed < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
+          entry.target.classList.add('counted');
+          animateCounter(entry.target as HTMLElement);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    setTimeout(() => {
+      document.querySelectorAll('.stat-item').forEach(el => observer.observe(el));
+    }, 100);
+
+    return () => observer.disconnect();
+  }, []);
 
   // Scroll reveal animation
   useEffect(() => {
@@ -257,16 +355,14 @@ export default function Home() {
 
             <div className="feature-item group">
               <div className="feature-item__icon-wrapper">
-                <svg aria-hidden="true" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.2">
-                  <rect x="1" y="3" width="15" height="13" rx="1" strokeLinecap="round" strokeLinejoin="round"></rect>
-                  <path d="M16 8h4l3 3v5h-7V8z" strokeLinecap="round" strokeLinejoin="round"></path>
-                  <circle cx="6" cy="19" r="2"></circle>
-                  <circle cx="18" cy="19" r="2"></circle>
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.2">
+                  <rect x="3" y="5" width="18" height="14" rx="2" strokeLinecap="round" strokeLinejoin="round"></rect>
+                  <line x1="3" y1="10" x2="21" y2="10" strokeLinecap="round" strokeLinejoin="round"></line>
                 </svg>
               </div>
               <div className="feature-item__text">
-                <h4 className="feature-item__title">Безкоштовна доставка</h4>
-                <p className="feature-item__desc">Від 2000₴ — по всій Україні</p>
+                <h4 className="feature-item__title">Швидка оплата</h4>
+                <p className="feature-item__desc">Безпечно карткою або при отриманні</p>
               </div>
             </div>
 
@@ -307,156 +403,208 @@ export default function Home() {
 
         {/* Sub-section: New Arrivals */}
         <div className="container" id="new-collections">
-          <div className="section__header section__header--center">
-            <span className="section__badge">Новинки {new Date().getFullYear()}</span>
-            <h2 className="section__title">Нові надходження</h2>
-            <p className="section__subtitle">Сезонні новинки з усіх колекцій</p>
+          <div className="new-arrivals-header">
+            <div className="new-arrivals-header__text">
+              <span className="new-arrivals-badge">
+                <span className="new-arrivals-badge__dot" />
+                Новинки {new Date().getFullYear()}
+              </span>
+              <h2 className="section__title">Нові надходження</h2>
+              <p className="section__subtitle">Сезонні новинки з усіх колекцій</p>
+            </div>
+            <div className="new-arrivals-header__controls">
+              <button
+                className="carousel-btn carousel-btn--prev"
+                aria-label="Попередні товари"
+                onClick={() => scrollCarousel('prev')}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <button
+                className="carousel-btn carousel-btn--next"
+                aria-label="Наступні товари"
+                onClick={() => scrollCarousel('next')}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
           </div>
 
-          <div className="products-grid-4">
-            {newProducts.map((p: any, idx: number) => (
-              <ProductCard key={p.id} product={p} index={idx} />
+          <div
+            className="products-carousel"
+            ref={carouselRef}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {newProducts.map((p: any) => (
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
 
           <div className="section__cta-center">
-            <Link to="/shop/yoga" className="btn btn--primary btn--large">
-              Переглянути всі колекції
+            <Link to="/shop" className="btn btn--outline">
+              Переглянути всі новинки →
             </Link>
           </div>
         </div>
-      </section>
-
-
-      {/* ===== BRAND WORLD — Unified Philosophy & About ===== */}
-      <section className="brand-world section" id="about">
-        <div className="logo-pattern-bg"></div>
-
-        {/* INTRO: Cinematic two-column manifesto */}
-        <div className="bw-intro">
+        <section className="bw-unified-section bw-v3" id="about">
           <div className="container">
-            <div className="bw-intro__grid">
-
-              {/* Left: Brand manifesto */}
-              <div className="bw-manifesto">
-                <div className="bw-accent-line" aria-hidden="true">
-                  <div className="bw-accent-glow"></div>
-                </div>
-                <span className="bw-eyebrow">MIND BODY® — Philosophy</span>
-                <h2 className="bw-heading">
-                  Рух<br />що <em>перетворює</em>
-                </h2>
-                <p className="bw-body">
-                  Ми не просто шиємо одяг — ми створюємо другу шкіру, що слідує за кожним рухом.
-                  Кожна колекція народжується в Україні з глибокою увагою до деталей та любов'ю&nbsp;до&nbsp;руху.
-                </p>
-                <div className="bw-mission-block">
-                  <span className="bw-mission-eyebrow">Місія</span>
-                  <p className="bw-mission-text">Подаруй собі <em>комфорт</em> — і ти подаруєш собі крила</p>
-                </div>
-                <div className="bw-metrics">
-                  <div className="bw-metric">
-                    <span className="bw-metric__num">63K<em>+</em></span>
-                    <span className="bw-metric__lbl">підписників</span>
-                  </div>
-                  <div className="bw-metric-sep"></div>
-                  <div className="bw-metric">
-                    <span className="bw-metric__num">2168<em>+</em></span>
-                    <span className="bw-metric__lbl">публікацій</span>
-                  </div>
-                  <div className="bw-metric-sep"></div>
-                  <div className="bw-metric">
-                    <span className="bw-metric__num">100<em>%</em></span>
-                    <span className="bw-metric__lbl">🇺🇦 виробництво</span>
-                  </div>
-                </div>
-                <Link to="/about" className="btn btn--primary btn--large bw-cta">
-                  Дізнатись більше
-                </Link>
-              </div>
-
-              {/* Right: Futuristic Kinetic Core */}
-              <div className="bw-visual">
-                <div className="bw-kinetic-core">
-                  {/* Surrounding orbit rings */}
-                  <div className="bw-core-ring bw-core-ring-1"></div>
-                  <div className="bw-core-ring bw-core-ring-2"></div>
-                  <div className="bw-core-ring bw-core-ring-3"></div>
-
-                  {/* Central glowing orb with star */}
-                  <div className="bw-orb-center">
-                    <svg viewBox="0 0 100 100" className="bw-orb-star">
-                      <polygon points="50,0 55,40 100,50 55,60 50,100 45,60 0,50 45,40" fill="currentColor" />
+            <div className="bw-v3-layout">
+              
+              {/* Left: The Manifesto & Zen Ripple Logo */}
+              <div className="bw-v3-manifesto">
+                
+                <div 
+                  className="bw-zen-visual bw-magnetic-wrapper"
+                  ref={magneticRef}
+                  onMouseMove={handleMagneticMove}
+                  onMouseLeave={handleMagneticLeave}
+                >
+                  <div className="bw-kinetic-ring">
+                    <svg viewBox="0 0 100 100" width="160" height="160">
+                      <defs>
+                        <path id="circlePath" d="M 50, 50 m -40, 0 a 40,40 0 1,1 80,0 a 40,40 0 1,1 -80,0" />
+                      </defs>
+                      <text fill="currentColor" fontSize="10.5" fontWeight="700" letterSpacing="0.25em" style={{ textTransform: "uppercase" }}>
+                        <textPath href="#circlePath" startOffset="0%">
+                          Mind Body • Ukrainian Brand • Premium Quality •
+                        </textPath>
+                      </text>
                     </svg>
                   </div>
+                  <img src="/brand-sun.webp" alt="MindBody Energy" className="bw-zen-logo" />
+                </div>
 
-                  {/* Glassmorphic floating badge */}
-                  <div className="bw-floating-badge" aria-hidden="true">
-                    <span>MIND BODY</span>
-                    <strong>Energy</strong>
+                <div className="bw-manifesto-text">
+                  <span className="bw-eyebrow-minimal">MIND BODY®</span>
+                  <h2 className="bw-heading-elegant">
+                    Рух що <em>перетворює</em>
+                  </h2>
+                  <p className="bw-body-minimal">
+                    Ми не просто шиємо одяг — ми створюємо другу шкіру, що слідує за кожним рухом.
+                    Кожна колекція народжується з глибокою увагою до деталей та любов'ю до тіла.
+                  </p>
+                  <div className="bw-mission-elegant">
+                    Подаруй собі <em>комфорт</em> — і ти подаруєш собі крила
+                  </div>
+                  <Link to="/about" className="bw-btn-elegant">
+                    Філософія бренду<span className="bw-btn-arr">→</span>
+                  </Link>
+                </div>
+
+              </div>
+
+              {/* Center: The Floating Image Reveal Frame */}
+              <div className="bw-v3-frame-container">
+                <div className="bw-v3-frame-dots">
+                  {videoPlaylist.map((_, i) => (
+                    <span key={i} className={`bw-v3-dot ${currentPlaylistIdx === i ? 'bw-v3-dot--active' : ''}`} />
+                  ))}
+                </div>
+                <div className="bw-v3-frame">
+                   {/* 1. Sequential continuous playlist (3 videos) with smooth crossfade */}
+                   {videoPlaylist.map((src, i) => (
+                     <video
+                       key={`p-${i}`}
+                       className={`bw-frame-img bw-playlist-vid ${currentPlaylistIdx === i ? 'is-default-active' : ''}`}
+                       src={src}
+                       autoPlay={i === 0} 
+                       loop={false} muted playsInline
+                       onEnded={() => {
+                         const nextIdx = (i + 1) % videoPlaylist.length;
+                         setCurrentPlaylistIdx(nextIdx);
+                         const nextVid = document.querySelector(`.bw-playlist-vid[src="${videoPlaylist[nextIdx]}"]`) as HTMLVideoElement;
+                         if (nextVid) {
+                           nextVid.currentTime = 0;
+                           nextVid.play();
+                         }
+                       }}
+                     />
+                   ))}
+                   
+                   {/* 2. Hover specific targets (4 static repeating videos on top) */}
+                   <video className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--1" autoPlay loop muted playsInline>
+                     <source src="/uploads/brand-hero.mp4" type="video/mp4" />
+                   </video>
+                   <video className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--2" autoPlay loop muted playsInline>
+                     <source src="/uploads/brand-video-2.mp4" type="video/mp4" />
+                   </video>
+                   <video className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--3" autoPlay loop muted playsInline>
+                     <source src="/uploads/brand-video-3.mp4" type="video/mp4" />
+                   </video>
+                   <video className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--4" autoPlay loop muted playsInline>
+                     <source src="/uploads/brand-video-2.mp4" type="video/mp4" />
+                   </video>
+                </div>
+              </div>
+
+              {/* Right: The Ultra-Clean Feature List (Macro Typography) */}
+              <div className="bw-v3-features bw-macro-features">
+                
+                <div className="bw-feat-item bw-feat-item--1">
+                  <div className="bw-macro-number" data-text="01">01</div>
+                  <div className="bw-macro-content">
+                    <h3 className="bw-feat-title">Дихаючі тканини</h3>
+                    <p className="bw-feat-desc">Преміальні матеріали, що забезпечують ідеальну терморегуляцію.</p>
                   </div>
                 </div>
+
+                <div className="bw-feat-item bw-feat-item--2">
+                  <div className="bw-macro-number" data-text="02">02</div>
+                  <div className="bw-macro-content">
+                    <h3 className="bw-feat-title">Ексклюзивний дизайн</h3>
+                    <p className="bw-feat-desc">Естетика, що надихає навіть під час найважчих тренувань.</p>
+                  </div>
+                </div>
+
+                <div className="bw-feat-item bw-feat-item--3">
+                  <div className="bw-macro-number" data-text="03">03</div>
+                  <div className="bw-macro-content">
+                    <h3 className="bw-feat-title">Ідеальна посадка</h3>
+                    <p className="bw-feat-desc">Анатомічний крій, що бездоганно підкреслює вашу фігуру.</p>
+                  </div>
+                </div>
+
+                <div className="bw-feat-item bw-feat-item--4">
+                  <div className="bw-macro-number" data-text="04">04</div>
+                  <div className="bw-macro-content">
+                    <h3 className="bw-feat-title">Сертифікована якість</h3>
+                    <p className="bw-feat-desc">100% контроль, створено з любов'ю та увагою до кожної деталі.</p>
+                    <Link to="/shop" className="bw-feat-link">Каталог <span className="bw-feat-link-arr">→</span></Link>
+                  </div>
+                </div>
+
               </div>
 
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* FEATURES: Asymmetric Bento grid */}
-        <div className="bw-features">
+
+
+        {/* ANIMATED COUNTERS */}
+        <section className="stats-section">
           <div className="container">
-            <div className="bw-bento">
-
-              {/* Tile 1: Tall portrait */}
-              <div className="bw-tile bw-tile--tall">
-                <div className="bw-tile__bg" style={{ backgroundImage: "url('/pics1cloths/IMG_6201.webp')" }}></div>
-                <div className="bw-tile__veil"></div>
-                <div className="bw-tile__content">
-                  <span className="bw-tile__num">01</span>
-                  <h3 className="bw-tile__h">Дихаючі<br />тканини</h3>
-                  <p className="bw-tile__p">Преміальні матеріали, що забезпечують ідеальну терморегуляцію та свободу кожного руху.</p>
-                </div>
+            <div className="stats-grid">
+              <div className="stat-item" data-count="63900" data-suffix="+" data-format="social">
+                <span className="stat-number">63.9K</span>
+                <span className="stat-label">Підписників в Instagram</span>
               </div>
-
-              {/* Tile 2: Wide horizontal */}
-              <div className="bw-tile bw-tile--wide">
-                <div className="bw-tile__bg" style={{ backgroundImage: "url('/generalpics/595_131123.webp')" }}></div>
-                <div className="bw-tile__veil"></div>
-                <div className="bw-tile__content">
-                  <span className="bw-tile__num">02</span>
-                  <h3 className="bw-tile__h">Ексклюзивні<br />дизайни</h3>
-                  <p className="bw-tile__p">Стильні рішення для тих, хто цінує естетику навіть під час важких тренувань.</p>
-                </div>
+              <div className="stat-item" data-count="2168" data-suffix="+">
+                <span className="stat-number">2168</span>
+                <span className="stat-label">Публікацій у соцмережах</span>
               </div>
-
-              {/* Tile 3: Square */}
-              <div className="bw-tile">
-                <div className="bw-tile__bg" style={{ backgroundImage: "url('/generalpics/374_131123.webp')" }}></div>
-                <div className="bw-tile__veil"></div>
-                <div className="bw-tile__content">
-                  <span className="bw-tile__num">03</span>
-                  <h3 className="bw-tile__h">Ідеальна<br />посадка</h3>
-                  <p className="bw-tile__p">Анатомічний крій, що бездоганно підкреслює фігуру та дарує впевненість.</p>
-                </div>
+              <div className="stat-item" data-count="10" data-suffix="+">
+                <span className="stat-number">10+</span>
+                <span className="stat-label">Років на ринку</span>
               </div>
-
-              {/* Tile 4: Dark CTA */}
-              <div className="bw-tile bw-tile--dark">
-                <div className="bw-tile__content">
-                  <span className="bw-tile__num bw-tile__num--inv">04</span>
-                  <h3 className="bw-tile__h bw-tile__h--inv">Українське<br />виробництво</h3>
-                  <p className="bw-tile__p bw-tile__p--inv">100% контроль якості. Кожна деталь створюється з увагою до вашого комфорту.</p>
-                  <a href="/shop" className="bw-tile__btn">Переглянути каталог →</a>
-                </div>
+              <div className="stat-item" data-count="5000" data-suffix="+">
+                <span className="stat-number">5000+</span>
+                <span className="stat-label">Задоволених клієнтів</span>
               </div>
-
             </div>
           </div>
-        </div>
-
-
-
-
+        </section>
 
         {/* Instagram Premium Section (Merged visually into the About section logic) */}
         <div className="ig-hyper" id="instagram">
@@ -477,9 +625,14 @@ export default function Home() {
           {/* The center content container */}
           <div className="ig-hyper__content container">
             <div className="ig-hyper__header">
-              <h2 className="ig-hyper__title">Світ <em>Mind Body</em></h2>
+              <p className="ig-hyper__overline">Наш Instagram</p>
+              <h2 className="ig-hyper__title">
+                <span className="ig-hyper__title-world">Світ</span>
+                <em>Mind Body</em>
+              </h2>
               <p className="ig-hyper__subtitle">
-                Більше, ніж просто одяг. Світ естетики, мотивації та щоденного натхнення.<br />Будь в курсі нових колекцій першою.
+                Більше, ніж просто одяг — це естетика, мотивація та щоденне натхнення.
+                <br />Будь в курсі нових колекцій першою.
               </p>
             </div>
 
@@ -635,18 +788,17 @@ export default function Home() {
             </div>
 
             <a href="https://www.instagram.com/mindbody_sportwear/" target="_blank" rel="noopener noreferrer" className="ig-hyper__cta">
+              <svg className="ig-hyper__cta-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+              </svg>
               Відкрити Instagram
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: 6 }}><path d="M5 12h14M12 5l7 7-7 7" /></svg>
             </a>
           </div>
 
         </div>
       </section>
-
-    </main>
+        </main>
   );
 }
 
-export function links() {
-  return [{ rel: "stylesheet", href: styles }];
-}
+

@@ -3,8 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { StorageUtils, type CartItem } from "../utils/storage";
 import { AuthUtils } from "../utils/auth";
 import { useToast } from "../components/Toast";
-import styles from "../styles/checkout.css?url";
-
+import "../styles/checkout.css";
 
 export function meta() {
     return [
@@ -345,25 +344,10 @@ export default function Checkout() {
     const handleSubmitOrder = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (isSubmitting) return; // prevent double-submit
-
-        if (items.length === 0) {
-            showToast('Ваш кошик порожній', 'warning');
-            setStep('cart');
-            return;
-        }
-
         const newErrors: Partial<Record<keyof CustomerInfo, string>> = {};
         if (!customerInfo.name.trim()) newErrors.name = "Введіть ваше ім'я";
         if (!customerInfo.phone) newErrors.phone = "Введіть номер телефону";
         else if (getPhoneDigits(customerInfo.phone).length < 12) newErrors.phone = "Введіть коректний номер";
-
-        if (customerInfo.email.trim()) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(customerInfo.email.trim())) {
-                newErrors.email = "Невірний формат email";
-            }
-        }
 
         if (customerInfo.delivery === 'nova_poshta') {
             if (!customerInfo.cityRef) newErrors.city = "Оберіть місто зі списку";
@@ -571,13 +555,9 @@ export default function Checkout() {
                                             value={customerInfo.name}
                                             onChange={handleInputChange}
                                             placeholder="Олена Шевченко"
-                                            autoComplete="name"
                                             required
-                                            aria-required="true"
-                                            aria-invalid={!!errors.name}
-                                            aria-describedby={errors.name ? "name-error" : undefined}
                                         />
-                                        {errors.name && <span id="name-error" role="alert" className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.name}</span>}
+                                        {errors.name && <span className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.name}</span>}
                                     </div>
                                     <div className="form-group">
                                         <label htmlFor="email">Email <span style={{ color: '#999', fontWeight: 400 }}>(необов'язково)</span></label>
@@ -588,11 +568,7 @@ export default function Checkout() {
                                             value={customerInfo.email}
                                             onChange={handleInputChange}
                                             placeholder="olena@example.com"
-                                            autoComplete="email"
-                                            aria-invalid={!!errors.email}
-                                            aria-describedby={errors.email ? "email-error" : undefined}
                                         />
-                                        {errors.email && <span id="email-error" role="alert" className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.email}</span>}
                                     </div>
                                     <div className="form-group">
                                         <label htmlFor="phone">Телефон *</label>
@@ -606,14 +582,9 @@ export default function Checkout() {
                                                 setCustomerInfo(prev => ({ ...prev, phone: formatted }));
                                             }}
                                             placeholder="+380 (XX) XXX-XX-XX"
-                                            autoComplete="tel"
-                                            inputMode="tel"
                                             required
-                                            aria-required="true"
-                                            aria-invalid={!!errors.phone}
-                                            aria-describedby={errors.phone ? "phone-error" : undefined}
                                         />
-                                        {errors.phone && <span id="phone-error" role="alert" className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.phone}</span>}
+                                        {errors.phone && <span className="field-error-text" style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>{errors.phone}</span>}
                                     </div>
                                 </div>
 
@@ -631,7 +602,7 @@ export default function Checkout() {
                                             />
                                             <div className="delivery-option__content">
                                                 <div className="delivery-option__logo nova-poshta">
-                                                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+                                                    <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
                                                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                                                     </svg>
                                                 </div>
@@ -651,7 +622,7 @@ export default function Checkout() {
                                             />
                                             <div className="delivery-option__content">
                                                 <div className="delivery-option__logo ukrposhta">
-                                                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+                                                    <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
                                                         <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
                                                     </svg>
                                                 </div>
@@ -863,8 +834,7 @@ export default function Checkout() {
                                 <button
                                     type="submit"
                                     className="cart-btn cart-btn--primary cart-btn--full"
-                                    disabled={isSubmitting || items.length === 0}
-                                    aria-busy={isSubmitting}
+                                    disabled={isSubmitting}
                                 >
                                     {isSubmitting ? 'Відправляємо...' : 'Підтвердити замовлення'}
                                 </button>
@@ -1079,7 +1049,4 @@ export default function Checkout() {
         </main>
     );
 }
-
-export function links() {
-  return [{ rel: "stylesheet", href: styles }];
-}
+ 
