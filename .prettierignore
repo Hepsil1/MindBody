@@ -1,0 +1,40 @@
+# Build artifacts
+build/
+dist/
+.cache/
+
+# Generated
+.react-router/
+node_modules/
+*.tsbuildinfo
+
+# Prisma generated
+prisma/migrations/
+
+# Backups (pg_dumps)
+backups/
+
+# Public static assets
+public/
+
+# Lockfiles (handled by their respective tools)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Legacy / temporary
+_audit*.txt
+_audit*.cjs
+_ui-ux-skill-tmp/
+.agent/
+.claude/
+.gemini/
+
+# Scripts owned by user (untracked)
+scripts/start.bat
+scripts/stop.bat

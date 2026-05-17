@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json.schemastore.org/prettierrc",
+  "plugins": ["prettier-plugin-prisma"],
+  "printWidth": 100,
+  "tabWidth": 4,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "quoteProps": "as-needed",
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "overrides": [
+    {
+      "files": ["*.md", "*.mdx"],
+      "options": {
+        "printWidth": 80,
+        "proseWrap": "preserve"
+      }
+    },
+    {
+      "files": ["*.yml", "*.yaml"],
+      "options": {
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": ["*.json", "*.jsonc"],
+      "options": {
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": ["*.css"],
+      "options": {
+        "singleQuote": false
+      }
+    },
+    {
+      "files": ["*.prisma"],
+      "options": {
+        "tabWidth": 2
+      }
+    }
+  ]
+}
