@@ -1,16 +1,20 @@
 import { z } from "zod";
 
 // ===== Register API =====
+// IMPORTANT: in Zod 4, .email() validates BEFORE .trim() applies in the chain.
+// So we must .trim() the input first, otherwise "  user@x.com  " fails
+// validation with "Невірний формат email" even though it's a perfectly valid
+// address with stray whitespace from a copy-paste.
 export const RegisterSchema = z.object({
-    name: z.string().min(2, "Ім'я занадто коротке").max(100).trim(),
-    email: z.string().email("Невірний формат email").max(100).trim().toLowerCase(),
+    name: z.string().trim().min(2, "Ім'я занадто коротке").max(100),
+    email: z.string().trim().toLowerCase().email("Невірний формат email").max(100),
     phone: z.string().max(20).optional().nullable(),
     password: z.string().min(6, "Пароль занадто короткий").max(100),
 });
 
 // ===== Login API =====
 export const LoginSchema = z.object({
-    email: z.string().email("Невірний формат email").max(100).trim().toLowerCase(),
+    email: z.string().trim().toLowerCase().email("Невірний формат email").max(100),
     password: z.string().min(1, "Пароль обов'язковий").max(100),
 });
 
@@ -23,12 +27,13 @@ export const ReviewSchema = z.object({
 });
 
 // ===== Order Create API =====
+// Same Zod-4 whitespace-before-validation gotcha as RegisterSchema above.
 const OrderCustomerSchema = z.object({
-    name: z.string().min(2).max(100).trim(),
-    email: z.string().email().max(100).trim().toLowerCase().optional().default(""),
-    phone: z.string().min(10).max(20).trim(),
-    city: z.string().min(1).max(100).trim(),
-    warehouse: z.string().min(1).max(200).trim(),
+    name: z.string().trim().min(2).max(100),
+    email: z.string().trim().toLowerCase().email().max(100).optional().default(""),
+    phone: z.string().trim().min(10).max(20),
+    city: z.string().trim().min(1).max(100),
+    warehouse: z.string().trim().min(1).max(200),
 });
 
 const OrderItemSchema = z.object({
