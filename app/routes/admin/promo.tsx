@@ -1,13 +1,14 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { useLoaderData, useSubmit, useNavigate, redirect } from "react-router";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../db.server";
 import { isAuthenticated } from "../../utils/admin.server";
 import { useState } from "react";
 
 export async function loader() {
-    const promos = (await prisma.$queryRawUnsafe(
-        `SELECT * FROM "PromoCode" ORDER BY "createdAt" DESC`,
-    )) as any[];
+    const promos = await prisma.promoCode.findMany({
+        orderBy: { createdAt: "desc" },
+    });
     return { promos };
 }
 
@@ -37,19 +38,22 @@ export async function action({ request }: ActionFunctionArgs) {
             }
 
             try {
-                await prisma.$executeRawUnsafe(
-                    `INSERT INTO "PromoCode" (id, code, "discountType", "discountValue", "minOrder", "maxUses", "usedCount", "isActive", "expiresAt", "createdAt")
-                     VALUES ($1, $2, $3, $4, $5, $6, 0, true, $7, CURRENT_TIMESTAMP)`,
-                    id,
-                    code,
-                    discountType,
-                    discountValue,
-                    minOrder,
-                    maxUses,
-                    expiresAt ? new Date(expiresAt).toISOString() : null,
-                );
-            } catch (e: any) {
-                if (e.message?.includes("UNIQUE")) {
+                await prisma.promoCode.create({
+                    data: {
+                        id,
+                        code,
+                        discountType,
+                        discountValue,
+                        minOrder,
+                        maxUses,
+                        usedCount: 0,
+                        isActive: true,
+                        expiresAt: expiresAt ? new Date(expiresAt) : null,
+                    },
+                });
+            } catch (e) {
+                // P2002 = unique constraint violation
+                if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
                     return { error: "Промокод з таким кодом вже існує" };
                 }
                 return { error: "Помилка створення" };
@@ -59,22 +63,22 @@ export async function action({ request }: ActionFunctionArgs) {
         if (intent === "toggle") {
             const id = formData.get("id") as string;
             const currentActive = formData.get("isActive") === "true";
-            await prisma.$executeRawUnsafe(
-                `UPDATE "PromoCode" SET "isActive" = $1 WHERE id = $2`,
-                !currentActive,
-                id,
-            );
+            await prisma.promoCode.update({
+                where: { id },
+                data: { isActive: !currentActive },
+            });
         }
 
         if (intent === "delete") {
             const id = formData.get("id") as string;
-            await prisma.$executeRawUnsafe(`DELETE FROM "PromoCode" WHERE id = $1`, id);
+            await prisma.promoCode.delete({ where: { id } });
         }
 
         return null;
-    } catch (e: any) {
+    } catch (e) {
         console.error("Promo action error:", e);
-        return { error: e.message || "Сталася серверна помилка" };
+        const message = e instanceof Error ? e.message : "Сталася серверна помилка";
+        return { error: message };
     }
 }
 
@@ -368,7 +372,7 @@ export default function AdminPromo() {
                             </tr>
                         </thead>
                         <tbody>
-                            {promos.map((p: any) => {
+                            {promos.map((p) => {
                                 const isExpired = p.expiresAt && new Date(p.expiresAt) < new Date();
                                 const isExhausted = p.maxUses && p.usedCount >= p.maxUses;
                                 const isEffectivelyActive =
