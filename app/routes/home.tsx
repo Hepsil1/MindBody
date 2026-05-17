@@ -7,7 +7,48 @@ import ProductCard from "../components/ProductCard";
 import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
 import "../styles/home.css";
+
 const DEFAULT_SITE_URL = "https://mindbody.com.ua";
+
+// One Instagram post tile rendered in the social proof section.
+interface InstagramPost {
+    id: string;
+    mediaUrl: string;
+    permalink: string;
+}
+
+interface InstagramData {
+    username: string;
+    followersCount: string;
+    profilePictureUrl: string;
+    posts: InstagramPost[];
+}
+
+// Home category card — covers DB rows and the hard-coded fallback alike.
+interface HomeCategoryCard {
+    id: string;
+    title: string;
+    subtitle: string | null;
+    image: string;
+    imagePos?: string;
+    link: string;
+    buttonText: string;
+}
+
+// New-products card on the home page.
+interface HomeProductCard {
+    id: string;
+    name: string;
+    // Matches ProductCard's `string | undefined` API (null is not accepted).
+    category: string | undefined;
+    price: number;
+    image: string;
+    image2: string | null;
+    is_new: boolean;
+    is_sale: boolean;
+    sale_price: number | undefined;
+    discount_percent: number;
+}
 
 export function meta({ data }: Route.MetaArgs) {
     const siteUrl = data?.siteUrl || DEFAULT_SITE_URL;
@@ -76,43 +117,72 @@ export async function loader({ request }: Route.LoaderArgs) {
 
         // All 3 queries run in parallel with 60s in-memory cache
         const [slides, categoriesFromDb, rawProducts] = await Promise.all([
+            // Keep raw SQL here because legacy rows may still have a NULL page
+            // column even though the Prisma schema marks it non-nullable.
+            // The generic ensures the result is still typed.
             cachedFetch(
                 "home:slides",
                 CACHE_TTL,
                 () =>
-                    prisma.$queryRaw`SELECT id, name, type, link, image1, image2, image3, "image1Pos", "image2Pos", "image3Pos" FROM "Slide" WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC` as Promise<
-                        any[]
-                    >,
+                    prisma.$queryRaw<
+                        Array<{
+                            id: string;
+                            name: string;
+                            type: string;
+                            link: string | null;
+                            image1: string;
+                            image2: string | null;
+                            image3: string | null;
+                            image1Pos: string;
+                            image2Pos: string;
+                            image3Pos: string;
+                        }>
+                    >`SELECT id, name, type, link, image1, image2, image3, "image1Pos", "image2Pos", "image3Pos" FROM "Slide" WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC`,
             ),
-            cachedFetch(
-                "home:categories",
-                CACHE_TTL,
-                () =>
-                    prisma.$queryRawUnsafe(
-                        `SELECT id, title, subtitle, image, "imagePos", link, "buttonText" FROM "Category" ORDER BY "order" ASC`,
-                    ) as Promise<any[]>,
+            cachedFetch("home:categories", CACHE_TTL, () =>
+                prisma.category.findMany({
+                    orderBy: { order: "asc" },
+                    select: {
+                        id: true,
+                        title: true,
+                        subtitle: true,
+                        image: true,
+                        imagePos: true,
+                        link: true,
+                        buttonText: true,
+                    },
+                }),
             ),
-            cachedFetch(
-                "home:products",
-                CACHE_TTL,
-                () =>
-                    prisma.$queryRawUnsafe(
-                        `SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", "createdAt"
-           FROM "Product"
-           WHERE status = 'active'
-           ORDER BY "createdAt" DESC LIMIT 12`,
-                    ) as Promise<any[]>,
+            cachedFetch("home:products", CACHE_TTL, () =>
+                prisma.product.findMany({
+                    where: { status: "active" },
+                    orderBy: { createdAt: "desc" },
+                    take: 12,
+                    select: {
+                        id: true,
+                        name: true,
+                        price: true,
+                        comparePrice: true,
+                        category: true,
+                        images: true,
+                        shopPageSlug: true,
+                        createdAt: true,
+                    },
+                }),
             ),
         ]);
 
         const NOW = Date.now();
         const NEW_THRESHOLD_DAYS = 14;
 
-        const mapProduct = (p: any) => {
+        // Typed via the Prisma return shape inferred above.
+        const mapProduct = (p: (typeof rawProducts)[number]): HomeProductCard => {
             let imgs: string[] = [];
             try {
                 imgs = JSON.parse(p.images || "[]");
-            } catch {}
+            } catch {
+                // Malformed images JSON — fall back to the brand placeholder.
+            }
             const price = Number(p.price);
             const comparePrice = Number(p.comparePrice) || 0;
             const isSale = comparePrice > price && price > 0;
@@ -122,7 +192,7 @@ export async function loader({ request }: Route.LoaderArgs) {
             return {
                 id: p.id,
                 name: p.name,
-                category: p.category || p.shopPageSlug,
+                category: p.category ?? p.shopPageSlug ?? undefined,
                 price: isSale ? comparePrice : price, // comparePrice is the "original" price
                 image: imgs[0] || "/brand-sun.png",
                 image2: imgs[1] || null,
@@ -133,69 +203,72 @@ export async function loader({ request }: Route.LoaderArgs) {
             };
         };
 
+        const slidesPayload: SlideData[] = slides.map((s) => ({
+            id: s.id,
+            name: s.name,
+            type: s.type as "triptych" | "single",
+            link: s.link,
+            image1: s.image1,
+            image2: s.image2,
+            image3: s.image3,
+        }));
+
+        // Normalise into HomeCategoryCard[] so the render side doesn't have
+        // to branch on a union — fallback array now has the same shape as DB rows.
+        const FALLBACK_CATEGORIES: HomeCategoryCard[] = [
+            {
+                id: "1",
+                title: "YOGA",
+                subtitle: "Для гармонії тіла та духу",
+                image: "/pics1cloths/IMG_6201.webp",
+                link: "/shop/yoga",
+                buttonText: "Переглянути",
+            },
+            {
+                id: "2",
+                title: "SPORT",
+                subtitle: "Для активних тренувань",
+                image: "/pics1cloths/IMG_6210.webp",
+                link: "/shop/sport",
+                buttonText: "Переглянути",
+            },
+            {
+                id: "3",
+                title: "DANCE",
+                subtitle: "Свобода рухів",
+                image: "/generalpics/595_131123.webp",
+                link: "/shop/dance",
+                buttonText: "Переглянути",
+            },
+            {
+                id: "4",
+                title: "CASUAL",
+                subtitle: "Повсякденний комфорт",
+                image: "/generalpics/348_131123.webp",
+                link: "/shop/casual",
+                buttonText: "Переглянути",
+            },
+            {
+                id: "5",
+                title: "KIDS",
+                subtitle: "Для наймолодших",
+                image: "/pics2cloths/IMG_5222.webp",
+                link: "/shop/kids",
+                buttonText: "Переглянути",
+            },
+            {
+                id: "6",
+                title: "YOGATOOLS",
+                subtitle: "Аксесуари та інвентар",
+                image: "/generalpics/374_131123.webp",
+                link: "/shop/yogatools",
+                buttonText: "Переглянути",
+            },
+        ];
+
         return {
-            slides: slides.map((s: any) => ({
-                id: s.id,
-                name: s.name,
-                type: s.type as "triptych" | "single",
-                link: s.link,
-                image1: s.image1,
-                image2: s.image2,
-                image3: s.image3,
-            })) as SlideData[],
-            categories:
-                categoriesFromDb.length > 0
-                    ? categoriesFromDb
-                    : [
-                          {
-                              id: "1",
-                              title: "YOGA",
-                              subtitle: "Для гармонії тіла та духу",
-                              image: "/pics1cloths/IMG_6201.webp",
-                              link: "/shop/yoga",
-                              buttonText: "Переглянути",
-                          },
-                          {
-                              id: "2",
-                              title: "SPORT",
-                              subtitle: "Для активних тренувань",
-                              image: "/pics1cloths/IMG_6210.webp",
-                              link: "/shop/sport",
-                              buttonText: "Переглянути",
-                          },
-                          {
-                              id: "3",
-                              title: "DANCE",
-                              subtitle: "Свобода рухів",
-                              image: "/generalpics/595_131123.webp",
-                              link: "/shop/dance",
-                              buttonText: "Переглянути",
-                          },
-                          {
-                              id: "4",
-                              title: "CASUAL",
-                              subtitle: "Повсякденний комфорт",
-                              image: "/generalpics/348_131123.webp",
-                              link: "/shop/casual",
-                              buttonText: "Переглянути",
-                          },
-                          {
-                              id: "5",
-                              title: "KIDS",
-                              subtitle: "Для наймолодших",
-                              image: "/pics2cloths/IMG_5222.webp",
-                              link: "/shop/kids",
-                              buttonText: "Переглянути",
-                          },
-                          {
-                              id: "6",
-                              title: "YOGATOOLS",
-                              subtitle: "Аксесуари та інвентар",
-                              image: "/generalpics/374_131123.webp",
-                              link: "/shop/yogatools",
-                              buttonText: "Переглянути",
-                          },
-                      ],
+            slides: slidesPayload,
+            categories: categoriesFromDb.length > 0 ? categoriesFromDb : FALLBACK_CATEGORIES,
             newProducts: rawProducts.map(mapProduct),
             instagramData: {
                 username: "mindbody_sportwear",
@@ -228,12 +301,17 @@ export async function loader({ request }: Route.LoaderArgs) {
                         permalink: "https://www.instagram.com/p/CrvCs5qoWDY/",
                     },
                 ],
-            } as any,
+            } satisfies InstagramData,
             siteUrl: process.env.SITE_URL || DEFAULT_SITE_URL,
         };
     } catch (error) {
         console.error("Failed to load home data:", error);
-        return { slides: [] as SlideData[], categories: [], newProducts: [], instagramData: null };
+        return {
+            slides: [] as SlideData[],
+            categories: [] as HomeCategoryCard[],
+            newProducts: [] as HomeProductCard[],
+            instagramData: null as InstagramData | null,
+        };
     }
 }
 
@@ -579,11 +657,11 @@ export default function Home() {
                         </p>
                     </div>
                     <div className="editorial-categories-grid">
-                        {categories.map((cat: any) => (
+                        {categories.map((cat) => (
                             <CategoryCard
                                 key={cat.id}
                                 title={cat.title}
-                                subtitle={cat.subtitle}
+                                subtitle={cat.subtitle ?? ""}
                                 image={cat.image}
                                 imagePos={cat.imagePos}
                                 link={cat.link}
@@ -646,7 +724,7 @@ export default function Home() {
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
                     >
-                        {newProducts.map((p: any) => (
+                        {newProducts.map((p) => (
                             <ProductCard key={p.id} product={p} />
                         ))}
                     </div>
@@ -884,7 +962,7 @@ export default function Home() {
                     <div className="ig-hyper__wall">
                         <div className="ig-hyper__marquee ig-hyper__marquee--left">
                             {[...postsToRender, ...postsToRender, ...postsToRender].map(
-                                (post: any, i: number) => (
+                                (post: InstagramPost, i: number) => (
                                     <div
                                         key={`left-${i}`}
                                         className="ig-hyper__photo"
@@ -896,7 +974,7 @@ export default function Home() {
                         <div className="ig-hyper__marquee ig-hyper__marquee--right">
                             {[...postsToRender, ...postsToRender, ...postsToRender]
                                 .reverse()
-                                .map((post: any, i: number) => (
+                                .map((post: InstagramPost, i: number) => (
                                     <div
                                         key={`right-${i}`}
                                         className="ig-hyper__photo"
