@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
 import { sendEmail, renderNewsletterWelcome } from "../utils/email.server";
+import { env } from "../utils/env.server";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -60,7 +61,7 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         // Fire-and-forget welcome email. Don't block the response on email delivery.
-        const siteUrl = process.env.SITE_URL || "https://mindbody.com.ua";
+        const siteUrl = env.SITE_URL;
         const unsubscribeUrl = `${siteUrl}/api/newsletter?unsub=${sub.unsubKey}`;
         sendEmail({
             to: rawEmail,

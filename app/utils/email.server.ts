@@ -13,13 +13,13 @@
 // log the issue and skip the email.
 
 import { Resend } from "resend";
-import "dotenv/config"; // ensure .env is loaded for dev (PM2 handles this in prod)
+import { env } from "./env.server";
 
-const apiKey = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.EMAIL_FROM || "hello@mindbody.com.ua";
-const FROM_NAME = process.env.EMAIL_FROM_NAME || "MIND BODY";
-const REPLY_TO = process.env.EMAIL_REPLY_TO || FROM_EMAIL;
-const SITE_URL = process.env.SITE_URL || "https://mindbody.com.ua";
+const apiKey = env.RESEND_API_KEY;
+const FROM_EMAIL = env.EMAIL_FROM ?? "hello@mindbody.com.ua";
+const FROM_NAME = env.EMAIL_FROM_NAME ?? "MIND BODY";
+const REPLY_TO = env.EMAIL_REPLY_TO ?? FROM_EMAIL;
+const SITE_URL = env.SITE_URL;
 
 const resend = apiKey ? new Resend(apiKey) : null;
 
