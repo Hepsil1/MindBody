@@ -45,6 +45,22 @@ const emptyForm: ProductForm = {
     inventory: {},
 };
 
+// Defensive JSON parser that preserves the fallback's type.
+function parseJsonAdmin<T>(str: string | null | undefined, fallback: T): T {
+    if (!str) return fallback;
+    try {
+        return JSON.parse(str) as T;
+    } catch {
+        return fallback;
+    }
+}
+
+interface InventoryEntry {
+    color?: string;
+    size?: string;
+    stock: number;
+}
+
 // --- Loader ---
 export async function loader({ params }: LoaderFunctionArgs) {
     const isNew = params.id === "new" || !params.id;
@@ -53,10 +69,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
     let shopPages: { slug: string; title: string }[] = [];
 
     try {
-        // 1. Fetch FilterConfig (Raw SQL)
-        const configResult: any[] = await prisma.$queryRawUnsafe(
-            `SELECT id, config FROM "FilterConfig"`,
-        );
+        // 1. Fetch FilterConfigs
+        const configResult = await prisma.filterConfig.findMany({
+            select: { id: true, config: true },
+        });
         for (const row of configResult) {
             filterConfigs[row.id] = parseAndMergeFilterConfig(row.config);
         }
@@ -64,45 +80,47 @@ export async function loader({ params }: LoaderFunctionArgs) {
             filterConfigs["global"] = parseAndMergeFilterConfig(null);
         }
 
-        // 2. Fetch ShopPages (Raw SQL)
-        const pagesResult: any[] = await prisma.$queryRawUnsafe(
-            `SELECT slug, title FROM "ShopPage"`,
-        );
-        shopPages = pagesResult.map((p: any) => ({ slug: p.slug, title: p.title }));
+        // 2. Fetch ShopPages
+        const pagesResult = await prisma.shopPage.findMany({
+            select: { slug: true, title: true },
+        });
+        shopPages = pagesResult.map((p) => ({ slug: p.slug, title: p.title }));
 
-        // 3. Fetch Product if not new (Raw SQL)
-        if (!isNew) {
-            const productResult: any[] = await prisma.$queryRawUnsafe(
-                `SELECT * FROM "Product" WHERE id = $1`,
-                params.id,
-            );
-            if (productResult[0]) {
-                const p = productResult[0];
-                const parseJson = (str: string, fallback: any) => {
-                    try {
-                        return str ? JSON.parse(str) : fallback;
-                    } catch {
-                        return fallback;
-                    }
-                };
-
-                const inventoryList = parseJson(p.inventory, []);
+        // 3. Fetch Product if not new
+        if (!isNew && params.id) {
+            const p = await prisma.product.findUnique({ where: { id: params.id } });
+            if (p) {
+                const inventoryList = parseJsonAdmin<InventoryEntry[]>(p.inventory, []);
                 // Convert list back to map
                 const inventoryMap: Record<string, number> = {};
                 if (Array.isArray(inventoryList)) {
-                    inventoryList.forEach((item: any) => {
+                    inventoryList.forEach((item) => {
                         inventoryMap[`${item.color}_${item.size}`] = item.stock;
                     });
                 }
 
+                // ProductForm requires non-null strings for several fields where
+                // Prisma exposes them as `string | null`. Coerce here so the
+                // contract is enforced at the boundary.
+                const status: ProductForm["status"] =
+                    p.status === "active" || p.status === "draft" || p.status === "archived"
+                        ? p.status
+                        : "draft";
+
                 product = {
                     ...p,
+                    name: p.name,
+                    description: p.description ?? "",
+                    sku: p.sku ?? "",
+                    category: p.category ?? "",
+                    shopPageSlug: p.shopPageSlug ?? "",
+                    status,
                     price: String(p.price),
                     comparePrice: p.comparePrice ? String(p.comparePrice) : "",
                     stock: String(p.stock),
-                    images: parseJson(p.images, []),
-                    colors: parseJson(p.colors, []),
-                    sizes: parseJson(p.sizes, []),
+                    images: parseJsonAdmin<string[]>(p.images, []),
+                    colors: parseJsonAdmin<string[]>(p.colors, []),
+                    sizes: parseJsonAdmin<string[]>(p.sizes, []),
                     inventory: inventoryMap,
                 };
             }
@@ -211,9 +229,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
         }
 
         return null;
-    } catch (e: any) {
+    } catch (e) {
         console.error("Action error:", e);
-        return { error: e.message || "Сталася серверна помилка" };
+        const message = e instanceof Error ? e.message : "Сталася серверна помилка";
+        return { error: message };
     }
 }
 
@@ -271,7 +290,7 @@ function generateUUID() {
 }
 
 // --- Error Boundary ---
-export function ErrorBoundary({ error }: { error: any }) {
+export function ErrorBoundary({ error }: { error: unknown }) {
     console.error("ErrorBoundary caught error in AdminProductEdit:", error);
 
     let errorDetails = "";
@@ -939,9 +958,9 @@ export default function AdminProductEdit() {
                                                                     <span
                                                                         style={{ fontWeight: 500 }}
                                                                     >
-                                                                        {(
-                                                                            filterConfig?.colors as any
-                                                                        )?.[color] || color}{" "}
+                                                                        {filterConfig?.colors?.[
+                                                                            color
+                                                                        ] || color}{" "}
                                                                         / {size}
                                                                     </span>
                                                                 </td>
@@ -1011,7 +1030,7 @@ export default function AdminProductEdit() {
                                     onChange={(e) =>
                                         setFormData((p) => ({
                                             ...p,
-                                            status: e.target.value as any,
+                                            status: e.target.value as ProductForm["status"],
                                         }))
                                     }
                                     style={{
