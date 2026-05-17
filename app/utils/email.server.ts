@@ -14,6 +14,7 @@
 
 import { Resend } from "resend";
 import { env } from "./env.server";
+import { logger } from "./logger.server";
 
 const apiKey = env.RESEND_API_KEY;
 const FROM_EMAIL = env.EMAIL_FROM ?? "hello@mindbody.com.ua";
@@ -59,7 +60,7 @@ export async function sendEmail(
     args: SendEmailArgs,
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
     if (!resend) {
-        console.warn("[email] RESEND_API_KEY not set — skipping send to", args.to);
+        logger.warn({ to: args.to }, "[email] RESEND_API_KEY not set — skipping send");
         return { ok: false, error: "not_configured" };
     }
     try {
@@ -83,12 +84,12 @@ export async function sendEmail(
             headers: Object.keys(headers).length ? headers : undefined,
         });
         if (res.error) {
-            console.error("[email] Resend error:", res.error);
+            logger.error({ err: res.error, to: args.to }, "[email] Resend error");
             return { ok: false, error: res.error.message };
         }
         return { ok: true, id: res.data?.id };
     } catch (e: any) {
-        console.error("[email] unexpected send error:", e);
+        logger.error({ err: e, to: args.to }, "[email] unexpected send error");
         return { ok: false, error: e?.message || "send_failed" };
     }
 }

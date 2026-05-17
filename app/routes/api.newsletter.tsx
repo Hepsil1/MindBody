@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
 import { sendEmail, renderNewsletterWelcome } from "../utils/email.server";
 import { env } from "../utils/env.server";
+import { logger } from "../utils/logger.server";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -69,11 +70,13 @@ export async function action({ request }: ActionFunctionArgs) {
             html: renderNewsletterWelcome({ email: rawEmail, unsubKey: sub.unsubKey }),
             unsubscribeUrl,
             tags: [{ name: "type", value: "newsletter-welcome" }],
-        }).catch((e) => console.error("[newsletter] welcome email failed:", e));
+        }).catch((e) =>
+            logger.error({ err: e, email: rawEmail }, "[newsletter] welcome email failed"),
+        );
 
         return Response.json({ success: true });
     } catch (e) {
-        console.error("Newsletter subscribe failed", e);
+        logger.error({ err: e }, "[newsletter] subscribe failed");
         return Response.json(
             { success: false, error: "Сталась помилка, спробуйте пізніше" },
             { status: 500 },

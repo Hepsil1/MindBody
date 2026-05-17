@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
 import bcrypt from "bcryptjs";
+import { logger } from "../utils/logger.server";
 
 /**
  * Login API — Authenticates customer with email/password.
@@ -53,7 +54,7 @@ export async function action({ request }: ActionFunctionArgs) {
             headers: { "Content-Type": "application/json" },
         });
     } catch (e) {
-        console.error("Login error:", e);
+        logger.error({ err: e }, "[auth] login failed");
         return new Response(JSON.stringify({ error: "Помилка сервера" }), {
             status: 500,
             headers: { "Content-Type": "application/json" },

@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
 import bcrypt from "bcryptjs";
+import { logger } from "../utils/logger.server";
 
 /**
  * Registration API — Creates a new customer with hashed password.
@@ -57,7 +58,7 @@ export async function action({ request }: ActionFunctionArgs) {
             headers: { "Content-Type": "application/json" },
         });
     } catch (e) {
-        console.error("Registration error:", e);
+        logger.error({ err: e }, "[auth] registration failed");
         return new Response(JSON.stringify({ error: "Помилка сервера" }), {
             status: 500,
             headers: { "Content-Type": "application/json" },

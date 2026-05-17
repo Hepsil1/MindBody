@@ -4,10 +4,12 @@ import { prisma } from "../db.server";
 import { OrderCreateSchema, formatZodErrors } from "../utils/validation";
 import { checkRateLimit } from "../utils/rateLimit.server";
 import { sendEmail, renderOrderConfirmation } from "../utils/email.server";
+import { env } from "../utils/env.server";
+import { logger } from "../utils/logger.server";
 
 // Telegram Configuration — from environment variables
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
+const TELEGRAM_BOT_TOKEN = env.TELEGRAM_BOT_TOKEN ?? "";
+const TELEGRAM_CHAT_ID = env.TELEGRAM_CHAT_ID ?? "";
 
 export async function action({ request }: ActionFunctionArgs) {
     if (request.method !== "POST") {
@@ -277,7 +279,7 @@ export async function action({ request }: ActionFunctionArgs) {
                 }
             });
         } catch (e) {
-            console.error(`Atomic stock update transaction failed:`, e);
+            logger.error({ err: e, orderNumber: orderNumberInt }, "[orders] stock update failed");
         }
 
         // 5. Increment promo code usage if used
@@ -288,7 +290,7 @@ export async function action({ request }: ActionFunctionArgs) {
                     promoCode.trim().toUpperCase(),
                 );
             } catch (e) {
-                console.error("Promo increment failed:", e);
+                logger.error({ err: e, promoCode }, "[orders] promo increment failed");
             }
         }
 
@@ -310,7 +312,7 @@ export async function action({ request }: ActionFunctionArgs) {
                     body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message }),
                 });
             } catch (e) {
-                console.error("Telegram failed:", e);
+                logger.error({ err: e, orderNumber: orderNumberInt }, "[orders] telegram failed");
             }
         }
 
@@ -358,14 +360,19 @@ export async function action({ request }: ActionFunctionArgs) {
                     { name: "type", value: "order-confirmation" },
                     { name: "order", value: String(orderNumberInt) },
                 ],
-            }).catch((e) => console.error("[email] order confirmation failed:", e));
+            }).catch((e) =>
+                logger.error(
+                    { err: e, orderNumber: orderNumberInt, to: customer.email },
+                    "[orders] confirmation email failed",
+                ),
+            );
         }
 
         return new Response(JSON.stringify({ success: true, orderId: newOrder.orderNumber }), {
             headers: { "Content-Type": "application/json" },
         });
     } catch (error: any) {
-        console.error("Order creation error:", error);
+        logger.error({ err: error }, "[orders] creation failed");
         return new Response(
             JSON.stringify({ success: false, error: error?.message || "Order creation failed" }),
             {
