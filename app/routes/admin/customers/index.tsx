@@ -34,7 +34,10 @@ export default function AdminCustomers() {
         return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     };
 
-    const getTotalSpent = (orders: { total: any }[]) => {
+    // `total` arrives as a Prisma Decimal on the server; after useLoaderData
+    // SSR-serialization it may be a string or number. Number() handles all
+    // three because Prisma.Decimal exposes toString/valueOf.
+    const getTotalSpent = (orders: { total: unknown }[]) => {
         return orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
     };
 

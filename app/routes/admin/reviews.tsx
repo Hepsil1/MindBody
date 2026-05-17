@@ -12,14 +12,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
 
     // Map product IDs to names
-    const productIds = Array.from(new Set(reviews.map((r: any) => r.productId)));
+    const productIds = Array.from(new Set(reviews.map((r) => r.productId)));
     const productMap: Record<string, string> = {};
     if (productIds.length > 0) {
         const products = await prisma.product.findMany({
             where: { id: { in: productIds } },
             select: { id: true, name: true },
         });
-        products.forEach((p: any) => {
+        products.forEach((p) => {
             productMap[p.id] = p.name;
         });
     }
@@ -54,7 +54,7 @@ export default function AdminReviews() {
         <div style={{ padding: "20px" }}>
             <h1 style={{ fontSize: "24px", marginBottom: "20px" }}>Модерація відгуків</h1>
             <div style={{ display: "grid", gap: "16px" }}>
-                {reviews.map((r: any) => (
+                {reviews.map((r) => (
                     <div
                         key={r.id}
                         style={{

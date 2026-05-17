@@ -1,4 +1,5 @@
 import { useLoaderData, useNavigate, Form, redirect } from "react-router";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../../db.server";
 import { isAuthenticated } from "../../../utils/admin.server";
 import { useState } from "react";
@@ -80,9 +81,11 @@ export async function action({ request, params }: ActionArgs) {
         const lastName = formData.get("lastName") as string;
         const email = formData.get("email") as string;
         const phone = formData.get("phone") as string;
-        const newPassword = formData.get("newPassword") as string;
+        // NOTE: newPassword update isn't wired up yet — the form posts the
+        // field but the action ignores it. When implementing, bcrypt-hash it
+        // and add to updateData under `passwordHash`.
 
-        const updateData: any = {
+        const updateData: Prisma.CustomerUpdateInput = {
             firstName,
             lastName,
             email,

@@ -120,9 +120,10 @@ export async function action({ request }: { request: Request }) {
         }
 
         return null;
-    } catch (e: any) {
+    } catch (e) {
         console.error("Action error:", e);
-        return { error: e.message || "Сталася серверна помилка" };
+        const message = e instanceof Error ? e.message : "Сталася серверна помилка";
+        return { error: message };
     }
 }
 
