@@ -60,9 +60,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
         }
 
         return null;
-    } catch (e: any) {
+    } catch (e) {
         console.error("Order action error:", e);
-        return { error: e.message || "Сталася серверна помилка" };
+        const message = e instanceof Error ? e.message : "Сталася серверна помилка";
+        return { error: message };
     }
 }
 
@@ -426,7 +427,7 @@ export default function AdminOrderDetails() {
                                                 {item.product?.name || "Товар"}
                                             </div>
                                             <div className="item-meta">
-                                                {(item as any).size && (
+                                                {item.size && (
                                                     <span>
                                                         <svg
                                                             width="12"
@@ -438,22 +439,22 @@ export default function AdminOrderDetails() {
                                                         >
                                                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                                                         </svg>
-                                                        Розмір: {(item as any).size}
+                                                        Розмір: {item.size}
                                                     </span>
                                                 )}
-                                                {(item as any).color && (
+                                                {item.color && (
                                                     <span>
                                                         <span
                                                             style={{
                                                                 width: 12,
                                                                 height: 12,
                                                                 borderRadius: "50%",
-                                                                background: (item as any).color,
+                                                                background: item.color,
                                                                 border: "1px solid rgba(255,255,255,0.2)",
                                                                 display: "inline-block",
                                                             }}
                                                         ></span>
-                                                        Колір: {(item as any).color}
+                                                        Колір: {item.color}
                                                     </span>
                                                 )}
                                                 <span>× {item.quantity} шт</span>
