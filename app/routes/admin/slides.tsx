@@ -2951,7 +2951,6 @@ function FilterEditorModal({ isOpen, onClose, filterConfigs = [], shopPages = []
         } else {
             setData(parseAndMergeFilterConfig(configRow.config));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedPage, filterConfigs]);
 
     const handleSave = () => {

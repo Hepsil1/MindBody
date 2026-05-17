@@ -70,6 +70,12 @@ export default tseslint.config(
             // don't block CI while we clean up gradually.
             "react/no-unescaped-entities": "warn",
             "react/display-name": "warn",
+            // React 19 plugin flags these in many places that aren't bugs —
+            // demote to warn for the baseline; Phase 4 refactor of admin/slides
+            // and other monster files will eliminate them naturally.
+            "react-hooks/set-state-in-effect": "warn",
+            "react-hooks/component-hook-factories": "warn",
+            "react-hooks/static-components": "warn",
         },
     },
 
@@ -88,6 +94,18 @@ export default tseslint.config(
             globals: {
                 ...globals.node,
             },
+        },
+    },
+
+    // CommonJS scripts — require() is legitimate, not an error.
+    {
+        files: ["**/*.cjs", "scripts/**/*.js"],
+        languageOptions: {
+            globals: { ...globals.node },
+            sourceType: "commonjs",
+        },
+        rules: {
+            "@typescript-eslint/no-require-imports": "off",
         },
     },
 

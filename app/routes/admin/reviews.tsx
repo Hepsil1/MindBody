@@ -13,7 +13,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     // Map product IDs to names
     const productIds = Array.from(new Set(reviews.map((r: any) => r.productId)));
-    let productMap: Record<string, string> = {};
+    const productMap: Record<string, string> = {};
     if (productIds.length > 0) {
         const products = await prisma.product.findMany({
             where: { id: { in: productIds } },

@@ -53,12 +53,11 @@ interface NovaPoshtaWarehouse {
 // Phone formatting helper: +380 (XX) XXX-XX-XX
 function formatPhoneUA(value: string): string {
     const digits = value.replace(/\D/g, "");
-    // Ensure starts with 380
+    // Ensure starts with 380 — normalise common Ukrainian prefixes.
     let d = digits;
-    if (d.startsWith("380")) d = d;
-    else if (d.startsWith("80")) d = "3" + d;
+    if (d.startsWith("80")) d = "3" + d;
     else if (d.startsWith("0")) d = "38" + d;
-    else if (!d.startsWith("3")) d = "380" + d;
+    else if (!d.startsWith("380") && !d.startsWith("3")) d = "380" + d;
 
     // Build formatted string
     let result = "+380";
