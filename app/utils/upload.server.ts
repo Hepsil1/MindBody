@@ -10,7 +10,7 @@ import sharp from "sharp";
  * NEVER falls back to base64 — this prevents multi-MB strings
  * from being stored in the database, which kills query performance.
  */
-export async function uploadFile(file: any): Promise<string | null> {
+export async function uploadFile(file: FormDataEntryValue | null): Promise<string | null> {
     if (!file || (file instanceof File && file.size === 0)) return null;
     if (!(file instanceof Blob)) return null;
 
@@ -24,7 +24,7 @@ export async function uploadFile(file: any): Promise<string | null> {
             return null;
         }
 
-        const mimeType = (file as File).type || "image/jpeg";
+        const mimeType = file instanceof File ? file.type || "image/jpeg" : "image/jpeg";
         const isSvg = mimeType.includes("svg");
         const isImage = mimeType.startsWith("image/");
 

@@ -88,9 +88,10 @@ export async function sendEmail(
             return { ok: false, error: res.error.message };
         }
         return { ok: true, id: res.data?.id };
-    } catch (e: any) {
+    } catch (e) {
         logger.error({ err: e, to: args.to }, "[email] unexpected send error");
-        return { ok: false, error: e?.message || "send_failed" };
+        const message = e instanceof Error ? e.message : "send_failed";
+        return { ok: false, error: message };
     }
 }
 
@@ -112,7 +113,7 @@ const ESCAPE: Record<string, string> = {
     '"': "&quot;",
     "'": "&#39;",
 };
-function esc(s: any): string {
+function esc(s: unknown): string {
     return String(s ?? "").replace(/[&<>"']/g, (c) => ESCAPE[c]);
 }
 function money(n: number) {
