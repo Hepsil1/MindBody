@@ -37,17 +37,22 @@ export async function action({ request }: ActionFunctionArgs) {
         );
     }
 
-    let body: any;
+    let body: unknown;
     try {
         body = await request.json();
     } catch {
         return Response.json({ success: false, error: "Invalid JSON" }, { status: 400 });
     }
 
-    const rawEmail = String(body?.email || "")
+    // Defensive narrowing — body is `unknown` until we read fields.
+    const bodyObj = (typeof body === "object" && body !== null ? body : {}) as {
+        email?: unknown;
+        source?: unknown;
+    };
+    const rawEmail = String(bodyObj.email ?? "")
         .trim()
         .toLowerCase();
-    const source = String(body?.source || "footer").slice(0, 32);
+    const source = String(bodyObj.source ?? "footer").slice(0, 32);
 
     if (!EMAIL_REGEX.test(rawEmail) || rawEmail.length > 200) {
         return Response.json({ success: false, error: "Введіть коректний email" }, { status: 400 });

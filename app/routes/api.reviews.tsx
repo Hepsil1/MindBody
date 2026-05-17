@@ -12,20 +12,24 @@ export async function loader({ request }: { request: Request }) {
     }
 
     try {
-        const reviews = (await prisma.$queryRawUnsafe(
-            `SELECT id, "productId", "authorName", rating, text, "isVerified", "createdAt" 
-             FROM "Review" 
-             WHERE "productId" = $1 AND "isApproved" = true
-             ORDER BY "createdAt" DESC`,
-            productId,
-        )) as any[];
+        const reviews = await prisma.review.findMany({
+            where: { productId, isApproved: true },
+            orderBy: { createdAt: "desc" },
+            select: {
+                id: true,
+                productId: true,
+                authorName: true,
+                rating: true,
+                text: true,
+                isVerified: true,
+                createdAt: true,
+            },
+        });
 
         const count = reviews.length;
         const avg =
             count > 0
-                ? Math.round(
-                      (reviews.reduce((s: number, r: any) => s + r.rating, 0) / count) * 10,
-                  ) / 10
+                ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / count) * 10) / 10
                 : 0;
 
         return Response.json({ reviews, avg, count });

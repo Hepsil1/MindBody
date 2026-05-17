@@ -10,16 +10,11 @@ export async function loader({ request }: { request: Request }) {
     }
 
     try {
-        const promo = (await prisma.$queryRawUnsafe(
-            `SELECT * FROM "PromoCode" WHERE code = $1 LIMIT 1`,
-            code,
-        )) as any[];
+        const p = await prisma.promoCode.findUnique({ where: { code } });
 
-        if (!promo[0]) {
+        if (!p) {
             return Response.json({ valid: false, error: "Промокод не знайдено" });
         }
-
-        const p = promo[0];
 
         // Check if active
         if (!p.isActive) {
@@ -56,17 +51,17 @@ export async function action({ request }: { request: Request }) {
     }
 
     try {
-        const body = await request.json();
-        const { code } = body;
+        const raw = (await request.json()) as { code?: unknown };
+        const code = typeof raw.code === "string" ? raw.code.trim().toUpperCase() : "";
 
         if (!code) {
             return Response.json({ error: "Код не вказано" }, { status: 400 });
         }
 
-        await prisma.$executeRawUnsafe(
-            `UPDATE "PromoCode" SET "usedCount" = "usedCount" + 1 WHERE code = $1`,
-            code.trim().toUpperCase(),
-        );
+        await prisma.promoCode.updateMany({
+            where: { code },
+            data: { usedCount: { increment: 1 } },
+        });
 
         return Response.json({ success: true });
     } catch (e) {

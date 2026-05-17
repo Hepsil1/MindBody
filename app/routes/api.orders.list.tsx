@@ -24,10 +24,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
         // Use case-insensitive email matching
         const emailLower = email.toLowerCase().trim();
 
-        // First find customer by email (case-insensitive)
-        const customers = await prisma.$queryRaw<any[]>`
-            SELECT * FROM "Customer" WHERE LOWER(email) = ${emailLower}
-        `;
+        // First find customer by email (case-insensitive). Prisma has no
+        // built-in case-insensitive findUnique, so we typed-raw a single row.
+        const customers = await prisma.$queryRaw<
+            Array<{ id: string; email: string }>
+        >`SELECT id, email FROM "Customer" WHERE LOWER(email) = ${emailLower} LIMIT 1`;
 
         if (customers.length === 0) {
             console.log(`No customer found for email: ${emailLower}`);
@@ -57,13 +58,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
         console.log(`Found ${orders.length} orders for customer ${customer.id}`);
 
-        // Format orders for frontend
-        const formattedOrders = orders.map((order: any) => ({
+        // Format orders for frontend (typed via the findMany return shape)
+        const formattedOrders = orders.map((order) => ({
             id: String(order.orderNumber),
             date: new Date(order.createdAt).toLocaleDateString("uk-UA"),
             status: order.status,
             total: Number(order.total),
-            items: order.items.map((item: any) => ({
+            items: order.items.map((item) => ({
                 name: item.product?.name || "Товар",
                 image: item.product?.images ? JSON.parse(item.product.images)[0] : "/brand-sun.png",
                 quantity: item.quantity,
