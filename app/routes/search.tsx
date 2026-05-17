@@ -1,12 +1,26 @@
 import { Link, useLoaderData, useSearchParams } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { prisma } from "../db.server";
 import { useState } from "react";
 import ProductCard, { type Product } from "../components/ProductCard";
 
 const SITE_URL = "https://mindbody.com.ua";
 
-export function meta({ data }: { data: any }) {
+// Shape of one row returned by the raw SELECT below.
+interface SearchProductRow {
+    id: string;
+    name: string;
+    price: number | string;
+    comparePrice: number | string | null;
+    category: string | null;
+    images: string | null;
+    shopPageSlug: string | null;
+    inventory: string | null;
+    status: string;
+    createdAt: Date;
+}
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const q = data?.q || "";
     const count = data?.products?.length || 0;
     const title = q ? `Пошук: ${q} | MIND BODY` : "Пошук | MIND BODY";
@@ -27,19 +41,19 @@ export function meta({ data }: { data: any }) {
         // Search-result pages shouldn't be indexed individually
         { name: "robots", content: "noindex, follow" },
     ];
-}
+};
 
 export async function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url);
     const q = (url.searchParams.get("q") || "").trim();
 
     if (q.length < 2) {
-        return { q, products: [] as any[] };
+        return { q, products: [] as Product[] };
     }
 
     try {
         const term = `%${q.replace(/[%_]/g, "")}%`;
-        const products: any[] = await prisma.$queryRaw`
+        const products = await prisma.$queryRaw<SearchProductRow[]>`
             SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", inventory, status, "createdAt"
             FROM "Product"
             WHERE status = 'active'
@@ -55,19 +69,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
         const NOW = Date.now();
         const NEW_THRESHOLD = 14 * 24 * 60 * 60 * 1000;
 
-        const mapped = products.map((p: any) => {
+        const mapped: Product[] = products.map((p) => {
             let imgs: string[] = [];
             try {
                 imgs = JSON.parse(p.images || "[]");
-            } catch {}
+            } catch {
+                // Malformed images JSON — fall back to placeholder.
+            }
             let inv: Record<string, number> = {};
             try {
                 inv = JSON.parse(p.inventory || "{}");
-            } catch {}
+            } catch {
+                // Malformed inventory JSON — treat as no stock info, fall back to status check.
+            }
             const invValues = Object.values(inv);
             const inStock =
                 p.status === "active" &&
-                (invValues.length === 0 || invValues.some((v: any) => Number(v) > 0));
+                (invValues.length === 0 || invValues.some((v) => Number(v) > 0));
             const price = Number(p.price);
             const comparePrice = Number(p.comparePrice) || 0;
             const isSale = comparePrice > price && price > 0;
@@ -76,7 +94,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
             return {
                 id: p.id,
                 name: p.name,
-                category: p.category,
+                category: p.category ?? undefined,
                 price: isSale ? comparePrice : price,
                 image: imgs[0] || "/brand-sun.png",
                 image2: imgs[1] || null,
@@ -85,13 +103,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
                 sale_price: isSale ? price : undefined,
                 discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
                 inStock,
-            } as Product;
+            };
         });
 
         return { q, products: mapped };
     } catch (e) {
         console.error("Search loader error", e);
-        return { q, products: [] as any[] };
+        return { q, products: [] as Product[] };
     }
 }
 
