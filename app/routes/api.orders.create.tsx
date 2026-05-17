@@ -7,17 +7,11 @@ import { checkRateLimit } from "../utils/rateLimit.server";
 import { sendEmail, renderOrderConfirmation } from "../utils/email.server";
 import { env } from "../utils/env.server";
 import { logger } from "../utils/logger.server";
+import type { InventoryVariant } from "../types/product";
 
 // Telegram Configuration — from environment variables
 const TELEGRAM_BOT_TOKEN = env.TELEGRAM_BOT_TOKEN ?? "";
 const TELEGRAM_CHAT_ID = env.TELEGRAM_CHAT_ID ?? "";
-
-// Shape of one entry in the JSON inventory array stored on Product.inventory.
-interface InventoryVariant {
-    size?: string | null;
-    color?: string | null;
-    stock?: number;
-}
 
 // Server-validated cart item — built from incoming items + DB price/name lookup,
 // then used for order creation and downstream notifications.

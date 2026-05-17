@@ -1,11 +1,23 @@
-import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router";
+import { Link, useLoaderData, type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "../components/Toast";
 import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
+import type {
+    InventoryVariant,
+    ReviewData,
+    RelatedProductCard,
+    FilterConfigData,
+} from "../types/product";
 import "../styles/product-page.css";
 
-export function meta({ data }: { data: any }) {
+// NOTE: this route file exports a client component, so we can't import
+// `.server` modules here (Vite will fail with "Server-only module
+// referenced by client"). Use process.env directly in the loader; Phase 4
+// will extract loader logic into a `.server.ts` companion so we can adopt
+// the pino logger and Zod-validated env across all routes.
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const product = data?.product;
     if (!product) {
         return [{ title: "Товар не знайдено | MIND BODY" }];
@@ -81,17 +93,12 @@ export function meta({ data }: { data: any }) {
             },
         },
     ];
-}
+};
 
 export function headers() {
     return {
         "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
     };
-}
-
-// --- Types ---
-interface FilterConfigData {
-    colors: Record<string, string>;
 }
 
 const COLOR_MAP: Record<string, string> = {
@@ -112,46 +119,78 @@ const COLOR_MAP: Record<string, string> = {
     marsala: "#722F37",
 };
 
+// Narrow JSON parser that preserves the fallback's type.
+function parseJson<T>(str: string | null | undefined, fallback: T): T {
+    if (!str) return fallback;
+    try {
+        return JSON.parse(str) as T;
+    } catch {
+        return fallback;
+    }
+}
+
+interface ProductDetailData {
+    id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    comparePrice: number;
+    images: string[];
+    category: string | null;
+    shopPageSlug: string | null;
+    colors: string[];
+    sizes: string[];
+    inventory: InventoryVariant[];
+    status: string;
+    is_new: boolean;
+    is_sale: boolean;
+    discount_percent: number;
+}
+
 export async function loader({ params }: LoaderFunctionArgs) {
     const id = params.id;
-    let product: any = null;
+    if (!id) throw new Response("Not Found", { status: 404 });
+
+    let product: ProductDetailData | null = null;
     let filterConfig: FilterConfigData | null = null;
-    let relatedProducts: any[] = [];
+    let relatedProducts: RelatedProductCard[] = [];
 
     try {
         // Run product + filterConfig queries in parallel
-        const [productResult, configResult] = await Promise.all([
-            prisma.$queryRawUnsafe(
-                `SELECT id, name, description, price, "comparePrice", category, images, colors, sizes, inventory, status, "shopPageSlug", "createdAt"
-                 FROM "Product" WHERE id = $1`,
-                id,
-            ) as Promise<any[]>,
-            prisma.$queryRawUnsafe(
-                `SELECT id, config FROM "FilterConfig" WHERE id = 'global'`,
-            ) as Promise<any[]>,
+        const [p, globalConfig] = await Promise.all([
+            prisma.product.findUnique({
+                where: { id },
+                select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    price: true,
+                    comparePrice: true,
+                    category: true,
+                    images: true,
+                    colors: true,
+                    sizes: true,
+                    inventory: true,
+                    status: true,
+                    shopPageSlug: true,
+                    createdAt: true,
+                },
+            }),
+            prisma.filterConfig.findUnique({ where: { id: "global" } }),
         ]);
 
-        if (productResult[0]) {
-            const p = productResult[0];
-            const parseJson = (str: string, fallback: any) => {
-                try {
-                    return str ? JSON.parse(str) : fallback;
-                } catch {
-                    return fallback;
-                }
-            };
-
-            const images = parseJson(p.images, []);
+        if (p) {
+            const images = parseJson<string[]>(p.images, []);
             if (images.length === 0) images.push("/brand-sun.png");
 
             // Parse inventory to extract available variants
-            const inventory = parseJson(p.inventory, []);
+            const inventory = parseJson<InventoryVariant[]>(p.inventory, []);
 
             // Extract available colors and sizes from inventory (only in-stock items)
             const availableColors = new Set<string>();
             const availableSizes = new Set<string>();
             for (const item of inventory) {
-                if (item.stock > 0) {
+                if ((item.stock ?? 0) > 0) {
                     if (item.color) availableColors.add(item.color);
                     if (item.size) availableSizes.add(item.size);
                 }
@@ -166,18 +205,20 @@ export async function loader({ params }: LoaderFunctionArgs) {
                 id: p.id,
                 name: p.name,
                 description: p.description,
-                price: price,
-                comparePrice: comparePrice,
-                images: images,
+                price,
+                comparePrice,
+                images,
                 category: p.category,
                 shopPageSlug: p.shopPageSlug,
                 colors:
                     availableColors.size > 0
                         ? Array.from(availableColors)
-                        : parseJson(p.colors, []),
+                        : parseJson<string[]>(p.colors, []),
                 sizes:
-                    availableSizes.size > 0 ? Array.from(availableSizes) : parseJson(p.sizes, []),
-                inventory: inventory,
+                    availableSizes.size > 0
+                        ? Array.from(availableSizes)
+                        : parseJson<string[]>(p.sizes, []),
+                inventory,
                 status: p.status,
                 is_new: isNew,
                 is_sale: comparePrice > price && price > 0,
@@ -185,29 +226,31 @@ export async function loader({ params }: LoaderFunctionArgs) {
                     comparePrice > price ? Math.round((1 - price / comparePrice) * 100) : 0,
             };
 
-            const relatedResult: any[] = await prisma.$queryRawUnsafe(
-                `SELECT id, name, price, images FROM "Product" WHERE category = $1 AND id != $2 LIMIT 4`,
-                p.category,
-                p.id,
-            );
+            if (p.category) {
+                const relatedResult = await prisma.product.findMany({
+                    where: { category: p.category, id: { not: p.id } },
+                    select: { id: true, name: true, price: true, images: true },
+                    take: 4,
+                });
 
-            relatedProducts = relatedResult.map((rp) => ({
-                id: rp.id,
-                name: rp.name,
-                price: Number(rp.price),
-                image: parseJson(rp.images, ["/brand-sun.png"])[0],
-            }));
+                relatedProducts = relatedResult.map((rp) => ({
+                    id: rp.id,
+                    name: rp.name,
+                    price: Number(rp.price),
+                    image: parseJson<string[]>(rp.images, ["/brand-sun.png"])[0],
+                }));
+            }
         }
 
-        // configResult already fetched in parallel above
-        const globalConfig = configResult.find((c: any) => c.id === "global");
         if (globalConfig?.config) {
             try {
-                filterConfig = JSON.parse(globalConfig.config);
-            } catch {}
+                filterConfig = JSON.parse(globalConfig.config) as FilterConfigData;
+            } catch {
+                // Malformed FilterConfig — render PDP without color overrides.
+            }
         }
     } catch (e) {
-        console.error("Product Loader Error:", e);
+        console.error("[product] loader failed:", { productId: id, error: e });
         throw new Response("Server Error", { status: 500 });
     }
 
@@ -219,14 +262,14 @@ export async function loader({ params }: LoaderFunctionArgs) {
         product,
         filterConfig,
         relatedProducts,
-        siteUrl: process.env.SITE_URL || "https://mindbody.com.ua",
+        siteUrl: process.env.SITE_URL ?? "https://mindbody.com.ua",
     };
 }
 
 // ===== REVIEWS SECTION COMPONENT =====
 function ReviewsSection({ productId }: { productId: string }) {
     const { showToast } = useToast();
-    const [reviews, setReviews] = useState<any[]>([]);
+    const [reviews, setReviews] = useState<ReviewData[]>([]);
     const [avg, setAvg] = useState(0);
     const [count, setCount] = useState(0);
     const [showForm, setShowForm] = useState(false);
@@ -323,7 +366,7 @@ function ReviewsSection({ productId }: { productId: string }) {
 
             {reviews.length > 0 ? (
                 <div className="reviews-list">
-                    {reviews.map((r: any) => (
+                    {reviews.map((r) => (
                         <div key={r.id} className="review-card">
                             <div className="review-card__header">
                                 <div className="review-card__author">
@@ -459,32 +502,45 @@ export default function ProductDetail() {
     // Helper: Get stock for a specific size/color combination
     const getVariantStock = (size: string, color: string): number => {
         if (!product.inventory || !Array.isArray(product.inventory)) return 0;
-        const variant = product.inventory.find((v: any) => v.size === size && v.color === color);
+        const variant = product.inventory.find(
+            (v: InventoryVariant) => v.size === size && v.color === color,
+        );
         return variant?.stock || 0;
     };
 
     // Helper: Check if a color is available for the selected size
     const isColorAvailable = (color: string): boolean => {
         if (!selectedSize)
-            return product.inventory?.some((v: any) => v.color === color && v.stock > 0) ?? true;
+            return (
+                product.inventory?.some(
+                    (v: InventoryVariant) => v.color === color && (v.stock ?? 0) > 0,
+                ) ?? true
+            );
         return getVariantStock(selectedSize, color) > 0;
     };
 
     // Helper: Check if a size is available for the selected color
     const isSizeAvailable = (size: string): boolean => {
         if (!selectedColor)
-            return product.inventory?.some((v: any) => v.size === size && v.stock > 0) ?? true;
+            return (
+                product.inventory?.some(
+                    (v: InventoryVariant) => v.size === size && (v.stock ?? 0) > 0,
+                ) ?? true
+            );
         return getVariantStock(size, selectedColor) > 0;
     };
 
     // Current selection stock
     const currentStock = getVariantStock(selectedSize, selectedColor);
     const hasAnyStock =
-        !product.inventory?.length || product.inventory.some((v: any) => v.stock > 0);
+        !product.inventory?.length ||
+        product.inventory.some((v: InventoryVariant) => (v.stock ?? 0) > 0);
     const hasColorStock =
         !selectedColor ||
         !product.inventory?.length ||
-        product.inventory.some((v: any) => v.color === selectedColor && v.stock > 0);
+        product.inventory.some(
+            (v: InventoryVariant) => v.color === selectedColor && (v.stock ?? 0) > 0,
+        );
     const isInStock = selectedSize
         ? currentStock > 0 || product.inventory?.length === 0
         : hasColorStock && hasAnyStock;
@@ -533,7 +589,7 @@ export default function ProductDetail() {
             name: product.name,
             price: product.price,
             image: product.images[0],
-            category: product.category,
+            category: product.category ?? "",
         });
         if (added) showToast("Додано до улюбленого ❤️");
         else showToast("Вже у списку", "info");
