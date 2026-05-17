@@ -6,7 +6,7 @@ import sharp from "sharp";
  * Upload a file to the server's public/uploads directory.
  * Automatically resizes and converts most images to WebP via Sharp for SEO.
  * Returns the URL path (e.g., "/uploads/upload_1234.webp").
- * 
+ *
  * NEVER falls back to base64 — this prevents multi-MB strings
  * from being stored in the database, which kills query performance.
  */
@@ -27,9 +27,9 @@ export async function uploadFile(file: any): Promise<string | null> {
         const mimeType = (file as File).type || "image/jpeg";
         const isSvg = mimeType.includes("svg");
         const isImage = mimeType.startsWith("image/");
-        
+
         // Define extension (webp for converted images, svg for icons, else fallback)
-        const ext = isSvg ? "svg" : (isImage ? "webp" : "jpg");
+        const ext = isSvg ? "svg" : isImage ? "webp" : "jpg";
         const filename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
         const uploadsDir = path.join(process.cwd(), "public", "uploads");
@@ -44,7 +44,7 @@ export async function uploadFile(file: any): Promise<string | null> {
             await sharp(buffer)
                 // Максимально возможное разрешение для 4K/Retina (3500px). Площадь до 12 Мегапикселей.
                 // Apple iOS безопасно рендерит WebP только до 16.7 Мегапикселей. Это сохраняет 100% визуального качества.
-                .resize({ width: 3500, height: 3500, withoutEnlargement: true, fit: 'inside' }) 
+                .resize({ width: 3500, height: 3500, withoutEnlargement: true, fit: "inside" })
                 .webp({ quality: 95, effort: 4 }) // Ultra-high HQ
                 .toFile(filePath);
         } else {
@@ -76,7 +76,10 @@ export function isBase64DataUrl(str: string | null | undefined): boolean {
  * Sanitize an image URL — replaces base64 data URLs with a placeholder.
  * Use this in loaders to prevent sending multi-MB base64 strings to the client.
  */
-export function sanitizeImageUrl(url: string | null | undefined, fallback: string = "/brand-sun.png"): string {
+export function sanitizeImageUrl(
+    url: string | null | undefined,
+    fallback: string = "/brand-sun.png",
+): string {
     if (!url) return fallback;
     if (isBase64DataUrl(url)) return fallback;
     return url;

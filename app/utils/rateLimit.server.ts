@@ -12,14 +12,17 @@ interface RateLimitEntry {
 const store = new Map<string, RateLimitEntry>();
 
 // Cleanup old entries periodically (every 5 minutes)
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of store) {
-        if (now > entry.resetAt) {
-            store.delete(key);
+setInterval(
+    () => {
+        const now = Date.now();
+        for (const [key, entry] of store) {
+            if (now > entry.resetAt) {
+                store.delete(key);
+            }
         }
-    }
-}, 5 * 60 * 1000);
+    },
+    5 * 60 * 1000,
+);
 
 /**
  * Check if a request is rate-limited.
@@ -33,11 +36,12 @@ export function checkRateLimit(
     request: Request,
     key: string,
     maxRequests: number = 10,
-    windowMs: number = 60_000
+    windowMs: number = 60_000,
 ): Response | null {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-        || request.headers.get("x-real-ip")
-        || "unknown";
+    const ip =
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip") ||
+        "unknown";
 
     const compositeKey = `${key}:${ip}`;
     const now = Date.now();
@@ -61,7 +65,7 @@ export function checkRateLimit(
                     "Content-Type": "application/json",
                     "Retry-After": String(retryAfter),
                 },
-            }
+            },
         );
     }
 

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import '../styles/loading-screen.css';
+import { useEffect, useState } from "react";
+import "../styles/loading-screen.css";
 
 export function LoadingScreen() {
     const [isVisible, setIsVisible] = useState(true);
@@ -16,15 +16,15 @@ export function LoadingScreen() {
 
         // Also hide if the document becomes interactive (handles slow loaders)
         const onReady = () => {
-            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            if (document.readyState === "complete" || document.readyState === "interactive") {
                 hide();
             }
         };
-        document.addEventListener('readystatechange', onReady);
+        document.addEventListener("readystatechange", onReady);
 
         return () => {
             clearTimeout(maxTimer);
-            document.removeEventListener('readystatechange', onReady);
+            document.removeEventListener("readystatechange", onReady);
         };
     }, []);
 
@@ -38,7 +38,7 @@ export function LoadingScreen() {
     if (!shouldRender) return null;
 
     return (
-        <div className={`loading-screen ${!isVisible ? 'loading-screen--hidden' : ''}`}>
+        <div className={`loading-screen ${!isVisible ? "loading-screen--hidden" : ""}`}>
             <div className="loading-screen__container">
                 <img
                     src="/brand-sun.webp"

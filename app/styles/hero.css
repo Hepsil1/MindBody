@@ -29,7 +29,8 @@
     height: 100%;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 1.2s cubic-bezier (0.4, 0, 0.2, 1),
+    transition:
+        opacity 1.2s cubic-bezier (0.4, 0, 0.2, 1),
         visibility 1.2s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: opacity;
     background: #e5e5e5;
@@ -101,7 +102,13 @@
     position: absolute;
     inset: 0;
     z-index: 5;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 35%, rgba(0, 0, 0, 0.1) 65%, rgba(0, 0, 0, 0.35) 100%);
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.55) 0%,
+        rgba(0, 0, 0, 0.15) 35%,
+        rgba(0, 0, 0, 0.1) 65%,
+        rgba(0, 0, 0, 0.35) 100%
+    );
     pointer-events: none;
 }
 
@@ -119,7 +126,7 @@
     pointer-events: none;
 }
 
-.hero-slider__content>* {
+.hero-slider__content > * {
     pointer-events: auto;
 }
 
@@ -153,7 +160,6 @@
     animation: logoGlowPulse 5s ease-in-out infinite 2s;
 }
 
-
 /* === Premium Logo Animation === */
 @keyframes logoRevealPremium {
     to {
@@ -163,7 +169,6 @@
 }
 
 @keyframes logoGlowPulse {
-
     0%,
     100% {
         filter: brightness(0) invert(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.2));
@@ -171,7 +176,8 @@
     }
 
     50% {
-        filter: brightness(0) invert(1) drop-shadow(0 0 80px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 120px rgba(61, 122, 140, 0.2));
+        filter: brightness(0) invert(1) drop-shadow(0 0 80px rgba(255, 255, 255, 0.45))
+            drop-shadow(0 0 120px rgba(61, 122, 140, 0.2));
         transform: scale(1.015);
     }
 }
@@ -197,7 +203,7 @@
     padding: 16px 48px !important;
     font-size: 0.8rem !important;
     letter-spacing: 0.25em !important;
-    font-family: 'Jost', sans-serif !important;
+    font-family: "Jost", sans-serif !important;
     font-weight: 400 !important;
     text-transform: uppercase;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -239,7 +245,7 @@
 }
 
 .hero-slider__dot::after {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     top: 0;
@@ -300,7 +306,7 @@
 }
 
 .hero-slider__scroll-line::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -328,7 +334,6 @@
 
 /* === Responsive === */
 @media (max-width: 768px) {
-
     .hero-slider__triptych-item:nth-child(1),
     .hero-slider__triptych-item:nth-child(3) {
         display: none;

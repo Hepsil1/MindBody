@@ -38,16 +38,16 @@ model Product {
 }
 
 model Customer {
-  id              String   @id @default(uuid())
-  passwordHash    String?  @unique
-  firstName       String
-  lastName        String
-  email           String   @unique
-  phone           String?
-  avatar          String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  orders          Order[]
+  id           String   @id @default(uuid())
+  passwordHash String?  @unique
+  firstName    String
+  lastName     String
+  email        String   @unique
+  phone        String?
+  avatar       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orders       Order[]
 }
 
 model Order {
@@ -167,7 +167,7 @@ model PromoCode {
 model NewsletterSubscriber {
   id           String   @id @default(uuid())
   email        String   @unique
-  source       String?  // 'footer', 'cookie-banner', 'checkout', 'popup'
+  source       String? // 'footer', 'cookie-banner', 'checkout', 'popup'
   consent      Boolean  @default(true)
   unsubscribed Boolean  @default(false)
   unsubKey     String   @unique @default(uuid())

@@ -16,7 +16,11 @@ export function meta({ data }: { data: any }) {
     return [
         { title },
         { name: "description", content: desc },
-        { tagName: "link", rel: "canonical", href: `${SITE_URL}/search${q ? `?q=${encodeURIComponent(q)}` : ""}` },
+        {
+            tagName: "link",
+            rel: "canonical",
+            href: `${SITE_URL}/search${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+        },
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
         { property: "og:type", content: "website" },
@@ -53,14 +57,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
         const mapped = products.map((p: any) => {
             let imgs: string[] = [];
-            try { imgs = JSON.parse(p.images || "[]"); } catch {}
+            try {
+                imgs = JSON.parse(p.images || "[]");
+            } catch {}
             let inv: Record<string, number> = {};
-            try { inv = JSON.parse(p.inventory || "{}"); } catch {}
+            try {
+                inv = JSON.parse(p.inventory || "{}");
+            } catch {}
             const invValues = Object.values(inv);
-            const inStock = p.status === "active" && (
-                invValues.length === 0 ||
-                invValues.some((v: any) => Number(v) > 0)
-            );
+            const inStock =
+                p.status === "active" &&
+                (invValues.length === 0 || invValues.some((v: any) => Number(v) > 0));
             const price = Number(p.price);
             const comparePrice = Number(p.comparePrice) || 0;
             const isSale = comparePrice > price && price > 0;
@@ -73,7 +80,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
                 price: isSale ? comparePrice : price,
                 image: imgs[0] || "/brand-sun.png",
                 image2: imgs[1] || null,
-                is_new: (NOW - createdAt) < NEW_THRESHOLD,
+                is_new: NOW - createdAt < NEW_THRESHOLD,
                 is_sale: isSale,
                 sale_price: isSale ? price : undefined,
                 discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
@@ -107,13 +114,21 @@ export default function Search() {
 
     return (
         <main className="search-page">
-            <section className="page-hero" style={{
-                background: "linear-gradient(135deg, var(--color-bg-cream) 0%, var(--color-bg-soft) 100%)",
-                padding: "120px 0 60px",
-                textAlign: "center"
-            }}>
+            <section
+                className="page-hero"
+                style={{
+                    background:
+                        "linear-gradient(135deg, var(--color-bg-cream) 0%, var(--color-bg-soft) 100%)",
+                    padding: "120px 0 60px",
+                    textAlign: "center",
+                }}
+            >
                 <div className="container" style={{ maxWidth: "720px" }}>
-                    <nav className="breadcrumb" aria-label="Хлібні крихти" style={{ marginBottom: "20px" }}>
+                    <nav
+                        className="breadcrumb"
+                        aria-label="Хлібні крихти"
+                        style={{ marginBottom: "20px" }}
+                    >
                         <Link to="/">Головна</Link>
                         <span aria-hidden="true"> / </span>
                         <span>Пошук</span>
@@ -131,7 +146,7 @@ export default function Search() {
                             border: "1px solid var(--color-border)",
                             borderRadius: "999px",
                             padding: "6px",
-                            boxShadow: "0 6px 30px rgba(20, 40, 40, 0.06)"
+                            boxShadow: "0 6px 30px rgba(20, 40, 40, 0.06)",
                         }}
                     >
                         <label htmlFor="search-input" className="visually-hidden">
@@ -141,7 +156,7 @@ export default function Search() {
                             id="search-input"
                             type="search"
                             value={query}
-                            onChange={e => setQuery(e.target.value)}
+                            onChange={(e) => setQuery(e.target.value)}
                             placeholder="Лосини, топ, костюм…"
                             autoComplete="off"
                             autoFocus
@@ -151,7 +166,7 @@ export default function Search() {
                                 background: "transparent",
                                 padding: "14px 20px",
                                 fontSize: "16px",
-                                fontFamily: "var(--font-body, 'DM Sans', sans-serif)"
+                                fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
                             }}
                         />
                         <button
@@ -168,26 +183,37 @@ export default function Search() {
                         <p style={{ marginTop: "20px", color: "var(--color-text-secondary)" }}>
                             {products.length > 0
                                 ? `Знайдено ${products.length} ${products.length === 1 ? "товар" : "товарів"} за запитом «${initialQ}»`
-                                : `Нічого не знайдено за запитом «${initialQ}»`
-                            }
+                                : `Нічого не знайдено за запитом «${initialQ}»`}
                         </p>
                     )}
                 </div>
             </section>
 
-            <section className="section" style={{ background: "#fff", paddingTop: "40px", paddingBottom: "80px" }}>
+            <section
+                className="section"
+                style={{ background: "#fff", paddingTop: "40px", paddingBottom: "80px" }}
+            >
                 <div className="container">
                     {!hasQuery && (
-                        <div style={{
-                            textAlign: "center",
-                            padding: "40px 20px",
-                            color: "var(--color-text-secondary)"
-                        }}>
+                        <div
+                            style={{
+                                textAlign: "center",
+                                padding: "40px 20px",
+                                color: "var(--color-text-secondary)",
+                            }}
+                        >
                             <p style={{ marginBottom: "24px", fontSize: "16px" }}>
                                 Введи 2 або більше символів — і ми знайдемо.
                             </p>
-                            <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
-                                {["Лосини", "Топ", "Костюм", "Шорти", "Худі"].map(tag => (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "10px",
+                                    justifyContent: "center",
+                                    flexWrap: "wrap",
+                                }}
+                            >
+                                {["Лосини", "Топ", "Костюм", "Шорти", "Худі"].map((tag) => (
                                     <button
                                         key={tag}
                                         type="button"
@@ -204,7 +230,7 @@ export default function Search() {
                                             borderRadius: "999px",
                                             cursor: "pointer",
                                             fontSize: "14px",
-                                            fontFamily: "var(--font-body, 'DM Sans', sans-serif)"
+                                            fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
                                         }}
                                     >
                                         {tag}
@@ -227,15 +253,37 @@ export default function Search() {
                     {noResults && (
                         <div style={{ textAlign: "center", padding: "48px 20px" }}>
                             <h2 style={{ marginBottom: "12px" }}>Спробуй інше</h2>
-                            <p style={{ color: "var(--color-text-secondary)", marginBottom: "32px", maxWidth: "480px", margin: "0 auto 32px" }}>
-                                Можливо, варто перевірити написання або скоротити запит.
-                                Або перегляньте наші колекції:
+                            <p
+                                style={{
+                                    color: "var(--color-text-secondary)",
+                                    marginBottom: "32px",
+                                    maxWidth: "480px",
+                                    margin: "0 auto 32px",
+                                }}
+                            >
+                                Можливо, варто перевірити написання або скоротити запит. Або
+                                перегляньте наші колекції:
                             </p>
-                            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-                                <Link to="/shop/yoga" className="btn btn--primary">Yoga</Link>
-                                <Link to="/shop/sport" className="btn btn--primary">Sport</Link>
-                                <Link to="/shop/casual" className="btn btn--primary">Casual</Link>
-                                <Link to="/shop/kids" className="btn btn--primary">Kids</Link>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "12px",
+                                    justifyContent: "center",
+                                    flexWrap: "wrap",
+                                }}
+                            >
+                                <Link to="/shop/yoga" className="btn btn--primary">
+                                    Yoga
+                                </Link>
+                                <Link to="/shop/sport" className="btn btn--primary">
+                                    Sport
+                                </Link>
+                                <Link to="/shop/casual" className="btn btn--primary">
+                                    Casual
+                                </Link>
+                                <Link to="/shop/kids" className="btn btn--primary">
+                                    Kids
+                                </Link>
                             </div>
                         </div>
                     )}

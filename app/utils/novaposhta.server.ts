@@ -54,15 +54,19 @@ export interface NovaPoshtaResponse<T> {
 async function makeNovaPoshtaRequest<T>(
     modelName: string,
     calledMethod: string,
-    methodProperties: Record<string, unknown>
+    methodProperties: Record<string, unknown>,
 ): Promise<NovaPoshtaResponse<T>> {
     // Check if API key is configured
     if (!NOVA_POSHTA_API_KEY) {
-        console.error('Nova Poshta API key is not configured! Please add your API key to app/utils/novaposhta.server.ts');
+        console.error(
+            "Nova Poshta API key is not configured! Please add your API key to app/utils/novaposhta.server.ts",
+        );
         return {
             success: false,
             data: [],
-            errors: ['API key not configured. Please set NOVA_POSHTA_API_KEY environment variable or update novaposhta.server.ts'],
+            errors: [
+                "API key not configured. Please set NOVA_POSHTA_API_KEY environment variable or update novaposhta.server.ts",
+            ],
             warnings: [],
             info: { totalCount: 0 },
         };
@@ -70,9 +74,9 @@ async function makeNovaPoshtaRequest<T>(
 
     try {
         const response = await fetch(NOVA_POSHTA_API_URL, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
                 apiKey: NOVA_POSHTA_API_KEY,
@@ -86,20 +90,20 @@ async function makeNovaPoshtaRequest<T>(
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const result = await response.json() as NovaPoshtaResponse<T>;
+        const result = (await response.json()) as NovaPoshtaResponse<T>;
 
         // Log errors from Nova Poshta API for debugging
         if (!result.success && result.errors && result.errors.length > 0) {
-            console.error('Nova Poshta API returned errors:', result.errors);
+            console.error("Nova Poshta API returned errors:", result.errors);
         }
 
         return result;
     } catch (error) {
-        console.error('Nova Poshta API error:', error);
+        console.error("Nova Poshta API error:", error);
         return {
             success: false,
             data: [],
-            errors: [error instanceof Error ? error.message : 'Unknown error'],
+            errors: [error instanceof Error ? error.message : "Unknown error"],
             warnings: [],
             info: { totalCount: 0 },
         };
@@ -111,22 +115,18 @@ export async function searchCities(query: string, limit: number = 20): Promise<N
         return [];
     }
 
-    const response = await makeNovaPoshtaRequest<NovaPoshtaCity>(
-        'Address',
-        'getCities',
-        {
-            FindByString: query,
-            Limit: String(limit),
-        }
-    );
+    const response = await makeNovaPoshtaRequest<NovaPoshtaCity>("Address", "getCities", {
+        FindByString: query,
+        Limit: String(limit),
+    });
 
     return response.success ? response.data : [];
 }
 
 export async function getWarehouses(
     cityRef: string,
-    searchQuery: string = '',
-    limit: number = 50
+    searchQuery: string = "",
+    limit: number = 50,
 ): Promise<NovaPoshtaWarehouse[]> {
     if (!cityRef) {
         return [];
@@ -142,9 +142,9 @@ export async function getWarehouses(
     }
 
     const response = await makeNovaPoshtaRequest<NovaPoshtaWarehouse>(
-        'Address',
-        'getWarehouses',
-        methodProperties
+        "Address",
+        "getWarehouses",
+        methodProperties,
     );
 
     return response.success ? response.data : [];
@@ -155,14 +155,10 @@ export async function searchSettlements(query: string, limit: number = 20) {
         return [];
     }
 
-    const response = await makeNovaPoshtaRequest<NovaPoshtaCity>(
-        'Address',
-        'searchSettlements',
-        {
-            CityName: query,
-            Limit: String(limit),
-        }
-    );
+    const response = await makeNovaPoshtaRequest<NovaPoshtaCity>("Address", "searchSettlements", {
+        CityName: query,
+        Limit: String(limit),
+    });
 
     return response.success ? response.data : [];
 }

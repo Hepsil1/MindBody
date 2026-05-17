@@ -63,7 +63,12 @@ interface HeroSliderProps {
     children?: React.ReactNode;
 }
 
-export default function HeroSlider({ slides: propSlides, autoPlay = true, interval = 5000, children }: HeroSliderProps) {
+export default function HeroSlider({
+    slides: propSlides,
+    autoPlay = true,
+    interval = 5000,
+    children,
+}: HeroSliderProps) {
     const slides = propSlides && propSlides.length > 0 ? propSlides : defaultSlides;
     const [activeSlide, setActiveSlide] = useState(0);
 
@@ -88,7 +93,7 @@ export default function HeroSlider({ slides: propSlides, autoPlay = true, interv
         return [
             { img: slide.image1, pos: (slide as any).image1Pos || "center center" },
             { img: slide.image2, pos: (slide as any).image2Pos || "center center" },
-            { img: slide.image3, pos: (slide as any).image3Pos || "center center" }
+            { img: slide.image3, pos: (slide as any).image3Pos || "center center" },
         ].filter((item): item is { img: string; pos: string } => !!item.img);
     };
 
@@ -123,13 +128,18 @@ export default function HeroSlider({ slides: propSlides, autoPlay = true, interv
 
             {/* Content Layer */}
             <div className="hero-slider__content">
-                {children ? children : (
+                {children ? (
+                    children
+                ) : (
                     <>
                         {/* Brand Logo + UTP */}
                         <div className="hero-slider__logo-container">
                             <div className="hero-slider__brand-block">
                                 <div className="hero-slider__logo">
-                                    <img src="/pics/mind_body_logo.png" alt="MIND BODY — sport wear" />
+                                    <img
+                                        src="/pics/mind_body_logo.png"
+                                        alt="MIND BODY — sport wear"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -137,7 +147,11 @@ export default function HeroSlider({ slides: propSlides, autoPlay = true, interv
                         {/* CTA Button */}
                         <div className="hero-slider__footer-cta">
                             <div className="hero-slider__cta">
-                                <Link to="/shop/yoga" className="btn btn--primary btn--glow hero-slider__cta-btn" id="cta-shop">
+                                <Link
+                                    to="/shop/yoga"
+                                    className="btn btn--primary btn--glow hero-slider__cta-btn"
+                                    id="cta-shop"
+                                >
                                     Переглянути колекцію
                                 </Link>
                             </div>
@@ -158,8 +172,6 @@ export default function HeroSlider({ slides: propSlides, autoPlay = true, interv
                     ))}
                 </div>
             </div>
-
-
         </section>
     );
 }

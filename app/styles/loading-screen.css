@@ -3,19 +3,29 @@
    ======================================== */
 
 @keyframes loadingSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes loadingBreathe {
-    0%   { transform: scale(0.95); opacity: 0.9; }
-    100% { transform: scale(1.0);  opacity: 1; }
+    0% {
+        transform: scale(0.95);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .loading-screen {
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at 50% 45%, #FFFFFF 0%, #F6F5F1 60%, #EDEAE4 100%);
+    background: radial-gradient(circle at 50% 45%, #ffffff 0%, #f6f5f1 60%, #edeae4 100%);
     z-index: 9999;
     display: flex;
     align-items: center;

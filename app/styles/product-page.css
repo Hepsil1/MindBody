@@ -7,7 +7,7 @@
 .product-page-mindbody {
     background-color: var(--c-cream, #faf8f6);
     color: var(--c-text, #1a1a1a);
-    font-family: var(--f-sans, 'DM Sans', sans-serif);
+    font-family: var(--f-sans, "DM Sans", sans-serif);
     min-height: 100vh;
     padding-bottom: 120px;
 }
@@ -27,14 +27,14 @@
 
 /* Branded Watermark */
 .shop-hero-luxe.compact::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 50%;
     right: 0%;
     transform: translateY(-50%);
     width: 500px;
     height: 500px;
-    background-image: url('/logo-sun.png');
+    background-image: url("/logo-sun.png");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -52,7 +52,7 @@
 }
 
 .shop-hero-luxe__drift::before {
-    content: '';
+    content: "";
     position: absolute;
     width: 600px;
     height: 600px;
@@ -64,7 +64,7 @@
 }
 
 .shop-hero-luxe__drift::after {
-    content: '';
+    content: "";
     position: absolute;
     width: 400px;
     height: 400px;
@@ -108,7 +108,7 @@
     color: inherit;
     text-decoration: none;
     transition: color 0.3s ease;
-    font-family: var(--f-sans, 'DM Sans', sans-serif);
+    font-family: var(--f-sans, "DM Sans", sans-serif);
     font-weight: 500;
 }
 
@@ -122,7 +122,7 @@
 
 .luxe-breadcrumb .current {
     color: #fff;
-    font-family: var(--f-serif, 'Cormorant Garamond', serif);
+    font-family: var(--f-serif, "Cormorant Garamond", serif);
     font-style: italic;
     font-size: 22px;
     text-transform: none;
@@ -199,19 +199,23 @@
 }
 
 .thumb-vertical.active::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: -6px;
     left: 0;
     width: 100%;
     height: 2px;
-    background-color: var(--c-marsala, #722F37);
+    background-color: var(--c-marsala, #722f37);
     animation: lineScale 0.3s ease forwards;
 }
 
 @keyframes lineScale {
-    from { transform: scaleX(0); }
-    to { transform: scaleX(1); }
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
 }
 
 /* Right Main Visual */
@@ -236,8 +240,14 @@
 }
 
 @keyframes fadeInImg {
-    from { opacity: 0.8; transform: scale(0.98); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0.8;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .visual-badge {
@@ -261,7 +271,7 @@
 }
 
 .product-title {
-    font-family: var(--f-serif, 'Cormorant Garamond', serif);
+    font-family: var(--f-serif, "Cormorant Garamond", serif);
     font-size: 42px;
     font-weight: 400;
     margin: 0 0 12px 0;
@@ -270,7 +280,7 @@
 }
 
 .product-price-block {
-    font-family: var(--f-serif, 'Cormorant Garamond', serif);
+    font-family: var(--f-serif, "Cormorant Garamond", serif);
     font-size: 22px;
     color: #444;
 }
@@ -342,7 +352,7 @@
 }
 
 .color-swatch::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -4px;
     right: -4px;
@@ -458,7 +468,7 @@
     height: 60px;
     background-color: var(--color-primary, #2a5a5a);
     color: #fff;
-    font-family: var(--f-sans, 'DM Sans', sans-serif);
+    font-family: var(--f-sans, "DM Sans", sans-serif);
     font-size: 14px;
     font-weight: 700;
     text-transform: uppercase;
@@ -466,7 +476,9 @@
     border: none;
     border-radius: var(--radius-md, 8px);
     cursor: pointer;
-    transition: background 0.3s, transform 0.3s;
+    transition:
+        background 0.3s,
+        transform 0.3s;
 }
 
 .btn-primary-add:hover {
@@ -517,7 +529,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    font-family: var(--f-sans, 'DM Sans', sans-serif);
+    font-family: var(--f-sans, "DM Sans", sans-serif);
     font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
@@ -533,7 +545,7 @@
 
 .acc-icon::before,
 .acc-icon::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 50%;
     left: 50%;
@@ -581,7 +593,7 @@
 }
 
 .related-title {
-    font-family: var(--f-serif, 'Cormorant Garamond', serif);
+    font-family: var(--f-serif, "Cormorant Garamond", serif);
     font-size: 36px;
     font-weight: 300;
     color: var(--c-primary, #2a5a5a);
@@ -630,7 +642,7 @@
 }
 
 .related-info span {
-    font-family: var(--f-serif, 'Cormorant Garamond', serif);
+    font-family: var(--f-serif, "Cormorant Garamond", serif);
     font-size: 18px;
     color: #777;
 }
@@ -800,8 +812,14 @@
 }
 
 @keyframes modalIn {
-    from { opacity: 0; transform: scale(0.95) translateY(10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .quick-buy-modal__title {
@@ -924,7 +942,7 @@
     }
 
     .mobile-sticky-cta__price {
-        font-family: var(--font-display, 'Cormorant Garamond', serif);
+        font-family: var(--font-display, "Cormorant Garamond", serif);
         font-size: 22px;
         font-weight: 700;
         color: #0d3838;

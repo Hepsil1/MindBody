@@ -7,7 +7,7 @@ export default function Contacts() {
     const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -52,7 +52,14 @@ export default function Contacts() {
                     <div className="contacts-grid">
                         <a href="tel:+380966650855" className="contact-card">
                             <div className="contact-card__icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
                                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                                 </svg>
                             </div>
@@ -63,7 +70,14 @@ export default function Contacts() {
 
                         <a href="mailto:hello@mind-body.com.ua" className="contact-card">
                             <div className="contact-card__icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
                                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                                     <polyline points="22,6 12,13 2,6" />
                                 </svg>
@@ -75,7 +89,14 @@ export default function Contacts() {
 
                         <div className="contact-card">
                             <div className="contact-card__icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
                                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                                     <circle cx="12" cy="10" r="3" />
                                 </svg>
@@ -85,9 +106,21 @@ export default function Contacts() {
                             <span className="contact-card__hint">Онлайн-магазин</span>
                         </div>
 
-                        <a href="https://instagram.com/mindbody.sportwear" target="_blank" rel="noopener noreferrer" className="contact-card">
+                        <a
+                            href="https://instagram.com/mindbody.sportwear"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="contact-card"
+                        >
                             <div className="contact-card__icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
                                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                                     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
@@ -103,17 +136,32 @@ export default function Contacts() {
                     <div id="contact-form" className="contacts-form-section">
                         <div className="contacts-form-container">
                             <h2>Напишіть нам</h2>
-                            <p>Маєте питання? Заповніть форму, і наші консультанти зв'яжуться з вами якнайшвидше.</p>
+                            <p>
+                                Маєте питання? Заповніть форму, і наші консультанти зв'яжуться з
+                                вами якнайшвидше.
+                            </p>
 
                             {status === "sent" ? (
                                 <div className="contacts-form-success">
-                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                    <svg
+                                        width="48"
+                                        height="48"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                    >
                                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                                         <polyline points="22 4 12 14.01 9 11.01" />
                                     </svg>
                                     <h3>Повідомлення надіслано!</h3>
                                     <p>Ми зв'яжемося з вами найближчим часом.</p>
-                                    <button className="btn-submit" onClick={() => setStatus("idle")}>Надіслати ще</button>
+                                    <button
+                                        className="btn-submit"
+                                        onClick={() => setStatus("idle")}
+                                    >
+                                        Надіслати ще
+                                    </button>
                                 </div>
                             ) : (
                                 <form className="contacts-form" onSubmit={handleSubmit} noValidate>
@@ -157,7 +205,10 @@ export default function Contacts() {
                                     </div>
 
                                     {status === "error" && (
-                                        <p className="contacts-form-error">Помилка надсилання. Спробуйте ще раз або зателефонуйте нам.</p>
+                                        <p className="contacts-form-error">
+                                            Помилка надсилання. Спробуйте ще раз або зателефонуйте
+                                            нам.
+                                        </p>
                                     )}
 
                                     <button
@@ -165,7 +216,9 @@ export default function Contacts() {
                                         className="btn-submit"
                                         disabled={status === "sending"}
                                     >
-                                        {status === "sending" ? "Надсилання..." : "Надіслати повідомлення"}
+                                        {status === "sending"
+                                            ? "Надсилання..."
+                                            : "Надіслати повідомлення"}
                                     </button>
                                 </form>
                             )}

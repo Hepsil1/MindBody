@@ -24,13 +24,16 @@ export function useToast() {
 export function ToastProvider({ children }: { children: ReactNode }) {
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-    const showToast = useCallback((text: ReactNode, type: ToastMessage["type"] = "success", image?: string) => {
-        const id = ++toastId;
-        setToasts((prev) => [...prev, { id, text, type, image }]);
-        setTimeout(() => {
-            setToasts((prev) => prev.filter((t) => t.id !== id));
-        }, 3500);
-    }, []);
+    const showToast = useCallback(
+        (text: ReactNode, type: ToastMessage["type"] = "success", image?: string) => {
+            const id = ++toastId;
+            setToasts((prev) => [...prev, { id, text, type, image }]);
+            setTimeout(() => {
+                setToasts((prev) => prev.filter((t) => t.id !== id));
+            }, 3500);
+        },
+        [],
+    );
 
     const dismiss = useCallback((id: number) => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -46,16 +49,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     return (
         <ToastContext.Provider value={{ showToast }}>
             {children}
-            <div className="toast-container" style={{
-                position: "fixed",
-                top: "20px",
-                right: "20px",
-                zIndex: 99999,
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                pointerEvents: "none",
-            }}>
+            <div
+                className="toast-container"
+                style={{
+                    position: "fixed",
+                    top: "20px",
+                    right: "20px",
+                    zIndex: 99999,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                    pointerEvents: "none",
+                }}
+            >
                 {toasts.map((toast) => (
                     <div
                         key={toast.id}
@@ -69,21 +75,23 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                             borderRadius: "12px",
                             backdropFilter: "blur(20px)",
                             WebkitBackdropFilter: "blur(20px)",
-                            background: toast.type === "success"
-                                ? "rgba(16, 185, 129, 0.15)"
-                                : toast.type === "error"
-                                    ? "rgba(239, 68, 68, 0.15)"
-                                    : toast.type === "warning"
+                            background:
+                                toast.type === "success"
+                                    ? "rgba(16, 185, 129, 0.15)"
+                                    : toast.type === "error"
+                                      ? "rgba(239, 68, 68, 0.15)"
+                                      : toast.type === "warning"
                                         ? "rgba(245, 158, 11, 0.15)"
                                         : "rgba(59, 130, 246, 0.15)",
-                            border: `1px solid ${toast.type === "success"
-                                ? "rgba(16, 185, 129, 0.3)"
-                                : toast.type === "error"
-                                    ? "rgba(239, 68, 68, 0.3)"
-                                    : toast.type === "warning"
+                            border: `1px solid ${
+                                toast.type === "success"
+                                    ? "rgba(16, 185, 129, 0.3)"
+                                    : toast.type === "error"
+                                      ? "rgba(239, 68, 68, 0.3)"
+                                      : toast.type === "warning"
                                         ? "rgba(245, 158, 11, 0.3)"
                                         : "rgba(59, 130, 246, 0.3)"
-                                }`,
+                            }`,
                             color: "#fff",
                             fontSize: "0.9rem",
                             fontWeight: 500,
@@ -95,30 +103,38 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                         }}
                         onClick={() => dismiss(toast.id)}
                     >
-                        <span style={{
-                            width: toast.image ? "40px" : "28px",
-                            height: toast.image ? "50px" : "28px",
-                            borderRadius: toast.image ? "6px" : "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "0.85rem",
-                            fontWeight: 700,
-                            flexShrink: 0,
-                            overflow: "hidden",
-                            background: toast.image ? "#1e293b" : (
-                                toast.type === "success"
-                                ? "rgba(16, 185, 129, 0.3)"
-                                : toast.type === "error"
-                                    ? "rgba(239, 68, 68, 0.3)"
-                                    : toast.type === "warning"
-                                        ? "rgba(245, 158, 11, 0.3)"
-                                        : "rgba(59, 130, 246, 0.3)"
-                            ),
-                        }}>
+                        <span
+                            style={{
+                                width: toast.image ? "40px" : "28px",
+                                height: toast.image ? "50px" : "28px",
+                                borderRadius: toast.image ? "6px" : "50%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "0.85rem",
+                                fontWeight: 700,
+                                flexShrink: 0,
+                                overflow: "hidden",
+                                background: toast.image
+                                    ? "#1e293b"
+                                    : toast.type === "success"
+                                      ? "rgba(16, 185, 129, 0.3)"
+                                      : toast.type === "error"
+                                        ? "rgba(239, 68, 68, 0.3)"
+                                        : toast.type === "warning"
+                                          ? "rgba(245, 158, 11, 0.3)"
+                                          : "rgba(59, 130, 246, 0.3)",
+                            }}
+                        >
                             {toast.image ? (
-                                <img src={toast.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : icons[toast.type]}
+                                <img
+                                    src={toast.image}
+                                    alt=""
+                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                />
+                            ) : (
+                                icons[toast.type]
+                            )}
                         </span>
                         <span style={{ flex: 1, lineHeight: "1.4" }}>{toast.text}</span>
                     </div>

@@ -68,7 +68,13 @@ export default function FloatingContact() {
                 onClick={scrollToTop}
                 aria-label="Нагору"
             >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                >
                     <polyline points="18 15 12 9 6 15" />
                 </svg>
             </button>

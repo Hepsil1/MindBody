@@ -20,7 +20,7 @@ export async function action({ request }: { request: Request }) {
 
         const trimmed = contact.trim().substring(0, 100);
         await prisma.contactRequest.create({
-            data: { contact: trimmed }
+            data: { contact: trimmed },
         });
 
         // Also send to Telegram
@@ -28,14 +28,16 @@ export async function action({ request }: { request: Request }) {
             const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
             const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
             if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-                const msg = `📩 Нова заявка на зворотній зв'язок!\n\nКонтакт: ${trimmed}\nЧас: ${new Date().toLocaleString('uk-UA')}`;
+                const msg = `📩 Нова заявка на зворотній зв'язок!\n\nКонтакт: ${trimmed}\nЧас: ${new Date().toLocaleString("uk-UA")}`;
                 await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg }),
                 });
             }
-        } catch { /* Telegram is optional */ }
+        } catch {
+            /* Telegram is optional */
+        }
 
         return Response.json({ success: true });
     } catch (e) {

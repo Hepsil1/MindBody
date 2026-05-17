@@ -8,18 +8,18 @@ export default function SmartSunParticles() {
         if (!canvas) return;
 
         // Respect user's motion preference
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
         const isMobile = window.innerWidth <= 768;
 
-        let width = canvas.width = window.innerWidth;
-        let height = canvas.height = window.innerHeight;
+        let width = (canvas.width = window.innerWidth);
+        let height = (canvas.height = window.innerHeight);
 
         const sunImage = new Image();
-        sunImage.src = '/logo-sun.png';
+        sunImage.src = "/logo-sun.png";
 
         const particles: any[] = [];
         // Mobile: fewer, smaller particles for battery & GPU savings
@@ -39,12 +39,10 @@ export default function SmartSunParticles() {
                     vx: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4),
                     vy: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4),
                     // Mobile: smaller particles (60-130px vs 80-230px desktop)
-                    size: isMobile
-                        ? Math.random() * 70 + 60
-                        : Math.random() * 150 + 80,
+                    size: isMobile ? Math.random() * 70 + 60 : Math.random() * 150 + 80,
                     rotation: Math.random() * Math.PI * 2,
                     rotSpeed: (Math.random() - 0.5) * (isMobile ? 0.003 : 0.005),
-                    alpha: Math.random() * 0.08 + 0.02
+                    alpha: Math.random() * 0.08 + 0.02,
                 });
             }
             render();
@@ -136,23 +134,28 @@ export default function SmartSunParticles() {
         const handleScroll = () => {
             isScrolling = true;
             clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => { isScrolling = false; }, isMobile ? 300 : 150);
+            scrollTimeout = setTimeout(
+                () => {
+                    isScrolling = false;
+                },
+                isMobile ? 300 : 150,
+            );
         };
 
-        window.addEventListener('resize', handleResize, { passive: true });
+        window.addEventListener("resize", handleResize, { passive: true });
         if (!isMobile) {
-            window.addEventListener('mousemove', handleMouseMove, { passive: true });
-            window.addEventListener('mouseout', handleMouseLeave, { passive: true });
+            window.addEventListener("mousemove", handleMouseMove, { passive: true });
+            window.addEventListener("mouseout", handleMouseLeave, { passive: true });
         }
-        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener("scroll", handleScroll, { passive: true });
 
         return () => {
-            window.removeEventListener('resize', handleResize);
+            window.removeEventListener("resize", handleResize);
             if (!isMobile) {
-                window.removeEventListener('mousemove', handleMouseMove);
-                window.removeEventListener('mouseout', handleMouseLeave);
+                window.removeEventListener("mousemove", handleMouseMove);
+                window.removeEventListener("mouseout", handleMouseLeave);
             }
-            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener("scroll", handleScroll);
             clearTimeout(scrollTimeout);
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
@@ -162,12 +165,12 @@ export default function SmartSunParticles() {
         <canvas
             ref={canvasRef}
             style={{
-                position: 'fixed',
+                position: "fixed",
                 top: 0,
                 left: 0,
-                width: '100%',
-                height: '100%',
-                pointerEvents: 'none',
+                width: "100%",
+                height: "100%",
+                pointerEvents: "none",
                 zIndex: -1,
             }}
         />

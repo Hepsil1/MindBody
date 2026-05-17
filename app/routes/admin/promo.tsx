@@ -5,9 +5,9 @@ import { isAuthenticated } from "../../utils/admin.server";
 import { useState } from "react";
 
 export async function loader() {
-    const promos = await prisma.$queryRawUnsafe(
-        `SELECT * FROM "PromoCode" ORDER BY "createdAt" DESC`
-    ) as any[];
+    const promos = (await prisma.$queryRawUnsafe(
+        `SELECT * FROM "PromoCode" ORDER BY "createdAt" DESC`,
+    )) as any[];
     return { promos };
 }
 
@@ -21,12 +21,16 @@ export async function action({ request }: ActionFunctionArgs) {
 
         if (intent === "create") {
             const code = (formData.get("code") as string)?.trim().toUpperCase();
-            const discountType = formData.get("discountType") as string || "percent";
+            const discountType = (formData.get("discountType") as string) || "percent";
             const discountValue = parseFloat(formData.get("discountValue") as string) || 0;
             const minOrder = parseFloat(formData.get("minOrder") as string) || 0;
-            const maxUses = formData.get("maxUses") ? parseInt(formData.get("maxUses") as string) : null;
-            const expiresAt = formData.get("expiresAt") as string || null;
-            const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            const maxUses = formData.get("maxUses")
+                ? parseInt(formData.get("maxUses") as string)
+                : null;
+            const expiresAt = (formData.get("expiresAt") as string) || null;
+            const id =
+                Math.random().toString(36).substring(2, 15) +
+                Math.random().toString(36).substring(2, 15);
 
             if (!code || discountValue <= 0) {
                 return { error: "Заповніть обов'язкові поля" };
@@ -36,10 +40,16 @@ export async function action({ request }: ActionFunctionArgs) {
                 await prisma.$executeRawUnsafe(
                     `INSERT INTO "PromoCode" (id, code, "discountType", "discountValue", "minOrder", "maxUses", "usedCount", "isActive", "expiresAt", "createdAt")
                      VALUES ($1, $2, $3, $4, $5, $6, 0, true, $7, CURRENT_TIMESTAMP)`,
-                    id, code, discountType, discountValue, minOrder, maxUses, expiresAt ? new Date(expiresAt).toISOString() : null
+                    id,
+                    code,
+                    discountType,
+                    discountValue,
+                    minOrder,
+                    maxUses,
+                    expiresAt ? new Date(expiresAt).toISOString() : null,
                 );
             } catch (e: any) {
-                if (e.message?.includes('UNIQUE')) {
+                if (e.message?.includes("UNIQUE")) {
                     return { error: "Промокод з таким кодом вже існує" };
                 }
                 return { error: "Помилка створення" };
@@ -51,15 +61,14 @@ export async function action({ request }: ActionFunctionArgs) {
             const currentActive = formData.get("isActive") === "true";
             await prisma.$executeRawUnsafe(
                 `UPDATE "PromoCode" SET "isActive" = $1 WHERE id = $2`,
-                !currentActive, id
+                !currentActive,
+                id,
             );
         }
 
         if (intent === "delete") {
             const id = formData.get("id") as string;
-            await prisma.$executeRawUnsafe(
-                `DELETE FROM "PromoCode" WHERE id = $1`, id
-            );
+            await prisma.$executeRawUnsafe(`DELETE FROM "PromoCode" WHERE id = $1`, id);
         }
 
         return null;
@@ -100,7 +109,7 @@ export default function AdminPromo() {
     };
 
     return (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', color: '#e2e8f0' }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto", color: "#e2e8f0" }}>
             <style>{`
                 .promo-card {
                     background: #1e293b;
@@ -261,7 +270,7 @@ export default function AdminPromo() {
             <div className="promo-header">
                 <h1>🏷️ Промокоди</h1>
                 <button className="btn-create" onClick={() => setShowForm(!showForm)}>
-                    {showForm ? '✕ Закрити' : '+ Створити промокод'}
+                    {showForm ? "✕ Закрити" : "+ Створити промокод"}
                 </button>
             </div>
 
@@ -271,7 +280,12 @@ export default function AdminPromo() {
                     <div className="form-grid">
                         <div className="form-group">
                             <label>Код *</label>
-                            <input name="code" placeholder="ЗИМА25" required style={{ textTransform: 'uppercase' }} />
+                            <input
+                                name="code"
+                                placeholder="ЗИМА25"
+                                required
+                                style={{ textTransform: "uppercase" }}
+                            />
                         </div>
                         <div className="form-group">
                             <label>Тип знижки</label>
@@ -282,15 +296,34 @@ export default function AdminPromo() {
                         </div>
                         <div className="form-group">
                             <label>Значення знижки *</label>
-                            <input name="discountValue" type="number" step="0.01" min="0.01" placeholder="10" required />
+                            <input
+                                name="discountValue"
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                placeholder="10"
+                                required
+                            />
                         </div>
                         <div className="form-group">
                             <label>Мін. замовлення (₴)</label>
-                            <input name="minOrder" type="number" step="1" min="0" placeholder="0" defaultValue="0" />
+                            <input
+                                name="minOrder"
+                                type="number"
+                                step="1"
+                                min="0"
+                                placeholder="0"
+                                defaultValue="0"
+                            />
                         </div>
                         <div className="form-group">
                             <label>Макс. використань</label>
-                            <input name="maxUses" type="number" min="1" placeholder="Без обмежень" />
+                            <input
+                                name="maxUses"
+                                type="number"
+                                min="1"
+                                placeholder="Без обмежень"
+                            />
                         </div>
                         <div className="form-group">
                             <label>Дійсний до</label>
@@ -298,18 +331,28 @@ export default function AdminPromo() {
                         </div>
                     </div>
                     <div className="form-actions">
-                        <button type="submit" className="btn-submit">Створити</button>
-                        <button type="button" className="btn-cancel" onClick={() => setShowForm(false)}>Скасувати</button>
+                        <button type="submit" className="btn-submit">
+                            Створити
+                        </button>
+                        <button
+                            type="button"
+                            className="btn-cancel"
+                            onClick={() => setShowForm(false)}
+                        >
+                            Скасувати
+                        </button>
                     </div>
                 </form>
             )}
 
             <div className="promo-card">
                 {promos.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
-                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏷️</div>
-                        <p style={{ fontSize: '16px', marginBottom: '8px' }}>Промокодів ще немає</p>
-                        <p style={{ fontSize: '13px' }}>Створіть перший промокод для своїх клієнтів</p>
+                    <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
+                        <div style={{ fontSize: "48px", marginBottom: "16px" }}>🏷️</div>
+                        <p style={{ fontSize: "16px", marginBottom: "8px" }}>Промокодів ще немає</p>
+                        <p style={{ fontSize: "13px" }}>
+                            Створіть перший промокод для своїх клієнтів
+                        </p>
                     </div>
                 ) : (
                     <table className="promo-table">
@@ -328,7 +371,8 @@ export default function AdminPromo() {
                             {promos.map((p: any) => {
                                 const isExpired = p.expiresAt && new Date(p.expiresAt) < new Date();
                                 const isExhausted = p.maxUses && p.usedCount >= p.maxUses;
-                                const isEffectivelyActive = p.isActive && !isExpired && !isExhausted;
+                                const isEffectivelyActive =
+                                    p.isActive && !isExpired && !isExhausted;
 
                                 return (
                                     <tr key={p.id}>
@@ -336,38 +380,60 @@ export default function AdminPromo() {
                                             <span className="promo-code">{p.code}</span>
                                         </td>
                                         <td>
-                                            <strong style={{ color: '#f8fafc' }}>
-                                                {p.discountType === 'percent' ? `${p.discountValue}%` : `${p.discountValue} ₴`}
+                                            <strong style={{ color: "#f8fafc" }}>
+                                                {p.discountType === "percent"
+                                                    ? `${p.discountValue}%`
+                                                    : `${p.discountValue} ₴`}
                                             </strong>
                                         </td>
                                         <td>
                                             <span className="stat-value">
-                                                {p.minOrder > 0 ? `від ${p.minOrder} ₴` : '—'}
+                                                {p.minOrder > 0 ? `від ${p.minOrder} ₴` : "—"}
                                             </span>
                                         </td>
                                         <td>
                                             <span className="stat-value">
-                                                {p.usedCount}{p.maxUses ? ` / ${p.maxUses}` : ''}
+                                                {p.usedCount}
+                                                {p.maxUses ? ` / ${p.maxUses}` : ""}
                                             </span>
                                         </td>
                                         <td>
-                                            <span className={`badge-active ${isEffectivelyActive ? 'on' : 'off'}`}>
-                                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor' }}></span>
-                                                {isExpired ? 'Протермін.' : isExhausted ? 'Вичерпано' : p.isActive ? 'Активний' : 'Неактивний'}
+                                            <span
+                                                className={`badge-active ${isEffectivelyActive ? "on" : "off"}`}
+                                            >
+                                                <span
+                                                    style={{
+                                                        width: 6,
+                                                        height: 6,
+                                                        borderRadius: "50%",
+                                                        background: "currentColor",
+                                                    }}
+                                                ></span>
+                                                {isExpired
+                                                    ? "Протермін."
+                                                    : isExhausted
+                                                      ? "Вичерпано"
+                                                      : p.isActive
+                                                        ? "Активний"
+                                                        : "Неактивний"}
                                             </span>
                                         </td>
                                         <td>
                                             <span className="stat-value">
-                                                {p.expiresAt ? new Date(p.expiresAt).toLocaleDateString('uk-UA') : '∞'}
+                                                {p.expiresAt
+                                                    ? new Date(p.expiresAt).toLocaleDateString(
+                                                          "uk-UA",
+                                                      )
+                                                    : "∞"}
                                             </span>
                                         </td>
                                         <td>
-                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                            <div style={{ display: "flex", gap: "8px" }}>
                                                 <button
                                                     className="btn-sm"
                                                     onClick={() => handleToggle(p.id, p.isActive)}
                                                 >
-                                                    {p.isActive ? '⏸ Вимкнути' : '▶ Увімкнути'}
+                                                    {p.isActive ? "⏸ Вимкнути" : "▶ Увімкнути"}
                                                 </button>
                                                 <button
                                                     className="btn-sm danger"

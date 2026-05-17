@@ -14,7 +14,7 @@ export async function action({ request }: { request: Request }) {
     const internalToken = request.headers.get("X-Internal-Token") || "";
     const isInternalCall = INTERNAL_SECRET && internalToken === INTERNAL_SECRET;
     const isAdmin = await isAuthenticated(request);
-    
+
     // Same-origin check: browsers enforce Origin header on POST — not spoofable from cross-site
     const origin = request.headers.get("Origin") || "";
     const requestHost = new URL(request.url).origin;
@@ -46,7 +46,7 @@ export async function action({ request }: { request: Request }) {
                     text: message,
                     parse_mode: "Markdown",
                 }),
-            }
+            },
         );
 
         if (!response.ok) {

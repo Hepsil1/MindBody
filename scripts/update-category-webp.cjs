@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
@@ -9,7 +9,7 @@ async function main() {
             if (c.image && c.image.match(/\.(jpg|jpeg|png)$/i)) {
                 await prisma.category.update({
                     where: { id: c.id },
-                    data: { image: c.image.replace(/\.(jpg|jpeg|png)$/i, '.webp') }
+                    data: { image: c.image.replace(/\.(jpg|jpeg|png)$/i, ".webp") },
                 });
                 console.log(`Updated category: ${c.title}`);
             }

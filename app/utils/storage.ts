@@ -17,20 +17,20 @@ export interface WishlistItem {
 }
 
 const STORAGE_KEYS = {
-    CART: 'cart',
-    WISHLIST: 'wishlist'
+    CART: "cart",
+    WISHLIST: "wishlist",
 };
 
 const EVENTS = {
-    CART_UPDATED: 'cart-updated',
-    WISHLIST_UPDATED: 'wishlist-updated'
+    CART_UPDATED: "cart-updated",
+    WISHLIST_UPDATED: "wishlist-updated",
 };
 
 export const StorageUtils = {
     // CART METHODS
     getCart: (): CartItem[] => {
         try {
-            return JSON.parse(localStorage.getItem(STORAGE_KEYS.CART) || '[]');
+            return JSON.parse(localStorage.getItem(STORAGE_KEYS.CART) || "[]");
         } catch {
             return [];
         }
@@ -39,7 +39,7 @@ export const StorageUtils = {
     addToCart: (item: CartItem) => {
         const cart = StorageUtils.getCart();
         const existingIndex = cart.findIndex(
-            i => i.id === item.id && i.size === item.size && i.color === item.color
+            (i) => i.id === item.id && i.size === item.size && i.color === item.color,
         );
 
         if (existingIndex > -1) {
@@ -50,14 +50,15 @@ export const StorageUtils = {
 
         localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cart));
         window.dispatchEvent(new Event(EVENTS.CART_UPDATED));
-        window.dispatchEvent(new Event('cart-item-added'));
+        window.dispatchEvent(new Event("cart-item-added"));
     },
 
     updateCartQuantity: (id: string | number, delta: number, size?: string, color?: string) => {
         const cart = StorageUtils.getCart();
-        const updated = cart.map(item => {
+        const updated = cart.map((item) => {
             // Match loosely if size/color not specified or match exactly
-            const isMatch = item.id === id &&
+            const isMatch =
+                item.id === id &&
                 (size ? item.size === size : true) &&
                 (color ? item.color === color : true);
 
@@ -73,7 +74,7 @@ export const StorageUtils = {
 
     removeFromCart: (id: string | number, size?: string, color?: string) => {
         let cart = StorageUtils.getCart();
-        cart = cart.filter(item => {
+        cart = cart.filter((item) => {
             // Match by id, size, AND color (treat undefined as matching anything)
             const idMatch = item.id === id;
             const sizeMatch = size === undefined || item.size === size;
@@ -95,7 +96,7 @@ export const StorageUtils = {
     // WISHLIST METHODS
     getWishlist: (): WishlistItem[] => {
         try {
-            return JSON.parse(localStorage.getItem(STORAGE_KEYS.WISHLIST) || '[]');
+            return JSON.parse(localStorage.getItem(STORAGE_KEYS.WISHLIST) || "[]");
         } catch {
             return [];
         }
@@ -103,7 +104,7 @@ export const StorageUtils = {
 
     addToWishlist: (item: WishlistItem): boolean => {
         const list = StorageUtils.getWishlist();
-        if (list.some(i => i.id === item.id)) return false; // Already exists
+        if (list.some((i) => i.id === item.id)) return false; // Already exists
 
         list.push(item);
         localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(list));
@@ -113,7 +114,7 @@ export const StorageUtils = {
 
     removeFromWishlist: (id: string | number) => {
         let list = StorageUtils.getWishlist();
-        list = list.filter(item => item.id !== id);
+        list = list.filter((item) => item.id !== id);
 
         localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(list));
         window.dispatchEvent(new Event(EVENTS.WISHLIST_UPDATED));
@@ -121,7 +122,7 @@ export const StorageUtils = {
 
     isInWishlist: (id: string | number): boolean => {
         const list = StorageUtils.getWishlist();
-        return list.some(item => item.id === id);
+        return list.some((item) => item.id === id);
     },
 
     // SUBSCRIPTIONS
@@ -133,5 +134,5 @@ export const StorageUtils = {
     subscribeToWishlist: (callback: () => void) => {
         window.addEventListener(EVENTS.WISHLIST_UPDATED, callback);
         return () => window.removeEventListener(EVENTS.WISHLIST_UPDATED, callback);
-    }
+    },
 };

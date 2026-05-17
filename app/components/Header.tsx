@@ -22,7 +22,6 @@ export function Header() {
     const [user, setUser] = useState<User | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
 
-
     // Search state
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -56,13 +55,13 @@ export function Header() {
 
         // Auto-open cart drawer when item added
         const openDrawerOnAdd = () => setIsCartOpen(true);
-        window.addEventListener('cart-item-added', openDrawerOnAdd);
+        window.addEventListener("cart-item-added", openDrawerOnAdd);
 
         return () => {
             unsubCart();
             unsubWishlist();
             unsubAuth();
-            window.removeEventListener('cart-item-added', openDrawerOnAdd);
+            window.removeEventListener("cart-item-added", openDrawerOnAdd);
         };
     }, []);
 
@@ -70,8 +69,8 @@ export function Header() {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 100);
         };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
     // Search debounce
@@ -122,11 +121,16 @@ export function Header() {
 
     const handleProfileClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        navigate(user ? '/profile' : '/auth');
+        navigate(user ? "/profile" : "/auth");
     };
 
     const getInitials = (name: string) => {
-        return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        return name
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2);
     };
 
     return (
@@ -135,8 +139,19 @@ export function Header() {
                 <div className="top-bar__container">
                     <div className="top-bar__left">
                         <a href="tel:+380671234567" className="top-bar__phone">
-                            <svg className="top-bar__phone-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M16.5 12.69v2.25a1.5 1.5 0 01-1.635 1.5 14.843 14.843 0 01-6.472-2.302 14.625 14.625 0 01-4.5-4.5A14.843 14.843 0 011.59 3.135 1.5 1.5 0 013.082 1.5H5.33a1.5 1.5 0 011.5 1.29 9.63 9.63 0 00.525 2.108 1.5 1.5 0 01-.337 1.582l-.953.953a12 12 0 004.5 4.5l.953-.952a1.5 1.5 0 011.582-.338 9.63 9.63 0 002.108.525 1.5 1.5 0 011.29 1.522z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <svg
+                                className="top-bar__phone-icon"
+                                viewBox="0 0 18 18"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M16.5 12.69v2.25a1.5 1.5 0 01-1.635 1.5 14.843 14.843 0 01-6.472-2.302 14.625 14.625 0 01-4.5-4.5A14.843 14.843 0 011.59 3.135 1.5 1.5 0 013.082 1.5H5.33a1.5 1.5 0 011.5 1.29 9.63 9.63 0 00.525 2.108 1.5 1.5 0 01-.337 1.582l-.953.953a12 12 0 004.5 4.5l.953-.952a1.5 1.5 0 011.582-.338 9.63 9.63 0 002.108.525 1.5 1.5 0 011.29 1.522z"
+                                    stroke="currentColor"
+                                    strokeWidth="1.2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
                             </svg>
                             <span>+380 67 123 45 67</span>
                         </a>
@@ -144,13 +159,21 @@ export function Header() {
 
                     <div className="top-bar__center">
                         <Link to="/" className="top-bar__logo-link" prefetch="intent">
-                            <img src="/pics/mind_body_logo_sun.png" alt="Mind Body" className="top-bar__logo-icon" />
+                            <img
+                                src="/pics/mind_body_logo_sun.png"
+                                alt="Mind Body"
+                                className="top-bar__logo-icon"
+                            />
                         </Link>
                     </div>
 
                     <div className="top-bar__right">
-                        <NavLink to="/about" className="top-bar__link">Про бренд</NavLink>
-                        <NavLink to="/about#contact-premium" className="top-bar__link">Контакти</NavLink>
+                        <NavLink to="/about" className="top-bar__link">
+                            Про бренд
+                        </NavLink>
+                        <NavLink to="/about#contact-premium" className="top-bar__link">
+                            Контакти
+                        </NavLink>
                         <NavLink to={user ? "/profile" : "/auth"} className="top-bar__link">
                             {user ? "Профіль" : "Увійти"}
                         </NavLink>
@@ -158,40 +181,117 @@ export function Header() {
                 </div>
             </div>
 
-            <header className={`header ${isScrolled ? 'is-scrolled' : ''}`} id="header">
+            <header className={`header ${isScrolled ? "is-scrolled" : ""}`} id="header">
                 <div className="header__container">
                     <Link to="/" prefetch="intent" className="header__logo">
-                        <img src="/pics/mind_body_1.png" alt="MIND BODY" className="header__logo-img" />
+                        <img
+                            src="/pics/mind_body_1.png"
+                            alt="MIND BODY"
+                            className="header__logo-img"
+                        />
                     </Link>
 
                     <nav className={`header__nav ${isMenuOpen ? "header__nav--active" : ""}`}>
                         <ul className="header__nav-list">
                             {/* YOGA */}
                             <li className="header__nav-item header__nav-item--mega">
-                                <NavLink to="/shop/yoga" prefetch="intent" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
+                                <NavLink
+                                    to="/shop/yoga"
+                                    prefetch="intent"
+                                    className="header__nav-link"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
                                     YOGA
                                 </NavLink>
                                 <div className="mega-menu">
                                     <div className="mega-menu__inner">
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
-                                            <Link to="/shop/yoga" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                                            <Link to="/shop/yoga?categories=jumpsuit" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
-                                            <Link to="/shop/yoga?categories=leggings" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Легінси</Link>
-                                            <Link to="/shop/yoga?categories=velo" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>VELO</Link>
-                                            <Link to="/shop/yoga?categories=tops" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Топи</Link>
-                                            <Link to="/shop/yoga?categories=shorts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
-                                            <Link to="/shop/yoga?categories=longsleeve" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Лонгсліви</Link>
-                                            <Link to="/shop/yoga?categories=tshirts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Футболки</Link>
+                                            <Link
+                                                to="/shop/yoga"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Всі товари
+                                            </Link>
+                                            <Link
+                                                to="/shop/yoga?categories=jumpsuit"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Комбінезони
+                                            </Link>
+                                            <Link
+                                                to="/shop/yoga?categories=leggings"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Легінси
+                                            </Link>
+                                            <Link
+                                                to="/shop/yoga?categories=velo"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                VELO
+                                            </Link>
+                                            <Link
+                                                to="/shop/yoga?categories=tops"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Топи
+                                            </Link>
+                                            <Link
+                                                to="/shop/yoga?categories=shorts"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Шорти
+                                            </Link>
+                                            <Link
+                                                to="/shop/yoga?categories=longsleeve"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Лонгсліви
+                                            </Link>
+                                            <Link
+                                                to="/shop/yoga?categories=tshirts"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Футболки
+                                            </Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img src="/pics1cloths/IMG_6201.webp" alt="Yoga Collection" loading="lazy" />
-                                                <div className="mega-menu__featured-badge">YOGA</div>
+                                                <img
+                                                    src="/pics1cloths/IMG_6201.webp"
+                                                    alt="Yoga Collection"
+                                                    loading="lazy"
+                                                />
+                                                <div className="mega-menu__featured-badge">
+                                                    YOGA
+                                                </div>
                                             </div>
                                             <div className="mega-menu__featured-content">
                                                 <h5>Yoga Колекція</h5>
-                                                <Link to="/shop/yoga" className="mega-menu__featured-link" onClick={() => setIsMenuOpen(false)}>Переглянути →</Link>
+                                                <Link
+                                                    to="/shop/yoga"
+                                                    className="mega-menu__featured-link"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                >
+                                                    Переглянути →
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
@@ -200,30 +300,103 @@ export function Header() {
 
                             {/* SPORT */}
                             <li className="header__nav-item header__nav-item--mega">
-                                <NavLink to="/shop/sport" prefetch="intent" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
+                                <NavLink
+                                    to="/shop/sport"
+                                    prefetch="intent"
+                                    className="header__nav-link"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
                                     SPORT
                                 </NavLink>
                                 <div className="mega-menu">
                                     <div className="mega-menu__inner">
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
-                                            <Link to="/shop/sport" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                                            <Link to="/shop/sport?categories=jumpsuit" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
-                                            <Link to="/shop/sport?categories=leggings" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Легінси</Link>
-                                            <Link to="/shop/sport?categories=velo" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>VELO</Link>
-                                            <Link to="/shop/sport?categories=tops" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Топи</Link>
-                                            <Link to="/shop/sport?categories=shorts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
-                                            <Link to="/shop/sport?categories=longsleeve" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Лонгсліви</Link>
-                                            <Link to="/shop/sport?categories=sets" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комплекти</Link>
+                                            <Link
+                                                to="/shop/sport"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Всі товари
+                                            </Link>
+                                            <Link
+                                                to="/shop/sport?categories=jumpsuit"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Комбінезони
+                                            </Link>
+                                            <Link
+                                                to="/shop/sport?categories=leggings"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Легінси
+                                            </Link>
+                                            <Link
+                                                to="/shop/sport?categories=velo"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                VELO
+                                            </Link>
+                                            <Link
+                                                to="/shop/sport?categories=tops"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Топи
+                                            </Link>
+                                            <Link
+                                                to="/shop/sport?categories=shorts"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Шорти
+                                            </Link>
+                                            <Link
+                                                to="/shop/sport?categories=longsleeve"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Лонгсліви
+                                            </Link>
+                                            <Link
+                                                to="/shop/sport?categories=sets"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Комплекти
+                                            </Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img src="/generalpics/333_131123.webp" alt="Sport Collection" loading="lazy" />
-                                                <div className="mega-menu__featured-badge">SPORT</div>
+                                                <img
+                                                    src="/generalpics/333_131123.webp"
+                                                    alt="Sport Collection"
+                                                    loading="lazy"
+                                                />
+                                                <div className="mega-menu__featured-badge">
+                                                    SPORT
+                                                </div>
                                             </div>
                                             <div className="mega-menu__featured-content">
                                                 <h5>Sport Колекція</h5>
-                                                <Link to="/shop/sport" className="mega-menu__featured-link" onClick={() => setIsMenuOpen(false)}>Переглянути →</Link>
+                                                <Link
+                                                    to="/shop/sport"
+                                                    className="mega-menu__featured-link"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                >
+                                                    Переглянути →
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
@@ -232,26 +405,71 @@ export function Header() {
 
                             {/* DANCE */}
                             <li className="header__nav-item header__nav-item--mega">
-                                <NavLink to="/shop/dance" prefetch="intent" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
+                                <NavLink
+                                    to="/shop/dance"
+                                    prefetch="intent"
+                                    className="header__nav-link"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
                                     DANCE
                                 </NavLink>
                                 <div className="mega-menu">
                                     <div className="mega-menu__inner">
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
-                                            <Link to="/shop/dance" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                                            <Link to="/shop/dance?categories=jumpsuit" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
-                                            <Link to="/shop/dance?categories=net-models" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Моделі із сітки</Link>
-                                            <Link to="/shop/dance?categories=pole-sets" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комплекти пілон</Link>
+                                            <Link
+                                                to="/shop/dance"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Всі товари
+                                            </Link>
+                                            <Link
+                                                to="/shop/dance?categories=jumpsuit"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Комбінезони
+                                            </Link>
+                                            <Link
+                                                to="/shop/dance?categories=net-models"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Моделі із сітки
+                                            </Link>
+                                            <Link
+                                                to="/shop/dance?categories=pole-sets"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Комплекти пілон
+                                            </Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img src="/generalpics/374_131123.webp" alt="Dance Collection" loading="lazy" />
-                                                <div className="mega-menu__featured-badge">DANCE</div>
+                                                <img
+                                                    src="/generalpics/374_131123.webp"
+                                                    alt="Dance Collection"
+                                                    loading="lazy"
+                                                />
+                                                <div className="mega-menu__featured-badge">
+                                                    DANCE
+                                                </div>
                                             </div>
                                             <div className="mega-menu__featured-content">
                                                 <h5>Dance Колекція</h5>
-                                                <Link to="/shop/dance" className="mega-menu__featured-link" onClick={() => setIsMenuOpen(false)}>Переглянути →</Link>
+                                                <Link
+                                                    to="/shop/dance"
+                                                    className="mega-menu__featured-link"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                >
+                                                    Переглянути →
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
@@ -260,34 +478,114 @@ export function Header() {
 
                             {/* CASUAL */}
                             <li className="header__nav-item header__nav-item--mega">
-                                <NavLink to="/shop/casual" prefetch="intent" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
+                                <NavLink
+                                    to="/shop/casual"
+                                    prefetch="intent"
+                                    className="header__nav-link"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
                                     CASUAL
                                 </NavLink>
                                 <div className="mega-menu">
                                     <div className="mega-menu__inner">
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
-                                            <Link to="/shop/casual" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                                            <Link to="/shop/casual?categories=suits" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Костюми</Link>
-                                            <Link to="/shop/casual?categories=shirts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Сорочки</Link>
-                                            <Link to="/shop/casual?categories=tshirts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Футболки</Link>
-                                            <Link to="/shop/casual?categories=singlets" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Майки</Link>
+                                            <Link
+                                                to="/shop/casual"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Всі товари
+                                            </Link>
+                                            <Link
+                                                to="/shop/casual?categories=suits"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Костюми
+                                            </Link>
+                                            <Link
+                                                to="/shop/casual?categories=shirts"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Сорочки
+                                            </Link>
+                                            <Link
+                                                to="/shop/casual?categories=tshirts"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Футболки
+                                            </Link>
+                                            <Link
+                                                to="/shop/casual?categories=singlets"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Майки
+                                            </Link>
                                         </div>
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Ще</h4>
-                                            <Link to="/shop/casual?categories=shorts" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Шорти</Link>
-                                            <Link to="/shop/casual?categories=thermo" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Термо</Link>
-                                            <Link to="/shop/casual?categories=hoodies" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Худі / Світшоти</Link>
-                                            <Link to="/shop/casual?categories=joggers" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Джоггери</Link>
+                                            <Link
+                                                to="/shop/casual?categories=shorts"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Шорти
+                                            </Link>
+                                            <Link
+                                                to="/shop/casual?categories=thermo"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Термо
+                                            </Link>
+                                            <Link
+                                                to="/shop/casual?categories=hoodies"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Худі / Світшоти
+                                            </Link>
+                                            <Link
+                                                to="/shop/casual?categories=joggers"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Джоггери
+                                            </Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img src="/generalpics/595_131123.webp" alt="Casual Collection" loading="lazy" />
-                                                <div className="mega-menu__featured-badge">CASUAL</div>
+                                                <img
+                                                    src="/generalpics/595_131123.webp"
+                                                    alt="Casual Collection"
+                                                    loading="lazy"
+                                                />
+                                                <div className="mega-menu__featured-badge">
+                                                    CASUAL
+                                                </div>
                                             </div>
                                             <div className="mega-menu__featured-content">
                                                 <h5>Casual Колекція</h5>
-                                                <Link to="/shop/casual" className="mega-menu__featured-link" onClick={() => setIsMenuOpen(false)}>Переглянути →</Link>
+                                                <Link
+                                                    to="/shop/casual"
+                                                    className="mega-menu__featured-link"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                >
+                                                    Переглянути →
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
@@ -296,23 +594,52 @@ export function Header() {
 
                             {/* KIDS */}
                             <li className="header__nav-item header__nav-item--mega">
-                                <NavLink to="/shop/kids" prefetch="intent" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
+                                <NavLink
+                                    to="/shop/kids"
+                                    prefetch="intent"
+                                    className="header__nav-link"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
                                     KIDS
                                 </NavLink>
                                 <div className="mega-menu">
                                     <div className="mega-menu__inner">
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Категорії</h4>
-                                            <Link to="/shop/kids" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Всі товари</Link>
-                                                            <Link to="/shop/kids?categories=jumpsuit" className="mega-menu__link" prefetch="intent" onClick={() => setIsMenuOpen(false)}>Комбінезони</Link>
+                                            <Link
+                                                to="/shop/kids"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Всі товари
+                                            </Link>
+                                            <Link
+                                                to="/shop/kids?categories=jumpsuit"
+                                                className="mega-menu__link"
+                                                prefetch="intent"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Комбінезони
+                                            </Link>
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img src="/pics2cloths/IMG_5222.webp" alt="Kids Collection" loading="lazy" />
+                                                <img
+                                                    src="/pics2cloths/IMG_5222.webp"
+                                                    alt="Kids Collection"
+                                                    loading="lazy"
+                                                />
                                             </div>
                                             <div className="mega-menu__featured-content">
                                                 <h5>Дитяча Колекція</h5>
-                                                <Link to="/shop/kids" className="mega-menu__featured-link" onClick={() => setIsMenuOpen(false)}>Переглянути →</Link>
+                                                <Link
+                                                    to="/shop/kids"
+                                                    className="mega-menu__featured-link"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                >
+                                                    Переглянути →
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
@@ -321,7 +648,12 @@ export function Header() {
 
                             {/* YOGATOOLS */}
                             <li className="header__nav-item">
-                                <NavLink to="/shop/yogatools" prefetch="intent" className="header__nav-link" onClick={() => setIsMenuOpen(false)}>
+                                <NavLink
+                                    to="/shop/yogatools"
+                                    prefetch="intent"
+                                    className="header__nav-link"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
                                     YOGATOOLS
                                 </NavLink>
                             </li>
@@ -330,47 +662,103 @@ export function Header() {
 
                     <div className="header__actions">
                         {/* Search Button */}
-                        <button className="header__action-btn" aria-label="Пошук" onClick={openSearch}>
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <button
+                            className="header__action-btn"
+                            aria-label="Пошук"
+                            onClick={openSearch}
+                        >
+                            <svg
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
                                 <circle cx="11" cy="11" r="8" />
                                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
                             </svg>
                         </button>
 
-                        <button className={`header__action-btn ${user ? 'header__action-btn--avatar' : ''}`} aria-label="Профіль" onClick={handleProfileClick}>
+                        <button
+                            className={`header__action-btn ${user ? "header__action-btn--avatar" : ""}`}
+                            aria-label="Профіль"
+                            onClick={handleProfileClick}
+                        >
                             {user ? (
                                 <span className="header__user-avatar">
                                     {user.avatar ? (
                                         <img src={user.avatar} alt={user.name} />
-                                    ) : getInitials(user.name)}
+                                    ) : (
+                                        getInitials(user.name)
+                                    )}
                                 </span>
                             ) : (
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <svg
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                     <circle cx="12" cy="7" r="4" />
                                 </svg>
                             )}
                         </button>
-                        <Link to="/wishlist" className="header__action-btn" aria-label={`Улюблені${wishlistCount > 0 ? `: ${wishlistCount}` : ''}`}>
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+                        <Link
+                            to="/wishlist"
+                            className="header__action-btn"
+                            aria-label={`Улюблені${wishlistCount > 0 ? `: ${wishlistCount}` : ""}`}
+                        >
+                            <svg
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                             </svg>
-                            {wishlistCount > 0 && <span className="header__wishlist-count" aria-hidden="true">{wishlistCount}</span>}
+                            {wishlistCount > 0 && (
+                                <span className="header__wishlist-count" aria-hidden="true">
+                                    {wishlistCount}
+                                </span>
+                            )}
                         </Link>
-                        <button className="header__action-btn" aria-label={`Кошик${cartCount > 0 ? `: ${cartCount} товарів` : ''}`} onClick={() => setIsCartOpen(true)}>
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <button
+                            className="header__action-btn"
+                            aria-label={`Кошик${cartCount > 0 ? `: ${cartCount} товарів` : ""}`}
+                            onClick={() => setIsCartOpen(true)}
+                        >
+                            <svg
+                                width="22"
+                                height="22"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
                                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                                 <line x1="3" y1="6" x2="21" y2="6" />
                                 <path d="M16 10a4 4 0 0 1-8 0" />
                             </svg>
-                            {cartCount > 0 && <span className="header__cart-count" aria-hidden="true">{cartCount}</span>}
+                            {cartCount > 0 && (
+                                <span className="header__cart-count" aria-hidden="true">
+                                    {cartCount}
+                                </span>
+                            )}
                         </button>
                         <button
                             className={`header__burger ${isMenuOpen ? "header__burger--active" : ""}`}
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             aria-label="Меню"
                         >
-                            <span></span><span></span><span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
                         </button>
                     </div>
                 </div>
@@ -381,7 +769,15 @@ export function Header() {
                 <div className="search-overlay" onClick={closeSearch}>
                     <div className="search-overlay__content" onClick={(e) => e.stopPropagation()}>
                         <div className="search-overlay__input-wrap">
-                            <svg className="search-overlay__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg
+                                className="search-overlay__icon"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
                                 <circle cx="11" cy="11" r="8" />
                                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
                             </svg>
@@ -394,8 +790,19 @@ export function Header() {
                                 onChange={handleSearchInput}
                                 autoComplete="off"
                             />
-                            <button className="search-overlay__close" onClick={closeSearch} aria-label="Закрити">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <button
+                                className="search-overlay__close"
+                                onClick={closeSearch}
+                                aria-label="Закрити"
+                            >
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
                                     <line x1="18" y1="6" x2="6" y2="18" />
                                     <line x1="6" y1="6" x2="18" y2="18" />
                                 </svg>
@@ -416,10 +823,18 @@ export function Header() {
                                                 className="search-result-item"
                                                 onClick={closeSearch}
                                             >
-                                                <img src={item.image} alt={item.name} className="search-result-item__img" />
+                                                <img
+                                                    src={item.image}
+                                                    alt={item.name}
+                                                    className="search-result-item__img"
+                                                />
                                                 <div className="search-result-item__info">
-                                                    <span className="search-result-item__name">{item.name}</span>
-                                                    <span className="search-result-item__price">{item.price.toLocaleString()} ₴</span>
+                                                    <span className="search-result-item__name">
+                                                        {item.name}
+                                                    </span>
+                                                    <span className="search-result-item__price">
+                                                        {item.price.toLocaleString()} ₴
+                                                    </span>
                                                 </div>
                                             </Link>
                                         ))}

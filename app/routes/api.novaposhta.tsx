@@ -18,7 +18,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
         if (actionType === "getWarehouses") {
             const cityRef = formData.get("cityRef") as string;
-            const query = formData.get("query") as string || "";
+            const query = (formData.get("query") as string) || "";
             const warehouses = await getWarehouses(cityRef, query);
             return Response.json({ success: true, data: warehouses });
         }
@@ -26,10 +26,7 @@ export async function action({ request }: ActionFunctionArgs) {
         return Response.json({ success: false, error: "Unknown action" }, { status: 400 });
     } catch (error) {
         console.error("Nova Poshta API error:", error);
-        return Response.json(
-            { success: false, error: "API request failed" },
-            { status: 500 }
-        );
+        return Response.json({ success: false, error: "API request failed" }, { status: 500 });
     }
 }
 
@@ -53,6 +50,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     return Response.json({
         success: false,
-        message: "Nova Poshta API endpoint. Use POST with action=searchCities or action=getWarehouses"
+        message:
+            "Nova Poshta API endpoint. Use POST with action=searchCities or action=getWarehouses",
     });
 }

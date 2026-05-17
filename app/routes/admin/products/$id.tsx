@@ -42,7 +42,7 @@ const emptyForm: ProductForm = {
     images: [],
     colors: [],
     sizes: [],
-    inventory: {}
+    inventory: {},
 };
 
 // --- Loader ---
@@ -54,25 +54,36 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
     try {
         // 1. Fetch FilterConfig (Raw SQL)
-        const configResult: any[] = await prisma.$queryRawUnsafe(`SELECT id, config FROM "FilterConfig"`);
+        const configResult: any[] = await prisma.$queryRawUnsafe(
+            `SELECT id, config FROM "FilterConfig"`,
+        );
         for (const row of configResult) {
             filterConfigs[row.id] = parseAndMergeFilterConfig(row.config);
         }
-        if (!filterConfigs['global']) {
-            filterConfigs['global'] = parseAndMergeFilterConfig(null);
+        if (!filterConfigs["global"]) {
+            filterConfigs["global"] = parseAndMergeFilterConfig(null);
         }
 
         // 2. Fetch ShopPages (Raw SQL)
-        const pagesResult: any[] = await prisma.$queryRawUnsafe(`SELECT slug, title FROM "ShopPage"`);
+        const pagesResult: any[] = await prisma.$queryRawUnsafe(
+            `SELECT slug, title FROM "ShopPage"`,
+        );
         shopPages = pagesResult.map((p: any) => ({ slug: p.slug, title: p.title }));
 
         // 3. Fetch Product if not new (Raw SQL)
         if (!isNew) {
-            const productResult: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Product" WHERE id = $1`, params.id);
+            const productResult: any[] = await prisma.$queryRawUnsafe(
+                `SELECT * FROM "Product" WHERE id = $1`,
+                params.id,
+            );
             if (productResult[0]) {
                 const p = productResult[0];
                 const parseJson = (str: string, fallback: any) => {
-                    try { return str ? JSON.parse(str) : fallback; } catch { return fallback; }
+                    try {
+                        return str ? JSON.parse(str) : fallback;
+                    } catch {
+                        return fallback;
+                    }
                 };
 
                 const inventoryList = parseJson(p.inventory, []);
@@ -92,7 +103,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
                     images: parseJson(p.images, []),
                     colors: parseJson(p.colors, []),
                     sizes: parseJson(p.sizes, []),
-                    inventory: inventoryMap
+                    inventory: inventoryMap,
                 };
             }
         }
@@ -152,7 +163,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
                 const now = new Date().toISOString();
 
                 // Upsert Product (PostgreSQL syntax) using CURRENT_TIMESTAMP
-                await prisma.$executeRawUnsafe(`
+                await prisma.$executeRawUnsafe(
+                    `
                     INSERT INTO "Product" (id, name, description, price, "comparePrice", sku, status, stock, category, "shopPageSlug", images, colors, sizes, inventory, "createdAt", "updatedAt")
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                     ON CONFLICT(id) DO UPDATE SET
@@ -170,7 +182,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
                         sizes=EXCLUDED.sizes,
                         inventory=EXCLUDED.inventory,
                         "updatedAt"=CURRENT_TIMESTAMP
-                `, id, name, description, price, comparePrice, sku, status, stock, category, shopPageSlug, images, colors, sizes, inventory);
+                `,
+                    id,
+                    name,
+                    description,
+                    price,
+                    comparePrice,
+                    sku,
+                    status,
+                    stock,
+                    category,
+                    shopPageSlug,
+                    images,
+                    colors,
+                    sizes,
+                    inventory,
+                );
 
                 return { success: true };
             } catch (e) {
@@ -192,7 +219,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 // --- Icons ---
 const UploadIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24">
+    <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        width="24"
+        height="24"
+    >
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
         <polyline points="17 8 12 3 7 8" />
         <line x1="12" y1="3" x2="12" y2="15" />
@@ -200,14 +234,28 @@ const UploadIcon = () => (
 );
 
 const TrashIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+    <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        width="14"
+        height="14"
+    >
         <polyline points="3 6 5 6 21 6" />
         <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
     </svg>
 );
 
 const ArrowLeftIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+    <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        width="20"
+        height="20"
+    >
         <line x1="19" y1="12" x2="5" y2="12" />
         <polyline points="12 19 5 12 12 5" />
     </svg>
@@ -215,8 +263,9 @@ const ArrowLeftIcon = () => (
 
 // --- Custom UUID fallback ---
 function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+        var r = (Math.random() * 16) | 0,
+            v = c == "x" ? r : (r & 0x3) | 0x8;
         return v.toString(16);
     });
 }
@@ -230,17 +279,23 @@ export function ErrorBoundary({ error }: { error: any }) {
         errorDetails = `HTTP Error ${error.status} ${error.statusText}\nData: ${JSON.stringify(error.data)}`;
     } else if (error instanceof Error) {
         errorDetails = `${error.message}\n${error.stack}`;
-    } else if (typeof error === 'object' && error !== null) {
+    } else if (typeof error === "object" && error !== null) {
         // Try to stringify safely, handling circular references or proxy objects
         try {
             const cache = new Set();
-            errorDetails = JSON.stringify(error, (key, value) => {
-                if (typeof value === 'object' && value !== null) {
-                    if (cache.has(value)) { return '[Circular]'; }
-                    cache.add(value);
-                }
-                return value;
-            }, 2);
+            errorDetails = JSON.stringify(
+                error,
+                (key, value) => {
+                    if (typeof value === "object" && value !== null) {
+                        if (cache.has(value)) {
+                            return "[Circular]";
+                        }
+                        cache.add(value);
+                    }
+                    return value;
+                },
+                2,
+            );
         } catch (e) {
             errorDetails = `Failed to stringify error object: ${String(e)}`;
         }
@@ -249,9 +304,27 @@ export function ErrorBoundary({ error }: { error: any }) {
     }
 
     return (
-        <div style={{ padding: '40px', background: '#0f1115', color: 'white', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-            <h1 style={{ color: '#ef4444' }}>Помилка на сторінці редагування товару</h1>
-            <pre style={{ background: '#1c1f26', padding: '20px', borderRadius: '8px', overflowX: 'auto', marginTop: '20px', color: '#f1f5f9', fontSize: '14px' }}>
+        <div
+            style={{
+                padding: "40px",
+                background: "#0f1115",
+                color: "white",
+                minHeight: "100vh",
+                fontFamily: "sans-serif",
+            }}
+        >
+            <h1 style={{ color: "#ef4444" }}>Помилка на сторінці редагування товару</h1>
+            <pre
+                style={{
+                    background: "#1c1f26",
+                    padding: "20px",
+                    borderRadius: "8px",
+                    overflowX: "auto",
+                    marginTop: "20px",
+                    color: "#f1f5f9",
+                    fontSize: "14px",
+                }}
+            >
                 {errorDetails}
             </pre>
         </div>
@@ -269,11 +342,11 @@ export default function AdminProductEdit() {
         if (product) return product;
         return {
             ...emptyForm,
-            shopPageSlug: shopPages[0]?.slug || "women"
+            shopPageSlug: shopPages[0]?.slug || "women",
         };
     });
 
-    const filterConfig = filterConfigs[formData.shopPageSlug] || filterConfigs['global'];
+    const filterConfig = filterConfigs[formData.shopPageSlug] || filterConfigs["global"];
 
     // Upload Handler
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,9 +361,9 @@ export default function AdminProductEdit() {
     // Listen for upload success
     useEffect(() => {
         if (fetcher.data?.imageUrl) {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
-                images: [...prev.images, fetcher.data.imageUrl]
+                images: [...prev.images, fetcher.data.imageUrl],
             }));
         }
     }, [fetcher.data]);
@@ -302,10 +375,10 @@ export default function AdminProductEdit() {
 
         // Append all simple fields
         Object.entries(formData).forEach(([key, value]) => {
-            if (key === 'inventory') {
+            if (key === "inventory") {
                 // Convert Map to List for storage
                 const inventoryList = Object.entries(value).map(([id, stock]) => {
-                    const [color, size] = id.split('_');
+                    const [color, size] = id.split("_");
                     return { color, size, stock };
                 });
                 data.append(key, JSON.stringify(inventoryList));
@@ -329,11 +402,11 @@ export default function AdminProductEdit() {
     }, [fetcher.data, navigate]);
 
     // Helpers
-    const toggleArrayItem = (field: 'colors' | 'sizes', item: string) => {
-        setFormData(prev => {
+    const toggleArrayItem = (field: "colors" | "sizes", item: string) => {
+        setFormData((prev) => {
             const current = prev[field];
             const newArray = current.includes(item)
-                ? current.filter(i => i !== item)
+                ? current.filter((i) => i !== item)
                 : [...current, item];
             return { ...prev, [field]: newArray };
         });
@@ -343,19 +416,19 @@ export default function AdminProductEdit() {
     useEffect(() => {
         const total = Object.values(formData.inventory).reduce((a, b) => a + b, 0);
         if (total > 0) {
-            setFormData(p => ({ ...p, stock: String(total) }));
+            setFormData((p) => ({ ...p, stock: String(total) }));
         }
     }, [formData.inventory]);
 
     const globalApplyStock = (qty: number) => {
         const newInventory = { ...formData.inventory };
-        formData.colors.forEach(c => {
-            formData.sizes.forEach(s => {
+        formData.colors.forEach((c) => {
+            formData.sizes.forEach((s) => {
                 newInventory[`${c}_${s}`] = qty;
             });
         });
-        setFormData(p => ({ ...p, inventory: newInventory }));
-    }
+        setFormData((p) => ({ ...p, inventory: newInventory }));
+    };
 
     return (
         <div className="admin-wrapper">
@@ -640,9 +713,13 @@ export default function AdminProductEdit() {
                             <ArrowLeftIcon />
                             До списку товарів
                         </Link>
-                        <h1 className="page-title">{isNew ? "Новий товар" : formData.name || "Редагування"}</h1>
+                        <h1 className="page-title">
+                            {isNew ? "Новий товар" : formData.name || "Редагування"}
+                        </h1>
                         <p className="page-subtitle">
-                            {isNew ? "Створіть ідеальний товар для вашого магазину" : `SKU: ${formData.sku || '---'}`}
+                            {isNew
+                                ? "Створіть ідеальний товар для вашого магазину"
+                                : `SKU: ${formData.sku || "---"}`}
                         </p>
                     </div>
                     <div>
@@ -658,21 +735,34 @@ export default function AdminProductEdit() {
 
                 <div className="admin-layout-grid">
                     {/* Left Column: Main Info */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
+                    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
                         <div className="ad-card">
                             <h3 className="ad-card-title">Загальна інформація</h3>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                            <div
+                                style={{
+                                    display: "grid",
+                                    gridTemplateColumns: "1fr 1fr",
+                                    gap: "20px",
+                                    marginBottom: "20px",
+                                }}
+                            >
                                 <div className="form-group" style={{ marginBottom: 0 }}>
                                     <label className="form-label">Розділ магазину</label>
                                     <select
                                         className="form-select"
                                         value={formData.shopPageSlug}
-                                        onChange={e => setFormData(p => ({ ...p, shopPageSlug: e.target.value }))}
+                                        onChange={(e) =>
+                                            setFormData((p) => ({
+                                                ...p,
+                                                shopPageSlug: e.target.value,
+                                            }))
+                                        }
                                     >
-                                        {shopPages.map(page => (
-                                            <option key={page.slug} value={page.slug}>{page.title}</option>
+                                        {shopPages.map((page) => (
+                                            <option key={page.slug} value={page.slug}>
+                                                {page.title}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -681,12 +771,19 @@ export default function AdminProductEdit() {
                                     <select
                                         className="form-select"
                                         value={formData.category}
-                                        onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}
+                                        onChange={(e) =>
+                                            setFormData((p) => ({ ...p, category: e.target.value }))
+                                        }
                                     >
                                         <option value="">Оберіть категорію</option>
-                                        {filterConfig?.categories && Object.entries(filterConfig.categories).map(([key, label]: [string, any]) => (
-                                            <option key={key} value={key}>{label as string}</option>
-                                        ))}
+                                        {filterConfig?.categories &&
+                                            Object.entries(filterConfig.categories).map(
+                                                ([key, label]: [string, any]) => (
+                                                    <option key={key} value={key}>
+                                                        {label as string}
+                                                    </option>
+                                                ),
+                                            )}
                                     </select>
                                 </div>
                             </div>
@@ -698,8 +795,10 @@ export default function AdminProductEdit() {
                                     className="form-input"
                                     placeholder="Напр. Спортивний топ Aura"
                                     value={formData.name}
-                                    onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                                    style={{ fontSize: '16px', fontWeight: 500 }}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({ ...p, name: e.target.value }))
+                                    }
+                                    style={{ fontSize: "16px", fontWeight: 500 }}
                                 />
                             </div>
 
@@ -709,15 +808,39 @@ export default function AdminProductEdit() {
                                     className="form-textarea"
                                     placeholder="Детальний описи товару, склад, особливості..."
                                     value={formData.description}
-                                    onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({ ...p, description: e.target.value }))
+                                    }
                                 />
                             </div>
                         </div>
 
                         <div className="ad-card">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid var(--ad-border)', paddingBottom: '16px' }}>
-                                <h3 className="ad-card-title" style={{ margin: 0, padding: 0, border: 'none' }}>Варіанти та Склад</h3>
-                                <div style={{ fontSize: '13px', padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', color: '#5eead4' }}>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    marginBottom: "24px",
+                                    borderBottom: "1px solid var(--ad-border)",
+                                    paddingBottom: "16px",
+                                }}
+                            >
+                                <h3
+                                    className="ad-card-title"
+                                    style={{ margin: 0, padding: 0, border: "none" }}
+                                >
+                                    Варіанти та Склад
+                                </h3>
+                                <div
+                                    style={{
+                                        fontSize: "13px",
+                                        padding: "6px 12px",
+                                        background: "rgba(255,255,255,0.05)",
+                                        borderRadius: "100px",
+                                        color: "#5eead4",
+                                    }}
+                                >
                                     Загальна кількість: <b>{formData.stock} шт.</b>
                                 </div>
                             </div>
@@ -725,19 +848,27 @@ export default function AdminProductEdit() {
                             <div className="form-group">
                                 <label className="form-label">Доступні кольори (оберіть всі)</label>
                                 <div className="color-grid">
-                                    {filterConfig?.colors && Object.entries(filterConfig.colors).map(([key, label]: [string, any]) => (
-                                        <div
-                                            key={key}
-                                            onClick={() => toggleArrayItem('colors', key)}
-                                            className={`color-option ${formData.colors.includes(key) ? 'active' : ''}`}
-                                            style={{
-                                                background: key === 'other' ? 'linear-gradient(45deg, #eee, #999)' : key
-                                            }}
-                                            title={label as string}
-                                        >
-                                            {formData.colors.includes(key) && <div className="check-mark">✓</div>}
-                                        </div>
-                                    ))}
+                                    {filterConfig?.colors &&
+                                        Object.entries(filterConfig.colors).map(
+                                            ([key, label]: [string, any]) => (
+                                                <div
+                                                    key={key}
+                                                    onClick={() => toggleArrayItem("colors", key)}
+                                                    className={`color-option ${formData.colors.includes(key) ? "active" : ""}`}
+                                                    style={{
+                                                        background:
+                                                            key === "other"
+                                                                ? "linear-gradient(45deg, #eee, #999)"
+                                                                : key,
+                                                    }}
+                                                    title={label as string}
+                                                >
+                                                    {formData.colors.includes(key) && (
+                                                        <div className="check-mark">✓</div>
+                                                    )}
+                                                </div>
+                                            ),
+                                        )}
                                 </div>
                             </div>
 
@@ -747,8 +878,8 @@ export default function AdminProductEdit() {
                                     {(filterConfig?.sizes || []).map((size: string) => (
                                         <div
                                             key={size}
-                                            onClick={() => toggleArrayItem('sizes', size)}
-                                            className={`size-option ${formData.sizes.includes(size) ? 'active' : ''}`}
+                                            onClick={() => toggleArrayItem("sizes", size)}
+                                            className={`size-option ${formData.sizes.includes(size) ? "active" : ""}`}
                                         >
                                             {size}
                                         </div>
@@ -759,71 +890,140 @@ export default function AdminProductEdit() {
                             {formData.colors.length > 0 && formData.sizes.length > 0 ? (
                                 <div className="inv-table-wrapper">
                                     <div className="inv-header">
-                                        <span style={{ fontSize: '13px', fontWeight: 600 }}>Керування залишками</span>
+                                        <span style={{ fontSize: "13px", fontWeight: 600 }}>
+                                            Керування залишками
+                                        </span>
                                         <button
                                             onClick={() => {
-                                                const qty = prompt("Введіть кількість для всіх варіантів:", "10");
+                                                const qty = prompt(
+                                                    "Введіть кількість для всіх варіантів:",
+                                                    "10",
+                                                );
                                                 if (qty) globalApplyStock(parseInt(qty));
                                             }}
-                                            style={{ fontSize: '12px', color: 'var(--ad-primary)', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                                            style={{
+                                                fontSize: "12px",
+                                                color: "var(--ad-primary)",
+                                                background: "transparent",
+                                                border: "none",
+                                                cursor: "pointer",
+                                                fontWeight: 600,
+                                            }}
                                         >
                                             ЗАПОВНИТИ ВСІ
                                         </button>
                                     </div>
-                                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                    <div style={{ maxHeight: "300px", overflowY: "auto" }}>
                                         <table className="inv-table">
                                             <tbody>
-                                                {formData.colors.map(color => (
-                                                    formData.sizes.map(size => {
+                                                {formData.colors.map((color) =>
+                                                    formData.sizes.map((size) => {
                                                         const key = `${color}_${size}`;
                                                         return (
                                                             <tr key={key}>
-                                                                <td style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: color }}></div>
-                                                                    <span style={{ fontWeight: 500 }}>{(filterConfig?.colors as any)?.[color] || color} / {size}</span>
+                                                                <td
+                                                                    style={{
+                                                                        display: "flex",
+                                                                        alignItems: "center",
+                                                                        gap: "10px",
+                                                                    }}
+                                                                >
+                                                                    <div
+                                                                        style={{
+                                                                            width: "12px",
+                                                                            height: "12px",
+                                                                            borderRadius: "50%",
+                                                                            background: color,
+                                                                        }}
+                                                                    ></div>
+                                                                    <span
+                                                                        style={{ fontWeight: 500 }}
+                                                                    >
+                                                                        {(
+                                                                            filterConfig?.colors as any
+                                                                        )?.[color] || color}{" "}
+                                                                        / {size}
+                                                                    </span>
                                                                 </td>
-                                                                <td style={{ width: '100px', textAlign: 'right' }}>
+                                                                <td
+                                                                    style={{
+                                                                        width: "100px",
+                                                                        textAlign: "right",
+                                                                    }}
+                                                                >
                                                                     <input
                                                                         type="number"
                                                                         className="inv-input"
-                                                                        value={formData.inventory[key] || 0}
-                                                                        onChange={(e) => setFormData(p => ({
-                                                                            ...p,
-                                                                            inventory: { ...p.inventory, [key]: parseInt(e.target.value) || 0 }
-                                                                        }))}
+                                                                        value={
+                                                                            formData.inventory[
+                                                                                key
+                                                                            ] || 0
+                                                                        }
+                                                                        onChange={(e) =>
+                                                                            setFormData((p) => ({
+                                                                                ...p,
+                                                                                inventory: {
+                                                                                    ...p.inventory,
+                                                                                    [key]:
+                                                                                        parseInt(
+                                                                                            e.target
+                                                                                                .value,
+                                                                                        ) || 0,
+                                                                                },
+                                                                            }))
+                                                                        }
                                                                     />
                                                                 </td>
                                                             </tr>
-                                                        )
-                                                    })
-                                                ))}
+                                                        );
+                                                    }),
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
                             ) : (
-                                <div style={{ padding: '30px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', marginTop: '16px', fontSize: '14px', color: 'var(--ad-text-muted)' }}>
+                                <div
+                                    style={{
+                                        padding: "30px",
+                                        textAlign: "center",
+                                        background: "rgba(255,255,255,0.02)",
+                                        borderRadius: "8px",
+                                        marginTop: "16px",
+                                        fontSize: "14px",
+                                        color: "var(--ad-text-muted)",
+                                    }}
+                                >
                                     Оберіть хоча б один колір та розмір, щоб налаштувати склад.
                                 </div>
                             )}
                         </div>
-
                     </div>
 
                     {/* Right Column: Sidebar */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
+                    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
                         <div className="ad-card">
                             <h3 className="ad-card-title">Статус публікації</h3>
                             <div className="form-group">
                                 <select
                                     className="form-select"
                                     value={formData.status}
-                                    onChange={e => setFormData(p => ({ ...p, status: e.target.value as any }))}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({
+                                            ...p,
+                                            status: e.target.value as any,
+                                        }))
+                                    }
                                     style={{
-                                        color: formData.status === 'active' ? 'var(--ad-primary)' : 'inherit',
-                                        fontWeight: formData.status === 'active' ? '600' : '400',
-                                        border: formData.status === 'active' ? '1px solid rgba(94, 234, 212, 0.3)' : '1px solid transparent'
+                                        color:
+                                            formData.status === "active"
+                                                ? "var(--ad-primary)"
+                                                : "inherit",
+                                        fontWeight: formData.status === "active" ? "600" : "400",
+                                        border:
+                                            formData.status === "active"
+                                                ? "1px solid rgba(94, 234, 212, 0.3)"
+                                                : "1px solid transparent",
                                     }}
                                 >
                                     <option value="active">🟢 Опубліковано (Active)</option>
@@ -839,20 +1039,45 @@ export default function AdminProductEdit() {
                                 {formData.images.map((img, idx) => (
                                     <div key={idx} className="image-item">
                                         <img src={img} alt="" />
-                                        <button className="delete-btn" onClick={() => setFormData(p => ({ ...p, images: p.images.filter((_, i) => i !== idx) }))}>
+                                        <button
+                                            className="delete-btn"
+                                            onClick={() =>
+                                                setFormData((p) => ({
+                                                    ...p,
+                                                    images: p.images.filter((_, i) => i !== idx),
+                                                }))
+                                            }
+                                        >
                                             <TrashIcon />
                                         </button>
                                     </div>
                                 ))}
 
                                 <label className="upload-box">
-                                    <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
-                                    {fetcher.state === "submitting" && fetcher.formData?.get("intent") === "upload_image" ? (
-                                        <div style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        hidden
+                                        onChange={handleImageUpload}
+                                    />
+                                    {fetcher.state === "submitting" &&
+                                    fetcher.formData?.get("intent") === "upload_image" ? (
+                                        <div
+                                            style={{
+                                                width: "20px",
+                                                height: "20px",
+                                                border: "2px solid rgba(255,255,255,0.2)",
+                                                borderTopColor: "#fff",
+                                                borderRadius: "50%",
+                                                animation: "spin 1s linear infinite",
+                                            }}
+                                        ></div>
                                     ) : (
                                         <>
                                             <UploadIcon />
-                                            <span style={{ fontSize: '12px', marginTop: '8px' }}>Додати</span>
+                                            <span style={{ fontSize: "12px", marginTop: "8px" }}>
+                                                Додати
+                                            </span>
                                         </>
                                     )}
                                 </label>
@@ -866,9 +1091,15 @@ export default function AdminProductEdit() {
                                 <input
                                     type="number"
                                     className="form-input"
-                                    style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ad-primary)' }}
+                                    style={{
+                                        fontSize: "20px",
+                                        fontWeight: "bold",
+                                        color: "var(--ad-primary)",
+                                    }}
                                     value={formData.price}
-                                    onChange={e => setFormData(p => ({ ...p, price: e.target.value }))}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({ ...p, price: e.target.value }))
+                                    }
                                 />
                             </div>
                             <div className="form-group">
@@ -878,7 +1109,9 @@ export default function AdminProductEdit() {
                                     className="form-input"
                                     placeholder="----"
                                     value={formData.comparePrice}
-                                    onChange={e => setFormData(p => ({ ...p, comparePrice: e.target.value }))}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({ ...p, comparePrice: e.target.value }))
+                                    }
                                 />
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -887,11 +1120,12 @@ export default function AdminProductEdit() {
                                     type="text"
                                     className="form-input"
                                     value={formData.sku}
-                                    onChange={e => setFormData(p => ({ ...p, sku: e.target.value }))}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({ ...p, sku: e.target.value }))
+                                    }
                                 />
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -899,6 +1133,6 @@ export default function AdminProductEdit() {
             <style>{`
                 @keyframes spin { to { transform: rotate(360deg); } }
             `}</style>
-        </div >
+        </div>
     );
 }

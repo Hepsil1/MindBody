@@ -5,20 +5,25 @@
 
 /* Breathing Logo Animation */
 @keyframes breathe {
-    0%, 100% {
+    0%,
+    100% {
         transform: scale(1);
-        filter: brightness(0) invert(1) drop-shadow(0 0 15px rgba(255,255,255,0.3));
+        filter: brightness(0) invert(1) drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
     }
     50% {
         transform: scale(1.05);
-        filter: brightness(0) invert(1) drop-shadow(0 0 25px rgba(255,255,255,0.5));
+        filter: brightness(0) invert(1) drop-shadow(0 0 25px rgba(255, 255, 255, 0.5));
     }
 }
 
 /* Scroll Down Animation */
 @keyframes scrollDown {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(250%); }
+    0% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(250%);
+    }
 }
 
 /* Hero Overlay Container */
@@ -67,10 +72,10 @@
     transform: rotate(180deg);
     color: #fff;
     font-size: clamp(0.8rem, 1vw, 0.9rem);
-    font-family: 'Tenor Sans', sans-serif;
+    font-family: "Tenor Sans", sans-serif;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     margin: 0;
     white-space: nowrap;
 }
@@ -107,7 +112,7 @@
 .about-hero-scroll__track {
     width: 1px;
     height: 50px;
-    background: rgba(255,255,255,0.4);
+    background: rgba(255, 255, 255, 0.4);
     overflow: hidden;
 }
 

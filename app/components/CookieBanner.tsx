@@ -16,12 +16,16 @@ export function CookieBanner() {
     }, []);
 
     const accept = () => {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ accepted: true, at: Date.now() })); } catch {}
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ accepted: true, at: Date.now() }));
+        } catch {}
         setVisible(false);
     };
 
     const decline = () => {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ accepted: false, at: Date.now() })); } catch {}
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ accepted: false, at: Date.now() }));
+        } catch {}
         setVisible(false);
     };
 
@@ -44,10 +48,18 @@ export function CookieBanner() {
                     </p>
                 </div>
                 <div className="cookie-banner__actions">
-                    <button type="button" className="cookie-banner__btn cookie-banner__btn--ghost" onClick={decline}>
+                    <button
+                        type="button"
+                        className="cookie-banner__btn cookie-banner__btn--ghost"
+                        onClick={decline}
+                    >
                         Лише необхідні
                     </button>
-                    <button type="button" className="cookie-banner__btn cookie-banner__btn--primary" onClick={accept}>
+                    <button
+                        type="button"
+                        className="cookie-banner__btn cookie-banner__btn--primary"
+                        onClick={accept}
+                    >
                         Прийняти
                     </button>
                 </div>

@@ -20,11 +20,11 @@ const cache = new Map<string, CacheEntry<unknown>>();
 export async function cachedFetch<T>(
     key: string,
     ttlMs: number,
-    fetcher: () => Promise<T>
+    fetcher: () => Promise<T>,
 ): Promise<T> {
     const existing = cache.get(key) as CacheEntry<T> | undefined;
 
-    if (existing && (Date.now() - existing.timestamp) < ttlMs) {
+    if (existing && Date.now() - existing.timestamp < ttlMs) {
         return existing.data;
     }
 

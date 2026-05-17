@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const defaultSlides = [
@@ -14,7 +14,7 @@ const defaultSlides = [
         image2Pos: "center center",
         image3Pos: "center center",
         order: 1,
-        isActive: true
+        isActive: true,
     },
     {
         id: "default-2-" + Date.now(),
@@ -28,7 +28,7 @@ const defaultSlides = [
         image2Pos: "center center",
         image3Pos: "center center",
         order: 2,
-        isActive: true
+        isActive: true,
     },
     {
         id: "default-3-" + Date.now(),
@@ -42,7 +42,7 @@ const defaultSlides = [
         image2Pos: "center center",
         image3Pos: "center center",
         order: 3,
-        isActive: true
+        isActive: true,
     },
     {
         id: "default-4-" + Date.now(),
@@ -56,7 +56,7 @@ const defaultSlides = [
         image2Pos: "center center",
         image3Pos: "center center",
         order: 4,
-        isActive: true
+        isActive: true,
     },
     {
         id: "default-5-" + Date.now(),
@@ -70,22 +70,22 @@ const defaultSlides = [
         image2Pos: "center center",
         image3Pos: "center center",
         order: 5,
-        isActive: true
+        isActive: true,
     },
 ];
 
 async function main() {
     const slideCount = await prisma.slide.count();
-    
+
     if (slideCount === 0) {
         console.log("No slides in database. Seeding default slides directly to DB...");
-        
+
         for (const slide of defaultSlides) {
             await prisma.slide.create({
-                data: slide
+                data: slide,
             });
         }
-        
+
         console.log("Seeded 5 default slides. They will now appear in the Admin Panel!");
     } else {
         console.log(`Database already has ${slideCount} slides. Skipping seed.`);

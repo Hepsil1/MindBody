@@ -55,7 +55,9 @@ function htmlToText(html: string): string {
         .trim();
 }
 
-export async function sendEmail(args: SendEmailArgs): Promise<{ ok: boolean; id?: string; error?: string }> {
+export async function sendEmail(
+    args: SendEmailArgs,
+): Promise<{ ok: boolean; id?: string; error?: string }> {
     if (!resend) {
         console.warn("[email] RESEND_API_KEY not set — skipping send to", args.to);
         return { ok: false, error: "not_configured" };
@@ -145,10 +147,14 @@ function shell(opts: {
             <tr>
               <td style="padding:32px;">
                 ${opts.bodyHtml}
-                ${opts.cta ? `
+                ${
+                    opts.cta
+                        ? `
                 <div style="text-align:center; margin-top:32px;">
                   <a href="${esc(opts.cta.href)}" style="display:inline-block; background:#2a5a5a; color:#ffffff; text-decoration:none; padding:14px 32px; border-radius:999px; font-weight:600; letter-spacing:0.02em;">${esc(opts.cta.label)}</a>
-                </div>` : ""}
+                </div>`
+                        : ""
+                }
               </td>
             </tr>
             <tr>
@@ -188,7 +194,9 @@ export interface OrderEmailData {
 }
 
 export function renderOrderConfirmation(data: OrderEmailData): string {
-    const itemsRows = data.items.map((it) => `
+    const itemsRows = data.items
+        .map(
+            (it) => `
         <tr>
           <td style="padding:12px 0; border-bottom:1px solid #f0ede9;">
             <div style="font-weight:600;">${esc(it.name)}</div>
@@ -205,7 +213,9 @@ export function renderOrderConfirmation(data: OrderEmailData): string {
             ${money(it.price * it.quantity)}
           </td>
         </tr>
-    `).join("");
+    `,
+        )
+        .join("");
 
     const bodyHtml = `
         <p style="font-size:16px; line-height:1.6; color:#1a1a1a; margin:0 0 16px;">
@@ -233,19 +243,27 @@ export function renderOrderConfirmation(data: OrderEmailData): string {
             </tfoot>
         </table>
 
-        ${data.deliveryMethod || data.deliveryAddress ? `
+        ${
+            data.deliveryMethod || data.deliveryAddress
+                ? `
         <div style="margin-top:24px; padding:16px; background:#faf8f6; border-radius:12px;">
             <div style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#888; margin-bottom:6px;">Доставка</div>
             <div style="font-size:14px; color:#1a1a1a;">
                 ${esc(data.deliveryMethod || "")}${data.deliveryAddress ? "<br>" + esc(data.deliveryAddress) : ""}
             </div>
-        </div>` : ""}
+        </div>`
+                : ""
+        }
 
-        ${data.paymentMethod ? `
+        ${
+            data.paymentMethod
+                ? `
         <div style="margin-top:12px; padding:16px; background:#faf8f6; border-radius:12px;">
             <div style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#888; margin-bottom:6px;">Оплата</div>
             <div style="font-size:14px; color:#1a1a1a;">${esc(data.paymentMethod)}</div>
-        </div>` : ""}
+        </div>`
+                : ""
+        }
 
         <p style="font-size:13px; color:#888; line-height:1.6; margin:24px 0 0;">
             Якщо щось не так — просто дай нам знати, відповівши на цей email.
@@ -262,7 +280,9 @@ export function renderOrderConfirmation(data: OrderEmailData): string {
 }
 
 export function renderNewsletterWelcome(data: { email: string; unsubKey?: string }): string {
-    const unsubLink = data.unsubKey ? `${SITE_URL}/api/newsletter?unsub=${data.unsubKey}` : `${SITE_URL}`;
+    const unsubLink = data.unsubKey
+        ? `${SITE_URL}/api/newsletter?unsub=${data.unsubKey}`
+        : `${SITE_URL}`;
     const bodyHtml = `
         <p style="font-size:16px; line-height:1.6; color:#1a1a1a; margin:0 0 16px;">
             Ласкаво просимо у спільноту MIND BODY ✨

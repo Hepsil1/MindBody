@@ -10,25 +10,25 @@
 
 export const CATEGORY_MAP: Record<string, string> = {
     // Common across sections
-    "jumpsuit":     "Комбінезони",
-    "leggings":     "Легінси",
-    "tops":         "Топи",
-    "shorts":       "Шорти",
-    "longsleeve":   "Лонгсліви",
-    "tshirts":      "Футболки",
-    "singlets":     "Майки",
-    "sets":         "Комплекти",
-    "jackets":      "Куртки",
-    "velo":         "VELO",
+    jumpsuit: "Комбінезони",
+    leggings: "Легінси",
+    tops: "Топи",
+    shorts: "Шорти",
+    longsleeve: "Лонгсліви",
+    tshirts: "Футболки",
+    singlets: "Майки",
+    sets: "Комплекти",
+    jackets: "Куртки",
+    velo: "VELO",
     // Dance specific
-    "net-models":   "Моделі із сітки",
-    "pole-sets":    "Комплекти пілон",
+    "net-models": "Моделі із сітки",
+    "pole-sets": "Комплекти пілон",
     // Casual specific
-    "suits":        "Костюми",
-    "shirts":       "Сорочки",
-    "thermo":       "Термо",
-    "hoodies":      "Худі / Світшоти",
-    "joggers":      "Джоггери",
+    suits: "Костюми",
+    shirts: "Сорочки",
+    thermo: "Термо",
+    hoodies: "Худі / Світшоти",
+    joggers: "Джоггери",
     // Kids specific
     "kids-jumpsuit": "Комбінезони",
 };
@@ -52,5 +52,5 @@ export function labelToSlug(label: string): string | null {
  * Used in DEFAULT_FILTER_CONFIG
  */
 export function buildFilterCategories(slugs: string[]): Record<string, string> {
-    return Object.fromEntries(slugs.map(slug => [slug, slugToLabel(slug)]));
+    return Object.fromEntries(slugs.map((slug) => [slug, slugToLabel(slug)]));
 }

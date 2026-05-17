@@ -10,7 +10,7 @@ const defaultSlides = [
         image2: "/generalpics/374_131123.jpg",
         image3: "/generalpics/338_131123.jpg",
         order: 1,
-        link: "/shop/women"
+        link: "/shop/women",
     },
     {
         name: "Cocoa Collection",
@@ -19,7 +19,7 @@ const defaultSlides = [
         image2: "/pics2cloths/IMG_4976.JPG",
         image3: "/pics2cloths/IMG_4980.JPG",
         order: 2,
-        link: "/shop/women"
+        link: "/shop/women",
     },
     {
         name: "Black Collection",
@@ -28,7 +28,7 @@ const defaultSlides = [
         image2: "/pics1cloths/IMG_6203.JPG",
         image3: "/pics1cloths/IMG_6204.JPG",
         order: 3,
-        link: "/shop/women"
+        link: "/shop/women",
     },
     {
         name: "Teal Variants",
@@ -37,7 +37,7 @@ const defaultSlides = [
         image2: "/generalpics/595_131123.jpg",
         image3: "/generalpics/602_131123.jpg",
         order: 4,
-        link: "/shop/women"
+        link: "/shop/women",
     },
     {
         name: "Hero Banner",
@@ -46,7 +46,7 @@ const defaultSlides = [
         image2: null,
         image3: null,
         order: 5,
-        link: "/shop"
+        link: "/shop",
     },
 ];
 
@@ -69,8 +69,8 @@ async function main() {
                 image3: slide.image3,
                 order: slide.order,
                 link: slide.link,
-                isActive: true
-            }
+                isActive: true,
+            },
         });
     }
     console.log("Slides seeded successfully!");

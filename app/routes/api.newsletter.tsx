@@ -11,7 +11,7 @@ const RATE_MAX = 5;
 
 function rateLimited(ip: string) {
     const now = Date.now();
-    const bucket = (rateBuckets.get(ip) || []).filter(t => now - t < RATE_WINDOW_MS);
+    const bucket = (rateBuckets.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
     if (bucket.length >= RATE_MAX) return true;
     bucket.push(now);
     rateBuckets.set(ip, bucket);
@@ -31,7 +31,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (rateLimited(ip)) {
         return Response.json(
             { success: false, error: "Забагато спроб, спробуйте через хвилину" },
-            { status: 429 }
+            { status: 429 },
         );
     }
 
@@ -42,14 +42,13 @@ export async function action({ request }: ActionFunctionArgs) {
         return Response.json({ success: false, error: "Invalid JSON" }, { status: 400 });
     }
 
-    const rawEmail = String(body?.email || "").trim().toLowerCase();
+    const rawEmail = String(body?.email || "")
+        .trim()
+        .toLowerCase();
     const source = String(body?.source || "footer").slice(0, 32);
 
     if (!EMAIL_REGEX.test(rawEmail) || rawEmail.length > 200) {
-        return Response.json(
-            { success: false, error: "Введіть коректний email" },
-            { status: 400 }
-        );
+        return Response.json({ success: false, error: "Введіть коректний email" }, { status: 400 });
     }
 
     try {
@@ -57,7 +56,7 @@ export async function action({ request }: ActionFunctionArgs) {
         const sub = await prisma.newsletterSubscriber.upsert({
             where: { email: rawEmail },
             create: { email: rawEmail, source, consent: true },
-            update: { unsubscribed: false, consent: true }
+            update: { unsubscribed: false, consent: true },
         });
 
         // Fire-and-forget welcome email. Don't block the response on email delivery.
@@ -76,7 +75,7 @@ export async function action({ request }: ActionFunctionArgs) {
         console.error("Newsletter subscribe failed", e);
         return Response.json(
             { success: false, error: "Сталась помилка, спробуйте пізніше" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -93,7 +92,7 @@ export async function loader({ request }: { request: Request }) {
         if (!sub) return Response.json({ success: false, error: "Not found" }, { status: 404 });
         await prisma.newsletterSubscriber.update({
             where: { unsubKey: key },
-            data: { unsubscribed: true }
+            data: { unsubscribed: true },
         });
         return Response.json({ success: true, email: sub.email });
     } catch {

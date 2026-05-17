@@ -21,16 +21,16 @@ export async function loader() {
     `;
 
     const staticPages = [
-        { url: "/",            priority: "1.0", changefreq: "daily" },
-        { url: "/about",       priority: "0.7", changefreq: "monthly" },
-        { url: "/contacts",    priority: "0.5", changefreq: "monthly" },
-        { url: "/delivery",    priority: "0.6", changefreq: "monthly" },
-        { url: "/size-guide",  priority: "0.5", changefreq: "monthly" },
-        { url: "/care-guide",  priority: "0.5", changefreq: "monthly" },
-        { url: "/faq",         priority: "0.6", changefreq: "monthly" },
+        { url: "/", priority: "1.0", changefreq: "daily" },
+        { url: "/about", priority: "0.7", changefreq: "monthly" },
+        { url: "/contacts", priority: "0.5", changefreq: "monthly" },
+        { url: "/delivery", priority: "0.6", changefreq: "monthly" },
+        { url: "/size-guide", priority: "0.5", changefreq: "monthly" },
+        { url: "/care-guide", priority: "0.5", changefreq: "monthly" },
+        { url: "/faq", priority: "0.6", changefreq: "monthly" },
         { url: "/return-policy", priority: "0.4", changefreq: "yearly" },
-        { url: "/privacy",     priority: "0.3", changefreq: "yearly" },
-        { url: "/terms",       priority: "0.3", changefreq: "yearly" },
+        { url: "/privacy", priority: "0.3", changefreq: "yearly" },
+        { url: "/terms", priority: "0.3", changefreq: "yearly" },
     ];
 
     const now = new Date().toISOString().split("T")[0];
@@ -40,24 +40,24 @@ export async function loader() {
 
     for (const page of staticPages) {
         urls.push(
-`  <url>
+            `  <url>
     <loc>${baseUrl}${esc(page.url)}</loc>
     <lastmod>${now}</lastmod>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
-  </url>`
+  </url>`,
         );
     }
 
     for (const sp of shopPages) {
         const lastmod = sp.updatedAt ? new Date(sp.updatedAt).toISOString().split("T")[0] : now;
         urls.push(
-`  <url>
+            `  <url>
     <loc>${baseUrl}/shop/${esc(sp.slug)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>`
+  </url>`,
         );
     }
 
@@ -65,12 +65,12 @@ export async function loader() {
         const lastmod = p.updatedAt ? new Date(p.updatedAt).toISOString().split("T")[0] : now;
         const path = p.slug ? `/p/${esc(p.slug)}` : `/product/${esc(p.id)}`;
         urls.push(
-`  <url>
+            `  <url>
     <loc>${baseUrl}${path}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-  </url>`
+  </url>`,
         );
     }
 

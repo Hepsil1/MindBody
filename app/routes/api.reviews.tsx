@@ -12,18 +12,21 @@ export async function loader({ request }: { request: Request }) {
     }
 
     try {
-        const reviews = await prisma.$queryRawUnsafe(
+        const reviews = (await prisma.$queryRawUnsafe(
             `SELECT id, "productId", "authorName", rating, text, "isVerified", "createdAt" 
              FROM "Review" 
              WHERE "productId" = $1 AND "isApproved" = true
              ORDER BY "createdAt" DESC`,
-            productId
-        ) as any[];
+            productId,
+        )) as any[];
 
         const count = reviews.length;
-        const avg = count > 0
-            ? Math.round((reviews.reduce((s: number, r: any) => s + r.rating, 0) / count) * 10) / 10
-            : 0;
+        const avg =
+            count > 0
+                ? Math.round(
+                      (reviews.reduce((s: number, r: any) => s + r.rating, 0) / count) * 10,
+                  ) / 10
+                : 0;
 
         return Response.json({ reviews, avg, count });
     } catch (e) {
@@ -61,10 +64,14 @@ export async function action({ request }: { request: Request }) {
                 text,
                 isVerified: false,
                 isApproved: false,
-            }
+            },
         });
 
-        return Response.json({ success: true, id: review.id, message: "Дякуємо! Ваш відгук буде опубліковано після модерації." });
+        return Response.json({
+            success: true,
+            id: review.id,
+            message: "Дякуємо! Ваш відгук буде опубліковано після модерації.",
+        });
     } catch (e) {
         console.error("Review create error:", e);
         return Response.json({ error: "Помилка збереження" }, { status: 500 });

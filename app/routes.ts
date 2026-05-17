@@ -56,4 +56,3 @@ export default [
         route("admin/reviews", "routes/admin/reviews.tsx"),
     ]),
 ] satisfies RouteConfig;
-

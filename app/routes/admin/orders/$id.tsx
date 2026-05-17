@@ -11,10 +11,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
             customer: true,
             items: {
                 include: {
-                    product: true
-                }
-            }
-        }
+                    product: true,
+                },
+            },
+        },
     });
 
     if (!order) {
@@ -36,7 +36,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const status = formData.get("status") as string;
             await prisma.order.update({
                 where: { id: params.id },
-                data: { status }
+                data: { status },
             });
         }
 
@@ -44,17 +44,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const paymentStatus = formData.get("paymentStatus") as string;
             await prisma.order.update({
                 where: { id: params.id },
-                data: { paymentStatus }
+                data: { paymentStatus },
             });
         }
 
         if (intent === "delete") {
             // First delete order items, then the order
             await prisma.orderItem.deleteMany({
-                where: { orderId: params.id }
+                where: { orderId: params.id },
             });
             await prisma.order.delete({
-                where: { id: params.id }
+                where: { id: params.id },
             });
             return redirect("/admin/orders");
         }
@@ -67,17 +67,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 const statusLabels: Record<string, { text: string; color: string }> = {
-    pending: { text: 'Очікує', color: '#f59e0b' },
-    processing: { text: 'Обробляється', color: '#3b82f6' },
-    shipped: { text: 'Відправлено', color: '#8b5cf6' },
-    delivered: { text: 'Доставлено', color: '#10b981' },
-    cancelled: { text: 'Скасовано', color: '#ef4444' }
+    pending: { text: "Очікує", color: "#f59e0b" },
+    processing: { text: "Обробляється", color: "#3b82f6" },
+    shipped: { text: "Відправлено", color: "#8b5cf6" },
+    delivered: { text: "Доставлено", color: "#10b981" },
+    cancelled: { text: "Скасовано", color: "#ef4444" },
 };
 
 const paymentLabels: Record<string, { text: string; color: string }> = {
-    pending: { text: 'Очікує оплати', color: '#f59e0b' },
-    paid: { text: 'Оплачено', color: '#10b981' },
-    refunded: { text: 'Повернуто', color: '#ef4444' }
+    pending: { text: "Очікує оплати", color: "#f59e0b" },
+    paid: { text: "Оплачено", color: "#10b981" },
+    refunded: { text: "Повернуто", color: "#ef4444" },
 };
 
 export default function AdminOrderDetails() {
@@ -116,7 +116,10 @@ export default function AdminOrderDetails() {
     const paymentInfo = paymentLabels[order.paymentStatus] || paymentLabels.pending;
 
     return (
-        <div className="admin-wrapper" style={{ maxWidth: '1200px', margin: '0 auto', color: '#e2e8f0' }}>
+        <div
+            className="admin-wrapper"
+            style={{ maxWidth: "1200px", margin: "0 auto", color: "#e2e8f0" }}
+        >
             <style>{`
                 .order-detail-card {
                     background: #1e293b;
@@ -280,7 +283,14 @@ export default function AdminOrderDetails() {
 
             {/* Back Link */}
             <Link to="/admin/orders" className="btn-back">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                >
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
                 Назад до замовлень
@@ -289,32 +299,65 @@ export default function AdminOrderDetails() {
             {/* Header */}
             <div className="order-detail-header">
                 <div>
-                    <h1 style={{ fontSize: '28px', fontWeight: '700', margin: '0 0 8px 0', color: '#f8fafc' }}>
+                    <h1
+                        style={{
+                            fontSize: "28px",
+                            fontWeight: "700",
+                            margin: "0 0 8px 0",
+                            color: "#f8fafc",
+                        }}
+                    >
                         Замовлення #{order.orderNumber}
                     </h1>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#94a3b8', fontSize: '14px' }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "16px",
+                            color: "#94a3b8",
+                            fontSize: "14px",
+                        }}
+                    >
                         <span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6, verticalAlign: 'middle' }}>
+                            <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                style={{ marginRight: 6, verticalAlign: "middle" }}
+                            >
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                                 <line x1="16" y1="2" x2="16" y2="6" />
                                 <line x1="8" y1="2" x2="8" y2="6" />
                                 <line x1="3" y1="10" x2="21" y2="10" />
                             </svg>
-                            {new Date(order.createdAt).toLocaleString('uk-UA', {
-                                day: '2-digit', month: '2-digit', year: 'numeric',
-                                hour: '2-digit', minute: '2-digit'
+                            {new Date(order.createdAt).toLocaleString("uk-UA", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
                             })}
                         </span>
                         <span
                             className="status-badge"
                             style={{ background: `${statusInfo.color}20`, color: statusInfo.color }}
                         >
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor' }}></span>
+                            <span
+                                style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: "50%",
+                                    background: "currentColor",
+                                }}
+                            ></span>
                             {statusInfo.text}
                         </span>
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                     <select
                         value={order.status}
                         onChange={handleStatusChange}
@@ -326,11 +369,16 @@ export default function AdminOrderDetails() {
                         <option value="delivered">✅ Доставлено</option>
                         <option value="cancelled">❌ Скасовано</option>
                     </select>
-                    <button
-                        className="btn-delete"
-                        onClick={() => setShowDeleteConfirm(true)}
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6, verticalAlign: 'middle' }}>
+                    <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            style={{ marginRight: 6, verticalAlign: "middle" }}
+                        >
                             <polyline points="3 6 5 6 21 6" />
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                         </svg>
@@ -344,34 +392,50 @@ export default function AdminOrderDetails() {
                 {/* Left Column - Items */}
                 <div>
                     <div className="order-detail-card">
-                        <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 20px 0', color: '#f8fafc' }}>
+                        <h3
+                            style={{
+                                fontSize: "16px",
+                                fontWeight: "600",
+                                margin: "0 0 20px 0",
+                                color: "#f8fafc",
+                            }}
+                        >
                             📦 Товари ({order.items.length})
                         </h3>
                         <div>
                             {order.items.map((item) => {
                                 const price = Number(item.price) || 0;
                                 const total = price * item.quantity;
-                                let imageUrl = '/brand-sun.png';
+                                let imageUrl = "/brand-sun.png";
                                 try {
                                     if (item.product?.images) {
                                         const parsed = JSON.parse(item.product.images);
                                         imageUrl = Array.isArray(parsed) ? parsed[0] : parsed;
                                     }
-                                } catch (e) { }
+                                } catch (e) {}
 
                                 return (
                                     <div key={item.id} className="item-card">
                                         <img
                                             src={imageUrl}
-                                            alt={item.product?.name || 'Товар'}
+                                            alt={item.product?.name || "Товар"}
                                             className="item-image"
                                         />
                                         <div className="item-details">
-                                            <div className="item-name">{item.product?.name || 'Товар'}</div>
+                                            <div className="item-name">
+                                                {item.product?.name || "Товар"}
+                                            </div>
                                             <div className="item-meta">
                                                 {(item as any).size && (
                                                     <span>
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <svg
+                                                            width="12"
+                                                            height="12"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                        >
                                                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                                                         </svg>
                                                         Розмір: {(item as any).size}
@@ -379,12 +443,16 @@ export default function AdminOrderDetails() {
                                                 )}
                                                 {(item as any).color && (
                                                     <span>
-                                                        <span style={{
-                                                            width: 12, height: 12, borderRadius: '50%',
-                                                            background: (item as any).color,
-                                                            border: '1px solid rgba(255,255,255,0.2)',
-                                                            display: 'inline-block'
-                                                        }}></span>
+                                                        <span
+                                                            style={{
+                                                                width: 12,
+                                                                height: 12,
+                                                                borderRadius: "50%",
+                                                                background: (item as any).color,
+                                                                border: "1px solid rgba(255,255,255,0.2)",
+                                                                display: "inline-block",
+                                                            }}
+                                                        ></span>
                                                         Колір: {(item as any).color}
                                                     </span>
                                                 )}
@@ -392,8 +460,12 @@ export default function AdminOrderDetails() {
                                             </div>
                                         </div>
                                         <div className="item-pricing">
-                                            <div className="item-price">{price.toLocaleString()} ₴</div>
-                                            <div className="item-total">{total.toLocaleString()} ₴</div>
+                                            <div className="item-price">
+                                                {price.toLocaleString()} ₴
+                                            </div>
+                                            <div className="item-total">
+                                                {total.toLocaleString()} ₴
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -401,18 +473,26 @@ export default function AdminOrderDetails() {
                         </div>
 
                         {/* Order Summary */}
-                        <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #334155' }}>
+                        <div
+                            style={{
+                                marginTop: "24px",
+                                paddingTop: "20px",
+                                borderTop: "1px solid #334155",
+                            }}
+                        >
                             <div className="summary-row">
-                                <span style={{ color: '#94a3b8' }}>Підсумок товарів</span>
+                                <span style={{ color: "#94a3b8" }}>Підсумок товарів</span>
                                 <span>{itemsSubtotal.toLocaleString()} ₴</span>
                             </div>
                             <div className="summary-row">
-                                <span style={{ color: '#94a3b8' }}>Доставка (Нова Пошта)</span>
-                                <span style={{ color: '#94a3b8' }}>За тарифами перевізника</span>
+                                <span style={{ color: "#94a3b8" }}>Доставка (Нова Пошта)</span>
+                                <span style={{ color: "#94a3b8" }}>За тарифами перевізника</span>
                             </div>
                             <div className="summary-row total">
                                 <span>Разом до сплати</span>
-                                <span style={{ color: '#5eead4' }}>{Number(order.total).toLocaleString()} ₴</span>
+                                <span style={{ color: "#5eead4" }}>
+                                    {Number(order.total).toLocaleString()} ₴
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -422,26 +502,44 @@ export default function AdminOrderDetails() {
                 <div>
                     {/* Customer Card */}
                     <div className="order-detail-card">
-                        <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 16px 0', color: '#f8fafc' }}>
+                        <h3
+                            style={{
+                                fontSize: "16px",
+                                fontWeight: "600",
+                                margin: "0 0 16px 0",
+                                color: "#f8fafc",
+                            }}
+                        >
                             👤 Клієнт
                         </h3>
                         <div className="info-row">
                             <span className="info-label">Ім'я</span>
-                            <span className="info-value">{order.customer?.firstName} {order.customer?.lastName}</span>
+                            <span className="info-value">
+                                {order.customer?.firstName} {order.customer?.lastName}
+                            </span>
                         </div>
                         <div className="info-row">
                             <span className="info-label">Email</span>
-                            <span className="info-value" style={{ color: '#5eead4' }}>{order.customer?.email}</span>
+                            <span className="info-value" style={{ color: "#5eead4" }}>
+                                {order.customer?.email}
+                            </span>
                         </div>
                         <div className="info-row">
                             <span className="info-label">Телефон</span>
-                            <span className="info-value">{order.customer?.phone || '—'}</span>
+                            <span className="info-value">{order.customer?.phone || "—"}</span>
                         </div>
                     </div>
 
                     {/* Payment Card */}
                     <div className="order-detail-card">
-                        <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 16px 0', color: '#f8fafc' }}>
+                        <h3
+                            style={{
+                                fontSize: "16px",
+                                fontWeight: "600",
+                                margin: "0 0 16px 0",
+                                color: "#f8fafc",
+                            }}
+                        >
                             💳 Оплата
                         </h3>
                         <div className="info-row">
@@ -452,20 +550,30 @@ export default function AdminOrderDetails() {
                             <span className="info-label">Статус оплати</span>
                             <span
                                 className="status-badge"
-                                style={{ background: `${paymentInfo.color}20`, color: paymentInfo.color }}
+                                style={{
+                                    background: `${paymentInfo.color}20`,
+                                    color: paymentInfo.color,
+                                }}
                             >
                                 {paymentInfo.text}
                             </span>
                         </div>
-                        <div style={{ marginTop: '16px' }}>
-                            <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>
+                        <div style={{ marginTop: "16px" }}>
+                            <label
+                                style={{
+                                    display: "block",
+                                    fontSize: "13px",
+                                    color: "#94a3b8",
+                                    marginBottom: "8px",
+                                }}
+                            >
                                 Змінити статус оплати
                             </label>
                             <select
                                 value={order.paymentStatus}
                                 onChange={handlePaymentChange}
                                 className="status-select"
-                                style={{ width: '100%' }}
+                                style={{ width: "100%" }}
                             >
                                 <option value="pending">🕐 Очікує оплати</option>
                                 <option value="paid">✅ Оплачено</option>
@@ -476,7 +584,14 @@ export default function AdminOrderDetails() {
 
                     {/* Delivery Card */}
                     <div className="order-detail-card">
-                        <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 16px 0', color: '#f8fafc' }}>
+                        <h3
+                            style={{
+                                fontSize: "16px",
+                                fontWeight: "600",
+                                margin: "0 0 16px 0",
+                                color: "#f8fafc",
+                            }}
+                        >
                             🚚 Доставка
                         </h3>
                         <div className="info-row">
@@ -494,14 +609,17 @@ export default function AdminOrderDetails() {
             {/* Delete Confirmation Modal */}
             {showDeleteConfirm && (
                 <div className="delete-modal" onClick={() => setShowDeleteConfirm(false)}>
-                    <div className="delete-modal-content" onClick={e => e.stopPropagation()}>
+                    <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
                         <h3>Видалити замовлення?</h3>
                         <p>
                             Замовлення <strong>#{order.orderNumber}</strong> буде назавжди видалено.
                             Цю дію неможливо скасувати.
                         </p>
                         <div className="delete-modal-actions">
-                            <button className="btn-cancel" onClick={() => setShowDeleteConfirm(false)}>
+                            <button
+                                className="btn-cancel"
+                                onClick={() => setShowDeleteConfirm(false)}
+                            >
                                 Скасувати
                             </button>
                             <button className="btn-confirm-delete" onClick={handleDelete}>

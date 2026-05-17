@@ -9,11 +9,18 @@ interface CategoryCardProps {
     buttonText: string;
 }
 
-export default function CategoryCard({ title, subtitle, image, imagePos, link, buttonText }: CategoryCardProps) {
+export default function CategoryCard({
+    title,
+    subtitle,
+    image,
+    imagePos,
+    link,
+    buttonText,
+}: CategoryCardProps) {
     // Parse imagePos: "50% 30% 1.2" -> { x: 50%, y: 30%, scale: 1.2 }
     const parseImagePos = () => {
         if (!imagePos) return { position: "center center", scale: 1 };
-        const parts = imagePos.split(' ');
+        const parts = imagePos.split(" ");
         const x = parts[0] || "50%";
         const y = parts[1] || "50%";
         const scale = parseFloat(parts[2]) || 1;
@@ -32,7 +39,7 @@ export default function CategoryCard({ title, subtitle, image, imagePos, link, b
                     style={{
                         objectPosition: position,
                         transform: scale !== 1 ? `scale(${scale})` : undefined,
-                        transformOrigin: position
+                        transformOrigin: position,
                     }}
                 />
             </div>

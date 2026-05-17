@@ -35,6 +35,9 @@ _ui-ux-skill-tmp/
 .claude/
 .gemini/
 
+# Hand-authored docs with intentional formatting we won't touch
+Preparing API and Integration Credentials.md
+
 # Scripts owned by user (untracked)
 scripts/start.bat
 scripts/stop.bat

@@ -21,7 +21,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
                 headers: { "Content-Type": "application/json" },
             });
         }
-        // Use case-insensitive email matching 
+        // Use case-insensitive email matching
         const emailLower = email.toLowerCase().trim();
 
         // First find customer by email (case-insensitive)
@@ -45,14 +45,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
             include: {
                 items: {
                     include: {
-                        product: true
-                    }
+                        product: true,
+                    },
                 },
-                customer: true
+                customer: true,
             },
             orderBy: {
-                createdAt: 'desc'
-            }
+                createdAt: "desc",
+            },
         });
 
         console.log(`Found ${orders.length} orders for customer ${customer.id}`);
@@ -60,23 +60,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
         // Format orders for frontend
         const formattedOrders = orders.map((order: any) => ({
             id: String(order.orderNumber),
-            date: new Date(order.createdAt).toLocaleDateString('uk-UA'),
+            date: new Date(order.createdAt).toLocaleDateString("uk-UA"),
             status: order.status,
             total: Number(order.total),
             items: order.items.map((item: any) => ({
-                name: item.product?.name || 'Товар',
-                image: item.product?.images ? JSON.parse(item.product.images)[0] : '/brand-sun.png',
+                name: item.product?.name || "Товар",
+                image: item.product?.images ? JSON.parse(item.product.images)[0] : "/brand-sun.png",
                 quantity: item.quantity,
                 price: Number(item.price),
                 size: item.size,
-                color: item.color
-            }))
+                color: item.color,
+            })),
         }));
 
         return new Response(JSON.stringify(formattedOrders), {
             headers: { "Content-Type": "application/json" },
         });
-
     } catch (error) {
         console.error("Failed to fetch orders:", error);
         return new Response("Internal Server Error", { status: 500 });

@@ -4,20 +4,22 @@ import { prisma } from "../../../db.server";
 export async function loader() {
     const orders = await prisma.order.findMany({
         include: { customer: true },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: "desc" },
     });
 
     return {
-        orders: orders.map(order => ({
+        orders: orders.map((order) => ({
             id: order.id,
             orderNumber: String(order.orderNumber),
-            customer: order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : "Unknown",
+            customer: order.customer
+                ? `${order.customer.firstName} ${order.customer.lastName}`
+                : "Unknown",
             email: order.customer?.email || "No Email",
-            date: new Date(order.createdAt).toLocaleDateString('uk-UA'),
+            date: new Date(order.createdAt).toLocaleDateString("uk-UA"),
             total: Number(order.total),
             paymentStatus: order.paymentStatus,
-            orderStatus: order.status
-        }))
+            orderStatus: order.status,
+        })),
     };
 }
 
@@ -114,22 +116,33 @@ export default function AdminOrdersList() {
 
             {/* Orders Table or Empty State */}
             {orders.length === 0 ? (
-                <div style={{
-                    padding: '80px 20px',
-                    textAlign: 'center',
-                    background: 'var(--ad-bg-card)',
-                    borderRadius: '12px',
-                    border: '1px solid var(--ad-border)'
-                }}>
-                    <div style={{ opacity: 0.5, marginBottom: '20px' }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="60" height="60">
+                <div
+                    style={{
+                        padding: "80px 20px",
+                        textAlign: "center",
+                        background: "var(--ad-bg-card)",
+                        borderRadius: "12px",
+                        border: "1px solid var(--ad-border)",
+                    }}
+                >
+                    <div style={{ opacity: 0.5, marginBottom: "20px" }}>
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            width="60"
+                            height="60"
+                        >
                             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                             <line x1="3" y1="6" x2="21" y2="6" />
                             <path d="M16 10a4 4 0 01-8 0" />
                         </svg>
                     </div>
-                    <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 500 }}>Замовлень поки немає</h3>
-                    <p style={{ margin: 0, color: 'var(--ad-text-muted)' }}>
+                    <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: 500 }}>
+                        Замовлень поки немає
+                    </h3>
+                    <p style={{ margin: 0, color: "var(--ad-text-muted)" }}>
                         Тут з'являться замовлення, коли клієнти зроблять перші покупки
                     </p>
                 </div>
@@ -144,49 +157,95 @@ export default function AdminOrdersList() {
                                 <th>Сума</th>
                                 <th>Статус</th>
                                 <th>Оплата</th>
-                                <th style={{ width: '100px', textAlign: 'right' }}>Дії</th>
+                                <th style={{ width: "100px", textAlign: "right" }}>Дії</th>
                             </tr>
                         </thead>
                         <tbody>
                             {orders.map((order) => (
                                 <tr key={order.id}>
                                     <td>
-                                        <div style={{ fontWeight: 600, color: 'var(--ad-text-main)' }}>#{order.orderNumber}</div>
+                                        <div
+                                            style={{
+                                                fontWeight: 600,
+                                                color: "var(--ad-text-main)",
+                                            }}
+                                        >
+                                            #{order.orderNumber}
+                                        </div>
                                     </td>
                                     <td>
                                         <div style={{ fontWeight: 500 }}>{order.customer}</div>
-                                        <div style={{ fontSize: '12px', color: 'var(--ad-text-muted)' }}>{order.email}</div>
+                                        <div
+                                            style={{
+                                                fontSize: "12px",
+                                                color: "var(--ad-text-muted)",
+                                            }}
+                                        >
+                                            {order.email}
+                                        </div>
                                     </td>
                                     <td>{order.date}</td>
-                                    <td style={{ fontWeight: 600 }}>{order.total.toLocaleString()} ₴</td>
+                                    <td style={{ fontWeight: 600 }}>
+                                        {order.total.toLocaleString()} ₴
+                                    </td>
                                     <td>
-                                        <span className={`status-badge status-${order.orderStatus}`}>
-                                            {order.orderStatus === 'pending' && 'Очікує'}
-                                            {order.orderStatus === 'processing' && 'Обробляється'}
-                                            {order.orderStatus === 'shipped' && 'Відправлено'}
-                                            {order.orderStatus === 'delivered' && 'Доставлено'}
-                                            {order.orderStatus === 'cancelled' && 'Скасовано'}
+                                        <span
+                                            className={`status-badge status-${order.orderStatus}`}
+                                        >
+                                            {order.orderStatus === "pending" && "Очікує"}
+                                            {order.orderStatus === "processing" && "Обробляється"}
+                                            {order.orderStatus === "shipped" && "Відправлено"}
+                                            {order.orderStatus === "delivered" && "Доставлено"}
+                                            {order.orderStatus === "cancelled" && "Скасовано"}
                                         </span>
                                     </td>
                                     <td>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <span style={{ fontSize: '13px', fontWeight: 500, color: '#e2e8f0' }}>
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: "4px",
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    fontSize: "13px",
+                                                    fontWeight: 500,
+                                                    color: "#e2e8f0",
+                                                }}
+                                            >
                                                 Накладений платіж
                                             </span>
-                                            <span style={{
-                                                fontSize: '12px',
-                                                color: order.paymentStatus === 'paid' ? '#10b981' :
-                                                    order.paymentStatus === 'refunded' ? '#ef4444' : '#f59e0b',
-                                                display: 'flex', alignItems: 'center', gap: '5px'
-                                            }}>
-                                                <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }}></span>
-                                                {order.paymentStatus === 'pending' && 'Очікує оплати'}
-                                                {order.paymentStatus === 'paid' && 'Оплачено'}
-                                                {order.paymentStatus === 'refunded' && 'Повернуто'}
+                                            <span
+                                                style={{
+                                                    fontSize: "12px",
+                                                    color:
+                                                        order.paymentStatus === "paid"
+                                                            ? "#10b981"
+                                                            : order.paymentStatus === "refunded"
+                                                              ? "#ef4444"
+                                                              : "#f59e0b",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "5px",
+                                                }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        width: 5,
+                                                        height: 5,
+                                                        borderRadius: "50%",
+                                                        background: "currentColor",
+                                                    }}
+                                                ></span>
+                                                {order.paymentStatus === "pending" &&
+                                                    "Очікує оплати"}
+                                                {order.paymentStatus === "paid" && "Оплачено"}
+                                                {order.paymentStatus === "refunded" && "Повернуто"}
                                             </span>
                                         </div>
                                     </td>
-                                    <td style={{ textAlign: 'right' }}>
+                                    <td style={{ textAlign: "right" }}>
                                         <Link to={`/admin/orders/${order.id}`} className="btn-view">
                                             Деталі
                                         </Link>

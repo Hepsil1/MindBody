@@ -17,7 +17,9 @@ export async function loader({ request }: Route.LoaderArgs) {
         newThisMonth: customers.filter((c) => {
             const now = new Date();
             const created = new Date(c.createdAt);
-            return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+            return (
+                created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear()
+            );
         }).length,
         withOrders: customers.filter((c) => c.orders.length > 0).length,
     };
@@ -51,7 +53,9 @@ export default function AdminCustomers() {
                 </div>
                 <div className="admin-stat">
                     <div className="admin-stat__label">Нові за місяць</div>
-                    <div className="admin-stat__value admin-stat__value--accent">+{stats.newThisMonth}</div>
+                    <div className="admin-stat__value admin-stat__value--accent">
+                        +{stats.newThisMonth}
+                    </div>
                 </div>
                 <div className="admin-stat">
                     <div className="admin-stat__label">З замовленнями</div>
@@ -136,7 +140,13 @@ export default function AdminCustomers() {
                             <circle cx="12" cy="8" r="4" />
                             <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
                         </svg>
-                        <div style={{ color: "var(--text-main)", fontWeight: "600", marginBottom: "8px" }}>
+                        <div
+                            style={{
+                                color: "var(--text-main)",
+                                fontWeight: "600",
+                                marginBottom: "8px",
+                            }}
+                        >
                             Клієнтів немає
                         </div>
                         <div style={{ color: "var(--text-muted)", fontSize: "14px" }}>
@@ -144,7 +154,10 @@ export default function AdminCustomers() {
                         </div>
                     </div>
                 ) : (
-                    <div className="admin-table-container" style={{ border: "none", borderRadius: 0 }}>
+                    <div
+                        className="admin-table-container"
+                        style={{ border: "none", borderRadius: 0 }}
+                    >
                         <table className="admin-table">
                             <thead>
                                 <tr>
@@ -156,9 +169,21 @@ export default function AdminCustomers() {
                             </thead>
                             <tbody>
                                 {customers.map((customer) => (
-                                    <tr key={customer.id} style={{ cursor: "pointer" }} onClick={() => window.location.href = `/admin/customers/${customer.id}`}>
+                                    <tr
+                                        key={customer.id}
+                                        style={{ cursor: "pointer" }}
+                                        onClick={() =>
+                                            (window.location.href = `/admin/customers/${customer.id}`)
+                                        }
+                                    >
                                         <td>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "16px",
+                                                }}
+                                            >
                                                 <div
                                                     style={{
                                                         width: "40px",
@@ -175,20 +200,35 @@ export default function AdminCustomers() {
                                                         border: "1px solid var(--border-subtle)",
                                                     }}
                                                 >
-                                                    {getInitials(customer.firstName, customer.lastName)}
+                                                    {getInitials(
+                                                        customer.firstName,
+                                                        customer.lastName,
+                                                    )}
                                                 </div>
                                                 <div>
-                                                    <div style={{ color: "var(--text-main)", fontWeight: "500" }}>
+                                                    <div
+                                                        style={{
+                                                            color: "var(--text-main)",
+                                                            fontWeight: "500",
+                                                        }}
+                                                    >
                                                         {customer.firstName} {customer.lastName}
                                                     </div>
-                                                    <div style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+                                                    <div
+                                                        style={{
+                                                            color: "var(--text-muted)",
+                                                            fontSize: "13px",
+                                                        }}
+                                                    >
                                                         {customer.email}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>{customer.orders.length}</td>
-                                        <td style={{ fontWeight: "500", color: "var(--text-main)" }}>
+                                        <td
+                                            style={{ fontWeight: "500", color: "var(--text-main)" }}
+                                        >
                                             ₴{getTotalSpent(customer.orders).toLocaleString()}
                                         </td>
                                         <td style={{ textAlign: "right" }}>
@@ -200,7 +240,7 @@ export default function AdminCustomers() {
                                                     color: "var(--accent-primary)",
                                                     cursor: "pointer",
                                                     fontSize: "13px",
-                                                    textDecoration: "none"
+                                                    textDecoration: "none",
                                                 }}
                                                 onClick={(e) => e.stopPropagation()}
                                             >

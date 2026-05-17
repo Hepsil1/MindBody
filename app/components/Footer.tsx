@@ -4,40 +4,40 @@ import { useToast } from "./Toast";
 
 export default function Footer() {
     const { showToast } = useToast();
-    const [contact, setContact] = useState('');
+    const [contact, setContact] = useState("");
     const [sending, setSending] = useState(false);
-    const [newsletterEmail, setNewsletterEmail] = useState('');
+    const [newsletterEmail, setNewsletterEmail] = useState("");
     const [newsletterSending, setNewsletterSending] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const trimmed = contact.trim();
         if (!trimmed) {
-            showToast('Введіть номер телефону або email', 'error');
+            showToast("Введіть номер телефону або email", "error");
             return;
         }
         const phoneRegex = /^\+?(38)?0?\d{9}$/;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phoneDigits = trimmed.replace(/[\s\-()]/g, '');
+        const phoneDigits = trimmed.replace(/[\s\-()]/g, "");
         if (!phoneRegex.test(phoneDigits) && !emailRegex.test(trimmed)) {
-            showToast('Введіть коректний номер телефону або email', 'error');
+            showToast("Введіть коректний номер телефону або email", "error");
             return;
         }
         setSending(true);
         try {
-            const res = await fetch('/api/contact', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contact: trimmed })
+            const res = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contact: trimmed }),
             });
             if (res.ok) {
-                showToast('Дякуємо! Ми зв\'яжемось з вами найближчим часом ✨');
-                setContact('');
+                showToast("Дякуємо! Ми зв'яжемось з вами найближчим часом ✨");
+                setContact("");
             } else {
-                showToast('Помилка при відправці', 'error');
+                showToast("Помилка при відправці", "error");
             }
         } catch {
-            showToast('Помилка з\'єднання', 'error');
+            showToast("Помилка з'єднання", "error");
         }
         setSending(false);
     };
@@ -47,25 +47,25 @@ export default function Footer() {
         const trimmed = newsletterEmail.trim();
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(trimmed)) {
-            showToast('Введіть коректний email', 'error');
+            showToast("Введіть коректний email", "error");
             return;
         }
         setNewsletterSending(true);
         try {
-            const res = await fetch('/api/newsletter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: trimmed, source: 'footer' })
+            const res = await fetch("/api/newsletter", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: trimmed, source: "footer" }),
             });
             const data = await res.json();
             if (res.ok && data.success) {
-                showToast('Дякуємо! Ви у нашому списку ✨');
-                setNewsletterEmail('');
+                showToast("Дякуємо! Ви у нашому списку ✨");
+                setNewsletterEmail("");
             } else {
-                showToast(data?.error || 'Не вдалось підписатись', 'error');
+                showToast(data?.error || "Не вдалось підписатись", "error");
             }
         } catch {
-            showToast('Помилка з\'єднання', 'error');
+            showToast("Помилка з'єднання", "error");
         }
         setNewsletterSending(false);
     };
@@ -74,44 +74,77 @@ export default function Footer() {
         <footer className="footer-puma">
             <div className="footer-puma__container">
                 <div className="footer-puma__content-wrapper">
-
                     {/* LEFT SIDE: LOGO & NAVIGATION */}
                     <div className="footer-puma__left-group">
                         <div className="footer-puma__logo-top">
-                            <img src="/pics/mind_body_logo_sun.png" alt="MIND BODY" className="footer-puma__logo-img" />
+                            <img
+                                src="/pics/mind_body_logo_sun.png"
+                                alt="MIND BODY"
+                                className="footer-puma__logo-img"
+                            />
                         </div>
 
                         <div className="footer-puma__nav-grid">
                             <div className="footer-puma__nav-col">
                                 <h5 className="footer-puma__col-header">Допомога</h5>
                                 <ul className="footer-puma__nav-list">
-                                    <li><Link to="/contacts">Контакти</Link></li>
-                                    <li><Link to="/size-guide">Таблиця розмірів</Link></li>
-                                    <li><Link to="/delivery">Доставка та оплата</Link></li>
-                                    <li><Link to="/return-policy">Повернення</Link></li>
-                                    <li><Link to="/care-guide">Догляд за виробами</Link></li>
-                                    <li><Link to="/faq">Часті запитання</Link></li>
+                                    <li>
+                                        <Link to="/contacts">Контакти</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/size-guide">Таблиця розмірів</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/delivery">Доставка та оплата</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/return-policy">Повернення</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/care-guide">Догляд за виробами</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/faq">Часті запитання</Link>
+                                    </li>
                                 </ul>
                             </div>
 
                             <div className="footer-puma__nav-col">
                                 <h5 className="footer-puma__col-header">Каталог</h5>
                                 <ul className="footer-puma__nav-list">
-                                    <li><Link to="/shop/yoga">Yoga</Link></li>
-                                    <li><Link to="/shop/sport">Sport</Link></li>
-                                    <li><Link to="/shop/dance">Dance</Link></li>
-                                    <li><Link to="/shop/casual">Casual</Link></li>
-                                    <li><Link to="/shop/kids">Kids</Link></li>
-                                    <li><Link to="/shop/yogatools">YogaTools</Link></li>
+                                    <li>
+                                        <Link to="/shop/yoga">Yoga</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/shop/sport">Sport</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/shop/dance">Dance</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/shop/casual">Casual</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/shop/kids">Kids</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/shop/yogatools">YogaTools</Link>
+                                    </li>
                                 </ul>
                             </div>
 
                             <div className="footer-puma__nav-col">
                                 <h5 className="footer-puma__col-header">Про компанію</h5>
                                 <ul className="footer-puma__nav-list">
-                                    <li><Link to="/about">Про нас</Link></li>
-                                    <li><Link to="/privacy">Політика конфіденційності</Link></li>
-                                    <li><Link to="/terms">Умови користування</Link></li>
+                                    <li>
+                                        <Link to="/about">Про нас</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/privacy">Політика конфіденційності</Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/terms">Умови користування</Link>
+                                    </li>
                                 </ul>
                             </div>
 
@@ -119,28 +152,63 @@ export default function Footer() {
                                 <h5 className="footer-puma__col-header">Зв'язатись</h5>
                                 <ul className="footer-puma__nav-list">
                                     <li>
-                                        <a href="tel:+380966650855" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                        <a
+                                            href="tel:+380966650855"
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "6px",
+                                            }}
+                                        >
+                                            <svg
+                                                aria-hidden="true"
+                                                width="16"
+                                                height="16"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            >
+                                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                            </svg>
                                             +38 (096) 665-08-55
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="viber://chat?number=%2B380509656737" target="_blank" rel="noopener noreferrer">
+                                        <a
+                                            href="viber://chat?number=%2B380509656737"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
                                             Viber
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="https://wa.me/380973542848" target="_blank" rel="noopener noreferrer">
+                                        <a
+                                            href="https://wa.me/380973542848"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
                                             WhatsApp
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="https://t.me/Juliamindbody" target="_blank" rel="noopener noreferrer">
+                                        <a
+                                            href="https://t.me/Juliamindbody"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
                                             Telegram
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="https://instagram.com/mindbody.sportwear" target="_blank" rel="noopener noreferrer">
+                                        <a
+                                            href="https://instagram.com/mindbody.sportwear"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
                                             Instagram
                                         </a>
                                     </li>
@@ -155,19 +223,40 @@ export default function Footer() {
                             <div className="mind-feedback__header">
                                 <div className="mind-feedback__title-wrap">
                                     <h4 className="mind-feedback__title">Давай поговоримо</h4>
-                                    <span className="mind-feedback__subtitle">маєш запитання — напиши</span>
+                                    <span className="mind-feedback__subtitle">
+                                        маєш запитання — напиши
+                                    </span>
                                 </div>
-                                <a href="https://instagram.com/mindbody.sportwear" target="_blank" rel="noopener noreferrer" className="mind-feedback__social-link" aria-label="Instagram">
+                                <a
+                                    href="https://instagram.com/mindbody.sportwear"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="mind-feedback__social-link"
+                                    aria-label="Instagram"
+                                >
                                     <div className="insta-icon-wrapper">
-                                        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                        <svg
+                                            aria-hidden="true"
+                                            width="22"
+                                            height="22"
+                                            viewBox="0 0 24 24"
+                                            fill="currentColor"
+                                        >
                                             <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                                         </svg>
                                     </div>
                                 </a>
                             </div>
 
-                            <form className="mind-feedback__form" onSubmit={handleSubmit} noValidate>
-                                <label htmlFor="footer-feedback-contact" className="visually-hidden">
+                            <form
+                                className="mind-feedback__form"
+                                onSubmit={handleSubmit}
+                                noValidate
+                            >
+                                <label
+                                    htmlFor="footer-feedback-contact"
+                                    className="visually-hidden"
+                                >
                                     Ваш номер телефону або email
                                 </label>
                                 <input
@@ -178,12 +267,17 @@ export default function Footer() {
                                     placeholder="Ваш номер телефону або email"
                                     className="mind-feedback__input"
                                     value={contact}
-                                    onChange={e => setContact(e.target.value)}
+                                    onChange={(e) => setContact(e.target.value)}
                                     disabled={sending}
                                     aria-required="true"
                                 />
-                                <button type="submit" className="mind-feedback__btn" disabled={sending} aria-busy={sending}>
-                                    {sending ? 'ВІДПРАВКА...' : 'НАДIСЛАТИ'}
+                                <button
+                                    type="submit"
+                                    className="mind-feedback__btn"
+                                    disabled={sending}
+                                    aria-busy={sending}
+                                >
+                                    {sending ? "ВІДПРАВКА..." : "НАДIСЛАТИ"}
                                 </button>
                             </form>
                         </div>
@@ -202,7 +296,11 @@ export default function Footer() {
                                 Без спаму, обіцяємо.
                             </p>
                         </div>
-                        <form className="footer-newsletter__form" onSubmit={handleNewsletterSubmit} noValidate>
+                        <form
+                            className="footer-newsletter__form"
+                            onSubmit={handleNewsletterSubmit}
+                            noValidate
+                        >
                             <label htmlFor="footer-newsletter-email" className="visually-hidden">
                                 Ваш email
                             </label>
@@ -214,7 +312,7 @@ export default function Footer() {
                                 placeholder="ваш@email.ua"
                                 className="footer-newsletter__input"
                                 value={newsletterEmail}
-                                onChange={e => setNewsletterEmail(e.target.value)}
+                                onChange={(e) => setNewsletterEmail(e.target.value)}
                                 disabled={newsletterSending}
                                 required
                                 aria-required="true"
@@ -225,7 +323,7 @@ export default function Footer() {
                                 disabled={newsletterSending}
                                 aria-busy={newsletterSending}
                             >
-                                {newsletterSending ? 'Підписуємо…' : 'Підписатись'}
+                                {newsletterSending ? "Підписуємо…" : "Підписатись"}
                             </button>
                         </form>
                     </div>
@@ -239,16 +337,27 @@ export default function Footer() {
             <div className="footer-puma__container">
                 <div className="footer-puma__bottom-row">
                     <div className="footer-puma__country-select">
-                        <svg className="footer-puma__flag" aria-hidden="true" width="20" height="14" viewBox="0 0 20 14" fill="none">
-                            <rect width="20" height="7" fill="#0057B7"/>
-                            <rect y="7" width="20" height="7" fill="#FFD700"/>
+                        <svg
+                            className="footer-puma__flag"
+                            aria-hidden="true"
+                            width="20"
+                            height="14"
+                            viewBox="0 0 20 14"
+                            fill="none"
+                        >
+                            <rect width="20" height="7" fill="#0057B7" />
+                            <rect y="7" width="20" height="7" fill="#FFD700" />
                         </svg>
                         <span className="footer-puma__country-name">УКРАЇНА (УКРАЇНСЬКА)</span>
                         <span className="footer-puma__arrow">▼</span>
                     </div>
 
                     <div className="footer-puma__logo-center">
-                        <img src="/pics/mind_body_1.png" alt="MIND BODY" className="footer-puma__logo-small" />
+                        <img
+                            src="/pics/mind_body_1.png"
+                            alt="MIND BODY"
+                            className="footer-puma__logo-small"
+                        />
                     </div>
 
                     <div className="footer-puma__copyright-text">

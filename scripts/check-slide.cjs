@@ -1,7 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 async function main() {
-    const s = await prisma.slide.findFirst({ orderBy: { order: 'asc' } });
+    const s = await prisma.slide.findFirst({ orderBy: { order: "asc" } });
     console.log(s);
 }
 main().finally(() => prisma.$disconnect());

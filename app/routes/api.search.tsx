@@ -10,7 +10,7 @@ export async function loader({ request }: { request: Request }) {
 
     try {
         const searchTerm = `%${query.trim()}%`;
-        const products = await prisma.$queryRaw`
+        const products = (await prisma.$queryRaw`
             SELECT id, name, price, "comparePrice", category, images, "shopPageSlug"
             FROM "Product"
             WHERE status = 'active'
@@ -21,14 +21,14 @@ export async function loader({ request }: { request: Request }) {
             )
             ORDER BY name ASC
             LIMIT 8
-        ` as any[];
+        `) as any[];
 
         const results = products.map((p: any) => {
             let image = "/pics1cloths/IMG_6201.JPG";
             try {
                 const imgs = JSON.parse(p.images || "[]");
                 if (imgs[0]) image = imgs[0];
-            } catch { }
+            } catch {}
 
             return {
                 id: p.id,
