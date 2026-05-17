@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import { randomBytes } from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../db.server";
 import { OrderCreateSchema, formatZodErrors } from "../utils/validation";
 import { checkRateLimit } from "../utils/rateLimit.server";
@@ -10,6 +11,31 @@ import { logger } from "../utils/logger.server";
 // Telegram Configuration — from environment variables
 const TELEGRAM_BOT_TOKEN = env.TELEGRAM_BOT_TOKEN ?? "";
 const TELEGRAM_CHAT_ID = env.TELEGRAM_CHAT_ID ?? "";
+
+// Shape of one entry in the JSON inventory array stored on Product.inventory.
+interface InventoryVariant {
+    size?: string | null;
+    color?: string | null;
+    stock?: number;
+}
+
+// Server-validated cart item — built from incoming items + DB price/name lookup,
+// then used for order creation and downstream notifications.
+interface ValidOrderItem {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    size: string | null;
+    color: string | null;
+}
+
+// Subset of Product we read during validation (keeps the row narrow + typed).
+const PRODUCT_VALIDATION_SELECT = {
+    name: true,
+    price: true,
+    inventory: true,
+} satisfies Prisma.ProductSelect;
 
 export async function action({ request }: ActionFunctionArgs) {
     if (request.method !== "POST") {
@@ -48,29 +74,30 @@ export async function action({ request }: ActionFunctionArgs) {
 
         // --- NEW: Server-Side Price & Stock Validation ---
         let calculatedSubtotal = 0;
-        const validItems: any[] = [];
+        const validItems: ValidOrderItem[] = [];
 
         for (const item of items) {
-            const products: any[] = await prisma.$queryRawUnsafe(
-                `SELECT name, price, inventory FROM "Product" WHERE id = $1`,
-                String(item.id),
-            );
+            const product = await prisma.product.findUnique({
+                where: { id: String(item.id) },
+                select: PRODUCT_VALIDATION_SELECT,
+            });
 
-            if (products.length === 0) {
+            if (!product) {
                 return new Response(
                     JSON.stringify({ success: false, error: `Товар не знайдено: ${item.name}` }),
                     { status: 400, headers: { "Content-Type": "application/json" } },
                 );
             }
 
-            const product = products[0];
             const realPrice = Number(product.price) || 0;
             const qty = Number(item.quantity) || 1;
 
-            let inventoryArr: any[] = [];
+            let inventoryArr: InventoryVariant[] = [];
             try {
                 inventoryArr = JSON.parse(product.inventory || "[]");
-            } catch {}
+            } catch {
+                // Malformed JSON in DB — treat as no variants and let order proceed.
+            }
 
             // Validate Stock
             if (inventoryArr.length > 0) {
@@ -120,11 +147,9 @@ export async function action({ request }: ActionFunctionArgs) {
 
         // --- Promo Code Validation (direct DB, no self-fetch) ---
         if (promoCode) {
-            const promoResults = (await prisma.$queryRawUnsafe(
-                `SELECT * FROM "PromoCode" WHERE code = $1 LIMIT 1`,
-                promoCode.trim().toUpperCase(),
-            )) as any[];
-            const p = promoResults[0];
+            const p = await prisma.promoCode.findUnique({
+                where: { code: promoCode.trim().toUpperCase() },
+            });
             if (!p || !p.isActive) {
                 return new Response(
                     JSON.stringify({
@@ -204,7 +229,7 @@ export async function action({ request }: ActionFunctionArgs) {
                     paymentStatus: "pending",
                     total: finalTotal,
                     items: {
-                        create: validItems.map((item: any) => ({
+                        create: validItems.map((item) => ({
                             productId: item.id,
                             quantity: item.quantity,
                             price: item.price,
@@ -215,9 +240,11 @@ export async function action({ request }: ActionFunctionArgs) {
                 },
                 include: { items: true, customer: true },
             });
-        } catch (e: any) {
+        } catch (e) {
             // Retry with different random suffix if unique constraint violation
-            if (e?.code === "P2002") {
+            const isUniqueViolation =
+                e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002";
+            if (isUniqueViolation) {
                 const retrySuffix = (randomBytes(2).readUInt16LE(0) % 9000) + 1000;
                 const retryOrderNumber = datePart * 10000 + retrySuffix;
                 newOrder = await prisma.order.create({
@@ -228,7 +255,7 @@ export async function action({ request }: ActionFunctionArgs) {
                         paymentStatus: "pending",
                         total: finalTotal,
                         items: {
-                            create: validItems.map((item: any) => ({
+                            create: validItems.map((item) => ({
                                 productId: item.id,
                                 quantity: item.quantity,
                                 price: item.price,
@@ -248,18 +275,24 @@ export async function action({ request }: ActionFunctionArgs) {
         try {
             await prisma.$transaction(async (tx) => {
                 for (const item of validItems) {
-                    // Lock the product row to prevent concurrent updates
-                    const lockedProducts: any[] = await tx.$queryRawUnsafe(
-                        `SELECT stock, inventory FROM "Product" WHERE id = $1 FOR UPDATE`,
-                        item.id,
+                    // Lock the product row to prevent concurrent updates. Prisma has
+                    // no first-class FOR UPDATE helper, so we use $queryRaw with an
+                    // explicit generic to keep the result typed.
+                    const lockedProducts = await tx.$queryRaw<
+                        Array<{ stock: number; inventory: string | null }>
+                    >(
+                        Prisma.sql`SELECT stock, inventory FROM "Product" WHERE id = ${item.id} FOR UPDATE`,
                     );
 
                     if (lockedProducts.length > 0) {
                         const product = lockedProducts[0];
-                        let inventoryArr: any[] = [];
+                        let inventoryArr: InventoryVariant[] = [];
                         try {
                             inventoryArr = JSON.parse(product.inventory || "[]");
-                        } catch {}
+                        } catch {
+                            // Malformed inventory JSON — bail out of decrement for this item.
+                            continue;
+                        }
 
                         let totalStock = 0;
                         for (const variant of inventoryArr) {
@@ -269,12 +302,13 @@ export async function action({ request }: ActionFunctionArgs) {
                             totalStock += variant.stock || 0;
                         }
 
-                        await tx.$executeRawUnsafe(
-                            `UPDATE "Product" SET stock = $1, inventory = $2 WHERE id = $3`,
-                            totalStock,
-                            JSON.stringify(inventoryArr),
-                            item.id,
-                        );
+                        await tx.product.update({
+                            where: { id: item.id },
+                            data: {
+                                stock: totalStock,
+                                inventory: JSON.stringify(inventoryArr),
+                            },
+                        });
                     }
                 }
             });
@@ -299,7 +333,7 @@ export async function action({ request }: ActionFunctionArgs) {
             try {
                 const itemsList = validItems
                     .map(
-                        (item: any) =>
+                        (item) =>
                             `📦 ${item.name} (${item.size || "-"}/${item.color || "-"}) × ${item.quantity}`,
                     )
                     .join("\n");
@@ -371,14 +405,12 @@ export async function action({ request }: ActionFunctionArgs) {
         return new Response(JSON.stringify({ success: true, orderId: newOrder.orderNumber }), {
             headers: { "Content-Type": "application/json" },
         });
-    } catch (error: any) {
+    } catch (error) {
         logger.error({ err: error }, "[orders] creation failed");
-        return new Response(
-            JSON.stringify({ success: false, error: error?.message || "Order creation failed" }),
-            {
-                status: 500,
-                headers: { "Content-Type": "application/json" },
-            },
-        );
+        const message = error instanceof Error ? error.message : "Order creation failed";
+        return new Response(JSON.stringify({ success: false, error: message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+        });
     }
 }
