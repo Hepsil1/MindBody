@@ -324,9 +324,15 @@ export const AuthUtils = {
     // Save address
     saveAddress: (address: Omit<Address, "id">): Address => {
         const addresses = AuthUtils.getAddresses();
+        // Use crypto.randomUUID() so two rapid save calls (same ms) don't collide.
+        // Fall back to a Date+random hybrid for very old browsers without crypto.
+        const id =
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+                ? `addr_${crypto.randomUUID()}`
+                : `addr_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
         const newAddress: Address = {
             ...address,
-            id: "addr_" + Date.now().toString(36),
+            id,
         };
 
         if (newAddress.isDefault) {
