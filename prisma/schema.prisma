@@ -39,7 +39,7 @@ model Product {
 
 model Customer {
   id              String   @id @default(uuid())
-  supabaseAuthId  String?  @unique
+  passwordHash    String?  @unique
   firstName       String
   lastName        String
   email           String   @unique

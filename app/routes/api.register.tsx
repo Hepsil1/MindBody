@@ -49,7 +49,7 @@ export async function action({ request }: ActionFunctionArgs) {
                 email: email.toLowerCase(),
                 phone: phone || null,
                 avatar: null,
-                supabaseAuthId: hashedPassword, // Reuse this field for password hash storage
+                passwordHash: hashedPassword,
             }
         });
 

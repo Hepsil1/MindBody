@@ -33,8 +33,7 @@ export async function action({ request }: ActionFunctionArgs) {
             );
         }
 
-        // Check password (stored in supabaseAuthId field)
-        const passwordHash = customer.supabaseAuthId;
+        const passwordHash = customer.passwordHash;
         if (!passwordHash) {
             return new Response(
                 JSON.stringify({ error: "Цей акаунт використовує вхід через Google" }),
