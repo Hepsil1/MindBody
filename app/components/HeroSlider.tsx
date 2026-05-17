@@ -10,6 +10,10 @@ export interface SlideData {
     image1: string;
     image2?: string | null;
     image3?: string | null;
+    // Optional object-position overrides per image (e.g. "50% 30%")
+    image1Pos?: string;
+    image2Pos?: string;
+    image3Pos?: string;
 }
 
 // Default slides for when database is empty
@@ -88,12 +92,12 @@ export default function HeroSlider({
     // Convert slide data to images array with positions
     const getSlideItems = (slide: SlideData) => {
         if (slide.type === "single") {
-            return [{ img: slide.image1, pos: (slide as any).image1Pos || "center center" }];
+            return [{ img: slide.image1, pos: slide.image1Pos || "center center" }];
         }
         return [
-            { img: slide.image1, pos: (slide as any).image1Pos || "center center" },
-            { img: slide.image2, pos: (slide as any).image2Pos || "center center" },
-            { img: slide.image3, pos: (slide as any).image3Pos || "center center" },
+            { img: slide.image1, pos: slide.image1Pos || "center center" },
+            { img: slide.image2, pos: slide.image2Pos || "center center" },
+            { img: slide.image3, pos: slide.image3Pos || "center center" },
         ].filter((item): item is { img: string; pos: string } => !!item.img);
     };
 
