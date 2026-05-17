@@ -61,7 +61,7 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         // Fire-and-forget welcome email. Don't block the response on email delivery.
-        const siteUrl = process.env.SITE_URL || "https://saleid.icu";
+        const siteUrl = process.env.SITE_URL || "https://mindbody.com.ua";
         const unsubscribeUrl = `${siteUrl}/api/newsletter?unsub=${sub.unsubKey}`;
         sendEmail({
             to: rawEmail,
