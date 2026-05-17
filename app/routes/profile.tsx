@@ -162,7 +162,7 @@ export default function Profile() {
         showToast("Адресу видалено", "success");
     };
 
-    const handleSettingsChange = (key: keyof UserSettings, value: any) => {
+    const handleSettingsChange = <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
         if (!settings) return;
         const newSettings = { ...settings, [key]: value };
         setSettings(newSettings);
@@ -940,7 +940,10 @@ export default function Profile() {
                                         <select
                                             value={settings.language}
                                             onChange={(e) =>
-                                                handleSettingsChange("language", e.target.value)
+                                                handleSettingsChange(
+                                                    "language",
+                                                    e.target.value as UserSettings["language"],
+                                                )
                                             }
                                         >
                                             <option value="uk">Українська</option>

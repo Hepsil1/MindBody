@@ -21,7 +21,17 @@ export default function SmartSunParticles() {
         const sunImage = new Image();
         sunImage.src = "/logo-sun.png";
 
-        const particles: any[] = [];
+        interface SunParticle {
+            x: number;
+            y: number;
+            vx: number;
+            vy: number;
+            size: number;
+            rotation: number;
+            rotSpeed: number;
+            alpha: number;
+        }
+        const particles: SunParticle[] = [];
         // Mobile: fewer, smaller particles for battery & GPU savings
         const numParticles = isMobile ? 5 : 12;
 
@@ -29,7 +39,7 @@ export default function SmartSunParticles() {
         let mouseY = -1000;
         let animationFrameId: number;
         let isScrolling = false;
-        let scrollTimeout: any;
+        let scrollTimeout: ReturnType<typeof setTimeout>;
 
         sunImage.onload = () => {
             for (let i = 0; i < numParticles; i++) {

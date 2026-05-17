@@ -29,15 +29,26 @@ export function meta() {
 
 export async function loader({ request }: Route.LoaderArgs) {
     try {
-        // Fetch About slides using Raw SQL to bypass outdated client validation
-        // The 'page' column exists in DB (pushed) but client might not know it
-        const aboutSlidesRaw =
-            (await prisma.$queryRaw`SELECT id, name, type, link, image1, image2, image3 FROM "Slide" WHERE page = 'about' ORDER BY "order" ASC`) as any[];
+        // Fetch About slides via typed Prisma query. The Slide model has a
+        // `page` column scoped by which page renders the slide.
+        const aboutSlidesRaw = await prisma.slide.findMany({
+            where: { page: "about" },
+            orderBy: { order: "asc" },
+            select: {
+                id: true,
+                name: true,
+                type: true,
+                link: true,
+                image1: true,
+                image2: true,
+                image3: true,
+            },
+        });
 
-        const aboutSlides: SlideData[] = aboutSlidesRaw.map((s: any) => ({
+        const aboutSlides: SlideData[] = aboutSlidesRaw.map((s) => ({
             id: s.id,
             name: s.name,
-            type: s.type,
+            type: s.type as "triptych" | "single",
             link: s.link,
             image1: s.image1,
             image2: s.image2,
