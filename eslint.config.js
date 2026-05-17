@@ -24,6 +24,7 @@ export default tseslint.config(
             "public/**",
             "prisma/migrations/**",
             "backups/**",
+            "coverage/**",
             "_audit*.txt",
             "_audit*.cjs",
             "_ui-ux-skill-tmp/**",

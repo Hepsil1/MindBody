@@ -18,3 +18,6 @@ build_output.txt
 /tmp_repos/
 /.tmp_repos/
 backups/
+
+# Vitest coverage output
+coverage/
