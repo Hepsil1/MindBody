@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Limit concurrency: a new push to a branch cancels the previous run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Type-check, lint, format, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        # --legacy-peer-deps is needed for now because some plugins (e.g.
+        # eslint-plugin-react) declare narrower peer ranges than what we use.
+        run: npm ci --legacy-peer-deps
+
+      - name: Generate Prisma client
+        # postinstall already runs `prisma generate` but if CI's cache made it
+        # skip, re-run explicitly so the typecheck below has the client types.
+        run: npx prisma generate
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Build
+        # Phase 3 will add: `npm test` here once Vitest is wired up.
+        env:
+          # Placeholder env vars so app/utils/env.server.ts passes Zod validation
+          # during the build step (which loads server modules).
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+          SESSION_SECRET: "ci-secret-must-be-at-least-32-characters-long"
+          SITE_URL: "https://mindbody.com.ua"
+          ADMIN_PASSWORD: "ci-password"
+          NOVA_POSHTA_API_KEY: "ci-placeholder"
+        run: npm run build
