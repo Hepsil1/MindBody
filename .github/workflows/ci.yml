@@ -46,8 +46,13 @@ jobs:
       - name: Format check
         run: npm run format:check
 
+      - name: Unit tests
+        # vitest.config.ts pins safe test env vars (NODE_ENV=test etc.),
+        # so this step doesn't need its own env block. 72+ tests cover the
+        # Zod schemas, auth utils, rate limiter, and filter merging.
+        run: npm run test
+
       - name: Build
-        # Phase 3 will add: `npm test` here once Vitest is wired up.
         env:
           # Placeholder env vars so app/utils/env.server.ts passes Zod validation
           # during the build step (which loads server modules).
