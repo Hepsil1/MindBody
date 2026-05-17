@@ -1,12 +1,38 @@
-import { type LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { useLoaderData, Link } from "react-router";
 import ProductCard from "../components/ProductCard";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { prisma } from "../db.server";
-import { parseAndMergeFilterConfig } from "../utils/filters";
+import {
+    parseAndMergeFilterConfig,
+    type MergedFilterConfig,
+    type PriceRange,
+} from "../utils/filters";
 import { labelToSlug, slugToLabel } from "../utils/categoryMap";
 
-export function meta({ data }: { data: any }) {
+// Product card shape after the loader's DB → frontend mapping. Used both by
+// the render side (filtering, sorting) and as the loader contract.
+interface ShopProductCard {
+    id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    comparePrice: number;
+    sale_price: number | undefined;
+    image: string;
+    image2: string | undefined;
+    images: string[];
+    // Matches ProductCard's `string | undefined` API; loader maps null → undefined.
+    category: string | undefined;
+    colors: string[];
+    sizes: string[];
+    is_new: boolean;
+    is_sale: boolean;
+    discount_percent: number;
+    status: string;
+}
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const shopPage = data?.shopPage;
     const slug = data?.category || "women";
     const titles: Record<string, string> = {
@@ -54,7 +80,7 @@ export function meta({ data }: { data: any }) {
             },
         },
     ];
-}
+};
 
 export function headers() {
     return {
@@ -62,71 +88,74 @@ export function headers() {
     };
 }
 
+// Defensive JSON parser that preserves the fallback's type.
+function parseJson<T>(str: string | null | undefined, fallback: T): T {
+    if (!str) return fallback;
+    try {
+        return JSON.parse(str) as T;
+    } catch {
+        return fallback;
+    }
+}
+
 export async function loader({ params }: LoaderFunctionArgs) {
     const categorySlug = params.category || "women";
 
     // Run all 3 queries in parallel for max speed
-    let filterConfig = null;
-    let shopPage = null;
-    let products: any[] = [];
-
-    const [configsResult, shopPageResult, rawProducts] = await Promise.all([
-        // 1. FilterConfigs (Specific + Global)
-        prisma
-            .$queryRawUnsafe(
-                `SELECT id, config FROM "FilterConfig" WHERE id = $1 OR id = 'global'`,
-                categorySlug,
-            )
-            .catch((e: any) => {
+    const [configs, shopPageResult, rawProducts] = await Promise.all([
+        prisma.filterConfig
+            .findMany({
+                where: { OR: [{ id: categorySlug }, { id: "global" }] },
+                select: { id: true, config: true },
+            })
+            .catch((e) => {
                 console.error("FilterConfig fetch failed", e);
-                return [];
-            }) as Promise<any[]>,
-        // 2. ShopPage
-        prisma.shopPage.findUnique({ where: { slug: categorySlug } }).catch((e: any) => {
+                return [] as Array<{ id: string; config: string }>;
+            }),
+        prisma.shopPage.findUnique({ where: { slug: categorySlug } }).catch((e) => {
             console.error("ShopPage fetch failed", e);
             return null;
         }),
-        // 3. Products — only needed columns, no SELECT *
-        prisma
-            .$queryRawUnsafe(
-                `SELECT id, name, price, "comparePrice", category, images, colors, sizes, "shopPageSlug", status, "createdAt"
-             FROM "Product"
-             WHERE "shopPageSlug" = $1 AND status = 'active'
-             ORDER BY "createdAt" DESC`,
-                categorySlug,
-            )
-            .catch((e: any) => {
-                console.warn("Product fetch failed:", e.message);
-                return [];
-            }) as Promise<any[]>,
+        prisma.product
+            .findMany({
+                where: { shopPageSlug: categorySlug, status: "active" },
+                orderBy: { createdAt: "desc" },
+                select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    price: true,
+                    comparePrice: true,
+                    category: true,
+                    images: true,
+                    colors: true,
+                    sizes: true,
+                    shopPageSlug: true,
+                    status: true,
+                    createdAt: true,
+                },
+            })
+            .catch((e: unknown) => {
+                const msg = e instanceof Error ? e.message : String(e);
+                console.warn("Product fetch failed:", msg);
+                return [] as never[];
+            }),
     ]);
 
-    const specificConfig = (configsResult as any[]).find((c) => c.id === categorySlug);
-    const globalConfig = (configsResult as any[]).find((c) => c.id === "global");
+    const specificConfig = configs.find((c) => c.id === categorySlug);
+    const globalConfig = configs.find((c) => c.id === "global");
 
     // Prioritize specific config, fallback to global
     const configToParse = specificConfig?.config || globalConfig?.config;
-    filterConfig = parseAndMergeFilterConfig(configToParse);
-    shopPage = shopPageResult;
-    products = rawProducts as any[];
-
-    // Removed fallback to local JSON files if DB is empty to ensure admin panel and storefront sync.
+    const filterConfig: MergedFilterConfig = parseAndMergeFilterConfig(configToParse);
+    const shopPage = shopPageResult;
 
     // Map Raw DB Objects to Frontend Props
     const NOW = Date.now();
     const NEW_THRESHOLD_DAYS = 14; // Products created within 14 days = NEW
 
-    const mappedProducts = products.map((p: any) => {
-        const parseJson = (str: string, fallback: any) => {
-            if (!str) return fallback;
-            try {
-                return JSON.parse(str);
-            } catch {
-                return fallback;
-            }
-        };
-
-        const images = parseJson(p.images, []);
+    const mappedProducts: ShopProductCard[] = rawProducts.map((p) => {
+        const images = parseJson<string[]>(p.images, []);
         const price = Number(p.price);
         const comparePrice = Number(p.comparePrice) || 0;
         const isSale = comparePrice > price && price > 0;
@@ -138,14 +167,14 @@ export async function loader({ params }: LoaderFunctionArgs) {
             name: p.name,
             description: p.description,
             price: isSale ? comparePrice : price, // ProductCard shows this as "original" (crossed out when sale)
-            comparePrice: comparePrice,
+            comparePrice,
             sale_price: isSale ? price : undefined, // ProductCard shows this as current (red) price
             image: images[0] || "/brand-sun.png",
             image2: images[1] || undefined, // Hover image for card
-            images: images,
-            category: p.category,
-            colors: parseJson(p.colors, []),
-            sizes: parseJson(p.sizes, []),
+            images,
+            category: p.category ?? undefined,
+            colors: parseJson<string[]>(p.colors, []),
+            sizes: parseJson<string[]>(p.sizes, []),
             is_new: isNew,
             is_sale: isSale,
             discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
@@ -271,7 +300,7 @@ export default function ShopCategory() {
     // Check if we are inside an iframe (visual editor mode)
     const isIframe = typeof window !== "undefined" && window.parent !== window;
 
-    const dynamicFilters = filterConfig as any;
+    const dynamicFilters = filterConfig;
 
     const categories = useMemo(() => {
         return dynamicFilters?.categories ? Object.keys(dynamicFilters.categories) : [];
@@ -292,19 +321,17 @@ export default function ShopCategory() {
     const filteredProducts = useMemo(() => {
         let result = [...products];
         if (selectedCategories.length > 0) {
-            result = result.filter((p: any) => {
-                if (selectedCategories.includes(p.category)) return true;
+            result = result.filter((p) => {
+                if (p.category && selectedCategories.includes(p.category)) return true;
                 // Graceful fallback for legacy products storing the label instead of slug
                 return selectedCategories.some((cat) => categoryLabels[cat] === p.category);
             });
         }
         if (selectedSizes.length > 0) {
-            result = result.filter((p: any) =>
-                p.sizes?.some((s: string) => selectedSizes.includes(s)),
-            );
+            result = result.filter((p) => p.sizes?.some((s: string) => selectedSizes.includes(s)));
         }
         if (selectedColors.length > 0) {
-            result = result.filter((p: any) =>
+            result = result.filter((p) =>
                 p.colors?.some((c: string) => {
                     if (selectedColors.includes(c)) return true;
                     // Graceful fallback for legacy products storing the color label
@@ -313,9 +340,9 @@ export default function ShopCategory() {
             );
         }
         if (selectedPriceRange) {
-            const range = priceRanges.find((r: any) => r.id === selectedPriceRange);
+            const range = priceRanges.find((r) => r.id === selectedPriceRange);
             if (range) {
-                result = result.filter((p: any) => p.price >= range.min && p.price <= range.max);
+                result = result.filter((p) => p.price >= range.min && p.price <= range.max);
             }
         }
         switch (sortBy) {
@@ -579,7 +606,7 @@ export default function ShopCategory() {
                                     <div className="filter-checkbox-list">
                                         {categories.map((cat, idx) => {
                                             const count = products.filter(
-                                                (p: any) =>
+                                                (p) =>
                                                     p.category === cat ||
                                                     p.category === categoryLabels[cat],
                                             ).length;
@@ -624,7 +651,7 @@ export default function ShopCategory() {
                                 <div className="accordion-content">
                                     <div className="mb-size-grid">
                                         {sizes.map((size: string, idx: number) => {
-                                            const count = products.filter((p: any) =>
+                                            const count = products.filter((p) =>
                                                 p.sizes?.includes(size),
                                             ).length;
                                             if (count === 0) return null;
@@ -653,7 +680,7 @@ export default function ShopCategory() {
                                     <div className="mb-color-grid">
                                         {colors.map((color: string, idx: number) => {
                                             const count = products.filter(
-                                                (p: any) =>
+                                                (p) =>
                                                     p.colors?.includes(color) ||
                                                     (colorLabels[color] &&
                                                         p.colors?.includes(colorLabels[color])),
@@ -683,7 +710,7 @@ export default function ShopCategory() {
                                 </div>
                                 <div className="accordion-content">
                                     <div className="filter-checkbox-list">
-                                        {priceRanges.map((range: any, idx: number) => (
+                                        {priceRanges.map((range: PriceRange, idx: number) => (
                                             <label
                                                 key={range.id || `dr-${idx}`}
                                                 className="mb-checkbox-item"
@@ -756,7 +783,7 @@ export default function ShopCategory() {
                                     <div className="filter-checkbox-list">
                                         {categories.map((cat, idx) => {
                                             const count = products.filter(
-                                                (p: any) =>
+                                                (p) =>
                                                     p.category === cat ||
                                                     p.category === categoryLabels[cat],
                                             ).length;
@@ -805,7 +832,7 @@ export default function ShopCategory() {
                                 <div className="accordion-content">
                                     <div className="mb-size-grid">
                                         {sizes.map((size: string, idx: number) => {
-                                            const count = products.filter((p: any) =>
+                                            const count = products.filter((p) =>
                                                 p.sizes?.includes(size),
                                             ).length;
                                             if (count === 0) return null;
@@ -838,7 +865,7 @@ export default function ShopCategory() {
                                     <div className="mb-color-grid">
                                         {colors.map((color: string, idx: number) => {
                                             const count = products.filter(
-                                                (p: any) =>
+                                                (p) =>
                                                     p.colors?.includes(color) ||
                                                     (colorLabels[color] &&
                                                         p.colors?.includes(colorLabels[color])),
@@ -872,7 +899,7 @@ export default function ShopCategory() {
                                 </div>
                                 <div className="accordion-content">
                                     <div className="filter-checkbox-list">
-                                        {priceRanges.map((range: any, idx: number) => (
+                                        {priceRanges.map((range: PriceRange, idx: number) => (
                                             <label
                                                 key={range.id || `range-${idx}`}
                                                 className="mb-checkbox-item"

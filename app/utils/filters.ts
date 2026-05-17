@@ -1,6 +1,20 @@
 import { buildFilterCategories } from "./categoryMap";
 
-export const DEFAULT_FILTER_CONFIG = {
+export interface PriceRange {
+    id: string;
+    label: string;
+    min: number;
+    max: number;
+}
+
+export interface MergedFilterConfig {
+    categories: Record<string, string>;
+    colors: Record<string, string>;
+    sizes: string[];
+    priceRanges: PriceRange[];
+}
+
+export const DEFAULT_FILTER_CONFIG: MergedFilterConfig = {
     categories: buildFilterCategories([
         "jumpsuit",
         "leggings",
@@ -39,19 +53,23 @@ export const DEFAULT_FILTER_CONFIG = {
     ],
 };
 
-export function parseAndMergeFilterConfig(dbConfigString: string | null | undefined) {
-    let parsedConfig: any = {};
+// What the DB-stored JSON may contain — every field is optional and may be
+// missing/malformed, so we merge with DEFAULT_FILTER_CONFIG defensively.
+type PartialFilterConfig = Partial<MergedFilterConfig>;
+
+export function parseAndMergeFilterConfig(
+    dbConfigString: string | null | undefined,
+): MergedFilterConfig {
+    let parsedConfig: PartialFilterConfig = {};
     if (dbConfigString) {
         try {
-            parsedConfig = JSON.parse(dbConfigString);
+            parsedConfig = JSON.parse(dbConfigString) as PartialFilterConfig;
         } catch (e) {
             console.error("Failed to parse DB FilterConfig", e);
         }
     }
 
     return {
-        ...DEFAULT_FILTER_CONFIG,
-        ...parsedConfig,
         categories: parsedConfig.categories || DEFAULT_FILTER_CONFIG.categories,
         colors: parsedConfig.colors || DEFAULT_FILTER_CONFIG.colors,
         sizes: parsedConfig.sizes || DEFAULT_FILTER_CONFIG.sizes,
