@@ -8,6 +8,12 @@ export const RegisterSchema = z.object({
     password: z.string().min(6, "Пароль занадто короткий").max(100),
 });
 
+// ===== Login API =====
+export const LoginSchema = z.object({
+    email: z.string().email("Невірний формат email").max(100).trim().toLowerCase(),
+    password: z.string().min(1, "Пароль обов'язковий").max(100),
+});
+
 // ===== Review API =====
 export const ReviewSchema = z.object({
     productId: z.string().min(1, "productId обов'язковий"),

@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
 import bcrypt from "bcryptjs";
 import { logger } from "../utils/logger.server";
+import { LoginSchema, formatZodErrors } from "../utils/validation";
 
 /**
  * Login API — Authenticates customer with email/password.
@@ -12,19 +13,19 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     try {
-        const body = await request.json();
-        const { email, password } = body;
-
-        if (!email || !password) {
-            return new Response(JSON.stringify({ error: "Email та пароль обов'язкові" }), {
+        const raw = await request.json();
+        const parsed = LoginSchema.safeParse(raw);
+        if (!parsed.success) {
+            return new Response(JSON.stringify({ error: formatZodErrors(parsed.error) }), {
                 status: 400,
                 headers: { "Content-Type": "application/json" },
             });
         }
+        const { email, password } = parsed.data;
 
-        // Find customer by email
+        // Find customer by email (Zod already lowercased the email).
         const customer = await prisma.customer.findUnique({
-            where: { email: email.toLowerCase() },
+            where: { email },
         });
 
         if (!customer) {
