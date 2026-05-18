@@ -1152,7 +1152,18 @@ export default function Checkout() {
                                                 key={`${item.id}-${item.size}`}
                                                 className="order-item"
                                             >
-                                                <img src={item.image} alt={item.name} />
+                                                {/* width/height set so the browser reserves the
+                                                    layout space before the image arrives — kills CLS.
+                                                    Square because our CSS uses object-fit: cover on
+                                                    .order-item img. */}
+                                                <img
+                                                    src={item.image}
+                                                    alt={item.name}
+                                                    width="80"
+                                                    height="80"
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                />
                                                 <div className="order-item__info">
                                                     <span className="order-item__name">
                                                         {item.name}

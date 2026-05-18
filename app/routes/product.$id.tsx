@@ -633,7 +633,16 @@ export default function ProductDetail() {
                                         aria-label={`View image ${idx + 1}`}
                                     >
                                         <div className="thumb-inner">
-                                            <img src={img} alt="" />
+                                            {/* Square thumb container with CSS object-fit cover;
+                                                width/height attrs reserve space before image loads. */}
+                                            <img
+                                                src={img}
+                                                alt=""
+                                                width="80"
+                                                height="80"
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
                                         </div>
                                     </button>
                                 ))}
@@ -1156,7 +1165,16 @@ export default function ProductDetail() {
                             {relatedProducts.map((rp) => (
                                 <Link to={`/product/${rp.id}`} key={rp.id} className="related-card">
                                     <div className="related-img-box">
-                                        <img src={rp.image} alt={rp.name} />
+                                        {/* 3:4 portrait matches our actual product photos
+                                            (2625x3500). Below the fold => lazy. */}
+                                        <img
+                                            src={rp.image}
+                                            alt={rp.name}
+                                            width="300"
+                                            height="400"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
                                     </div>
                                     <div className="related-info">
                                         <h4>{rp.name}</h4>
