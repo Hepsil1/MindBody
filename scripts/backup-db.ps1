@@ -26,7 +26,7 @@ $envFile  = Join-Path $repoRoot ".env"
 $backupDir = Join-Path $repoRoot "backups"
 
 if (-not (Test-Path $envFile)) {
-    Write-Error ".env not found at $envFile — cannot read DATABASE_URL."
+    Write-Error ".env not found at $envFile - cannot read DATABASE_URL."
     exit 1
 }
 
@@ -110,7 +110,7 @@ $gzStream.Close()
 Remove-Item $dumpFile -Force
 
 $sizeKB = [Math]::Round((Get-Item $gzFile).Length / 1024, 1)
-Write-Host "  ✓ $gzFile ($sizeKB KB)" -ForegroundColor Green
+Write-Host "  [OK] $gzFile ($sizeKB KB)" -ForegroundColor Green
 
 # ---- Retention: keep last 7 days ------------------------------------------
 $cutoff = (Get-Date).AddDays(-7)
@@ -122,7 +122,7 @@ Get-ChildItem $backupDir -Filter "mindbody_db_*.sql.gz" |
         $pruned++
     }
 if ($pruned -gt 0) {
-    Write-Host "  ✓ pruned $pruned old backup(s) older than 7 days" -ForegroundColor Green
+    Write-Host "  [OK] pruned $pruned old backup(s) older than 7 days" -ForegroundColor Green
 }
 
 Write-Host "==> Backup complete." -ForegroundColor Green
