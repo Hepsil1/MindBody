@@ -1,40 +1,67 @@
 {
-    # Global options
-    email your_email@example.com
+	# Global options
+	email your_email@example.com
 }
 
 saleid.icu {
-    reverse_proxy localhost:3000
+	reverse_proxy localhost:3000
 
-    # Gzip + Zstandard compression
-    encode zstd gzip
+	# Gzip + Zstandard compression
+	encode zstd gzip
 
-    # Aggressive cache for static assets (images, fonts, JS, CSS)
-    @static {
-        path *.webp *.png *.jpg *.jpeg *.gif *.ico *.svg
-        path *.woff *.woff2 *.ttf *.otf
-        path *.js *.css *.map
-    }
-    header @static Cache-Control "public, max-age=31536000, immutable"
+	# Aggressive cache for static assets (images, fonts, JS, CSS)
+	@static {
+		path *.webp *.png *.jpg *.jpeg *.gif *.ico *.svg
+		path *.woff *.woff2 *.ttf *.otf
+		path *.js *.css *.map
+	}
+	header @static Cache-Control "public, max-age=31536000, immutable"
 
-    # HTML — short cache, allow revalidation
-    @html {
-        path /
-        path *.html
-    }
-    header @html Cache-Control "public, max-age=60, stale-while-revalidate=300"
+	# HTML — short cache, allow revalidation
+	@html {
+		path /
+		path *.html
+	}
+	header @html Cache-Control "public, max-age=60, stale-while-revalidate=300"
 
-    # Security headers
-    header {
-        X-Content-Type-Options "nosniff"
-        X-Frame-Options "SAMEORIGIN"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        -Server
-    }
+	# Security headers
+	#
+	# NOTE on Content-Security-Policy:
+	# CSP is intentionally NOT set here yet. The site uses inline JSON-LD
+	# script blocks and pulls images from cdn2.behold.pictures (Instagram
+	# widget); a strict CSP would silently break either. Plan: roll out
+	# Content-Security-Policy-Report-Only first with a report endpoint,
+	# gather violations for a week, then promote to enforcing mode.
+	header {
+		# Force HTTPS for a full year, including subdomains, and let the
+		# browser eligible for the HSTS preload list. `preload` only takes
+		# effect after submitting to https://hstspreload.org.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 
-    # Log requests
-    log {
-        output file c:\mindbody\caddy_access.log
-        format json
-    }
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+
+		# Lock down powerful browser APIs we don't use. Empty parens =
+		# disabled for all origins.
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()"
+
+		# Block legacy Flash / PDF reader cross-domain policy loading.
+		X-Permitted-Cross-Domain-Policies "none"
+
+		# Isolate the document so spectre-style cross-origin attacks fail.
+		# COOP is safe to add unconditionally; COEP is intentionally NOT
+		# set because it would block cross-origin <img>/<iframe> resources
+		# (we load Instagram images from cdn2.behold.pictures).
+		Cross-Origin-Opener-Policy "same-origin"
+
+		# Hide the server software banner.
+		-Server
+	}
+
+	# Log requests
+	log {
+		output file c:\mindbody\caddy_access.log
+		format json
+	}
 }
