@@ -205,10 +205,19 @@ export async function action({ request }: ActionFunctionArgs) {
             create: { email: customerEmail, firstName, lastName, phone: customer.phone || "" },
         });
 
-        // 2. Generate Order Number (YYMMDD + 4 random digits for readability + uniqueness)
+        // 2. Generate Order Number — format: YYDDD + 4 random digits.
+        // YY  = last two digits of the year (e.g. 26 in 2026)
+        // DDD = day of year, 1-366
+        // The previous format (YYMMDD * 10000 + random) overflowed
+        // PostgreSQL INT4 (max 2,147,483,647) — `datePart * 10000` for any
+        // date after late 2022 produced numbers > 2.1 billion, so every
+        // order create failed in prod with a Prisma ConversionError.
+        // This format caps at 99366 * 10000 + 9999 = 993,669,999 — fits
+        // INT4 cleanly for the next century. Still 9-digit human-readable.
         const now = new Date();
-        const datePart =
-            (now.getFullYear() % 100) * 10000 + (now.getMonth() + 1) * 100 + now.getDate(); // YYMMDD
+        const startOfYear = new Date(now.getFullYear(), 0, 0);
+        const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / 86_400_000);
+        const datePart = (now.getFullYear() % 100) * 1000 + dayOfYear; // YYDDD
         const randomSuffix = (randomBytes(2).readUInt16LE(0) % 9000) + 1000; // 1000-9999
         const orderNumberInt = datePart * 10000 + randomSuffix;
 
