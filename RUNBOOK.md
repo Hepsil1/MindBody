@@ -228,19 +228,19 @@ To rotate any key:
 
 ## Domains
 
-- `saleid.icu` — the active domain. Caddy block in `Caddyfile`. TLS via
-  Cloudflare proxied.
-- `mindbody.com.ua` — **NOT configured in Caddyfile**. The codebase has
-  fallbacks pointing here (e.g. `email.server.ts` uses
-  `https://mindbody.com.ua` if `SITE_URL` env is unset), but the domain
-  itself doesn't respond. If you want to enable it, add a sibling block
-  to `Caddyfile`:
+- `saleid.icu` — the active **temporary** domain. Caddy block in
+  `Caddyfile`. TLS via Cloudflare proxied. `SITE_URL`, `EMAIL_FROM`,
+  `GOOGLE_REDIRECT_URI`, and all sitemap/canonical/OG URLs point here.
 
-```
-mindbody.com.ua {
-    redir https://saleid.icu{uri} permanent
-}
-```
+When the permanent domain is ready, switching is a three-step change:
+
+1. Add the new Caddy block (and optionally a redirect from `saleid.icu`).
+2. Update `.env`: `SITE_URL`, `EMAIL_FROM`, `EMAIL_REPLY_TO`,
+   `GOOGLE_REDIRECT_URI`.
+3. `npm run deploy` (rebuild + pm2 restart).
+
+Search the codebase for `"https://saleid.icu"` to spot any remaining
+hard-coded fallbacks that should move to the new domain too.
 
 ---
 

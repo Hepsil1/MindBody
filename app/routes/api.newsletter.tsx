@@ -67,8 +67,7 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         // Fire-and-forget welcome email. Don't block the response on email delivery.
-        const siteUrl = env.SITE_URL;
-        const unsubscribeUrl = `${siteUrl}/api/newsletter?unsub=${sub.unsubKey}`;
+        const unsubscribeUrl = `${env.SITE_URL}/api/newsletter?unsub=${sub.unsubKey}`;
         sendEmail({
             to: rawEmail,
             subject: "Ласкаво просимо у MIND BODY",

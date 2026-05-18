@@ -4,7 +4,7 @@ import { prisma } from "../db.server";
 import { useState } from "react";
 import ProductCard, { type Product } from "../components/ProductCard";
 
-const SITE_URL = "https://mindbody.com.ua";
+const SITE_URL = "https://saleid.icu";
 
 // Shape of one row returned by the raw SELECT below.
 interface SearchProductRow {

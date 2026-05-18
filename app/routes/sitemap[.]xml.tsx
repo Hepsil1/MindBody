@@ -10,7 +10,7 @@ import { prisma } from "../db.server";
 //  - Filtered / search / paginated URLs are intentionally excluded
 //    (they are noindex or query-only and don't deserve sitemap entries).
 export async function loader() {
-    const baseUrl = process.env.SITE_URL || "https://mindbody.com.ua";
+    const baseUrl = process.env.SITE_URL || "https://saleid.icu";
 
     const products = await prisma.$queryRaw<any[]>`
         SELECT id, slug, "updatedAt" FROM "Product" WHERE status = 'active'

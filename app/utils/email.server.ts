@@ -17,7 +17,7 @@ import { env } from "./env.server";
 import { logger } from "./logger.server";
 
 const apiKey = env.RESEND_API_KEY;
-const FROM_EMAIL = env.EMAIL_FROM ?? "hello@mindbody.com.ua";
+const FROM_EMAIL = env.EMAIL_FROM ?? "hello@saleid.icu";
 const FROM_NAME = env.EMAIL_FROM_NAME ?? "MIND BODY";
 const REPLY_TO = env.EMAIL_REPLY_TO ?? FROM_EMAIL;
 const SITE_URL = env.SITE_URL;

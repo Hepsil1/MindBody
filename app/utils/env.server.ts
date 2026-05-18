@@ -20,14 +20,14 @@ const EnvSchema = z.object({
     SESSION_SECRET: z
         .string()
         .min(32, "SESSION_SECRET must be at least 32 chars (use crypto.randomBytes(48))"),
+    // SITE_URL is the canonical production domain. We deliberately do NOT
+    // hard-code an allow-list of accepted hostnames — the project sits on
+    // saleid.icu today and will move to its permanent domain later; both
+    // need to validate cleanly.
     SITE_URL: z
         .string()
         .url("SITE_URL must be a valid URL")
-        .refine((v) => !v.endsWith("/"), "SITE_URL must not have a trailing slash")
-        .refine(
-            (v) => !v.includes("saleid.icu"),
-            "SITE_URL points at the deprecated saleid.icu domain — use mindbody.com.ua",
-        ),
+        .refine((v) => !v.endsWith("/"), "SITE_URL must not have a trailing slash"),
     ADMIN_PASSWORD: z.string().min(8, "ADMIN_PASSWORD must be at least 8 chars"),
     NOVA_POSHTA_API_KEY: z.string().min(1, "NOVA_POSHTA_API_KEY is required for checkout"),
 

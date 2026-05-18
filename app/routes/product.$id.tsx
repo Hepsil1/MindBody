@@ -22,7 +22,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     if (!product) {
         return [{ title: "Товар не знайдено | MIND BODY" }];
     }
-    const siteUrl = data?.siteUrl || "https://mindbody.com.ua";
+    const siteUrl = data?.siteUrl || "https://saleid.icu";
 
     const desc = (product.description || `${product.name} — купити в MIND BODY`).substring(0, 160);
     const image = product.images?.[0] || "/brand-sun.png";
@@ -262,7 +262,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         product,
         filterConfig,
         relatedProducts,
-        siteUrl: process.env.SITE_URL ?? "https://mindbody.com.ua",
+        siteUrl: process.env.SITE_URL ?? "https://saleid.icu",
     };
 }
 

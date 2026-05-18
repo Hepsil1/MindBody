@@ -41,7 +41,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     };
     const title = shopPage?.title || titles[slug] || "Каталог";
     const heroImage = shopPage?.heroImage || "/brand-sun.png";
-    const siteUrl = data?.siteUrl || "https://mindbody.com.ua";
+    const siteUrl = data?.siteUrl || "https://saleid.icu";
 
     const canonicalUrl = `${siteUrl}/shop/${slug}`;
     return [
@@ -187,7 +187,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         category: categorySlug,
         shopPage,
         filterConfig,
-        siteUrl: process.env.SITE_URL || "https://mindbody.com.ua",
+        siteUrl: process.env.SITE_URL || "https://saleid.icu",
     };
 }
 import { useSearchParams } from "react-router";

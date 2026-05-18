@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 
 export function meta() {
-    const siteUrl = "https://mindbody.com.ua";
+    const siteUrl = "https://saleid.icu";
     return [
         { title: "Політика конфіденційності | MIND BODY" },
         {

@@ -45,7 +45,7 @@ const FAQS = [
 ];
 
 export function meta() {
-    const siteUrl = "https://mindbody.com.ua";
+    const siteUrl = "https://saleid.icu";
     const faqSchema = {
         "@context": "https://schema.org",
         "@type": "FAQPage",
