@@ -26,3 +26,8 @@ backups/
 
 # Vitest coverage output
 coverage/
+
+# Playwright E2E artifacts (traces, screenshots, reports)
+test-results/
+playwright-report/
+playwright/.cache/
