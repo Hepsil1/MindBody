@@ -21,7 +21,10 @@
 # If step 2 fails, PM2 keeps the previous process — no downtime.
 # If step 3 fails, you'll see it immediately in `pm2 logs mindbody`.
 
-$ErrorActionPreference = "Stop"
+# Don't use $ErrorActionPreference = "Stop" — it turns every native
+# command's stderr line (like Vite's harmless build warnings) into a
+# fatal exception. We check $LASTEXITCODE explicitly after each call.
+$ErrorActionPreference = "Continue"
 
 Write-Host "==> [1/4] Pre-flight checks" -ForegroundColor Cyan
 
@@ -35,22 +38,24 @@ if ($pm2List -notmatch "\bmindbody\b") {
     exit 1
 }
 
-# Warn if the working tree has uncommitted changes — easy to deploy the wrong code.
-$gitStatus = git status --porcelain 2>$null
+# Warn if the working tree has uncommitted modifications. We only care
+# about TRACKED files that are dirty (M/A/D) — untracked files (??) are
+# typically local-only scripts the operator hasn't added to git and they
+# don't make the build different. Read-Host doesn't work in non-interactive
+# shells, so this is a warning only.
+$gitStatus = git status --porcelain 2>$null | Where-Object { $_ -notmatch '^\?\?' }
 if ($gitStatus) {
-    Write-Warning "Working tree has uncommitted changes:"
-    Write-Host $gitStatus
-    $confirm = Read-Host "Deploy anyway? (y/N)"
-    if ($confirm -ne "y") {
-        Write-Host "Aborted." -ForegroundColor Yellow
-        exit 0
-    }
+    Write-Warning "Working tree has uncommitted MODIFIED files:"
+    Write-Host ($gitStatus -join "`n")
+    Write-Host "Continuing anyway. Re-run after committing if this wasn't intentional." -ForegroundColor Yellow
 }
 
 Write-Host "==> [2/4] Building (skipping prisma generate - PM2 holds the DLL)" -ForegroundColor Cyan
-& npx react-router build
+# Pipe stderr to stdout so we see Vite's harmless warnings but
+# don't trigger PS's RemoteException trap.
+& npx react-router build 2>&1 | Out-Host
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Build failed. PM2 process is untouched."
+    Write-Host "Build FAILED. PM2 process is untouched." -ForegroundColor Red
     exit 1
 }
 
