@@ -31,6 +31,7 @@ export default [
     route("api/auth/login", "routes/api.auth.login.tsx"),
     route("api/promo", "routes/api/promo.tsx"),
     route("api/newsletter", "routes/api.newsletter.tsx"),
+    route("api/health", "routes/api.health.tsx"),
     route("sitemap.xml", "routes/sitemap[.]xml.tsx"),
 
     // Admin Login & Logout (Separate from layout)
