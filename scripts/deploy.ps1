@@ -26,8 +26,11 @@ $ErrorActionPreference = "Stop"
 Write-Host "==> [1/4] Pre-flight checks" -ForegroundColor Cyan
 
 # PM2 must be reachable so we know we can restart at the end.
-$pm2Status = pm2 jlist 2>$null | ConvertFrom-Json
-if (-not ($pm2Status | Where-Object { $_.name -eq "mindbody" })) {
+# `pm2 jlist` returns JSON but on Windows PS 5.1 ConvertFrom-Json
+# chokes on duplicate keys (USERNAME vs username env vars), so we
+# parse with a text grep instead.
+$pm2List = pm2 list 2>$null | Out-String
+if ($pm2List -notmatch "\bmindbody\b") {
     Write-Error "PM2 process 'mindbody' not found. Run: pm2 start ecosystem.config.cjs"
     exit 1
 }
@@ -44,7 +47,7 @@ if ($gitStatus) {
     }
 }
 
-Write-Host "==> [2/4] Building (skipping prisma generate — PM2 holds the DLL)" -ForegroundColor Cyan
+Write-Host "==> [2/4] Building (skipping prisma generate - PM2 holds the DLL)" -ForegroundColor Cyan
 & npx react-router build
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Build failed. PM2 process is untouched."
@@ -64,22 +67,22 @@ Start-Sleep -Seconds 3
 Write-Host "==> [4/4] Smoke checks" -ForegroundColor Cyan
 $root = (Invoke-WebRequest -Uri "https://saleid.icu" -UseBasicParsing -MaximumRedirection 5)
 if ($root.StatusCode -ne 200) {
-    Write-Error "saleid.icu returned $($root.StatusCode) — investigate before celebrating."
+    Write-Error "saleid.icu returned $($root.StatusCode) - investigate before celebrating."
     exit 1
 }
 
 # Pick one chunk from the rendered HTML and verify it actually exists.
 $entryMatch = $root.Content | Select-String -Pattern '/assets/entry\.client-[A-Za-z0-9_-]+\.js' -AllMatches
 if ($entryMatch.Matches.Count -eq 0) {
-    Write-Warning "Could not find entry.client chunk in HTML — smoke check inconclusive."
+    Write-Warning "Could not find entry.client chunk in HTML - smoke check inconclusive."
 } else {
     $entryUrl = "https://saleid.icu" + $entryMatch.Matches[0].Value
     $entryRes = Invoke-WebRequest -Uri $entryUrl -UseBasicParsing -Method Head
     if ($entryRes.StatusCode -ne 200) {
-        Write-Error "Entry chunk $entryUrl returned $($entryRes.StatusCode). HTML references a stale asset — try running deploy.ps1 again."
+        Write-Error "Entry chunk $entryUrl returned $($entryRes.StatusCode). HTML references a stale asset - try running deploy.ps1 again."
         exit 1
     }
-    Write-Host "  ✓ $entryUrl -> 200" -ForegroundColor Green
+    Write-Host "  [OK] $entryUrl -> 200" -ForegroundColor Green
 }
 
 Write-Host "==> Deploy complete." -ForegroundColor Green
