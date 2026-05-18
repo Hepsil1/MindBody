@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mindbody-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["react-router", "dev", "--port", "5175"],
+      "port": 5175
+    }
+  ]
+}

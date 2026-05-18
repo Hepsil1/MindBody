@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+  "_comment": "Project-scoped MCP servers for the MindBody design + audit workflow. Each future Claude Code session in this repo will get these tools after the user approves them once. None of these run on prod or touch user data — they're either browser-driving (chrome-devtools, playwright) or read-only documentation (context7).",
+  "mcpServers": {
+    "chrome-devtools": {
+      "_comment": "Google's headless-Chrome MCP. Lets us run Lighthouse audits, take screenshots, inspect computed CSS, watch network requests on any URL (including saleid.icu prod). The primary tool for design auditing.",
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    },
+    "playwright": {
+      "_comment": "Microsoft's Playwright MCP. Cross-browser scripted flows + visual regression diffs. Use when comparing pre/post-refactor screenshots so we never ship a visual breakage we didn't see.",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "context7": {
+      "_comment": "Upstash context7. Pulls live docs for React Router 7, Motion 12, Radix UI, Tailwind v4, Prisma, etc. Use when the model's tranining cutoff might be older than the library version we're using.",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    }
+  }
+}

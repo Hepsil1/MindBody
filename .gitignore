@@ -13,7 +13,12 @@ caddy_access.log
 build_output.txt
 
 # Local tooling
-/.claude/
+# NOTE: .claude/skills/ are project-scoped skills committed to the repo.
+# Only personal/session data is ignored.
+/.claude/sessions/
+/.claude/cache/
+/.claude/logs/
+/.claude/projects/
 /tmp/
 /tmp_repos/
 /.tmp_repos/
