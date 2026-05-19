@@ -69,6 +69,13 @@ export function meta({ data }: Route.MetaArgs) {
         },
         { property: "og:type", content: "website" },
         { property: "og:image", content: `${siteUrl}/brand-sun.png` },
+        // Declared dimensions of brand-sun.png. Telling Facebook/Twitter/
+        // Telegram the size upfront means the first share renders a real
+        // preview instead of a "fetching…" placeholder.
+        // TODO: ship a proper 1200x630 landscape OG image — current asset
+        // is square (504x503) and gets letterboxed in some clients.
+        { property: "og:image:width", content: "504" },
+        { property: "og:image:height", content: "503" },
         { property: "og:locale", content: "uk_UA" },
         { property: "og:site_name", content: "MIND BODY" },
         { name: "twitter:card", content: "summary_large_image" },

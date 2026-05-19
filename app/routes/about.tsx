@@ -23,6 +23,10 @@ export function meta() {
         },
         { property: "og:type", content: "website" },
         { property: "og:image", content: "/brand-sun.png" },
+        // brand-sun.png is 504x503. Declaring up front avoids the social
+        // preview "fetching..." placeholder on first share.
+        { property: "og:image:width", content: "504" },
+        { property: "og:image:height", content: "503" },
         { property: "og:locale", content: "uk_UA" },
     ];
 }

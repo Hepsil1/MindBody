@@ -38,6 +38,12 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
         { property: "og:title", content: product.name },
         { property: "og:description", content: desc },
         { property: "og:image", content: fullImage },
+        // Declared dimensions of our product photos (3:4 portrait, 2625x3500
+        // master) so social previews don't have to fetch+measure first.
+        // Twitter "summary_large_image" cards will crop to 1.91:1 — content
+        // still reads well because models are centered.
+        { property: "og:image:width", content: "2625" },
+        { property: "og:image:height", content: "3500" },
         { property: "og:type", content: "product" },
         { property: "product:price:amount", content: String(price) },
         { property: "product:price:currency", content: "UAH" },
