@@ -42,8 +42,20 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const title = shopPage?.title || titles[slug] || "Каталог";
     const heroImage = shopPage?.heroImage || "/brand-sun.png";
     const siteUrl = data?.siteUrl || "https://saleid.icu";
+    const products = data?.products ?? [];
 
     const canonicalUrl = `${siteUrl}/shop/${slug}`;
+
+    // First 10 products as an ItemList — Google recommends keeping the
+    // exposed list short. The full set still lives in the dynamic
+    // sitemap.xml, so search engines find everything either way.
+    const listItems = products.slice(0, 10).map((p, idx) => ({
+        "@type": "ListItem",
+        position: idx + 1,
+        url: `${siteUrl}/product/${p.id}`,
+        name: p.name,
+    }));
+
     return [
         { title: `${title} | MIND BODY` },
         {
@@ -77,6 +89,27 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
                     { "@type": "ListItem", position: 1, name: "Головна", item: siteUrl },
                     { "@type": "ListItem", position: 2, name: title, item: canonicalUrl },
                 ],
+            },
+        },
+        // CollectionPage tells Google this URL is a category listing, not
+        // a generic content page. The embedded ItemList exposes our top
+        // products with their canonical URLs so they can surface in
+        // "shopping" results / sitelinks. The full catalogue is still
+        // crawled via sitemap.xml.
+        {
+            "script:ld+json": {
+                "@context": "https://schema.org",
+                "@type": "CollectionPage",
+                name: title,
+                url: canonicalUrl,
+                description: shopPage?.subtitle ?? `${title} MIND BODY`,
+                isPartOf: { "@type": "WebSite", url: siteUrl, name: "MIND BODY" },
+                inLanguage: "uk-UA",
+                mainEntity: {
+                    "@type": "ItemList",
+                    numberOfItems: products.length,
+                    itemListElement: listItems,
+                },
             },
         },
     ];
