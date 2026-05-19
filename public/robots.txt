@@ -15,5 +15,5 @@ Disallow: /checkout
 # Politeness
 Crawl-delay: 1
 
-# Sitemap (must be absolute URL per specification)
-Sitemap: https://mindbody.com.ua/sitemap.xml
+# Sitemap (must be absolute URL per specification, must match the live domain)
+Sitemap: https://saleid.icu/sitemap.xml
