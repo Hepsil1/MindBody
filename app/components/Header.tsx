@@ -1,7 +1,8 @@
 import { Link, NavLink, useNavigate } from "react-router";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { StorageUtils } from "../utils/storage";
 import { AuthUtils, type User } from "../utils/auth";
+import { useDebounce } from "../hooks/useDebounce";
 import CartDrawer from "./CartDrawer";
 
 interface SearchResult {
@@ -28,7 +29,6 @@ export function Header() {
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
-    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -73,30 +73,39 @@ export function Header() {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Search debounce
-    const performSearch = useCallback(async (query: string) => {
-        if (query.trim().length < 2) {
+    // Debounce the search input so each keystroke doesn't fire a request.
+    // The effect below reacts to debouncedQuery — see app/hooks/useDebounce.ts.
+    const debouncedQuery = useDebounce(searchQuery, 300);
+
+    useEffect(() => {
+        const query = debouncedQuery.trim();
+        if (query.length < 2) {
             setSearchResults([]);
             setIsSearching(false);
             return;
         }
+        let cancelled = false;
         setIsSearching(true);
-        try {
-            const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-            const data = await res.json();
-            setSearchResults(data.products || []);
-        } catch {
-            setSearchResults([]);
-        } finally {
-            setIsSearching(false);
-        }
-    }, []);
+        (async () => {
+            try {
+                const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                if (!cancelled) setSearchResults(data.products || []);
+            } catch {
+                if (!cancelled) setSearchResults([]);
+            } finally {
+                if (!cancelled) setIsSearching(false);
+            }
+        })();
+        // Abort the late response if the user kept typing — otherwise an
+        // older slow request could overwrite newer results.
+        return () => {
+            cancelled = true;
+        };
+    }, [debouncedQuery]);
 
     const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setSearchQuery(value);
-        if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-        searchTimeoutRef.current = setTimeout(() => performSearch(value), 300);
+        setSearchQuery(e.target.value);
     };
 
     const openSearch = () => {

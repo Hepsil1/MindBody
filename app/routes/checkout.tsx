@@ -1,8 +1,14 @@
 import { Link } from "react-router";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { StorageUtils, type CartItem } from "../utils/storage";
 import { AuthUtils } from "../utils/auth";
 import { useToast } from "../components/Toast";
+import { formatPhoneUA, getPhoneDigits } from "../utils/phone";
+import {
+    useNovaPoshtaAutocomplete,
+    type NovaPoshtaCity,
+    type NovaPoshtaWarehouse,
+} from "../hooks/useNovaPoshtaAutocomplete";
 import "../styles/checkout.css";
 
 export function meta() {
@@ -16,9 +22,6 @@ export function meta() {
 }
 
 // Telegram messages are sent via server-side API route (token is NOT in client code)
-
-// Nova Poshta API (using server-side route to avoid CORS)
-const NOVA_POSHTA_API_ROUTE = "/api/novaposhta";
 
 type CheckoutStep = "cart" | "info" | "success";
 type PaymentMethod = "cash" | "card" | "apple_pay" | "google_pay";
@@ -37,42 +40,8 @@ interface CustomerInfo {
     delivery: DeliveryService;
 }
 
-interface NovaPoshtaCity {
-    Ref: string;
-    Description: string;
-    AreaDescription: string;
-}
-
-interface NovaPoshtaWarehouse {
-    Ref: string;
-    Description: string;
-    Number: string;
-    ShortAddress: string;
-}
-
-// Phone formatting helper: +380 (XX) XXX-XX-XX
-function formatPhoneUA(value: string): string {
-    const digits = value.replace(/\D/g, "");
-    // Ensure starts with 380 — normalise common Ukrainian prefixes.
-    let d = digits;
-    if (d.startsWith("80")) d = "3" + d;
-    else if (d.startsWith("0")) d = "38" + d;
-    else if (!d.startsWith("380") && !d.startsWith("3")) d = "380" + d;
-
-    // Build formatted string
-    let result = "+380";
-    const rest = d.slice(3);
-    if (rest.length > 0) result += " (" + rest.slice(0, 2);
-    if (rest.length >= 2) result += ") ";
-    if (rest.length > 2) result += rest.slice(2, 5);
-    if (rest.length > 5) result += "-" + rest.slice(5, 7);
-    if (rest.length > 7) result += "-" + rest.slice(7, 9);
-    return result;
-}
-
-function getPhoneDigits(formatted: string): string {
-    return formatted.replace(/\D/g, "");
-}
+// Nova Poshta types + phone helpers now live in their own modules. See
+// app/hooks/useNovaPoshtaAutocomplete.ts and app/utils/phone.ts.
 
 export default function Checkout() {
     const [items, setItems] = useState<CartItem[]>([]);
@@ -81,20 +50,6 @@ export default function Checkout() {
     const { showToast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderNumber, setOrderNumber] = useState("");
-
-    // Nova Poshta states
-    const [cities, setCities] = useState<NovaPoshtaCity[]>([]);
-    const [warehouses, setWarehouses] = useState<NovaPoshtaWarehouse[]>([]);
-    const [citySearch, setCitySearch] = useState("");
-    const [warehouseSearch, setWarehouseSearch] = useState("");
-    const [showCitiesDropdown, setShowCitiesDropdown] = useState(false);
-    const [showWarehousesDropdown, setShowWarehousesDropdown] = useState(false);
-    const [isLoadingCities, setIsLoadingCities] = useState(false);
-    const [isLoadingWarehouses, setIsLoadingWarehouses] = useState(false);
-
-    // Refs for click-outside detection
-    const cityAutocompleteRef = useRef<HTMLDivElement>(null);
-    const warehouseAutocompleteRef = useRef<HTMLDivElement>(null);
 
     const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
         name: "",
@@ -110,6 +65,46 @@ export default function Checkout() {
     });
 
     const [errors, setErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({});
+
+    // Nova Poshta autocomplete (cities + warehouses) — fetching, debouncing,
+    // dropdown visibility, and click-outside live in app/hooks. Parent owns
+    // the canonical customerInfo state via the two callbacks.
+    const {
+        cities,
+        warehouses,
+        citySearch,
+        setCitySearch,
+        warehouseSearch,
+        setWarehouseSearch,
+        showCitiesDropdown,
+        setShowCitiesDropdown,
+        showWarehousesDropdown,
+        setShowWarehousesDropdown,
+        isLoadingCities,
+        isLoadingWarehouses,
+        cityAutocompleteRef,
+        warehouseAutocompleteRef,
+        selectCity,
+        selectWarehouse,
+    } = useNovaPoshtaAutocomplete({
+        enabled: customerInfo.delivery === "nova_poshta",
+        cityRef: customerInfo.cityRef,
+        onCitySelect: (city) =>
+            setCustomerInfo((prev) => ({
+                ...prev,
+                city: city.Description,
+                cityRef: city.Ref,
+                // Pick a city → discard previous warehouse, the user will pick a new one
+                warehouse: "",
+                warehouseRef: "",
+            })),
+        onWarehouseSelect: (warehouse) =>
+            setCustomerInfo((prev) => ({
+                ...prev,
+                warehouse: warehouse.Description,
+                warehouseRef: warehouse.Ref,
+            })),
+    });
 
     useEffect(() => {
         const updateItems = () => {
@@ -131,140 +126,6 @@ export default function Checkout() {
         const unsub = StorageUtils.subscribeToCart(updateItems);
         return () => unsub();
     }, []);
-
-    // Search cities via Nova Poshta API (server-side)
-    const searchCities = useCallback(async (query: string) => {
-        if (query.length < 2) {
-            setCities([]);
-            return;
-        }
-
-        setIsLoadingCities(true);
-        try {
-            const formData = new FormData();
-            formData.append("action", "searchCities");
-            formData.append("query", query);
-
-            const response = await fetch(NOVA_POSHTA_API_ROUTE, {
-                method: "POST",
-                body: formData,
-            });
-            const data = await response.json();
-            if (data.success) {
-                setCities(data.data || []);
-                setShowCitiesDropdown(true);
-            } else {
-                console.error("Nova Poshta API error:", data.error);
-                setCities([]);
-            }
-        } catch (error) {
-            console.error("Nova Poshta API error:", error);
-            setCities([]);
-        } finally {
-            setIsLoadingCities(false);
-        }
-    }, []);
-
-    // Search warehouses via Nova Poshta API (server-side)
-    const searchWarehouses = useCallback(async (cityRef: string, query: string = "") => {
-        if (!cityRef) {
-            setWarehouses([]);
-            return;
-        }
-
-        setIsLoadingWarehouses(true);
-        try {
-            const formData = new FormData();
-            formData.append("action", "getWarehouses");
-            formData.append("cityRef", cityRef);
-            formData.append("query", query);
-
-            const response = await fetch(NOVA_POSHTA_API_ROUTE, {
-                method: "POST",
-                body: formData,
-            });
-            const data = await response.json();
-            if (data.success) {
-                setWarehouses(data.data || []);
-                setShowWarehousesDropdown(true);
-            } else {
-                console.error("Nova Poshta API error:", data.error);
-                setWarehouses([]);
-            }
-        } catch (error) {
-            console.error("Nova Poshta API error:", error);
-            setWarehouses([]);
-        } finally {
-            setIsLoadingWarehouses(false);
-        }
-    }, []);
-
-    // Debounced city search
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (citySearch && customerInfo.delivery === "nova_poshta") {
-                searchCities(citySearch);
-            }
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [citySearch, searchCities, customerInfo.delivery]);
-
-    // Debounced warehouse search
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (customerInfo.cityRef && customerInfo.delivery === "nova_poshta") {
-                searchWarehouses(customerInfo.cityRef, warehouseSearch);
-            }
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [warehouseSearch, customerInfo.cityRef, searchWarehouses, customerInfo.delivery]);
-
-    // Close dropdowns when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            // Close city dropdown if clicking outside
-            if (
-                cityAutocompleteRef.current &&
-                !cityAutocompleteRef.current.contains(event.target as Node)
-            ) {
-                setShowCitiesDropdown(false);
-            }
-            // Close warehouse dropdown if clicking outside
-            if (
-                warehouseAutocompleteRef.current &&
-                !warehouseAutocompleteRef.current.contains(event.target as Node)
-            ) {
-                setShowWarehousesDropdown(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const selectCity = (city: NovaPoshtaCity) => {
-        setCustomerInfo((prev) => ({
-            ...prev,
-            city: city.Description,
-            cityRef: city.Ref,
-            warehouse: "",
-            warehouseRef: "",
-        }));
-        setCitySearch(city.Description);
-        setShowCitiesDropdown(false);
-        setWarehouses([]);
-        searchWarehouses(city.Ref);
-    };
-
-    const selectWarehouse = (warehouse: NovaPoshtaWarehouse) => {
-        setCustomerInfo((prev) => ({
-            ...prev,
-            warehouse: warehouse.Description,
-            warehouseRef: warehouse.Ref,
-        }));
-        setWarehouseSearch(warehouse.Description);
-        setShowWarehousesDropdown(false);
-    };
 
     const updateQuantity = (id: string | number, delta: number, size?: string, color?: string) => {
         const item = items.find((i) => i.id === id && i.size === size && i.color === color);
@@ -345,8 +206,9 @@ export default function Checkout() {
         }));
         setCitySearch("");
         setWarehouseSearch("");
-        setCities([]);
-        setWarehouses([]);
+        // cities/warehouses arrays are owned by the hook now — they're
+        // implicitly stale once `enabled` flips and get re-populated on
+        // the next search when the user switches back to Nova Poshta.
     };
 
     const handlePaymentChange = (payment: PaymentMethod) => {
