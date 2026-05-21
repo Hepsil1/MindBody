@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs, type MetaFunction } from "react-router";
+import { type LoaderFunctionArgs, type MetaFunction, redirect } from "react-router";
 import { useLoaderData, Link } from "react-router";
 import ProductCard from "../components/ProductCard";
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -8,7 +8,12 @@ import {
     type MergedFilterConfig,
     type PriceRange,
 } from "../utils/filters";
-import { labelToSlug, slugToLabel } from "../utils/categoryMap";
+import {
+    labelToSlug,
+    slugToLabel,
+    ALLOWED_CATEGORY_SLUGS,
+    isValidSubcategory,
+} from "../utils/categoryMap";
 
 // Product card shape after the loader's DB → frontend mapping. Used both by
 // the render side (filtering, sorting) and as the loader contract.
@@ -131,8 +136,26 @@ function parseJson<T>(str: string | null | undefined, fallback: T): T {
     }
 }
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
     const categorySlug = params.category || "women";
+
+    // 301 redirect legacy query-string filters to the new nested path form.
+    // We only redirect *single* selections — multi-filter (?categories=a,b)
+    // stays as a query because it has no clean canonical equivalent.
+    // Three legacy inputs all funnel through here:
+    //   ?categories=longsleeve   (already a slug)
+    //   ?categories=Лонгсліви    (Ukrainian label — percent-encoded or not)
+    //   ?cat=Лонгсліви           (older parameter name)
+    const url = new URL(request.url);
+    const rawCategories = url.searchParams.get("categories");
+    const rawCat = url.searchParams.get("cat");
+    const raw = rawCategories ?? rawCat;
+    if (raw && !raw.includes(",")) {
+        const slug = ALLOWED_CATEGORY_SLUGS.has(raw) ? raw : labelToSlug(raw);
+        if (slug && isValidSubcategory(categorySlug, slug)) {
+            throw redirect(`/shop/${categorySlug}/${slug}`, 301);
+        }
+    }
 
     // Run all 3 queries in parallel for max speed
     const [configs, shopPageResult, rawProducts] = await Promise.all([
@@ -223,12 +246,18 @@ export async function loader({ params }: LoaderFunctionArgs) {
         siteUrl: process.env.SITE_URL || "https://saleid.icu",
     };
 }
-import { useSearchParams } from "react-router";
+import { useSearchParams, useParams } from "react-router";
 import "../styles/shop.css";
 
 export default function ShopCategory() {
     const { products, category, shopPage, filterConfig } = useLoaderData<typeof loader>();
     const [searchParams, setSearchParams] = useSearchParams();
+    // When mounted via the /shop/:category/:subcategory nested route, the
+    // sidebar should reflect the path-selected subcategory as a pre-checked
+    // filter. Read it once here so both initial state and the URL-sync
+    // effect can stay aware of "path mode".
+    const routeParams = useParams<{ subcategory?: string }>();
+    const pathSubcategory = routeParams.subcategory ?? null;
 
     // Helper to read initial arrays from URL
     const getListParam = (key: string) => {
@@ -240,7 +269,11 @@ export default function ShopCategory() {
     const initialCat = searchParams.get("cat");
     const initialCatSlug = initialCat ? (labelToSlug(initialCat) ?? initialCat) : null;
     const [selectedCategories, setSelectedCategories] = useState<string[]>(
-        initialCatSlug ? [initialCatSlug] : getListParam("categories"),
+        pathSubcategory
+            ? [pathSubcategory]
+            : initialCatSlug
+              ? [initialCatSlug]
+              : getListParam("categories"),
     );
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [selectedSizes, setSelectedSizes] = useState<string[]>(getListParam("sizes"));
@@ -276,7 +309,15 @@ export default function ShopCategory() {
         // Remove old generic cat
         if (newParams.has("cat")) newParams.delete("cat");
 
-        if (selectedCategories.length > 0)
+        // When on the nested /shop/cat/sub route and the only selected
+        // filter matches the path subcategory, don't echo it into a
+        // ?categories= query — that would clutter what is otherwise a
+        // clean canonical URL.
+        const isPathOnlyFilter =
+            pathSubcategory &&
+            selectedCategories.length === 1 &&
+            selectedCategories[0] === pathSubcategory;
+        if (selectedCategories.length > 0 && !isPathOnlyFilter)
             newParams.set("categories", selectedCategories.join(","));
         else newParams.delete("categories");
 

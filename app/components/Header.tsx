@@ -216,7 +216,7 @@ export function Header() {
                                                 Всі товари
                                             </Link>
                                             <Link
-                                                to="/shop/yoga?categories=jumpsuit"
+                                                to="/shop/yoga/jumpsuit"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -224,7 +224,7 @@ export function Header() {
                                                 Комбінезони
                                             </Link>
                                             <Link
-                                                to="/shop/yoga?categories=leggings"
+                                                to="/shop/yoga/leggings"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -232,7 +232,7 @@ export function Header() {
                                                 Легінси
                                             </Link>
                                             <Link
-                                                to="/shop/yoga?categories=velo"
+                                                to="/shop/yoga/velo"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -240,7 +240,7 @@ export function Header() {
                                                 VELO
                                             </Link>
                                             <Link
-                                                to="/shop/yoga?categories=tops"
+                                                to="/shop/yoga/tops"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -248,7 +248,7 @@ export function Header() {
                                                 Топи
                                             </Link>
                                             <Link
-                                                to="/shop/yoga?categories=shorts"
+                                                to="/shop/yoga/shorts"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -256,7 +256,7 @@ export function Header() {
                                                 Шорти
                                             </Link>
                                             <Link
-                                                to="/shop/yoga?categories=longsleeve"
+                                                to="/shop/yoga/longsleeve"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -264,7 +264,7 @@ export function Header() {
                                                 Лонгсліви
                                             </Link>
                                             <Link
-                                                to="/shop/yoga?categories=tshirts"
+                                                to="/shop/yoga/tshirts"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -321,7 +321,7 @@ export function Header() {
                                                 Всі товари
                                             </Link>
                                             <Link
-                                                to="/shop/sport?categories=jumpsuit"
+                                                to="/shop/sport/jumpsuit"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -329,7 +329,7 @@ export function Header() {
                                                 Комбінезони
                                             </Link>
                                             <Link
-                                                to="/shop/sport?categories=leggings"
+                                                to="/shop/sport/leggings"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -337,7 +337,7 @@ export function Header() {
                                                 Легінси
                                             </Link>
                                             <Link
-                                                to="/shop/sport?categories=velo"
+                                                to="/shop/sport/velo"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -345,7 +345,7 @@ export function Header() {
                                                 VELO
                                             </Link>
                                             <Link
-                                                to="/shop/sport?categories=tops"
+                                                to="/shop/sport/tops"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -353,7 +353,7 @@ export function Header() {
                                                 Топи
                                             </Link>
                                             <Link
-                                                to="/shop/sport?categories=shorts"
+                                                to="/shop/sport/shorts"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -361,7 +361,7 @@ export function Header() {
                                                 Шорти
                                             </Link>
                                             <Link
-                                                to="/shop/sport?categories=longsleeve"
+                                                to="/shop/sport/longsleeve"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -369,7 +369,7 @@ export function Header() {
                                                 Лонгсліви
                                             </Link>
                                             <Link
-                                                to="/shop/sport?categories=sets"
+                                                to="/shop/sport/sets"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -426,7 +426,7 @@ export function Header() {
                                                 Всі товари
                                             </Link>
                                             <Link
-                                                to="/shop/dance?categories=jumpsuit"
+                                                to="/shop/dance/jumpsuit"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -434,7 +434,7 @@ export function Header() {
                                                 Комбінезони
                                             </Link>
                                             <Link
-                                                to="/shop/dance?categories=net-models"
+                                                to="/shop/dance/net-models"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -442,7 +442,7 @@ export function Header() {
                                                 Моделі із сітки
                                             </Link>
                                             <Link
-                                                to="/shop/dance?categories=pole-sets"
+                                                to="/shop/dance/pole-sets"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -499,7 +499,7 @@ export function Header() {
                                                 Всі товари
                                             </Link>
                                             <Link
-                                                to="/shop/casual?categories=suits"
+                                                to="/shop/casual/suits"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -507,7 +507,7 @@ export function Header() {
                                                 Костюми
                                             </Link>
                                             <Link
-                                                to="/shop/casual?categories=shirts"
+                                                to="/shop/casual/shirts"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -515,7 +515,7 @@ export function Header() {
                                                 Сорочки
                                             </Link>
                                             <Link
-                                                to="/shop/casual?categories=tshirts"
+                                                to="/shop/casual/tshirts"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -523,7 +523,7 @@ export function Header() {
                                                 Футболки
                                             </Link>
                                             <Link
-                                                to="/shop/casual?categories=singlets"
+                                                to="/shop/casual/singlets"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -534,7 +534,7 @@ export function Header() {
                                         <div className="mega-menu__col">
                                             <h4 className="mega-menu__heading">Ще</h4>
                                             <Link
-                                                to="/shop/casual?categories=shorts"
+                                                to="/shop/casual/shorts"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -542,7 +542,7 @@ export function Header() {
                                                 Шорти
                                             </Link>
                                             <Link
-                                                to="/shop/casual?categories=thermo"
+                                                to="/shop/casual/thermo"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -550,7 +550,7 @@ export function Header() {
                                                 Термо
                                             </Link>
                                             <Link
-                                                to="/shop/casual?categories=hoodies"
+                                                to="/shop/casual/hoodies"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -558,7 +558,7 @@ export function Header() {
                                                 Худі / Світшоти
                                             </Link>
                                             <Link
-                                                to="/shop/casual?categories=joggers"
+                                                to="/shop/casual/joggers"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}
@@ -615,7 +615,7 @@ export function Header() {
                                                 Всі товари
                                             </Link>
                                             <Link
-                                                to="/shop/kids?categories=jumpsuit"
+                                                to="/shop/kids/jumpsuit"
                                                 className="mega-menu__link"
                                                 prefetch="intent"
                                                 onClick={() => setIsMenuOpen(false)}

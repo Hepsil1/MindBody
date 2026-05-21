@@ -1,10 +1,15 @@
 import { prisma } from "../db.server";
+import { isValidSubcategory } from "../utils/categoryMap";
 
 // Dynamic sitemap.xml — all canonical, indexable pages for Google.
 //
 // Conventions:
 //  - Static info pages → constant priority.
 //  - Categories (/shop/<slug>) → priority 0.8, daily (inventory changes).
+//  - Subcategories (/shop/<slug>/<subcategory>) → priority 0.75, daily.
+//    Only emitted when (a) there is at least one active product matching
+//    the pair, and (b) the pair is in the per-shop whitelist
+//    (CATEGORY_BY_SHOP_PAGE in app/utils/categoryMap.ts).
 //  - Products → priority 0.7, weekly. Uses /p/<slug> when slug present,
 //    falls back to /product/<id> otherwise.
 //  - Filtered / search / paginated URLs are intentionally excluded
@@ -19,6 +24,16 @@ export async function loader() {
     const shopPages = await prisma.$queryRaw<any[]>`
         SELECT slug, "updatedAt" FROM "ShopPage"
     `;
+
+    // Distinct (shopPage, subcategory) pairs that have at least one active
+    // product. The index on Product.category + Product.shopPageSlug makes
+    // this trivially cheap and the 1h Cache-Control absorbs the extra query.
+    const subcategoryPairs = await prisma.$queryRaw<
+        { shopPageSlug: string; category: string }[]
+    >`SELECT DISTINCT "shopPageSlug", category FROM "Product"
+      WHERE status = 'active'
+        AND category IS NOT NULL
+        AND "shopPageSlug" IS NOT NULL`;
 
     const staticPages = [
         { url: "/", priority: "1.0", changefreq: "daily" },
@@ -57,6 +72,20 @@ export async function loader() {
     <lastmod>${lastmod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
+  </url>`,
+        );
+    }
+
+    for (const pair of subcategoryPairs) {
+        // Defence in depth: filter out (shop, sub) combos that aren't in the
+        // declared whitelist — they'd 301 anyway, but no point listing them.
+        if (!isValidSubcategory(pair.shopPageSlug, pair.category)) continue;
+        urls.push(
+            `  <url>
+    <loc>${baseUrl}/shop/${esc(pair.shopPageSlug)}/${esc(pair.category)}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.75</priority>
   </url>`,
         );
     }
