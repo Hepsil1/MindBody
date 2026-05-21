@@ -32,6 +32,8 @@ process.env.NODE_ENV = process.env.NODE_ENV ?? "production";
 
 const path = await import("node:path");
 const url = await import("node:url");
+const crypto = await import("node:crypto");
+const { AsyncLocalStorage } = await import("node:async_hooks");
 const { default: compression } = await import("compression");
 const { default: express } = await import("express");
 const { default: morgan } = await import("morgan");
@@ -39,6 +41,15 @@ const { default: sourceMapSupport } = await import("source-map-support");
 const { createRequestHandler } = await import("@react-router/express");
 
 sourceMapSupport.install();
+
+// ────────────────────────────────────────────────────────────────────
+// Request-ID propagation
+//
+// The bundled app code reads requestId via app/utils/requestContext.server.ts
+// which looks at globalThis.__requestALS. We own the storage here so it
+// stays a single instance shared with the bundle (no double-allocation).
+// ────────────────────────────────────────────────────────────────────
+globalThis.__requestALS = new AsyncLocalStorage();
 
 const port = Number(process.env.PORT) || 3000;
 const buildPath = path.default.resolve("./build/server/index.js");
@@ -93,6 +104,20 @@ function isQuietNoise(pathname) {
 app.disable("x-powered-by");
 app.use(compression());
 
+// Request-ID middleware: generate (or honour upstream) X-Request-ID and
+// run the rest of the request inside AsyncLocalStorage so any logger
+// call from the bundle can pick it up via getRequestId(). Echo on the
+// response so clients/Cloudflare can correlate when reporting issues.
+app.use((req, res, next) => {
+    const incoming = req.headers["x-request-id"];
+    const requestId =
+        typeof incoming === "string" && incoming.length > 0 && incoming.length <= 128
+            ? incoming
+            : crypto.randomUUID();
+    res.set("X-Request-ID", requestId);
+    globalThis.__requestALS.run({ requestId }, next);
+});
+
 // Three static layers — same ordering and options as @react-router/serve.
 // build.publicPath defaults to "/", build.assetsBuildDirectory points at
 // `build/client` after a production build.
@@ -125,9 +150,13 @@ app.use((req, res, next) => {
 });
 
 // Morgan must come AFTER quiet-404 so its `skip` doesn't try to log
-// noise requests we already silenced.
+// noise requests we already silenced. We append `:requestId` to the
+// standard `tiny` format so access lines look like:
+//   GET /shop/sport 200 - 12.345 ms 8c3a1d04-...
+// matching the requestId stamped on every pino log line from the bundle.
+morgan.token("requestId", (_req, res) => res.getHeader("X-Request-ID"));
 app.use(
-    morgan("tiny", {
+    morgan(":method :url :status :res[content-length] - :response-time ms :requestId", {
         skip: (req) => isQuietNoise(req.path),
     }),
 );

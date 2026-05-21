@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { StorageUtils, type CartItem } from "../utils/storage";
 
 interface CartDrawerProps {
@@ -7,8 +7,15 @@ interface CartDrawerProps {
     onClose: () => void;
 }
 
+// CSS selector listing every element the user can normally tab to. We use
+// it both to move focus into the drawer on open and to wrap the Tab cycle.
+const FOCUSABLE_SELECTOR =
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     const [cart, setCart] = useState<CartItem[]>([]);
+    const drawerRef = useRef<HTMLElement>(null);
+    const previousFocusRef = useRef<HTMLElement | null>(null);
 
     useEffect(() => {
         const updateCart = () => setCart(StorageUtils.getCart());
@@ -38,6 +45,47 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         };
     }, [isOpen]);
 
+    // Focus management: when the drawer opens, remember where focus was,
+    // move it inside the drawer; when it closes, return focus to the
+    // trigger. Without this a keyboard / screen-reader user opens the
+    // cart and their focus is left behind on the page below.
+    useEffect(() => {
+        if (!isOpen) return;
+        previousFocusRef.current = document.activeElement as HTMLElement | null;
+        const first = drawerRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+        first?.focus();
+        return () => {
+            previousFocusRef.current?.focus?.();
+        };
+    }, [isOpen]);
+
+    // Focus trap: while the drawer is open Tab/Shift+Tab cycle only among
+    // the drawer's own focusable elements. Without this the user tabs
+    // out into the obscured background page and gets stuck behind the
+    // backdrop.
+    useEffect(() => {
+        if (!isOpen) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.key !== "Tab") return;
+            const drawer = drawerRef.current;
+            if (!drawer) return;
+            const focusables = Array.from(drawer.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+            if (focusables.length === 0) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            const active = document.activeElement;
+            if (e.shiftKey && active === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && active === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, [isOpen]);
+
     const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -63,6 +111,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
             {/* Drawer */}
             <aside
+                ref={drawerRef}
                 className={`cart-drawer ${isOpen ? "cart-drawer--open" : ""}`}
                 role="dialog"
                 aria-modal="true"

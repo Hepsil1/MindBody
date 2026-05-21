@@ -15,11 +15,19 @@
 
 import pino from "pino";
 import { env } from "./env.server";
+import { getRequestId } from "./requestContext.server";
 
 const isDev = env.NODE_ENV === "development";
 
 export const logger = pino({
     level: env.NODE_ENV === "production" ? "info" : "debug",
+    // Inject the current request-ID (from AsyncLocalStorage) into every
+    // log record. Lets us grep one request's full lifecycle out of a busy
+    // prod log: `grep requestId=<uuid> mindbody-out.log`.
+    mixin() {
+        const requestId = getRequestId();
+        return requestId ? { requestId } : {};
+    },
     // Redact common credential paths so an accidentally-logged request body
     // never persists keys to disk.
     redact: {

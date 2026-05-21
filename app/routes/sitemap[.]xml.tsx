@@ -17,13 +17,13 @@ import { isValidSubcategory } from "../utils/categoryMap";
 export async function loader() {
     const baseUrl = process.env.SITE_URL || "https://saleid.icu";
 
-    const products = await prisma.$queryRaw<any[]>`
-        SELECT id, slug, "updatedAt" FROM "Product" WHERE status = 'active'
-    `;
+    const products = await prisma.$queryRaw<
+        Array<{ id: string; slug: string | null; updatedAt: Date | null }>
+    >`SELECT id, slug, "updatedAt" FROM "Product" WHERE status = 'active'`;
 
-    const shopPages = await prisma.$queryRaw<any[]>`
-        SELECT slug, "updatedAt" FROM "ShopPage"
-    `;
+    const shopPages = await prisma.$queryRaw<
+        Array<{ slug: string; updatedAt: Date | null }>
+    >`SELECT slug, "updatedAt" FROM "ShopPage"`;
 
     // Distinct (shopPage, subcategory) pairs that have at least one active
     // product, with the most-recent product updatedAt as the pair's
