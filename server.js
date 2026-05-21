@@ -112,9 +112,12 @@ app.use(express.static("public", { maxAge: "1h" }));
 // static middleware above and never reach this filter.
 app.use((req, res, next) => {
     if (isQuietNoise(req.path)) {
-        // 24h browser cache + edge cache so Cloudflare absorbs repeats
-        // and the scanner gets the same response without bothering us.
-        res.set("Cache-Control", "public, max-age=86400");
+        // Short TTL on the 404 so a future deploy that brings the asset
+        // path back into use isn't poisoned by a multi-hour edge cache.
+        // 60 seconds is enough to absorb tight bot-scan loops without
+        // making recovery from an accidental match (like the one we just
+        // hit) require a Cloudflare purge.
+        res.set("Cache-Control", "public, max-age=60");
         res.status(404).end();
         return;
     }
