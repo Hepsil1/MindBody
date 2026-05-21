@@ -16,7 +16,7 @@ const PRODUCTS = [
         sku: "W-LEG-PRO-01",
         slug: "legginsy-pro",
         name: "Лосини PRO",
-        category: "Лосини",
+        category: "leggings",
         shopPageSlug: "yoga",
         description:
             "Високі лосини з Premium Supplex. Тримають форму, відводять вологу, " +
@@ -47,7 +47,7 @@ const PRODUCTS = [
         sku: "W-TOP-MIRA-01",
         slug: "top-mira",
         name: "Топ MIRA",
-        category: "Топи",
+        category: "tops",
         shopPageSlug: "yoga",
         description:
             "Лаконічний топ з вбудованою підтримкою. М'яка тканина не стискає рух, " +
@@ -68,7 +68,7 @@ const PRODUCTS = [
         sku: "W-JUMP-SOLAR-01",
         slug: "kombinezon-solar",
         name: "Комбінезон SOLAR",
-        category: "Комбінезони",
+        category: "jumpsuit",
         shopPageSlug: "yoga",
         description:
             "Комбінезон на тонких бретелях, друга шкіра. Глибокий виріз на спині, " +
@@ -93,7 +93,7 @@ const PRODUCTS = [
         sku: "W-SHORTS-FLEX-01",
         slug: "shorty-flex",
         name: "Шорти FLEX",
-        category: "Шорти",
+        category: "shorts",
         shopPageSlug: "yoga",
         description:
             "Шорти для гарячих практик і піляте. Дихаюча тканина, висока посадка, " +
@@ -113,7 +113,7 @@ const PRODUCTS = [
         sku: "W-LONG-CALM-01",
         slug: "longsliv-calm",
         name: "Лонгслів CALM",
-        category: "Лонгсліви",
+        category: "longsleeve",
         shopPageSlug: "yoga",
         description:
             "Легкий лонгслів для йоги в прохолодному залі або ранкових практик удома. " +
@@ -133,7 +133,7 @@ const PRODUCTS = [
         sku: "W-LEG-SPORT-01",
         slug: "legginsy-sport",
         name: "Лосини SPORT",
-        category: "Лосини",
+        category: "leggings",
         shopPageSlug: "sport",
         description:
             "Для бігу, тренажерки та інтенсивних кардіо. Компресійна посадка, " +
@@ -153,7 +153,7 @@ const PRODUCTS = [
         sku: "W-VELO-AERA-01",
         slug: "velo-aera",
         name: "VELO AERA",
-        category: "VELO",
+        category: "velo",
         shopPageSlug: "sport",
         description:
             "Велосипедні шорти середньої довжини. Анатомічний крій, силіконова стрічка " +
@@ -173,7 +173,7 @@ const PRODUCTS = [
         sku: "W-DANCE-MESH-01",
         slug: "komplekt-mesh",
         name: "Комплект MESH",
-        category: "Моделі із сітки",
+        category: "net-models",
         shopPageSlug: "dance",
         description:
             "Комплект для пілону та контемпорарі: топ + лосини зі вставками із дихаючої сітки. " +
@@ -198,7 +198,7 @@ const PRODUCTS = [
         sku: "W-DANCE-PILON-01",
         slug: "komplekt-pilon",
         name: "Комплект для пілону",
-        category: "Комплекти пілон",
+        category: "pole-sets",
         shopPageSlug: "dance",
         description:
             "Високі шорти + укорочений топ. Тканина з ефектом «другої шкіри», " +
@@ -217,7 +217,7 @@ const PRODUCTS = [
         sku: "C-HOODIE-EASE-01",
         slug: "hudi-ease",
         name: "Худі EASE",
-        category: "Худі/світшоти",
+        category: "hoodies",
         shopPageSlug: "casual",
         description:
             "М'яке худі з петлями для довгих ранків і повільних днів. " +
@@ -237,7 +237,7 @@ const PRODUCTS = [
         sku: "C-JOGGER-FLOW-01",
         slug: "dzhogery-flow",
         name: "Джогери FLOW",
-        category: "Джогери",
+        category: "joggers",
         shopPageSlug: "casual",
         description:
             "Зручні джогери з еластичним поясом і манжетами. Висока посадка, " +
@@ -257,7 +257,7 @@ const PRODUCTS = [
         sku: "K-JUMP-MINI-01",
         slug: "kombinezon-mini",
         name: "Дитячий комбінезон MINI",
-        category: "Комбінезони",
+        category: "jumpsuit",
         shopPageSlug: "kids",
         description:
             "Для маленьких гімнасток і танцівниць. Тканина, що тягнеться у 4 напрямках. " +

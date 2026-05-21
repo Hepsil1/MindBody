@@ -31,7 +31,39 @@ export const CATEGORY_MAP: Record<string, string> = {
     joggers: "Джоггери",
     // Kids specific
     "kids-jumpsuit": "Комбінезони",
+    // Yoga tools (yogatools ShopPage)
+    tools: "Інвентар",
 };
+
+/**
+ * Per-shop whitelist of allowed subcategory slugs.
+ *
+ * Used by the /shop/:category/:subcategory route to validate that a given
+ * combination is real (e.g. /shop/yoga/pole-sets must 301 → /shop/yoga
+ * because pole-sets only exists for dance).
+ *
+ * Source of truth: app/components/Header.tsx nav links + the yogatools
+ * ShopPage (no header link but has real products in DB).
+ */
+export const CATEGORY_BY_SHOP_PAGE: Record<string, string[]> = {
+    yoga: ["jumpsuit", "leggings", "velo", "tops", "shorts", "longsleeve", "tshirts"],
+    sport: ["jumpsuit", "leggings", "velo", "tops", "shorts", "longsleeve", "sets"],
+    dance: ["jumpsuit", "net-models", "pole-sets"],
+    casual: ["suits", "shirts", "tshirts", "singlets", "shorts", "thermo", "hoodies", "joggers"],
+    kids: ["jumpsuit"],
+    yogatools: ["tools"],
+};
+
+/** Set of every slug we accept anywhere (for fast O(1) validation in actions). */
+export const ALLOWED_CATEGORY_SLUGS: ReadonlySet<string> = new Set(Object.keys(CATEGORY_MAP));
+
+/** True if (shop, sub) is a real combination — see CATEGORY_BY_SHOP_PAGE. */
+export function isValidSubcategory(shop: string, sub: string): boolean {
+    return CATEGORY_BY_SHOP_PAGE[shop]?.includes(sub) ?? false;
+}
+
+/** Centralised path builder so links never accidentally use kyrillic. */
+export const buildSubcategoryUrl = (shop: string, sub: string): string => `/shop/${shop}/${sub}`;
 
 /** slug → Ukrainian label */
 export function slugToLabel(slug: string): string {
