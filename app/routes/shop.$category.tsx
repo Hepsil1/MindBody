@@ -2,40 +2,23 @@ import { type LoaderFunctionArgs, type MetaFunction, redirect } from "react-rout
 import { useLoaderData, Link } from "react-router";
 import ProductCard from "../components/ProductCard";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { prisma } from "../db.server";
-import {
-    parseAndMergeFilterConfig,
-    type MergedFilterConfig,
-    type PriceRange,
-} from "../utils/filters";
+import { type MergedFilterConfig, type PriceRange } from "../utils/filters";
 import {
     labelToSlug,
     slugToLabel,
     ALLOWED_CATEGORY_SLUGS,
     isValidSubcategory,
 } from "../utils/categoryMap";
+import {
+    loadShopData,
+    type ShopProductCard as SharedShopProductCard,
+} from "../utils/shopProducts.server";
 
-// Product card shape after the loader's DB → frontend mapping. Used both by
-// the render side (filtering, sorting) and as the loader contract.
-interface ShopProductCard {
-    id: string;
-    name: string;
-    description: string | null;
-    price: number;
-    comparePrice: number;
-    sale_price: number | undefined;
-    image: string;
-    image2: string | undefined;
-    images: string[];
-    // Matches ProductCard's `string | undefined` API; loader maps null → undefined.
-    category: string | undefined;
-    colors: string[];
-    sizes: string[];
-    is_new: boolean;
-    is_sale: boolean;
-    discount_percent: number;
-    status: string;
-}
+// Product card shape used by the render side (filtering, sorting). The
+// loader returns this through the shared loadShopData() helper — re-export
+// the shared type so existing code-paths that referenced ShopProductCard
+// keep compiling without changes.
+type ShopProductCard = SharedShopProductCard;
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const shopPage = data?.shopPage;
@@ -157,94 +140,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         }
     }
 
-    // Run all 3 queries in parallel for max speed
-    const [configs, shopPageResult, rawProducts] = await Promise.all([
-        prisma.filterConfig
-            .findMany({
-                where: { OR: [{ id: categorySlug }, { id: "global" }] },
-                select: { id: true, config: true },
-            })
-            .catch((e) => {
-                console.error("FilterConfig fetch failed", e);
-                return [] as Array<{ id: string; config: string }>;
-            }),
-        prisma.shopPage.findUnique({ where: { slug: categorySlug } }).catch((e) => {
-            console.error("ShopPage fetch failed", e);
-            return null;
-        }),
-        prisma.product
-            .findMany({
-                where: { shopPageSlug: categorySlug, status: "active" },
-                orderBy: { createdAt: "desc" },
-                select: {
-                    id: true,
-                    name: true,
-                    description: true,
-                    price: true,
-                    comparePrice: true,
-                    category: true,
-                    images: true,
-                    colors: true,
-                    sizes: true,
-                    shopPageSlug: true,
-                    status: true,
-                    createdAt: true,
-                },
-            })
-            .catch((e: unknown) => {
-                const msg = e instanceof Error ? e.message : String(e);
-                console.warn("Product fetch failed:", msg);
-                return [] as never[];
-            }),
-    ]);
-
-    const specificConfig = configs.find((c) => c.id === categorySlug);
-    const globalConfig = configs.find((c) => c.id === "global");
-
-    // Prioritize specific config, fallback to global
-    const configToParse = specificConfig?.config || globalConfig?.config;
-    const filterConfig: MergedFilterConfig = parseAndMergeFilterConfig(configToParse);
-    const shopPage = shopPageResult;
-
-    // Map Raw DB Objects to Frontend Props
-    const NOW = Date.now();
-    const NEW_THRESHOLD_DAYS = 14; // Products created within 14 days = NEW
-
-    const mappedProducts: ShopProductCard[] = rawProducts.map((p) => {
-        const images = parseJson<string[]>(p.images, []);
-        const price = Number(p.price);
-        const comparePrice = Number(p.comparePrice) || 0;
-        const isSale = comparePrice > price && price > 0;
-        const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : 0;
-        const isNew = NOW - createdAt < NEW_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
-
-        return {
-            id: p.id,
-            name: p.name,
-            description: p.description,
-            price: isSale ? comparePrice : price, // ProductCard shows this as "original" (crossed out when sale)
-            comparePrice,
-            sale_price: isSale ? price : undefined, // ProductCard shows this as current (red) price
-            image: images[0] || "/brand-sun.png",
-            image2: images[1] || undefined, // Hover image for card
-            images,
-            category: p.category ?? undefined,
-            colors: parseJson<string[]>(p.colors, []),
-            sizes: parseJson<string[]>(p.sizes, []),
-            is_new: isNew,
-            is_sale: isSale,
-            discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
-            status: p.status,
-        };
-    });
-
-    return {
-        products: mappedProducts,
-        category: categorySlug,
-        shopPage,
-        filterConfig,
-        siteUrl: process.env.SITE_URL || "https://saleid.icu",
-    };
+    // Single source of truth for the data fetch — same helper that the
+    // /shop/:category/:subcategory route calls (with subcategoryFilter).
+    return loadShopData(categorySlug);
 }
 import { useSearchParams, useParams, useNavigate } from "react-router";
 import "../styles/shop.css";
@@ -306,9 +204,15 @@ export default function ShopCategory() {
     // sibling subcategories client-side (e.g. /shop/sport/longsleeve →
     // /shop/sport/shorts). The route component is reused, so without this
     // effect the sidebar would stay stuck on the previous subcategory.
+    // We also reset size/color/price filters — they're scoped to the
+    // previous subcategory's stock and would silently filter out everything
+    // if they happen not to apply to the new sub.
     useEffect(() => {
         if (pathSubcategory && !selectedCategories.includes(pathSubcategory)) {
             setSelectedCategories([pathSubcategory]);
+            setSelectedSizes([]);
+            setSelectedColors([]);
+            setSelectedPriceRange(null);
         }
     }, [pathSubcategory]);
 

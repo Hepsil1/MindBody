@@ -88,4 +88,37 @@ test.describe("subcategory path URLs", () => {
         expect(xml).toMatch(/<loc>[^<]*\/shop\/sport\/longsleeve<\/loc>/);
         expect(xml).toMatch(/<loc>[^<]*\/shop\/dance\/pole-sets<\/loc>/);
     });
+
+    test("client-side sibling navigation resets size/color filters", async ({ page }) => {
+        // Start on longsleeve with a size filter pre-applied via URL
+        // (the realistic scenario: user picked Size S in sidebar, the
+        // sync effect put `?sizes=S` in the URL, then they click a
+        // sibling subcategory in the Header).
+        await page.goto("/shop/sport/longsleeve?sizes=S");
+        await expect(page).toHaveURL(/sizes=S/);
+
+        // Header's mega-menu link to /shop/sport/shorts lives inside a
+        // hover-only container (display:none until hovered). Bypass the
+        // hover by calling .click() on the DOM element directly — React
+        // Router's <Link> still intercepts the synthetic click event and
+        // performs client-side navigation, which is what we want to test.
+        await page.evaluate(() => {
+            const link = document.querySelector<HTMLAnchorElement>('a[href="/shop/sport/shorts"]');
+            if (!link) throw new Error("No link to /shop/sport/shorts found in DOM");
+            link.click();
+        });
+
+        // After client-side nav: pathSubcategory changed → our useEffect
+        // resets selectedSizes/Colors/PriceRange → sync effect removes
+        // them from URL. Final URL is the clean canonical path.
+        await expect(page).toHaveURL(/\/shop\/sport\/shorts(?:\?|$)/);
+        const finalUrl = page.url();
+        expect(finalUrl).not.toMatch(/[?&]sizes=/);
+        expect(finalUrl).not.toMatch(/[?&]colors=/);
+    });
+
+    // NB: quiet-404 middleware (server.js) is verified via curl against
+    // prod after deploy — Playwright auto-starts `react-router dev`
+    // which doesn't load our custom server, so we can't test it here.
+    // See docs/CATEGORIES.md "Verification one-liners" for the curl.
 });

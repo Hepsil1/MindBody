@@ -1,6 +1,7 @@
 import { type LoaderFunctionArgs, type MetaFunction, redirect } from "react-router";
 import { isValidSubcategory, slugToLabel } from "../utils/categoryMap";
-import ShopCategory, { loader as parentLoader } from "./shop.$category";
+import { loadShopData } from "../utils/shopProducts.server";
+import ShopCategory from "./shop.$category";
 
 /**
  * /shop/:category/:subcategory — nested route giving each subcategory its
@@ -23,13 +24,11 @@ export async function loader(args: LoaderFunctionArgs) {
         throw redirect(`/shop/${category}`, 301);
     }
 
-    const parent = await parentLoader(args);
-    // Narrow the product list to just this subcategory so SSR HTML matches
-    // what the user came for — keeps Google from seeing duplicate content
-    // between /shop/yoga and /shop/yoga/longsleeve.
-    const products = parent.products.filter((p) => p.category === subcategory);
-
-    return { ...parent, products, subcategory };
+    // Filter at the SQL level — Product.category has an index so this is a
+    // free narrowing. Previously we called the parent loader (fetching the
+    // entire category) and filtered in JS, wasting a query trip.
+    const data = await loadShopData(category, { subcategoryFilter: subcategory });
+    return { ...data, subcategory };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {

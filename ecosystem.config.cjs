@@ -34,8 +34,11 @@ module.exports = {
     apps: [
         {
             name: "mindbody",
-            script: "node_modules/@react-router/serve/dist/cli.js",
-            args: "./build/server/index.js",
+            // Custom server.js wraps @react-router/express the same way
+            // @react-router/serve does, but adds a quiet-404 middleware in
+            // front so bot probes (/.env*, /wp-admin, etc.) and stale
+            // chunk requests stop flooding the error log. See ./server.js.
+            script: "./server.js",
             cwd: __dirname,
             env: {
                 NODE_ENV: "production",

@@ -26,14 +26,20 @@ export async function loader() {
     `;
 
     // Distinct (shopPage, subcategory) pairs that have at least one active
-    // product. The index on Product.category + Product.shopPageSlug makes
-    // this trivially cheap and the 1h Cache-Control absorbs the extra query.
+    // product, with the most-recent product updatedAt as the pair's
+    // lastmod. The index on Product.category + Product.shopPageSlug makes
+    // this trivially cheap and the 1h Cache-Control absorbs the query.
+    // Using MAX(updatedAt) avoids the SEO-anti-pattern of stamping
+    // "today" on every subcategory URL — Google then re-crawls daily even
+    // when nothing has actually changed.
     const subcategoryPairs = await prisma.$queryRaw<
-        { shopPageSlug: string; category: string }[]
-    >`SELECT DISTINCT "shopPageSlug", category FROM "Product"
+        { shopPageSlug: string; category: string; maxUpdatedAt: Date | null }[]
+    >`SELECT "shopPageSlug", category, MAX("updatedAt") AS "maxUpdatedAt"
+      FROM "Product"
       WHERE status = 'active'
         AND category IS NOT NULL
-        AND "shopPageSlug" IS NOT NULL`;
+        AND "shopPageSlug" IS NOT NULL
+      GROUP BY "shopPageSlug", category`;
 
     const staticPages = [
         { url: "/", priority: "1.0", changefreq: "daily" },
@@ -80,10 +86,13 @@ export async function loader() {
         // Defence in depth: filter out (shop, sub) combos that aren't in the
         // declared whitelist — they'd 301 anyway, but no point listing them.
         if (!isValidSubcategory(pair.shopPageSlug, pair.category)) continue;
+        const lastmod = pair.maxUpdatedAt
+            ? new Date(pair.maxUpdatedAt).toISOString().split("T")[0]
+            : now;
         urls.push(
             `  <url>
     <loc>${baseUrl}/shop/${esc(pair.shopPageSlug)}/${esc(pair.category)}</loc>
-    <lastmod>${now}</lastmod>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.75</priority>
   </url>`,

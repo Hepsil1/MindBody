@@ -92,6 +92,7 @@ export default tseslint.config(
             "react-router.config.ts",
             "prisma/seed*.ts",
             "scripts/**/*.{js,cjs,mjs,ts}",
+            "server.js",
         ],
         languageOptions: {
             globals: {
