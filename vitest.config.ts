@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig, configDefaults } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
@@ -9,6 +9,10 @@ export default defineConfig({
         environment: "happy-dom",
         // Auto-include test files anywhere under tests/ + co-located *.test.ts(x).
         include: ["tests/**/*.{test,spec}.{ts,tsx}", "app/**/*.{test,spec}.{ts,tsx}"],
+        // tests/e2e/* are Playwright specs — they import @playwright/test and
+        // crash on load under vitest. Keep vitest's own defaults (node_modules,
+        // dist, …) and additionally skip the e2e directory.
+        exclude: [...configDefaults.exclude, "tests/e2e/**"],
         // Don't bother coverage-instrumenting code we'd never write tests for.
         coverage: {
             provider: "v8",
