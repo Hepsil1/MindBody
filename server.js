@@ -83,19 +83,11 @@ function isQuietNoise(pathname) {
     return QUIET_404_PATTERNS.some((re) => re.test(pathname));
 }
 
-app.use((req, res, next) => {
-    if (isQuietNoise(req.path)) {
-        // 24h browser cache + edge cache so Cloudflare absorbs repeats
-        // and the scanner gets the same response without bothering us.
-        res.set("Cache-Control", "public, max-age=86400");
-        res.status(404).end();
-        return;
-    }
-    next();
-});
-
 // ────────────────────────────────────────────────────────────────────
 // Everything below mirrors @react-router/serve's default setup.
+// The quiet-404 filter lives AFTER the static layers so existing
+// asset files (current build hashes) get served normally — it only
+// catches genuine misses (bot probes + stale chunks from prior deploys).
 // ────────────────────────────────────────────────────────────────────
 
 app.disable("x-powered-by");
@@ -114,9 +106,23 @@ app.use(
 app.use(build.publicPath, express.static(build.assetsBuildDirectory));
 app.use(express.static("public", { maxAge: "1h" }));
 
-// Skip morgan access logging for quiet-404 paths (defence in depth —
-// they're already filtered above; this just keeps the access log clean
-// if someone ever adds a pattern that overlaps with a real route).
+// Quiet-404 filter — runs AFTER static so we only catch real misses:
+// bot probes (/.env, /wp-admin, etc.) and stale chunk requests from
+// pre-deploy browser caches. Current build hashes are served by the
+// static middleware above and never reach this filter.
+app.use((req, res, next) => {
+    if (isQuietNoise(req.path)) {
+        // 24h browser cache + edge cache so Cloudflare absorbs repeats
+        // and the scanner gets the same response without bothering us.
+        res.set("Cache-Control", "public, max-age=86400");
+        res.status(404).end();
+        return;
+    }
+    next();
+});
+
+// Morgan must come AFTER quiet-404 so its `skip` doesn't try to log
+// noise requests we already silenced.
 app.use(
     morgan("tiny", {
         skip: (req) => isQuietNoise(req.path),
