@@ -5,6 +5,7 @@ import { prisma } from "../../../db.server";
 import { isAuthenticated } from "../../../utils/admin.server";
 import { uploadFile } from "../../../utils/upload.server";
 import { parseAndMergeFilterConfig } from "../../../utils/filters";
+import { ALLOWED_CATEGORY_SLUGS } from "../../../utils/categoryMap";
 
 // --- Types ---
 interface FilterConfigData {
@@ -176,6 +177,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const colors = (formData.get("colors") as string) || "[]";
             const sizes = (formData.get("sizes") as string) || "[]";
             const inventory = (formData.get("inventory") as string) || null;
+
+            // Guard against the kyrillic-label regression we just migrated
+            // out of. Product.category must be a known slug (or null) — all
+            // /shop/<cat>/<sub> URLs depend on slugs lining up with the
+            // CATEGORY_MAP/CATEGORY_BY_SHOP_PAGE source of truth.
+            if (category && !ALLOWED_CATEGORY_SLUGS.has(category)) {
+                return {
+                    error: `Невідома категорія "${category}". Оберіть значення з випадаючого списку — у БД зберігається slug (longsleeve, tops…), не український ярлик.`,
+                };
+            }
 
             try {
                 const now = new Date().toISOString();

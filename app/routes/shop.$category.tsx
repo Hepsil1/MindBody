@@ -246,7 +246,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         siteUrl: process.env.SITE_URL || "https://saleid.icu",
     };
 }
-import { useSearchParams, useParams } from "react-router";
+import { useSearchParams, useParams, useNavigate } from "react-router";
 import "../styles/shop.css";
 
 export default function ShopCategory() {
@@ -302,12 +302,34 @@ export default function ShopCategory() {
         }
     }, [searchParams.get("cat")]);
 
+    // Keep selectedCategories aligned with the path when navigating between
+    // sibling subcategories client-side (e.g. /shop/sport/longsleeve →
+    // /shop/sport/shorts). The route component is reused, so without this
+    // effect the sidebar would stay stuck on the previous subcategory.
+    useEffect(() => {
+        if (pathSubcategory && !selectedCategories.includes(pathSubcategory)) {
+            setSelectedCategories([pathSubcategory]);
+        }
+    }, [pathSubcategory]);
+
+    const navigate = useNavigate();
+
     // Sync state changes to URL Params
     useEffect(() => {
         const newParams = new URLSearchParams(searchParams);
 
         // Remove old generic cat
         if (newParams.has("cat")) newParams.delete("cat");
+
+        // When on the nested /shop/cat/sub route and the user un-checks
+        // the only selected filter, we're effectively saying "show me the
+        // whole shop again" — navigate up to the parent so the loader can
+        // fetch the unfiltered set instead of leaving us on a 0-product
+        // subcategory page.
+        if (pathSubcategory && selectedCategories.length === 0) {
+            navigate(`/shop/${category}`, { replace: true, preventScrollReset: true });
+            return;
+        }
 
         // When on the nested /shop/cat/sub route and the only selected
         // filter matches the path subcategory, don't echo it into a
