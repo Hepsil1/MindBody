@@ -44,6 +44,16 @@ export default defineConfig({
         {
             name: "chromium",
             use: { ...devices["Desktop Chrome"] },
+            // Desktop project runs every spec EXCEPT the mobile-only ones.
+            testIgnore: /mobile-.*\.spec\.ts/,
+        },
+        {
+            // Mobile project runs ONLY mobile-*.spec.ts at a phone viewport
+            // (Pixel 7 = 412x915). Catches horizontal-overflow / broken
+            // mobile-menu regressions that desktop Chrome can't see.
+            name: "Mobile Chrome",
+            use: { ...devices["Pixel 7"] },
+            testMatch: /mobile-.*\.spec\.ts/,
         },
     ],
 
