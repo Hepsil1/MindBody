@@ -163,18 +163,22 @@ export default function HeroSlider({
                     </>
                 )}
 
-                {/* Slide Indicators */}
-                <div className="hero-slider__nav">
-                    {slides.map((_, index) => (
-                        <button
-                            key={index}
-                            className={`hero-slider__dot ${index === activeSlide ? "is-active" : ""}`}
-                            data-slide={index}
-                            aria-label={`Slide ${index + 1}`}
-                            onClick={() => goToSlide(index)}
-                        />
-                    ))}
-                </div>
+                {/* Slide indicators — only when there is more than one
+                    slide. With a single slide the lone active dot is a
+                    meaningless 48px pill floating in the hero. */}
+                {slides.length > 1 && (
+                    <div className="hero-slider__nav">
+                        {slides.map((_, index) => (
+                            <button
+                                key={index}
+                                className={`hero-slider__dot ${index === activeSlide ? "is-active" : ""}`}
+                                data-slide={index}
+                                aria-label={`Slide ${index + 1}`}
+                                onClick={() => goToSlide(index)}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
     );

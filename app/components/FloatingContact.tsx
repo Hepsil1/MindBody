@@ -9,18 +9,12 @@ const TELEGRAM_URL = `https://t.me/+${PHONE}`;
 /**
  * Floating contact widget.
  *
- * Mobile: a single toggle FAB — tapping it reveals the messenger panel.
- * Keeps the corner uncluttered so the column of buttons no longer sits
- * on top of page content (it used to overlap text, carousels, stats).
- *
- * Desktop: app.css forces the panel permanently open and hides the
- * toggle (see the `.floating-contact` min-width media query) — so the
- * three messenger buttons stay always-visible exactly as before. The
- * toggle behaviour is purely a mobile affordance.
+ * The three messenger buttons (Telegram, Viber, WhatsApp) stay
+ * permanently visible at every width — no toggle FAB. A "back to
+ * top" button fades in once the user scrolls past 400px.
  */
 export default function FloatingContact() {
     const [showBackToTop, setShowBackToTop] = useState(false);
-    const [isPanelOpen, setIsPanelOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -36,29 +30,8 @@ export default function FloatingContact() {
 
     return (
         <div className="floating-contact">
-            {/* Toggle FAB — visible on mobile only (desktop hides it via CSS) */}
-            <button
-                className={`floating-contact__toggle ${isPanelOpen ? "is-open" : ""}`}
-                onClick={() => setIsPanelOpen((v) => !v)}
-                aria-label={isPanelOpen ? "Закрити контакти" : "Відкрити контакти"}
-                aria-expanded={isPanelOpen}
-            >
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    {isPanelOpen ? (
-                        <path
-                            d="M18 6L6 18M6 6l12 12"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            fill="none"
-                        />
-                    ) : (
-                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
-                    )}
-                </svg>
-            </button>
-
-            {/* Messenger panel — collapsible on mobile, always-open on desktop */}
-            <div className={`floating-contact__panel ${isPanelOpen ? "is-open" : ""}`}>
+            {/* Messenger panel — three social buttons, always visible */}
+            <div className="floating-contact__panel">
                 {/* Telegram */}
                 <a
                     href={TELEGRAM_URL}
