@@ -133,6 +133,36 @@
     border-left: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Mobile PDP header. The desktop layout is a fixed 190px teal band with
+   a single nowrap breadcrumb row — on a phone that left a big empty
+   teal void and pushed the italic product title into the right corner.
+   Collapse the band to its content height and stack the breadcrumb so
+   the title sits on its own line at a readable size. */
+@media (max-width: 600px) {
+    .shop-hero-luxe.compact {
+        height: auto;
+        padding-top: 18px;
+        padding-bottom: 18px;
+        margin-bottom: 32px;
+    }
+    .luxe-breadcrumb {
+        flex-wrap: wrap;
+        gap: 4px 8px;
+        font-size: 10px;
+    }
+    .luxe-breadcrumb .sep {
+        display: none;
+    }
+    .luxe-breadcrumb .current {
+        flex-basis: 100%;
+        font-size: 20px;
+        padding-left: 0;
+        border-left: none;
+        top: 0;
+        margin-top: 4px;
+    }
+}
+
 /* --- MAIN LAYOUT --- */
 .main-content-container {
     max-width: 1100px;

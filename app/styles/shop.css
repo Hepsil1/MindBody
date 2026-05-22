@@ -265,6 +265,34 @@
     }
 }
 
+/* Mobile sort toolbar fix. On a phone the toolbar tried to fit
+   [label | chips | count] in one nowrap flex row — the chips got
+   squeezed into a ~100px horizontally-scrolling box with a cramped
+   scrollbar and clipped chip text ("ЗА РЕЛЕВАНТНІС…"). Stack the
+   three parts vertically and let the chips wrap onto multiple lines
+   at full width instead of scrolling. */
+@media (max-width: 768px) {
+    .toolbar-top-row {
+        flex-wrap: wrap;
+        gap: 10px 12px;
+    }
+    .sort-label {
+        width: 100%;
+    }
+    .sort-chips {
+        width: 100%;
+        flex-wrap: wrap;
+        overflow-x: visible;
+        padding-bottom: 0;
+    }
+    .sort-chip {
+        flex: 0 0 auto;
+    }
+    .product-count {
+        width: 100%;
+    }
+}
+
 /* ============================================
    MOBILE FILTER BAR + DRAWER
    ============================================ */

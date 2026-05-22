@@ -9671,6 +9671,21 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     gap: 60px;
 }
 
+/* Mobile: the decorative "FOR ACTIVE LIFE" tagline block has
+   white-space:nowrap and ran off the right edge of the shop hero on
+   phones. Hide it on mobile (it's purely decorative) and stack the
+   hero composition vertically so nothing is clipped. */
+@media (max-width: 768px) {
+    .hero-composition {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+    .hero-tagline-block {
+        display: none;
+    }
+}
+
 .hero-title-block {
     flex: 1;
 }
@@ -10679,6 +10694,23 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     visibility: visible;
     transform: translateY(0) scale(1);
     pointer-events: auto;
+}
+
+/* Desktop (≥769px): no toggle — the three messenger buttons stay
+   permanently visible exactly as before the mobile redesign. The
+   toggle FAB + collapsible panel is purely a mobile affordance so the
+   widget stops covering page content on narrow screens. */
+@media (min-width: 769px) {
+    .floating-contact__toggle {
+        display: none;
+    }
+
+    .floating-contact__panel {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        pointer-events: auto;
+    }
 }
 
 /* Individual messenger buttons */

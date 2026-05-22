@@ -277,35 +277,45 @@ export async function loader({ request }: Route.LoaderArgs) {
             slides: slidesPayload,
             categories: categoriesFromDb.length > 0 ? categoriesFromDb : FALLBACK_CATEGORIES,
             newProducts: rawProducts.map(mapProduct),
+            // Instagram preview tiles. The previous Behold CDN URLs
+            // (behold.pictures/...) are dead — every tile rendered as a
+            // broken-image icon. Use local product photography from
+            // public/generalpics instead: zero external dependency, always
+            // loads. permalink points at the real IG profile.
             instagramData: {
                 username: "mindbody_sportwear",
                 followersCount: "63.9K",
-                profilePictureUrl:
-                    "https://cdn2.behold.pictures/su4XpNQnryeiB8O203eV2KgONDk2/17841401933988886/profile.webp",
+                profilePictureUrl: "/logo-sun.png",
                 posts: [
                     {
                         id: "1",
-                        mediaUrl:
-                            "https://behold.pictures/su4XpNQnryeiB8O203eV2KgONDk2/gGjqxmmbHMaeKvF1NJYz/18013613314928265/medium.jpg",
-                        permalink: "https://www.instagram.com/p/CyWaqsqIdkz/",
+                        mediaUrl: "/generalpics/333_131123.webp",
+                        permalink: "https://www.instagram.com/mindbody_sportwear/",
                     },
                     {
                         id: "2",
-                        mediaUrl:
-                            "https://behold.pictures/su4XpNQnryeiB8O203eV2KgONDk2/gGjqxmmbHMaeKvF1NJYz/18120507985317543/medium.jpg",
-                        permalink: "https://www.instagram.com/p/CyRDOY6oTo9/",
+                        mediaUrl: "/generalpics/347_131123.webp",
+                        permalink: "https://www.instagram.com/mindbody_sportwear/",
                     },
                     {
                         id: "3",
-                        mediaUrl:
-                            "https://behold.pictures/su4XpNQnryeiB8O203eV2KgONDk2/gGjqxmmbHMaeKvF1NJYz/18238941487231477/medium.jpg",
-                        permalink: "https://www.instagram.com/p/CyRAuqaoe79/",
+                        mediaUrl: "/generalpics/374_131123.webp",
+                        permalink: "https://www.instagram.com/mindbody_sportwear/",
                     },
                     {
                         id: "4",
-                        mediaUrl:
-                            "https://behold.pictures/su4XpNQnryeiB8O203eV2KgONDk2/gGjqxmmbHMaeKvF1NJYz/17913473309737851/medium.jpg",
-                        permalink: "https://www.instagram.com/p/CrvCs5qoWDY/",
+                        mediaUrl: "/generalpics/595_131123.webp",
+                        permalink: "https://www.instagram.com/mindbody_sportwear/",
+                    },
+                    {
+                        id: "5",
+                        mediaUrl: "/generalpics/588_131123.webp",
+                        permalink: "https://www.instagram.com/mindbody_sportwear/",
+                    },
+                    {
+                        id: "6",
+                        mediaUrl: "/generalpics/602_131123.webp",
+                        permalink: "https://www.instagram.com/mindbody_sportwear/",
                     },
                 ],
             } satisfies InstagramData,

@@ -1688,6 +1688,17 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
 }
+/* Mobile: stack the advantage cards in one column. This override MUST
+   live AFTER the desktop repeat(4,1fr) rule above — the existing
+   @media block near line 1097 is placed before it, so source order
+   let the 4-column desktop rule win even at 375px, pushing 3 of the
+   4 cards off-screen (the "clipped badges" bug). */
+@media (max-width: 600px) {
+    .features-bar__grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
 .feature-item {
     display: flex;
     align-items: center;
@@ -1696,6 +1707,14 @@
     border-radius: 16px;
     transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     cursor: default;
+}
+/* Mobile: tighter padding for the stacked advantage cards. Same
+   source-order reason as the grid override above. */
+@media (max-width: 600px) {
+    .feature-item {
+        padding: 12px;
+        gap: 12px;
+    }
 }
 .feature-item:hover {
     background: #fff;
