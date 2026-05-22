@@ -21,6 +21,10 @@ import SmartSunParticles from "./components/SmartSunParticles";
 
 export const links: Route.LinksFunction = () => [
     { rel: "icon", type: "image/png", href: "/logo-sun.png" },
+    // iOS home-screen icon + PWA manifest — lets the site be "added to
+    // home screen" with a proper icon and standalone display on mobile.
+    { rel: "apple-touch-icon", href: "/logo-sun.png" },
+    { rel: "manifest", href: "/manifest.json" },
     { rel: "preconnect", href: "https://fonts.googleapis.com" },
     {
         rel: "preconnect",
