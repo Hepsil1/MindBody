@@ -13612,12 +13612,28 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
         display: none;
     }
 
-    /* Opaque cream bar pinned to the very top — no more
-       transparent-over-hero with an invisible white logo. */
-    .header,
-    .header.is-scrolled {
+    /* Transparent header over the hero with a subtle dark
+       top-down scrim so white logo + icons stay readable on any
+       background. Keeps the hero photo full-bleed — the previous
+       opaque cream slab killed the immersive premium feel. */
+    .header {
         top: 0;
         height: var(--header-height);
+        background: linear-gradient(
+            180deg,
+            rgba(0, 0, 0, 0.55) 0%,
+            rgba(0, 0, 0, 0.25) 65%,
+            rgba(0, 0, 0, 0) 100%
+        );
+        border-bottom: none;
+        box-shadow: none;
+    }
+
+    /* When scrolled past the hero — or when the slide-out menu is
+       open, since the gradient would look muddy over a cream
+       menu — the bar turns solid cream with dark content. */
+    .header.is-scrolled,
+    .header.is-menu-open {
         background: var(--color-bg-cream);
         border-bottom: 1px solid var(--color-border);
         box-shadow: none;
@@ -13627,8 +13643,8 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
        wordmark optically centred whatever the side widths are. */
     .header__container {
         display: grid;
-        /* minmax(0,1fr) — without the 0 min, the side tracks grow to
-           their content width (burger vs. icons) and the logo drifts
+        /* minmax(0,1fr) — without the 0 min, the side tracks grow
+           to content width (burger vs. icons) and the logo drifts
            off-centre. Forcing equal side tracks dead-centres it. */
         grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
         padding: 0 8px;
@@ -13639,7 +13655,12 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
         justify-self: start;
         display: flex;
     }
+    /* White burger over the hero, dark when the bar turns solid. */
     .header__burger span {
+        background: #fff;
+    }
+    .header.is-scrolled .header__burger span,
+    .header.is-menu-open .header__burger span {
         background: var(--color-text-primary);
     }
 
@@ -13647,11 +13668,15 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
         grid-column: 2;
         justify-self: center;
     }
-    /* Natural dark wordmark on the cream bar. The desktop rule
-       inverts it to white, which disappeared on the light hero. */
+    /* Smaller wordmark — 28px felt heavy on a phone. The base
+       brightness(0) invert(1) keeps the logo white over the hero;
+       the is-scrolled rule (and is-menu-open below) drop the
+       filter so it reads dark on the solid bar. */
     .header__logo-img {
-        height: 28px;
+        height: 20px;
         width: auto;
+    }
+    .header.is-menu-open .header__logo-img {
         filter: none !important;
     }
 
@@ -13662,24 +13687,28 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     }
 
     /* Premium headers keep ~2 commerce icons; profile + wishlist
-       move into the slide-out menu. !important beats the base
-       rule's `display: flex !important`. */
+       move into the slide-out menu. */
     .header__action-btn--profile,
     .header__action-btn--wishlist {
         display: none !important;
     }
 
-    /* Borderless dark icons — the bordered boxes read as busy. */
+    /* Borderless icons. Colour comes from the base rules: white
+       over the hero (`color: #fff !important` at base), dark on
+       scroll (`.is-scrolled .header__action-btn` !important).
+       The menu-open rule below mirrors that dark switch. */
     .header__action-btn {
         width: 44px;
         height: 44px;
         border: none !important;
         background: transparent !important;
-        color: var(--color-text-primary) !important;
     }
     .header__action-btn:hover {
         background: transparent !important;
         transform: none !important;
+    }
+    .header.is-menu-open .header__action-btn {
+        color: var(--color-text-primary) !important;
     }
 
     /* The desktop hover mega-menus (~700px, absolutely positioned)

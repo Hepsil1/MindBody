@@ -190,7 +190,10 @@ export function Header() {
                 </div>
             </div>
 
-            <header className={`header ${isScrolled ? "is-scrolled" : ""}`} id="header">
+            <header
+                className={`header ${isScrolled ? "is-scrolled" : ""} ${isMenuOpen ? "is-menu-open" : ""}`}
+                id="header"
+            >
                 <div className="header__container">
                     {/* Burger — its own grid cell (left) on mobile; hidden
                         on desktop where the inline nav shows instead. */}
