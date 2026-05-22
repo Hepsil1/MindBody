@@ -3412,3 +3412,36 @@
         padding: 48px 0;
     }
 }
+
+/* ============================================================
+   MOBILE HERO POLISH (<=600px)
+   Logo: enlarged and dropped well below the model's face — it
+   used to sit small and high, landing on her features.
+   CTA: trimmed so the centred button clears the floating contact
+   cluster in the bottom-right corner.
+   ============================================================ */
+@media (max-width: 600px) {
+    .hero-slider__logo img {
+        width: 280px;
+    }
+
+    .hero-slider__logo-container {
+        margin-top: 27vh;
+    }
+
+    /* Narrow the CTA so the centred button clears the floating
+       contact cluster. The width comes from .hero-slider__cta's
+       max-width (the button is width:100% of it); padding is
+       overridden at .hero-slider__cta .hero-slider__cta-btn
+       specificity so the label still fits. */
+    .hero-slider__cta {
+        max-width: 250px;
+    }
+
+    .hero-slider__cta .hero-slider__cta-btn {
+        padding-left: 14px;
+        padding-right: 14px;
+        font-size: 13px;
+        letter-spacing: 0.4px;
+    }
+}

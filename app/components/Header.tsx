@@ -192,6 +192,18 @@ export function Header() {
 
             <header className={`header ${isScrolled ? "is-scrolled" : ""}`} id="header">
                 <div className="header__container">
+                    {/* Burger — its own grid cell (left) on mobile; hidden
+                        on desktop where the inline nav shows instead. */}
+                    <button
+                        className={`header__burger ${isMenuOpen ? "header__burger--active" : ""}`}
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        aria-label="Меню"
+                    >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
                     <Link to="/" prefetch="intent" className="header__logo">
                         <img
                             src="/pics/mind_body_1.png"
@@ -667,12 +679,51 @@ export function Header() {
                                 </NavLink>
                             </li>
                         </ul>
+
+                        {/* Secondary links — shown only inside the mobile
+                            slide-out menu (hidden on desktop via CSS). */}
+                        <div className="header__nav-extra">
+                            <NavLink
+                                to={user ? "/profile" : "/auth"}
+                                className="header__nav-extra-link"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                {user ? "Профіль" : "Увійти"}
+                            </NavLink>
+                            <Link
+                                to="/wishlist"
+                                className="header__nav-extra-link"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Обране{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
+                            </Link>
+                            <NavLink
+                                to="/about"
+                                className="header__nav-extra-link"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Про бренд
+                            </NavLink>
+                            <NavLink
+                                to="/about#contact-premium"
+                                className="header__nav-extra-link"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Контакти
+                            </NavLink>
+                            <a
+                                href="tel:+380671234567"
+                                className="header__nav-extra-link header__nav-extra-link--phone"
+                            >
+                                +380 67 123 45 67
+                            </a>
+                        </div>
                     </nav>
 
                     <div className="header__actions">
                         {/* Search Button */}
                         <button
-                            className="header__action-btn"
+                            className="header__action-btn header__action-btn--search"
                             aria-label="Пошук"
                             onClick={openSearch}
                         >
@@ -690,7 +741,7 @@ export function Header() {
                         </button>
 
                         <button
-                            className={`header__action-btn ${user ? "header__action-btn--avatar" : ""}`}
+                            className={`header__action-btn header__action-btn--profile ${user ? "header__action-btn--avatar" : ""}`}
                             aria-label="Профіль"
                             onClick={handleProfileClick}
                         >
@@ -718,7 +769,7 @@ export function Header() {
                         </button>
                         <Link
                             to="/wishlist"
-                            className="header__action-btn"
+                            className="header__action-btn header__action-btn--wishlist"
                             aria-label={`Улюблені${wishlistCount > 0 ? `: ${wishlistCount}` : ""}`}
                         >
                             <svg
@@ -738,7 +789,7 @@ export function Header() {
                             )}
                         </Link>
                         <button
-                            className="header__action-btn"
+                            className="header__action-btn header__action-btn--cart"
                             aria-label={`Кошик${cartCount > 0 ? `: ${cartCount} товарів` : ""}`}
                             onClick={() => setIsCartOpen(true)}
                         >
@@ -759,15 +810,6 @@ export function Header() {
                                     {cartCount}
                                 </span>
                             )}
-                        </button>
-                        <button
-                            className={`header__burger ${isMenuOpen ? "header__burger--active" : ""}`}
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            aria-label="Меню"
-                        >
-                            <span></span>
-                            <span></span>
-                            <span></span>
                         </button>
                     </div>
                 </div>

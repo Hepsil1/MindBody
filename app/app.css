@@ -13582,3 +13582,159 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
         opacity: 0.2;
     }
 }
+
+/* The menu-only secondary links never appear in the desktop nav.
+   Declared before the mobile @media below so source order lets
+   the @media rule re-enable them on phones. */
+.header__nav-extra {
+    display: none;
+}
+
+/* ============================================================
+   MOBILE HEADER REDESIGN (<=768px)
+   The phone header was two stacked bars (utility strip + main
+   header, ~114px of chrome), a white logo that vanished on the
+   light hero, and five cramped action icons. Rebuilt as one calm
+   opaque bar — burger · centred wordmark · search + cart — the
+   pattern premium brands use (Alo, Lululemon, COS). Profile,
+   wishlist, contacts and phone move into the slide-out menu.
+   Desktop (>768px) is untouched.
+   ============================================================ */
+@media (max-width: 768px) {
+    /* One 64px bar. The variable also feeds the hero's top
+       padding and the slide-out menu's top offset. */
+    :root {
+        --header-height: 64px;
+    }
+
+    /* Drop the top utility strip — its links live in the menu. */
+    .top-bar {
+        display: none;
+    }
+
+    /* Opaque cream bar pinned to the very top — no more
+       transparent-over-hero with an invisible white logo. */
+    .header,
+    .header.is-scrolled {
+        top: 0;
+        height: var(--header-height);
+        background: var(--color-bg-cream);
+        border-bottom: 1px solid var(--color-border);
+        box-shadow: none;
+    }
+
+    /* burger | logo | actions — the 1fr/auto/1fr grid keeps the
+       wordmark optically centred whatever the side widths are. */
+    .header__container {
+        display: grid;
+        /* minmax(0,1fr) — without the 0 min, the side tracks grow to
+           their content width (burger vs. icons) and the logo drifts
+           off-centre. Forcing equal side tracks dead-centres it. */
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        padding: 0 8px;
+    }
+
+    .header__burger {
+        grid-column: 1;
+        justify-self: start;
+        display: flex;
+    }
+    .header__burger span {
+        background: var(--color-text-primary);
+    }
+
+    .header__logo {
+        grid-column: 2;
+        justify-self: center;
+    }
+    /* Natural dark wordmark on the cream bar. The desktop rule
+       inverts it to white, which disappeared on the light hero. */
+    .header__logo-img {
+        height: 28px;
+        width: auto;
+        filter: none !important;
+    }
+
+    .header__actions {
+        grid-column: 3;
+        justify-self: end;
+        gap: 2px;
+    }
+
+    /* Premium headers keep ~2 commerce icons; profile + wishlist
+       move into the slide-out menu. !important beats the base
+       rule's `display: flex !important`. */
+    .header__action-btn--profile,
+    .header__action-btn--wishlist {
+        display: none !important;
+    }
+
+    /* Borderless dark icons — the bordered boxes read as busy. */
+    .header__action-btn {
+        width: 44px;
+        height: 44px;
+        border: none !important;
+        background: transparent !important;
+        color: var(--color-text-primary) !important;
+    }
+    .header__action-btn:hover {
+        background: transparent !important;
+        transform: none !important;
+    }
+
+    /* The desktop hover mega-menus (~700px, absolutely positioned)
+       sat off-screen inside the slide-out menu and forced it to
+       scroll horizontally. They are a desktop-only affordance —
+       on mobile, tapping a category navigates to its page. */
+    .mega-menu {
+        display: none;
+    }
+
+    /* Secondary links section inside the slide-out menu. */
+    .header__nav-extra {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid var(--color-border);
+    }
+    .header__nav-extra-link {
+        font-family: var(--font-body);
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--color-text-secondary);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .header__nav-extra-link:hover {
+        color: var(--color-primary);
+    }
+    .header__nav-extra-link--phone {
+        color: var(--color-primary);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    /* Floating contact — compact 40px cluster, tight to the
+       corner so it clears the centred hero CTA. */
+    .floating-contact {
+        right: 12px;
+        bottom: 20px;
+        gap: 10px;
+    }
+    .floating-contact__btn,
+    .floating-contact__scroll-top {
+        width: 40px;
+        height: 40px;
+    }
+    .floating-contact__btn svg {
+        width: 19px;
+        height: 19px;
+    }
+    .floating-contact__panel {
+        gap: 8px;
+    }
+}
