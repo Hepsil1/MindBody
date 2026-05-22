@@ -13583,6 +13583,10 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     }
 }
 
+/* cache-bust: rotate hashed asset filenames after Cloudflare cached
+   404s for the previous build (a stray dev server held port 3000
+   when those URLs were first requested). 2026-05-22 */
+
 /* The menu-only secondary links never appear in the desktop nav.
    Declared before the mobile @media below so source order lets
    the @media rule re-enable them on phones. */
