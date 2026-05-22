@@ -3391,3 +3391,33 @@
         transition: none !important;
     }
 }
+
+/* ============================================================
+   MOBILE POLISH (max-width: 600px)
+   The homepage sections shipped with desktop-scale vertical
+   padding on phones — bw-unified at 100/120 and ig-hyper at
+   80/60 left ~200px voids between content and made the page
+   feel assembled rather than designed. Normalise both to a
+   single 48px rhythm. This block is appended last on purpose:
+   it must win source order over the @media rules earlier in
+   this file (e.g. the ig-hyper 900px block). Desktop (>600px)
+   is never matched, so the wide layout is untouched.
+   ============================================================ */
+@media (max-width: 600px) {
+    .bw-unified-section.bw-v3 {
+        padding: 48px 0;
+    }
+
+    .ig-hyper {
+        padding: 48px 0;
+    }
+
+    /* The hero slider currently has a single slide, so its nav
+       rendered one lone active dot — a 48px pill that read as
+       an orphaned dash floating mid-hero. Hide pagination when
+       there is nothing to paginate. Returns automatically if a
+       second slide is ever added. */
+    .hero-slider__dot:only-child {
+        display: none;
+    }
+}
