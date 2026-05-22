@@ -370,4 +370,26 @@
         width: 100vw;
         max-width: 100vw;
     }
+
+    /* Touch targets: the +/- quantity steppers are 30x30 on desktop —
+       too small for a finger. Enlarge to 44px (WCAG 2.5.5) on mobile. */
+    .cart-drawer__qty button {
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
+    }
+
+    .cart-drawer__qty span {
+        width: 36px;
+    }
+
+    /* Product name: desktop truncates to a single line with ellipsis,
+       which on a narrow phone hides most of the name. Allow two lines. */
+    .cart-drawer__item-name {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
 }

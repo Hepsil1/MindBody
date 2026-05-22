@@ -125,6 +125,16 @@
     border-color: var(--color-primary);
 }
 
+/* Touch devices: bump colour swatches from 32px toward the 44px touch
+   minimum. 40px keeps the filter row compact while being comfortably
+   tappable; desktop (hover/mouse) keeps the denser 32px. */
+@media (max-width: 900px) {
+    .mb-color-swatch {
+        width: 40px;
+        height: 40px;
+    }
+}
+
 .mb-color-swatch.active {
     transform: scale(1.1);
     border-color: var(--color-primary);
@@ -278,7 +288,10 @@
     .mobile-filter-btn {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
+        /* 44px min height — WCAG 2.5.5 touch target (was ~38px). */
+        min-height: 44px;
         padding: 10px 18px;
         background: var(--color-primary);
         color: #fff;

@@ -165,6 +165,16 @@ html {
     font-size: 16px;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
+    /* Clip horizontal overflow at the viewport-establishing element.
+       body{overflow-x:hidden} below does NOT contain position:fixed
+       off-canvas panels (CartDrawer slides off-screen via translateX) —
+       fixed elements are positioned against the viewport, not body, so
+       they extend the document scroll width and cause a sideways scroll
+       on mobile. `clip` (vs `hidden`) never creates a scroll container,
+       so `position: sticky` descendants keep working; `hidden` is the
+       fallback for browsers without `clip` support. */
+    overflow-x: hidden;
+    overflow-x: clip;
 }
 
 body {
@@ -632,6 +642,15 @@ h3 {
     background: #111;
     color: #fff;
     transform: scale(1.05);
+}
+
+/* Touch devices: enlarge the wishlist hit target to the 44px WCAG 2.5.5
+   minimum (it stays permanently visible on touch — see opacity rule above). */
+@media (max-width: 768px) {
+    .product-card__heart-btn {
+        width: 44px;
+        height: 44px;
+    }
 }
 
 /* === Quick View Base === */
@@ -1160,6 +1179,11 @@ h3 {
     display: flex;
     align-items: center;
     gap: 7px;
+    /* align-self:stretch makes the tap target the full height of the
+       top bar (~34-36px) instead of just the ~13px icon/text height.
+       Horizontal padding widens the icon-only hit area on mobile. */
+    align-self: stretch;
+    padding: 0 8px;
     text-decoration: none;
     font-size: 11px;
     font-weight: 500;
@@ -1226,6 +1250,10 @@ h3 {
     transition: color 0.25s ease;
     display: flex;
     align-items: center;
+    /* Stretch to the full top-bar height so the tap target is ~34-36px
+       tall, not the ~10px text height. Text stays centered via the
+       flex alignment above. */
+    align-self: stretch;
     padding: 0 14px;
     line-height: 1;
     position: relative;
@@ -2705,8 +2733,22 @@ h3 {
         top: var(--header-height);
         left: 0;
         right: 0;
-        background: rgba(255, 255, 255, 0.98);
-
+        /* bottom:0 stretches the panel to the viewport bottom. Previously
+           there was no height at all — the menu was only as tall as its
+           own links, so page content showed through below them. Pinning
+           top + bottom on a fixed element also handles the mobile
+           address bar correctly (no 100vh quirk). */
+        bottom: 0;
+        /* Fully opaque — the old rgba(...,0.98) let the page bleed through.
+           Also belt-and-suspenders alongside bottom:0. */
+        background: var(--color-bg-white);
+        /* Above page content, below the fixed header (z-index 1000) so the
+           burger/close control stays reachable. */
+        z-index: 999;
+        /* Scroll inside the panel if the menu ever grows taller than the
+           viewport, instead of clipping links. */
+        overflow-y: auto;
+        overscroll-behavior: contain;
         padding: var(--space-xl);
         border-radius: 0;
         transform: none;
@@ -5304,6 +5346,10 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 .hero-fullscreen {
     position: relative;
     height: 100vh;
+    /* dvh = dynamic viewport height: excludes the mobile browser address
+       bar so the hero fills exactly the visible area (100vh overshoots
+       on mobile). 100vh line above stays as the fallback. */
+    height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -10590,6 +10636,31 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     gap: 12px;
 }
 
+/* Mobile: pull the column tighter into the corner and use 44px buttons
+   so it intrudes less on the content beside it. */
+@media (max-width: 480px) {
+    .floating-contact {
+        bottom: 16px;
+        right: 12px;
+        gap: 10px;
+    }
+
+    .floating-contact__btn,
+    .floating-contact__scroll-top {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* Product page has a fixed bottom "add to cart" bar (.mobile-sticky-cta,
+   ~60px tall, shown ≤768px). Lift the floating contacts above it so the
+   messenger buttons never cover the primary CTA. */
+@media (max-width: 768px) {
+    body:has(.product-page) .floating-contact {
+        bottom: 84px;
+    }
+}
+
 /* Panel of messenger buttons */
 .floating-contact__panel {
     display: flex;
@@ -12551,8 +12622,14 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     position: fixed !important;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    right: 0;
+    bottom: 0;
+    /* Was width:100vw / height:100vh. 100vw includes the scrollbar width
+       (causes a sliver of horizontal overflow); 100vh overshoots the
+       mobile viewport. inset 0 (top/left/right/bottom:0) on a fixed
+       element pins it exactly to the visible viewport on every device. */
+    width: auto;
+    height: auto;
     background: rgba(10, 10, 15, 0.85);
 
     z-index: 100000;
