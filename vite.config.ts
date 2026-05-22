@@ -17,6 +17,19 @@ export default defineConfig({
     build: {
         // Aggressive CSS minification
         cssMinify: "esbuild",
+        // Cache-bust segment in every asset filename. Bump ASSET_REV when
+        // Cloudflare has edge-cached a stale/poisoned response for an asset
+        // URL — changing the filename gives every asset a brand-new URL
+        // that CF has never seen, so it cache-misses and re-fetches from
+        // origin. Content hashes alone don't rotate when source is
+        // unchanged, so this manual revision is the reliable lever.
+        rollupOptions: {
+            output: {
+                entryFileNames: "assets/[name]-[hash]-r2.js",
+                chunkFileNames: "assets/[name]-[hash]-r2.js",
+                assetFileNames: "assets/[name]-[hash]-r2[extname]",
+            },
+        },
     },
 
     server: {

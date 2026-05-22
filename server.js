@@ -75,6 +75,12 @@ const QUIET_404_PATTERNS = [
     /^\/\.ssh(\/|$)/i,
     /^\/\.htpasswd$/i,
     /^\/\.htaccess$/i,
+    // IDE / deploy-tool config probes (VS Code SFTP plugin, etc.)
+    /^\/\.vscode(\/|$)/i,
+    /^\/\.idea(\/|$)/i,
+    /^\/\.vite(\/|$)/i,
+    /^\/sftp-config\.json$/i,
+    /^\/\.ftpconfig$/i,
     // WordPress / phpMyAdmin probes
     /^\/wp-(admin|content|includes|login)/i,
     /^\/xmlrpc\.php$/i,
