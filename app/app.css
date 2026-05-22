@@ -4736,6 +4736,15 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
         gap: 60px;
     }
 
+    /* When the footer columns stack, the feedback card's column must
+       stretch to full width. Without this, align-items:flex-start
+       above shrink-wraps the group, so the card (width:100%) renders
+       narrow and left-shifted with dead space beside it. */
+    .footer-puma__right-group {
+        width: 100%;
+        align-self: stretch;
+    }
+
     .mind-feedback {
         width: 100%;
         padding: 25px;
@@ -10769,6 +10778,22 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     .floating-contact {
         bottom: 20px;
         right: 16px;
+        gap: 10px;
+    }
+
+    /* Compact the floating cluster on phones to 44px buttons — the
+       intended size. The base 48px rule won source order over the
+       old ≤480px 44px override, so the column shipped oversized and
+       sprawled ~230px tall over page content. This block sits after
+       the base rules, so 44px now actually applies. */
+    .floating-contact__btn,
+    .floating-contact__scroll-top {
+        width: 44px;
+        height: 44px;
+    }
+
+    .floating-contact__panel {
+        gap: 10px;
     }
 }
 
