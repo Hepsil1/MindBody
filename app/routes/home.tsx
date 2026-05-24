@@ -820,7 +820,17 @@ export default function Home() {
                         onTouchEnd={handleTouchEnd}
                     >
                         {newProducts.map((p, i) => (
-                            <ProductCard key={p.id} product={p} priority={i < 4} />
+                            <ProductCard
+                                key={p.id}
+                                product={p}
+                                priority={i < 4}
+                                /* Mobile hero cards are full-width 100vw inside
+                                   the section. Default 50vw would make the
+                                   browser load the 400w variant (~200px native)
+                                   which renders upscaled on retina. 100vw on
+                                   mobile makes browser pick 1200w → sharp. */
+                                imageSizes="(max-width: 768px) 100vw, 25vw"
+                            />
                         ))}
                     </div>
 
