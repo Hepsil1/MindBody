@@ -36,6 +36,34 @@ export default function Auth() {
     // verify what they typed on a soft keyboard without it).
     const [showPassword, setShowPassword] = useState(false);
 
+    // Atom D: per-field validation errors (Ukrainian).  Populated
+    // onBlur so the user sees their typo immediately, not after
+    // submit.  Empty string = no error.
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+    const validateField = (id: string, value: string): string => {
+        if (id === "email") {
+            if (!value.trim()) return "Введіть email";
+            if (!validateEmail(value)) return "Невірний формат email";
+        }
+        if (id === "password" && value && mode === "register") {
+            const check = validatePassword(value);
+            if (!check.valid) return check.message;
+        }
+        if (id === "confirmPassword" && value && value !== password) {
+            return "Паролі не співпадають";
+        }
+        if (id === "name" && mode === "register" && !value.trim()) {
+            return "Введіть ваше ім'я";
+        }
+        return "";
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setFieldErrors((prev) => ({ ...prev, [id]: validateField(id, value) }));
+    };
+
     // Check if already logged in
     useEffect(() => {
         const checkAuth = async () => {
@@ -293,10 +321,24 @@ export default function Auth() {
                                         id="name"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
+                                        onBlur={handleBlur}
                                         placeholder="Ваше повне ім'я"
                                         autoComplete="name"
+                                        aria-invalid={!!fieldErrors.name}
+                                        aria-describedby={
+                                            fieldErrors.name ? "name-error" : undefined
+                                        }
                                         required
                                     />
+                                    {fieldErrors.name && (
+                                        <span
+                                            id="name-error"
+                                            className="field-error-text"
+                                            role="alert"
+                                        >
+                                            {fieldErrors.name}
+                                        </span>
+                                    )}
                                 </div>
                             )}
 
@@ -307,11 +349,23 @@ export default function Auth() {
                                     id="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
+                                    onBlur={handleBlur}
                                     placeholder="email@example.com"
                                     autoComplete="email"
                                     inputMode="email"
+                                    aria-invalid={!!fieldErrors.email}
+                                    aria-describedby={fieldErrors.email ? "email-error" : undefined}
                                     required
                                 />
+                                {fieldErrors.email && (
+                                    <span
+                                        id="email-error"
+                                        className="field-error-text"
+                                        role="alert"
+                                    >
+                                        {fieldErrors.email}
+                                    </span>
+                                )}
                             </div>
 
                             {mode === "register" && (
@@ -337,11 +391,16 @@ export default function Auth() {
                                         id="password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        onBlur={handleBlur}
                                         placeholder="••••••••"
                                         autoComplete={
                                             mode === "register"
                                                 ? "new-password"
                                                 : "current-password"
+                                        }
+                                        aria-invalid={!!fieldErrors.password}
+                                        aria-describedby={
+                                            fieldErrors.password ? "password-error" : undefined
                                         }
                                         required
                                     />
@@ -383,7 +442,16 @@ export default function Auth() {
                                         )}
                                     </button>
                                 </div>
-                                {mode === "register" && (
+                                {fieldErrors.password && (
+                                    <span
+                                        id="password-error"
+                                        className="field-error-text"
+                                        role="alert"
+                                    >
+                                        {fieldErrors.password}
+                                    </span>
+                                )}
+                                {mode === "register" && !fieldErrors.password && (
                                     <span className="form-hint">
                                         Мінімум 6 символів, включаючи цифру
                                     </span>
@@ -399,10 +467,26 @@ export default function Auth() {
                                             id="confirmPassword"
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
+                                            onBlur={handleBlur}
                                             placeholder="••••••••"
                                             autoComplete="new-password"
+                                            aria-invalid={!!fieldErrors.confirmPassword}
+                                            aria-describedby={
+                                                fieldErrors.confirmPassword
+                                                    ? "confirmPassword-error"
+                                                    : undefined
+                                            }
                                             required
                                         />
+                                        {fieldErrors.confirmPassword && (
+                                            <span
+                                                id="confirmPassword-error"
+                                                className="field-error-text"
+                                                role="alert"
+                                            >
+                                                {fieldErrors.confirmPassword}
+                                            </span>
+                                        )}
                                     </div>
 
                                     <label className="auth-checkbox">
