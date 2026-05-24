@@ -943,12 +943,18 @@
 }
 
 /* Atom M — PDP mobile swipe gallery (only renders <=768px because the
-   `.pdp-mobile-gallery` element is hidden on desktop). */
-.pdp-mobile-gallery {
+   `.pdp-mobile-gallery-wrap` element is hidden on desktop). */
+.pdp-mobile-gallery-wrap {
     display: none;
 }
 
 @media (max-width: 768px) {
+    .pdp-mobile-gallery-wrap {
+        display: block;
+        position: relative;
+        margin: 0 -16px;
+        background: var(--color-bg-soft, #f4f1ed);
+    }
     .pdp-mobile-gallery {
         display: flex;
         overflow-x: auto;
@@ -956,21 +962,15 @@
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-x: contain;
-        gap: 0;
-        margin: 0 -16px;
-        position: relative;
+        scrollbar-width: none;
     }
     .pdp-mobile-gallery::-webkit-scrollbar {
         display: none;
-    }
-    .pdp-mobile-gallery {
-        scrollbar-width: none;
     }
     .pdp-mobile-gallery__slide {
         flex: 0 0 100vw;
         scroll-snap-align: start;
         aspect-ratio: 4/5;
-        background: var(--color-bg-soft, #f4f1ed);
     }
     .pdp-mobile-gallery__slide img {
         width: 100%;
@@ -979,6 +979,8 @@
         cursor: zoom-in;
         display: block;
     }
+    /* Counter pill — sibling to the scroll container so it doesn't
+       move horizontally with swipe.  Anchored to the wrapper. */
     .pdp-mobile-gallery__counter {
         position: absolute;
         bottom: 16px;
@@ -994,6 +996,8 @@
         border-radius: 999px;
         backdrop-filter: blur(8px);
         pointer-events: none;
+        z-index: 2;
+        white-space: nowrap;
     }
 }
 

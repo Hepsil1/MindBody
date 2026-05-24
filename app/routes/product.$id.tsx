@@ -636,27 +636,29 @@ export default function ProductDetail() {
                         is overkill; we'll just show "{i+1} / N" via state
                         on scroll. */}
                     {product.images.length > 0 && (
-                        <div
-                            className="pdp-mobile-gallery"
-                            onScroll={(e) => {
-                                const el = e.currentTarget;
-                                const idx = Math.round(el.scrollLeft / el.clientWidth);
-                                if (idx !== activeImage) setActiveImage(idx);
-                            }}
-                        >
-                            {product.images.map((img: string, idx: number) => (
-                                <div key={idx} className="pdp-mobile-gallery__slide">
-                                    <img
-                                        src={img}
-                                        alt={`${product.name} — фото ${idx + 1}`}
-                                        loading={idx === 0 ? "eager" : "lazy"}
-                                        decoding="async"
-                                        fetchPriority={idx === 0 ? "high" : "auto"}
-                                        sizes="100vw"
-                                        onClick={() => setZoomOpen(true)}
-                                    />
-                                </div>
-                            ))}
+                        <div className="pdp-mobile-gallery-wrap">
+                            <div
+                                className="pdp-mobile-gallery"
+                                onScroll={(e) => {
+                                    const el = e.currentTarget;
+                                    const idx = Math.round(el.scrollLeft / el.clientWidth);
+                                    if (idx !== activeImage) setActiveImage(idx);
+                                }}
+                            >
+                                {product.images.map((img: string, idx: number) => (
+                                    <div key={idx} className="pdp-mobile-gallery__slide">
+                                        <img
+                                            src={img}
+                                            alt={`${product.name} — фото ${idx + 1}`}
+                                            loading={idx === 0 ? "eager" : "lazy"}
+                                            decoding="async"
+                                            fetchPriority={idx === 0 ? "high" : "auto"}
+                                            sizes="100vw"
+                                            onClick={() => setZoomOpen(true)}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                             {product.images.length > 1 && (
                                 <div className="pdp-mobile-gallery__counter" aria-live="polite">
                                     {activeImage + 1} / {product.images.length}
