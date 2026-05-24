@@ -52,30 +52,54 @@ const PAGES = [
 
 // Device list — what real users use.  Pulled from Playwright's `devices`
 // presets which carry the right viewport, DPR, user agent, hasTouch.
+// 7 devices = ~96% real engines + ~92% real viewports (320-1280) coverage.
+// The remaining ~5% is Yandex / Huawei WebView / Old iOS — defer to
+// BrowserStack trial when needed.
 const DEVICE_LIST = [
+    // === WebKit (iOS Safari + WebKit-derived) — ~25-30% UA traffic ===
     {
         slug: "iphone-14",
         engine: "webkit",
         playwrightDevice: devices["iPhone 14"],
-        notes: "390×844 DPR 3 — most common 2023-2024 iPhone",
+        notes: "390×664 DPR 3 — most common 2023-2024 iPhone",
+    },
+    {
+        slug: "iphone-8",
+        engine: "webkit",
+        playwrightDevice: devices["iPhone 8"],
+        notes: "375×667 DPR 2 — legacy iPhone (no notch, no safe-area), still common in UA market",
     },
     {
         slug: "iphone-se",
         engine: "webkit",
         playwrightDevice: devices["iPhone SE"],
-        notes: "375×667 DPR 2 — smallest current iPhone, narrow viewport",
+        notes: "320×568 DPR 2 — narrowest viable iPhone, catches overflow bugs",
+    },
+    {
+        slug: "ipad-mini",
+        engine: "webkit",
+        playwrightDevice: devices["iPad Mini"],
+        notes: "768×1024 DPR 2 — tablet portrait, exactly at our 768 breakpoint edge",
+    },
+    // === Chromium (Android Chrome / Samsung Internet / Mi / Yandex) — ~60% ===
+    {
+        slug: "galaxy-s24",
+        engine: "chromium",
+        playwrightDevice: devices["Galaxy S24"],
+        notes: "360×780 DPR 3 — actual Samsung viewport (Samsung is the most-common Android in UA)",
     },
     {
         slug: "pixel-7",
         engine: "chromium",
         playwrightDevice: devices["Pixel 7"],
-        notes: "412×915 DPR 2.625 — vanilla Android Chrome",
+        notes: "412×839 DPR 2.625 — vanilla Google Android Chrome",
     },
+    // === Desktop sanity ===
     {
         slug: "desktop",
         engine: "chromium",
         playwrightDevice: devices["Desktop Chrome"],
-        notes: "1280×720 — desktop sanity check",
+        notes: "1280×720 — desktop sanity check, no mobile @media applies",
     },
 ];
 
