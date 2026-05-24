@@ -17,7 +17,11 @@ export interface SlideData {
     image3Pos?: string;
 }
 
-// Default slides for when database is empty
+// Default slides for when database is empty.
+// imagePos defaults to "50% 35%" — face/upper-body safe crop for women's
+// fashion photography. Center crop would slice through the figure's torso.
+const FACE_SAFE = "50% 35%";
+
 const defaultSlides: SlideData[] = [
     {
         id: "default-1",
@@ -26,6 +30,9 @@ const defaultSlides: SlideData[] = [
         image1: "/generalpics/333_131123.webp",
         image2: "/generalpics/374_131123.webp",
         image3: "/generalpics/338_131123.webp",
+        image1Pos: FACE_SAFE,
+        image2Pos: FACE_SAFE,
+        image3Pos: FACE_SAFE,
     },
     {
         id: "default-2",
@@ -34,6 +41,9 @@ const defaultSlides: SlideData[] = [
         image1: "/pics2cloths/IMG_4971.webp",
         image2: "/pics2cloths/IMG_4976.webp",
         image3: "/pics2cloths/IMG_4980.webp",
+        image1Pos: FACE_SAFE,
+        image2Pos: FACE_SAFE,
+        image3Pos: FACE_SAFE,
     },
     {
         id: "default-3",
@@ -42,6 +52,9 @@ const defaultSlides: SlideData[] = [
         image1: "/pics1cloths/IMG_6201.webp",
         image2: "/pics1cloths/IMG_6203.webp",
         image3: "/pics1cloths/IMG_6204.webp",
+        image1Pos: FACE_SAFE,
+        image2Pos: FACE_SAFE,
+        image3Pos: FACE_SAFE,
     },
     {
         id: "default-4",
@@ -50,6 +63,9 @@ const defaultSlides: SlideData[] = [
         image1: "/generalpics/348_131123.webp",
         image2: "/generalpics/595_131123.webp",
         image3: "/generalpics/602_131123.webp",
+        image1Pos: FACE_SAFE,
+        image2Pos: FACE_SAFE,
+        image3Pos: FACE_SAFE,
     },
     {
         id: "default-5",
@@ -58,6 +74,9 @@ const defaultSlides: SlideData[] = [
         image1: "/generalpics/585_131123.webp",
         image2: "/generalpics/588_131123.webp",
         image3: "/generalpics/602_131123.webp",
+        image1Pos: FACE_SAFE,
+        image2Pos: FACE_SAFE,
+        image3Pos: FACE_SAFE,
     },
 ];
 

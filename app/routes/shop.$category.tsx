@@ -428,12 +428,15 @@ export default function ShopCategory() {
                                 }}
                             />
                         </picture>
-                        {/* Overlay to ensure text readability */}
+                        {/* Overlay to ensure text readability — WCAG AA contrast.
+                            Gradient is darker at bottom where the YOGA title sits
+                            but stays lighter at top to keep the product hero visible. */}
                         <div
                             style={{
                                 position: "absolute",
                                 inset: 0,
-                                background: "rgba(0,0,0,0.3)",
+                                background:
+                                    "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 100%)",
                             }}
                         ></div>
                     </div>
