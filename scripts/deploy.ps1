@@ -50,7 +50,18 @@ if ($gitStatus) {
     Write-Host "Continuing anyway. Re-run after committing if this wasn't intentional." -ForegroundColor Yellow
 }
 
-Write-Host "==> [2/4] Building (skipping prisma generate - PM2 holds the DLL)" -ForegroundColor Cyan
+Write-Host "==> [2a/4] Generating image variants (responsive srcset)" -ForegroundColor Cyan
+# Idempotent — skips variants newer than their master.  First-time
+# run on a fresh checkout takes ~30s, subsequent runs ~1s.  Without
+# this step, `srcset` attrs in JSX point at non-existent URLs and
+# the browser falls back to the master (no perf win).
+& node scripts/generate-image-variants.mjs 2>&1 | Out-Host
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Image variant generation FAILED. PM2 process untouched." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "==> [2b/4] Building (skipping prisma generate - PM2 holds the DLL)" -ForegroundColor Cyan
 # Pipe stderr to stdout so we see Vite's harmless warnings but
 # don't trigger PS's RemoteException trap.
 & npx react-router build 2>&1 | Out-Host

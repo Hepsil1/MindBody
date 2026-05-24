@@ -1,5 +1,6 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { Link } from "react-router";
+import { buildWebpSrcset } from "../utils/responsive-image";
 
 // Define the Slide type that matches the database model
 export interface SlideData {
@@ -119,16 +120,23 @@ export default function HeroSlider({
                                         reserves layout space and we don't get a 0.3 CLS jump when
                                         the image decodes. 1080x1920 is the typical mobile-portrait
                                         ratio of our hero uploads. */}
-                                    <img
-                                        src={item.img}
-                                        alt={`${slide.name} Image ${imgIndex + 1}`}
-                                        width={1080}
-                                        height={1920}
-                                        style={{ objectPosition: item.pos }}
-                                        loading={index === 0 ? "eager" : "lazy"}
-                                        decoding={index === 0 ? "sync" : "async"}
-                                        fetchPriority={index === 0 ? "high" : "low"}
-                                    />
+                                    <picture>
+                                        <source
+                                            srcSet={buildWebpSrcset(item.img)}
+                                            sizes="(max-width: 768px) 100vw, 33vw"
+                                            type="image/webp"
+                                        />
+                                        <img
+                                            src={item.img}
+                                            alt={`${slide.name} Image ${imgIndex + 1}`}
+                                            width={1080}
+                                            height={1920}
+                                            style={{ objectPosition: item.pos }}
+                                            loading={index === 0 ? "eager" : "lazy"}
+                                            decoding={index === 0 ? "sync" : "async"}
+                                            fetchPriority={index === 0 ? "high" : "low"}
+                                        />
+                                    </picture>
                                 </div>
                             ))}
                         </div>

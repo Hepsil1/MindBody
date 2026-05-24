@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "../components/Toast";
 import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
+import { buildWebpSrcset } from "../utils/responsive-image";
 import type {
     InventoryVariant,
     ReviewData,
@@ -647,15 +648,21 @@ export default function ProductDetail() {
                             >
                                 {product.images.map((img: string, idx: number) => (
                                     <div key={idx} className="pdp-mobile-gallery__slide">
-                                        <img
-                                            src={img}
-                                            alt={`${product.name} — фото ${idx + 1}`}
-                                            loading={idx === 0 ? "eager" : "lazy"}
-                                            decoding="async"
-                                            fetchPriority={idx === 0 ? "high" : "auto"}
-                                            sizes="100vw"
-                                            onClick={() => setZoomOpen(true)}
-                                        />
+                                        <picture>
+                                            <source
+                                                srcSet={buildWebpSrcset(img)}
+                                                sizes="100vw"
+                                                type="image/webp"
+                                            />
+                                            <img
+                                                src={img}
+                                                alt={`${product.name} — фото ${idx + 1}`}
+                                                loading={idx === 0 ? "eager" : "lazy"}
+                                                decoding="async"
+                                                fetchPriority={idx === 0 ? "high" : "auto"}
+                                                onClick={() => setZoomOpen(true)}
+                                            />
+                                        </picture>
                                     </div>
                                 ))}
                             </div>

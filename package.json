@@ -18,6 +18,7 @@
     "test:e2e:ui": "playwright test --ui",
     "visual-snapshot": "node scripts/visual-snapshot.mjs",
     "visual-snapshot:local": "node scripts/visual-snapshot.mjs --local",
+    "build:images": "node scripts/generate-image-variants.mjs",
     "deploy": "pwsh ./scripts/deploy.ps1",
     "backup:db": "pwsh ./scripts/backup-db.ps1",
     "postinstall": "prisma generate",

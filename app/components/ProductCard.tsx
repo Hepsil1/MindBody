@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { useRef } from "react";
 import { StorageUtils } from "../utils/storage";
 import { useToast } from "./Toast";
+import { buildWebpSrcset } from "../utils/responsive-image";
 
 export interface Product {
     id: string;
@@ -96,12 +97,11 @@ export default function ProductCard({
             <div className="product-card__image-wrapper">
                 <Link to={`/product/${id}`} prefetch="intent" className="product-card__image-link">
                     <picture>
-                        {image.match(/\.(jpg|jpeg|JPG|JPEG|png|PNG)$/) && (
-                            <source
-                                srcSet={image.replace(/\.(jpg|jpeg|JPG|JPEG|png|PNG)$/, ".webp")}
-                                type="image/webp"
-                            />
-                        )}
+                        <source
+                            srcSet={buildWebpSrcset(image)}
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                            type="image/webp"
+                        />
                         <img
                             src={image}
                             alt={name}
@@ -109,29 +109,23 @@ export default function ProductCard({
                             loading={priority ? "eager" : "lazy"}
                             decoding="async"
                             fetchPriority={priority ? "high" : "auto"}
-                            sizes="(max-width: 768px) 50vw, 25vw"
                             width="400"
                             height="500"
                         />
                     </picture>
                     {image2 && (
                         <picture>
-                            {image2.match(/\.(jpg|jpeg|JPG|JPEG|png|PNG)$/) && (
-                                <source
-                                    srcSet={image2.replace(
-                                        /\.(jpg|jpeg|JPG|JPEG|png|PNG)$/,
-                                        ".webp",
-                                    )}
-                                    type="image/webp"
-                                />
-                            )}
+                            <source
+                                srcSet={buildWebpSrcset(image2)}
+                                sizes="(max-width: 768px) 50vw, 25vw"
+                                type="image/webp"
+                            />
                             <img
                                 src={image2}
                                 alt={name}
                                 className="product-card__img product-card__img--hover"
                                 loading="lazy"
                                 decoding="async"
-                                sizes="(max-width: 768px) 50vw, 25vw"
                                 width="400"
                                 height="500"
                             />
