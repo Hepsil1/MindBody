@@ -202,7 +202,9 @@
 .checkout-hero__title em {
     font-family: var(--font-script);
     font-style: normal;
-    color: var(--color-primary);
+    /* Same contrast fix as .auth-hero__title em — teal-on-dark
+       1.4:1 vs needed 4.5:1.  #7AB0B0 = ~5.5:1. */
+    color: #7ab0b0;
 }
 
 .checkout-hero__subtitle {

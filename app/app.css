@@ -2887,8 +2887,8 @@ h3 {
     position: absolute;
     top: 16px;
     right: 16px;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     background: white;
     border: none;
     border-radius: 50%;
@@ -7624,8 +7624,8 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 .wishlist-card__remove,
 .wishlist-card__cart {
     position: absolute;
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: none;
     display: flex;
@@ -8147,7 +8147,12 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 .auth-hero__title em {
     font-family: var(--font-script);
     font-style: normal;
-    color: var(--color-primary);
+    /* var(--color-primary) #2a5a5a on the dark teal hero gradient
+       computes to 1.4:1 — the script word ("акаунт") is almost
+       invisible.  Light teal #7AB0B0 (the same fix used on top-bar)
+       lifts contrast to ~5.5:1 (passes AA) and stays in the teal
+       family.  Audit wishlist+profile P0. */
+    color: #7ab0b0;
 }
 
 .auth-hero__subtitle {
