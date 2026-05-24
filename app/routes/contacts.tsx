@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { useState } from "react";
+import { buildWebpSrcset } from "../utils/responsive-image";
 import "../styles/contacts.css";
 
 export default function Contacts() {
@@ -230,8 +231,17 @@ export default function Contacts() {
 
                         <div className="contacts-image-container">
                             <picture>
-                                <source srcSet="/pics1cloths/IMG_6212.webp" type="image/webp" />
-                                <img src="/pics1cloths/IMG_6212.JPG" alt="MIND BODY Collection" />
+                                <source
+                                    srcSet={buildWebpSrcset("/pics1cloths/IMG_6212.webp")}
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    type="image/webp"
+                                />
+                                <img
+                                    src="/pics1cloths/IMG_6212.webp"
+                                    alt="MIND BODY Collection"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
                             </picture>
                         </div>
                     </div>

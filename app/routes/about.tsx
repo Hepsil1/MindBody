@@ -3,6 +3,7 @@ import { prisma } from "../db.server";
 import { Link, useLoaderData } from "react-router";
 import { useState, useEffect } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
+import { buildWebpSrcset } from "../utils/responsive-image";
 import "../styles/about-page.css";
 import "../styles/home.css";
 import "../styles/contacts.css";
@@ -106,11 +107,17 @@ export default function About() {
                 <div className="story-premium__left">
                     <div className="story-premium__overlay"></div>
                     <picture>
-                        <source srcSet="/pics1cloths/IMG_6215.webp" type="image/webp" />
+                        <source
+                            srcSet={buildWebpSrcset("/pics1cloths/IMG_6215.webp")}
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            type="image/webp"
+                        />
                         <img
-                            src="/pics1cloths/IMG_6215.JPG"
+                            src="/pics1cloths/IMG_6215.webp"
                             alt="MIND BODY"
                             className="story-premium__image"
+                            loading="lazy"
+                            decoding="async"
                         />
                     </picture>
                     <div className="story-premium__badge">
@@ -212,8 +219,17 @@ export default function About() {
                             <div className="process-wide__number">01</div>
                             <div className="process-wide__image">
                                 <picture>
-                                    <source srcSet="/pics1cloths/IMG_6203.webp" type="image/webp" />
-                                    <img src="/pics1cloths/IMG_6203.JPG" alt="Idea" />
+                                    <source
+                                        srcSet={buildWebpSrcset("/pics1cloths/IMG_6203.webp")}
+                                        sizes="(max-width: 768px) 50vw, 25vw"
+                                        type="image/webp"
+                                    />
+                                    <img
+                                        src="/pics1cloths/IMG_6203.webp"
+                                        alt="Idea"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
                                 </picture>
                             </div>
                             <div className="process-wide__content">
@@ -228,8 +244,17 @@ export default function About() {
                             <div className="process-wide__number">02</div>
                             <div className="process-wide__image">
                                 <picture>
-                                    <source srcSet="/pics1cloths/IMG_6209.webp" type="image/webp" />
-                                    <img src="/pics1cloths/IMG_6209.JPG" alt="Materials" />
+                                    <source
+                                        srcSet={buildWebpSrcset("/pics1cloths/IMG_6209.webp")}
+                                        sizes="(max-width: 768px) 50vw, 25vw"
+                                        type="image/webp"
+                                    />
+                                    <img
+                                        src="/pics1cloths/IMG_6209.webp"
+                                        alt="Materials"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
                                 </picture>
                             </div>
                             <div className="process-wide__content">
@@ -244,8 +269,17 @@ export default function About() {
                             <div className="process-wide__number">03</div>
                             <div className="process-wide__image">
                                 <picture>
-                                    <source srcSet="/pics1cloths/IMG_6212.webp" type="image/webp" />
-                                    <img src="/pics1cloths/IMG_6212.JPG" alt="Sewing" />
+                                    <source
+                                        srcSet={buildWebpSrcset("/pics1cloths/IMG_6212.webp")}
+                                        sizes="(max-width: 768px) 50vw, 25vw"
+                                        type="image/webp"
+                                    />
+                                    <img
+                                        src="/pics1cloths/IMG_6212.webp"
+                                        alt="Sewing"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
                                 </picture>
                             </div>
                             <div className="process-wide__content">
@@ -260,8 +294,17 @@ export default function About() {
                             <div className="process-wide__number">04</div>
                             <div className="process-wide__image">
                                 <picture>
-                                    <source srcSet="/pics1cloths/IMG_6201.webp" type="image/webp" />
-                                    <img src="/pics1cloths/IMG_6201.JPG" alt="Result" />
+                                    <source
+                                        srcSet={buildWebpSrcset("/pics1cloths/IMG_6201.webp")}
+                                        sizes="(max-width: 768px) 50vw, 25vw"
+                                        type="image/webp"
+                                    />
+                                    <img
+                                        src="/pics1cloths/IMG_6201.webp"
+                                        alt="Result"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
                                 </picture>
                             </div>
                             <div className="process-wide__content">
