@@ -3454,6 +3454,209 @@
 }
 
 /* ====================================================================
+   Batch 11 — Complete mobile redesign of two sections per user feedback
+   "Это совершенно не телефонная история" + "полностью некрасиво"
+
+   SCOPE: mobile-only (max-width 768px). Desktop layout unchanged.
+
+   Sections rebuilt:
+   1. .new-arrivals — was arrow-button carousel with 70vw cards
+   2. .bw-unified-section.bw-v3 — was 3-column layout collapsed to
+      stacked text + cramped 2x2 feature grid + breathing video
+   ==================================================================== */
+@media (max-width: 768px) {
+    /* ---------- 1. НОВІ НАДХОДЖЕННЯ — native mobile carousel ---------- */
+
+    /* Header: stack centered, drop the side-by-side arrows layout */
+    .new-arrivals-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center !important;
+        text-align: center;
+        gap: 8px !important;
+        margin-bottom: 24px !important;
+        padding: 0 20px;
+    }
+    .new-arrivals-header__text {
+        align-items: center;
+    }
+    .new-arrivals-badge {
+        margin: 0 auto !important;
+    }
+    .section__title.new-arrivals {
+        text-align: center;
+    }
+
+    /* Hide arrow buttons — desktop interaction grammar. Mobile uses
+       native swipe + scroll-snap below. */
+    .new-arrivals-header__controls,
+    .carousel-btn--prev,
+    .carousel-btn--next {
+        display: none !important;
+    }
+
+    /* Carousel: peek-the-next-card pattern. 65vw card = 1 full + 0.5
+       next peek. Right edge fades to signal "more to swipe". */
+    .products-carousel {
+        scroll-padding-inline-start: 16px !important;
+        padding: 0 16px 12px !important;
+        gap: 12px !important;
+        /* Mask-image right-edge fade so peeking card looks intentional */
+        -webkit-mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+        mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+    }
+    .products-carousel > * {
+        flex: 0 0 65vw !important;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+    }
+
+    /* "Переглянути всі новинки" CTA below carousel: tighten padding */
+    .new-arrivals + .new-arrivals-cta,
+    .new-arrivals__cta {
+        margin-top: 24px;
+        text-align: center;
+    }
+
+    /* ---------- 2. РУХ ЩО ПЕРЕТВОРЮЄ — mobile narrative + swipe features ---------- */
+
+    /* Layout: completely linear narrative. Order:
+       1. eyebrow + title + subtitle (centered)
+       2. video frame (4:5 ratio, cap height)
+       3. mission text under video
+       4. feature cards as horizontal scroll-snap carousel
+       5. CTA button */
+
+    .bw-v3-layout {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 28px !important;
+        padding: 0 16px !important;
+    }
+
+    /* Manifesto — eyebrow + title + subtitle centered */
+    .bw-v3-manifesto {
+        order: 0 !important;
+        text-align: center !important;
+        padding: 0 !important;
+        gap: 14px;
+    }
+    .bw-eyebrow-minimal {
+        margin: 0 auto;
+    }
+    .bw-heading-elegant {
+        margin: 0 auto 12px !important;
+        max-width: 320px;
+        font-size: clamp(2rem, 8vw, 2.4rem) !important;
+    }
+    .bw-body-minimal {
+        margin: 0 auto 16px !important;
+        max-width: 320px;
+        text-align: center;
+    }
+    .bw-mission-elegant {
+        margin: 0 auto !important;
+        padding-left: 0 !important;
+        max-width: 300px;
+        text-align: center !important;
+        font-size: 13px !important;
+    }
+    /* Drop the serif top-border decoration left of mission — only works
+       in side-by-side layout */
+    .bw-mission-elegant::before {
+        display: none !important;
+    }
+    /* Hide zen logo magnetic widget — pointless on touch (no parallax) */
+    .bw-zen-visual,
+    .bw-zen-logo {
+        display: none !important;
+    }
+    /* CTA: full-width pill, separate row below mission */
+    .bw-manifesto-cta {
+        margin: 8px auto 0 !important;
+    }
+
+    /* Video frame — order: between title block and features */
+    .bw-v3-frame-container {
+        order: 1 !important;
+        margin: 0 auto !important;
+    }
+    .bw-v3-frame {
+        aspect-ratio: 4 / 5 !important; /* premium portrait, was 3/4 */
+        max-width: 320px;
+        max-height: 400px;
+    }
+
+    /* Features list — horizontal scroll-snap carousel (was 2x2 grid).
+       Cards are full-width-ish with peek of next. */
+    .bw-v3-features {
+        order: 2 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin-top: 4px;
+    }
+    .bw-macro-features {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-padding-inline-start: 16px;
+        padding: 16px 16px 24px;
+        gap: 12px !important;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        /* Right-edge mask to hint more content */
+        -webkit-mask-image: linear-gradient(to right, black 0%, black 90%, transparent 100%);
+        mask-image: linear-gradient(to right, black 0%, black 90%, transparent 100%);
+        /* Negative margin to extend full-bleed */
+        margin: 0 -16px;
+    }
+    .bw-macro-features::-webkit-scrollbar {
+        display: none;
+    }
+    .bw-feat-item {
+        flex: 0 0 76vw !important;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        background: var(--color-bg-white);
+        border: 1px solid var(--color-border-light);
+        border-radius: 8px;
+        padding: 24px 20px !important;
+        gap: 12px !important;
+        align-items: flex-start !important;
+    }
+    .bw-macro-number {
+        font-size: 44px !important; /* Premium scale on swipe card */
+        line-height: 0.9 !important;
+        -webkit-text-stroke-width: 1.2px !important;
+    }
+    .bw-macro-content {
+        flex: 1;
+    }
+    .bw-feat-title {
+        font-size: 1.15rem !important;
+        margin: 0 0 6px 0 !important;
+        line-height: 1.2;
+    }
+    .bw-feat-desc {
+        font-size: 13px !important;
+        line-height: 1.45 !important;
+        color: var(--color-text-secondary);
+    }
+    /* Dim-when-non-hovered desktop pattern is meaningless on touch */
+    .bw-macro-features:hover .bw-feat-item:not(:hover) {
+        opacity: 1 !important;
+    }
+
+    /* Hide the playlist dots indicator on mobile — there's no manifest
+       narrative around video on phone, the auto-advance is enough */
+    .bw-v3-frame-dots {
+        display: none !important;
+    }
+}
+
+/* ====================================================================
    Batch 9 — Mobile video frame: center, hide hover-only, smooth reveal
    On mobile there is no :hover trigger, so the 4 hover-target videos
    (bw-frame-hover-vid--1..4) are never shown but still autoplay+loop.
