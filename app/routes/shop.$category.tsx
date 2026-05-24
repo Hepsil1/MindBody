@@ -293,7 +293,9 @@ export default function ShopCategory() {
     // Only honour DB values where an admin actually adjusted the position.
     const imagePosStyle = useMemo(() => {
         const defaultX = "50%";
-        const defaultY = "30%";
+        // 22% = roughly upper-quarter, keeps face fully visible on
+        // portrait product shots even when the hero band is short.
+        const defaultY = "22%";
         const raw = shopPage?.heroImagePos?.trim() || "";
         const isAdminDefault = raw === "50% 50% 1" || raw === "50% 50%" || raw === "";
 

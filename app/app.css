@@ -13985,6 +13985,20 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
         min-height: 220px;
         max-height: 280px;
     }
+    /* Mobile: kill decorative watermark + signature line that crowd
+       the YOGA title and add proper left padding so YOGA isn't glued
+       to viewport edge. */
+    .shop-hero-luxe:not(.compact) .shop-hero-luxe__background,
+    .shop-hero-luxe:not(.compact) .luxe-signature {
+        display: none;
+    }
+    .shop-hero-luxe:not(.compact) .shop-hero-luxe__content {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    .shop-hero-luxe:not(.compact) .luxe-breadcrumb {
+        margin-bottom: 20px;
+    }
     /* Auth pages hero (login/register). */
     .auth-hero {
         /* Atom A: tighter padding so the form submit lands above
