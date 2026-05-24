@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { buildWebpSrcset } from "../utils/responsive-image";
 
 interface CategoryCardProps {
     title: string;
@@ -32,16 +33,24 @@ export default function CategoryCard({
     return (
         <Link to={link} prefetch="intent" className="category-card-editorial">
             <div className="category-card-editorial__image-wrapper">
-                <img
-                    src={image}
-                    alt={title}
-                    loading="lazy"
-                    style={{
-                        objectPosition: position,
-                        transform: scale !== 1 ? `scale(${scale})` : undefined,
-                        transformOrigin: position,
-                    }}
-                />
+                <picture>
+                    <source
+                        srcSet={buildWebpSrcset(image)}
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                        type="image/webp"
+                    />
+                    <img
+                        src={image}
+                        alt={title}
+                        loading="lazy"
+                        decoding="async"
+                        style={{
+                            objectPosition: position,
+                            transform: scale !== 1 ? `scale(${scale})` : undefined,
+                            transformOrigin: position,
+                        }}
+                    />
+                </picture>
             </div>
             <div className="category-card-editorial__overlay" />
             <div className="category-card-editorial__content">
