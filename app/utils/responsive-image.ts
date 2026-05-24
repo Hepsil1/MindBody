@@ -8,6 +8,16 @@
  * walks public/pics* and emits -400w.webp / -800w.webp / -1200w.webp
  * for every master > the target width.
  *
+ * The master URL is included as the final entry with a 2400w descriptor.
+ * This keeps the master in play for retina-desktop / hi-DPR displays
+ * where a 1200w variant would be upscaled and look mushy. The browser's
+ * srcset selector picks the smallest candidate ≥ physical-pixel demand,
+ * so:
+ *   mobile (390×3 = 1170 phys px)    → 1200w variant
+ *   tablet (768×2 = 1536 phys px)    → 1200w variant
+ *   desktop 1920×2 retina at 100vw   → master (2400w slot)
+ *   desktop 4K retina                → master (2400w slot)
+ *
  * For masters smaller than 1200w the -1200w.webp won't exist on disk
  * → that srcset entry 404s when the browser tries to load it.  Browser
  * then picks the next-closest available width.  Net effect: one
@@ -16,5 +26,10 @@
 export function buildWebpSrcset(url: string): string {
     // Strip any extension (jpg/jpeg/png/webp) — variants are always .webp.
     const base = url.replace(/\.(jpg|jpeg|JPG|JPEG|png|PNG)$/, ".webp").replace(/\.webp$/, "");
-    return `${base}-400w.webp 400w, ${base}-800w.webp 800w, ${base}-1200w.webp 1200w`;
+    return [
+        `${base}-400w.webp 400w`,
+        `${base}-800w.webp 800w`,
+        `${base}-1200w.webp 1200w`,
+        `${base}.webp 2400w`, // master fallback for retina desktop / hi-DPR
+    ].join(", ");
 }
