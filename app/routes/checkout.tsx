@@ -1185,6 +1185,36 @@ export default function Checkout() {
                                         </span>
                                         <span>{subtotal.toLocaleString()} ₴</span>
                                     </div>
+                                    {/* Phase 6 atom 4 — free-shipping nudge.
+                                        Mirrors the cart-drawer pattern at
+                                        FREE_SHIPPING=2000.  Disappears once
+                                        the threshold is met. */}
+                                    {(() => {
+                                        const FREE_SHIPPING = 2000;
+                                        const remaining = Math.max(0, FREE_SHIPPING - subtotal);
+                                        const progress = Math.min(
+                                            100,
+                                            (subtotal / FREE_SHIPPING) * 100,
+                                        );
+                                        return remaining > 0 ? (
+                                            <div className="shipping-progress">
+                                                <div className="shipping-progress__bar">
+                                                    <div
+                                                        className="shipping-progress__fill"
+                                                        style={{ width: `${progress}%` }}
+                                                    />
+                                                </div>
+                                                <span>
+                                                    До безкоштовної доставки ще{" "}
+                                                    <strong>{remaining.toLocaleString()} ₴</strong>
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="shipping-progress shipping-progress--free">
+                                                <span>🎉 Безкоштовна доставка!</span>
+                                            </div>
+                                        );
+                                    })()}
                                     <div className="summary-line">
                                         <span>Доставка</span>
                                         <span>За тарифами перевізника</span>

@@ -276,4 +276,63 @@
     body:has(.checkout-page) .floating-contact {
         bottom: 80px;
     }
+
+    /* ============================================================
+       PHASE 6 atom 4 — CART STEP polish
+       The cart step of /checkout (cart-summary__card) suffers the
+       same buried-CTA problem as the info step.  Mirror the fixed
+       bar pattern from atom 2.  Plus quantity stepper 44px and
+       breadcrumb contrast (hero is dark, default text is 50% white).
+       ============================================================ */
+
+    /* (a) Sticky cart CTA — same trick as info step */
+    .cart-page__content {
+        padding-bottom: 96px;
+    }
+    .cart-summary__card .cart-btn--primary,
+    .cart-summary__card .cart-btn--full {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 16px;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        margin: 0;
+        width: 100%;
+        border-radius: 0;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+        z-index: 5;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    /* (b) Quantity stepper — 32x32 fails WCAG 2.5.5 (44 min).
+       Bumped specificity to (0,2,1) so it beats the base rule in
+       app.css:3142 regardless of CSS file load order. */
+    .cart-page__content .cart-qty button {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
+    .cart-page__content .cart-qty span {
+        min-width: 48px;
+        font-size: 16px;
+    }
+    .cart-page__content .cart-qty {
+        padding: 6px;
+    }
+
+    /* (c) Breadcrumb on dark hero — bump from 50% white (~3:1) to
+       78% white (~5.2:1, passes AA).  Underline links so they read
+       as interactive on the dark surface. */
+    .checkout-hero .breadcrumb,
+    .checkout-hero .breadcrumb span {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 13px;
+    }
+    .checkout-hero .breadcrumb a {
+        color: #fff;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
 }
