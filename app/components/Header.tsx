@@ -837,12 +837,13 @@ export function Header() {
                             </svg>
                             <input
                                 ref={searchInputRef}
-                                type="text"
+                                type="search"
                                 className="search-overlay__input"
                                 placeholder="Пошук товарів..."
                                 value={searchQuery}
                                 onChange={handleSearchInput}
                                 autoComplete="off"
+                                aria-label="Пошук товарів"
                             />
                             <button
                                 className="search-overlay__close"

@@ -56,7 +56,7 @@ export default function Footer() {
 
                         <div className="footer-puma__nav-grid">
                             <div className="footer-puma__nav-col">
-                                <h5 className="footer-puma__col-header">Допомога</h5>
+                                <h3 className="footer-puma__col-header">Допомога</h3>
                                 <ul className="footer-puma__nav-list">
                                     <li>
                                         <Link to="/contacts">Контакти</Link>
@@ -80,7 +80,7 @@ export default function Footer() {
                             </div>
 
                             <div className="footer-puma__nav-col">
-                                <h5 className="footer-puma__col-header">Каталог</h5>
+                                <h3 className="footer-puma__col-header">Каталог</h3>
                                 <ul className="footer-puma__nav-list">
                                     <li>
                                         <Link to="/shop/yoga">Yoga</Link>
@@ -104,7 +104,7 @@ export default function Footer() {
                             </div>
 
                             <div className="footer-puma__nav-col">
-                                <h5 className="footer-puma__col-header">Про компанію</h5>
+                                <h3 className="footer-puma__col-header">Про компанію</h3>
                                 <ul className="footer-puma__nav-list">
                                     <li>
                                         <Link to="/about">Про нас</Link>
@@ -119,7 +119,7 @@ export default function Footer() {
                             </div>
 
                             <div className="footer-puma__nav-col">
-                                <h5 className="footer-puma__col-header">Зв'язатись</h5>
+                                <h3 className="footer-puma__col-header">Зв'язатись</h3>
                                 <ul className="footer-puma__nav-list">
                                     <li>
                                         <a

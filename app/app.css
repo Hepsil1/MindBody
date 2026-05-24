@@ -4695,7 +4695,11 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     position: relative;
     height: 40px;
     font-size: 11px;
-    color: #555;
+    /* #555 on black = 2.82:1 — fails WCAG AA (4.5).  #999 = ~7:1 (AAA).
+       Lighthouse mobile a11y audit flagged .footer-puma__country-name
+       and .footer-puma__copyright-text — both inherit color from
+       this parent. */
+    color: #999;
 }
 
 .footer-puma__country-select {
@@ -14172,4 +14176,121 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
         font-weight: 500;
         color: var(--color-text-secondary);
     }
+}
+
+/* ============================================================
+   PHASE 7b — HEADER + MENU MICRO-FIXES (<=768px)
+   Header agent (background) flagged 9 items; these are the
+   P0+P1 CSS-only repairs:
+
+   (a) Burger button never animates to X.  Root cause: the
+       three `.header__burger--active span:nth-child(*)`
+       rotation rules live in app/styles/header.css but that
+       file is NEVER imported (only app.css, cart.css and
+       loading-screen.css are imported via root.tsx).  Moving
+       the rules here makes the animation actually fire.
+       Math: button is 44x44 with padding:12 → 20px inner;
+       3 spans of 2px + 2 gaps of 5px = 16px stacked.
+       translateY(7px) lands the top bar on the middle bar.
+   (b) Eyebrow margin asymmetry — Phase 5d set КАТЕГОРІЇ to
+       20mb and АКАУНТ to 4mb.  Same label style, two
+       different gaps reads as "broken." Match both at 12mb.
+   (c) АКАУНТ links computed to 20.8px tall (the divider rule
+       sets `gap:18` on `.header__nav-extra`, but the links
+       themselves have no padding).  Add 12px vertical padding
+       → min-height 44px, hits WCAG 2.5.5 (AA).
+   (d) Slide-out drawer has `overflow-x: auto` from the base
+       header.css copy — lock to `hidden` so a stray wide
+       child can never produce a sideways scrollbar.
+   ============================================================ */
+@media (max-width: 768px) {
+    /* (a) Burger -> X */
+    .header__burger--active span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+    }
+    .header__burger--active span:nth-child(2) {
+        opacity: 0;
+    }
+    .header__burger--active span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+    }
+
+    /* (b) Symmetric eyebrow rhythm — overrides the 4px in
+       Phase 5d. */
+    .header__nav-extra::before {
+        margin-bottom: 12px;
+    }
+    /* Tighten the КАТЕГОРІЇ eyebrow to match. */
+    .header__nav-list::before {
+        margin-bottom: 12px;
+    }
+
+    /* (c) АКАУНТ links — 44px touch target via padding (we
+       can't change height directly without disturbing the
+       flex layout). */
+    .header__nav-extra a {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 8px 0;
+    }
+
+    /* (d) Drawer must never scroll sideways. */
+    .header__nav {
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    /* (e) A11y agent: cart-drawer__item-remove is the small "X"
+       in the top-right corner of each line item — base style
+       gives it only padding:4 (so ~16×16 hit area). Bump to a
+       44×44 invisible hit area without changing the visible
+       icon size.  Negative margin reabsorbs the layout shift. */
+    .cart-drawer__item-remove {
+        min-width: 44px;
+        min-height: 44px;
+        margin: -10px;
+        padding: 14px;
+    }
+}
+
+/* ============================================================
+   PHASE 7a — A11Y: KEYBOARD FOCUS RING (GLOBAL)
+   WCAG 2.2 AA — keyboard users currently see no focus
+   indicator anywhere on the site. :focus-visible fires only on
+   keyboard navigation (Tab) so mouse + touch users see no
+   visual change.  Strictly additive — does not modify any
+   existing visual style.
+
+   Rationale for GLOBAL scope (not mobile-only): keyboard
+   navigation is overwhelmingly desktop, so a mobile-only ring
+   would benefit nobody.  The visual cost on desktop is zero
+   for mouse users (the rule never fires).
+   ============================================================ */
+*:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Form fields look cleaner with a tighter offset and a soft
+   teal glow.  Inputs already have their own focus background
+   in some routes, but the outline ensures the spot is found
+   even on the cream backgrounds where placeholder text is the
+   only signal otherwise. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+    box-shadow: 0 0 0 4px rgba(42, 90, 90, 0.12);
+}
+
+/* Buttons get a subtle ring without the box-shadow so the
+   visual stays calm. */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }

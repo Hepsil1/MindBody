@@ -529,6 +529,12 @@ export default function Home() {
 
     return (
         <main>
+            {/* Accessible H1 — visually hidden because the hero wordmark
+                is a logo image, not text. WCAG 1.3.1 / Lighthouse
+                heading-order: every page needs a single H1. */}
+            <h1 className="visually-hidden">
+                MIND BODY — преміум жіночий спортивний одяг для йоги, гімнастики та активного життя
+            </h1>
             <HeroSlider slides={slides} />
             {/* Premium Features Bar */}
             <section className="premium-features-bar">

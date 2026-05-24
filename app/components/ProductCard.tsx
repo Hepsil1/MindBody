@@ -133,7 +133,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
                 <button
                     className="product-card__heart-btn"
-                    aria-label="Add to wishlist"
+                    aria-label="Додати в обране"
                     onClick={handleAddToWishlist}
                 >
                     <svg
@@ -174,9 +174,12 @@ export default function ProductCard({ product }: { product: Product }) {
                             <span className="product-card__price-main product-card__price-main--sale">
                                 {sale_price.toLocaleString()} ₴
                             </span>
-                            <span className="product-card__price-old">
+                            <s
+                                className="product-card__price-old"
+                                aria-label={`Попередня ціна ${price.toLocaleString()} гривень`}
+                            >
                                 {price.toLocaleString()} ₴
-                            </span>
+                            </s>
                         </>
                     ) : (
                         <span className="product-card__price-main">{price.toLocaleString()} ₴</span>
