@@ -14613,3 +14613,16 @@ select {
 .skeleton-shimmer {
     animation: skeletonPulse 1.5s ease-in-out infinite;
 }
+
+/* ====================================================================
+   Phase 4 — Tablet breakpoint (768-1023px)
+   Hero/landing audit found 120px section spacing felt "sparse" on
+   iPad. Mobile (<768) already has compact rhythm. Add a tablet
+   override so the in-between viewport breathes proportionally.
+   ==================================================================== */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+    :root {
+        --space-section: 80px;
+        --container-padding: 40px;
+    }
+}
