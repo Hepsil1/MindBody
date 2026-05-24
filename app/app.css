@@ -14507,3 +14507,109 @@ select {
         height: 100dvh;
     }
 }
+
+/* ====================================================================
+   Phase 2 — Interaction baseline
+   Universal active/pressed feedback, disabled state, error animation,
+   form input focus polish, mobile press scaling, smooth-scroll restore.
+   ==================================================================== */
+
+/* Press feedback: every clickable surface gets a subtle tactile scale.
+   Mouse devices respect :active; touch devices use a media query that
+   matches (hover: none). Apple/Stripe/Linear all do this. */
+.btn:active,
+button:active,
+[role="button"]:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+}
+
+/* Disabled buttons: legacy code used opacity:0 (invisible) — that was a
+   bug. Greyed-out is the canonical pattern. */
+.btn:disabled,
+button:disabled,
+button[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    color: var(--color-text-subtle);
+    pointer-events: none;
+}
+.btn:disabled:hover,
+button:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Mobile press feedback: touch devices don't get :hover, so :active
+   must do all the work. Slightly stronger scaling reads as "tapped". */
+@media (hover: none) {
+    button:active,
+    a:active,
+    [role="button"]:active,
+    .btn:active {
+        transform: scale(0.97);
+        opacity: 0.85;
+    }
+}
+
+/* Form errors fade-in — replaces the abrupt appendChild snap that
+   broke premium feel. Wrap any error message with class .form-error
+   or .field-error to inherit the animation. */
+@keyframes errorSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.form-error,
+.field-error,
+.error-message {
+    animation: errorSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Form-input focus polish — 250ms transition instead of 150ms snap.
+   The Stripe form aesthetic: noticeable but not sluggish. */
+input,
+textarea,
+select {
+    transition:
+        border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 0.25s ease,
+        box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Search overlay backdrop blur — was solid rgba which read harsh.
+   The blur creates depth + premium feel like Apple modals. */
+.search-overlay {
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+
+/* Color/size swatches global hover polish — used on PDP. Phase 2 adds
+   shadow lift so the hover feedback is unmistakable. */
+.color-swatch:hover,
+.size-chip:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Skeleton pulse — replace static grey with breathing animation.
+   ProductCardSkeleton and similar shimmer components inherit this. */
+@keyframes skeletonPulse {
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+.skeleton,
+.product-card-skeleton,
+.skeleton-shimmer {
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+}
