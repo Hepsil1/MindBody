@@ -293,6 +293,64 @@
     }
 }
 
+/* ============================================================
+   PHASE 8 atom 3 — SHOP SORT CHIPS + COUNT DEDUPE
+   Shop-yoga audit P0/P1:
+   (1) Base .sort-chip is Cormorant 11px/700 uppercase with
+       transparent bg + transparent border — reads as decorative
+       type on iPhone, NOT a tappable button.  Real iPhone
+       emulation confirmed: chip labels look like menu items.
+   (2) Two product counts: ".mobile-filter-bar" already shows
+       "14 товарів"; then ".product-count" repeats "12 з 14
+       ТОВАРІВ" — duplicate noise.
+
+   Mobile-only @media (max-width: 768px) so desktop keeps its
+   minimal-decorative chip style.
+   ============================================================ */
+@media (max-width: 768px) {
+    .sort-chip {
+        min-height: 36px;
+        padding: 8px 16px;
+        background: #fff;
+        border: 1px solid var(--color-border, #e8e5e1);
+        border-radius: 999px;
+        font-family: var(--font-body, "DM Sans", sans-serif);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: none;
+        color: var(--color-text-primary, #1a1a1a);
+    }
+    .sort-chip.active {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: #fff;
+        box-shadow: none;
+    }
+    .sort-chip .close-x {
+        font-size: 13px;
+        margin-left: 4px;
+        opacity: 0.85;
+    }
+
+    /* Dedupe — .mobile-filter-bar handles the count on mobile. */
+    .product-count {
+        display: none;
+    }
+
+    /* Remove the heavy 186px toolbar dead-zone by dropping the
+       bottom border + tightening padding (audit P2). */
+    .toolbar-top-row {
+        border-bottom: none;
+        padding-bottom: 12px;
+        gap: 8px;
+    }
+    .sort-label {
+        font-size: 10px;
+        opacity: 0.7;
+    }
+}
+
 /* ============================================
    MOBILE FILTER BAR + DRAWER
    ============================================ */
