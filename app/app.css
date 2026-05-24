@@ -14164,6 +14164,21 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 }
 
 /* ============================================================
+   PHASE 8 atom 1 — PARTICLES OFF MOBILE (<=768px)
+   Premium 2024 brands (Aesop, The Row, COS) keep mobile silent.
+   The .smart-sun-particles canvas already short-circuits its
+   useEffect on <=768px (no rAF loop, no listeners) — this rule
+   makes sure the empty canvas element doesn't even take a
+   compositor layer.  z-index:-1 + pointer-events:none meant it
+   was invisible already; display:none removes the cost entirely.
+   ============================================================ */
+@media (max-width: 768px) {
+    .smart-sun-particles {
+        display: none;
+    }
+}
+
+/* ============================================================
    PHASE 5e — CART DRAWER HIERARCHY (<=768px)
    Same audit insight as Phase 5c but for the drawer: the item
    name (Tenor Sans 13/400) reads quieter than the price

@@ -7,6 +7,14 @@ export default function SmartSunParticles() {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
+        // Phase 8 atom 1: no particles on mobile.  Premium 2024
+        // pattern (Aesop, The Row, COS) is silence.  Also a perf
+        // win — no canvas paint, no rAF loop, no resize/scroll
+        // listeners.  The CSS rule in app.css also hides the
+        // canvas element entirely on <=768px so it never even
+        // takes a layer.
+        if (window.innerWidth <= 768) return;
+
         // Respect user's motion preference
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -174,6 +182,7 @@ export default function SmartSunParticles() {
     return (
         <canvas
             ref={canvasRef}
+            className="smart-sun-particles"
             style={{
                 position: "fixed",
                 top: 0,
