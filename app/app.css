@@ -18,9 +18,15 @@
     font-weight: 600;
     text-decoration: none;
     transition: top 0.2s ease;
+    /* Even with top:-100% the element still captures pointer events on
+       some browsers / scroll states, intercepting the first tap on the
+       burger button. Disable hit-testing when off-screen; re-enable on
+       focus so keyboard users can still activate it. */
+    pointer-events: none;
 }
 .skip-link:focus {
     top: 0;
+    pointer-events: auto;
 }
 
 :root {
@@ -13769,5 +13775,401 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     }
     .floating-contact__panel {
         gap: 8px;
+    }
+}
+
+/* ============================================================
+   PHASE 1 — MOBILE BUTTON + CHIP UNIFICATION (<=768px)
+   On mobile the site had three different button languages:
+   .btn (4px-radius slab, 16/32 padding, 14px), .bw-btn-elegant
+   (pill, 14/28 padding, 11px), .mind-feedback__btn (sharp 0-
+   radius square, 40px height, 12px, letter-spacing 2px). Filter
+   size-chip active state was dark grey (#333) instead of brand
+   teal. Unify on mobile so the page reads as one system.
+
+   Higher specificity (a.bw-btn-elegant, double .mb-size-chip)
+   lets this app.css block beat the route-loaded home.css /
+   shop.css rules without !important.
+
+   Hero CTA's existing narrower padding (.hero-slider__cta-btn
+   in home.css) still wins for horizontal padding because that
+   selector is later in source order — intentional, keeps the
+   hero CTA compact.
+   ============================================================ */
+@media (max-width: 768px) {
+    .btn,
+    .btn--primary,
+    .btn--outline,
+    a.bw-btn-elegant,
+    .mind-feedback__btn {
+        padding: 14px 24px;
+        height: auto;
+        font-family: var(--font-body, "DM Sans", sans-serif);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        border-radius: 100px;
+        border-width: 1.5px;
+        line-height: 1;
+    }
+    /* Newsletter button keeps its form-width stretch. */
+    .mind-feedback__btn {
+        width: 100%;
+    }
+
+    /* Filter size-chip active — brand teal, not dark grey.
+       Double class selector beats shop.css source order. */
+    .mb-size-chip.mb-size-chip.active {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(42, 90, 90, 0.2);
+    }
+}
+
+/* ============================================================
+   PHASE 2 — MOBILE BREAKPOINT COMPLETENESS (<=480px)
+   Close gaps the deep audit flagged on iPhone SE / narrow
+   Androids: footer-grid still uses 40px gap (stacking +
+   40px gap = 160px+ vertical waste); cart-drawer title at
+   1.1rem + 2px tracking risked overflow next to the count
+   chip; long Ukrainian sort labels wrapped multi-line in
+   the sort row. Parent-class selectors win source order
+   over cart.css / shop.css without !important. Desktop
+   untouched.
+   ============================================================ */
+@media (max-width: 480px) {
+    .footer-puma__nav-grid {
+        gap: 20px;
+    }
+    .cart-drawer .cart-drawer__title {
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+    }
+    .sort-chips .sort-chip {
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* ============================================================
+   PHASE 3 — MOBILE HERO/BANNER PADDING + CART BG (<=768px)
+   Hero banners shipped with desktop-scale padding on phones:
+   shop hero ate 170px (39% of an 844px viewport), auth hero
+   220px, cart hero 240px. Cart page also had #f8f9fa grey bg
+   that broke the cream-cohesion. Tighten and recolour for
+   mobile. Desktop untouched.
+   ============================================================ */
+@media (max-width: 768px) {
+    /* Shop listing hero (kids/yoga/sport/etc.). The .compact
+       modifier on product pages has its own @media in
+       product-page.css and is untouched. */
+    .shop-hero-luxe:not(.compact) {
+        padding: 48px 0 24px;
+        min-height: 0;
+    }
+    /* Auth pages hero (login/register). */
+    .auth-hero {
+        padding: 100px 0 60px;
+    }
+    /* Cart page surface — match site cream so the page feels
+       cohesive with the rest of the brand. */
+    .cart-page {
+        background: var(--color-bg-cream);
+    }
+    /* Cart hero gradient — lighten from near-black to the
+       brand teal family, and shrink padding. */
+    .cart-header-section {
+        padding: 100px 0 56px;
+        background: linear-gradient(135deg, #1a4f5a 0%, #2a5a5a 100%);
+        margin-bottom: 32px;
+    }
+}
+
+/* ============================================================
+   PHASE 4 — MOBILE PREMIUM DETAILS (<=768px)
+   The detail-layer fixes that read as "considered" on phones:
+   product-card image gets a hairline separator from the card;
+   long product names clamp to 2 lines (no awkward 3-line
+   overflow on narrow cards); SALE badge uses brand marsala
+   (not dark-teal-on-teal); and the floating contact cluster
+   lifts above the product-page sticky CTA so it no longer
+   covers «Додати до кошика». Desktop untouched.
+   ============================================================ */
+@media (max-width: 768px) {
+    /* Hairline frame separates image from card surface. */
+    .product-card__image-wrapper {
+        border: 1px solid var(--color-border);
+    }
+    /* Long Ukrainian names clamp to 2 lines on narrow cards. */
+    .product-card__title {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.4em;
+    }
+    /* SALE badge: brand marsala (was a dark teal that vanished
+       on the cream card). NEW already uses --color-primary. */
+    .product-badge--sale {
+        background: var(--color-marsala);
+        color: #fff;
+    }
+    /* Re-establish product-page sticky-CTA clearance — my own
+       earlier mobile block reset bottom:20 and broke the
+       :has(.product-page) lift at line 10674. */
+    body:has(.product-page) .floating-contact {
+        bottom: 84px;
+    }
+}
+
+/* ============================================================
+   PHASE 5b — MOBILE MICRO-INTERACTIONS (<=768px)
+   Premium UX = tactile feedback + respect for OS settings.
+   Adds press-down feedback to main CTAs, exposes hover-only
+   link affordances to touch, disables card hover-flip on
+   touch (it can never trigger and causes flicker), and forces
+   the category card reveal link to show on touch.
+   ============================================================ */
+@media (max-width: 768px) {
+    /* Press feedback — even a 50ms scale tells the user the tap
+       registered. Without it mobile buttons feel mute. */
+    .btn:active,
+    .btn--primary:active,
+    .btn--outline:active,
+    a.bw-btn-elegant:active,
+    .mind-feedback__btn:active,
+    .header__action-btn:active,
+    .header__burger:active,
+    .mobile-sticky-cta__btn:active {
+        transform: scale(0.96);
+        opacity: 0.9;
+    }
+
+    /* Category card "ПЕРЕГЛЯНУТИ →" link reveals on hover on
+       desktop; on touch hover never fires, so the affordance is
+       invisible. Force visible. */
+    .category-card-editorial__reveal-wrap,
+    .category-card-editorial__link {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    /* Card hover-flip image can't trigger on touch and leaves
+       a stale layered image flicker — hide outright. */
+    .product-card__img--hover {
+        display: none;
+    }
+}
+
+/* ============================================================
+   PHASE 5b — REDUCED MOTION (global, premium pattern)
+   Aesop / The Row / COS all silence — don't shorten — when
+   the OS reports prefers-reduced-motion. Vestibular-sensitive
+   users get a still page, not a fast one. Targets every
+   animation/transition site-wide.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ============================================================
+   PHASE 5c — MOBILE HIERARCHY + RHYTHM (<=768px)
+   Two background brutal audits flagged:
+   (1) product-card price (22px/700) visually outweighs name
+       (0.85rem/400) — premium reads "name first, price second"
+       (cf. Aesop, The Row). Swap visual weight on mobile.
+   (2) auth form-group margin-bottom 20px is off the 8-module
+       scale and stacks to jagged 40/60/80 instead of 48/72/96.
+   (3) hero scrim is a soft 0.4→0→0→0.2 gradient that fails
+       against bright product photos on mobile — wordmark and
+       CTA need a stronger bottom shade to read at thumb-zone.
+   (4) footer column headers are 13px (same as links) — they
+       LOOK like another link, not a group label. Bump size +
+       tracking on mobile to restore hierarchy.
+   ============================================================ */
+@media (max-width: 768px) {
+    /* (1) Product card hierarchy — name dominates, price supports.
+       Both selectors raised to (0,0,2,0) to beat .shop-luxe scoped
+       rules at app.css:10160 / :10178 which set name 16/500 and
+       price 22/700 — that ladder reads "price first" on a phone. */
+    .product-card .product-card__title {
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        text-transform: none;
+        font-family: "Cormorant Garamond", Georgia, serif;
+    }
+    .product-card .product-card__price-main {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0;
+    }
+    .product-card .product-card__price-old {
+        font-size: 12px;
+    }
+
+    /* (2) Auth form-group rhythm — 24px lands on the 8-module
+       scale and stacks predictably (48/72/96). */
+    .auth-form .form-group {
+        margin-bottom: 24px;
+    }
+
+    /* (3) Hero scrim — darker bottom band so wordmark + CTA
+       read against any photo. Top stays subtle so the image
+       doesn't feel tunneled.  Bumped specificity to (0,0,2,0)
+       so we beat the (0,0,1,0) rule in home.css that loads
+       after app.css. */
+    .hero-slider .hero-slider__overlay {
+        background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.55) 0%,
+            rgba(0, 0, 0, 0.15) 40%,
+            rgba(0, 0, 0, 0) 70%,
+            rgba(0, 0, 0, 0.25) 100%
+        );
+    }
+
+    /* (4) Footer column headers — 14px + wider tracking sets
+       them apart from 13px link rows. Same 800 weight, same
+       white color — only size + tracking change. */
+    .footer-puma__col-header {
+        font-size: 14px;
+        letter-spacing: 1.5px;
+        margin-bottom: 16px;
+    }
+}
+
+/* ============================================================
+   PHASE 5d — MOBILE A11Y + MENU STRUCTURE (<=768px)
+   (a) Color swatches PDP: 40 → 44 — match size-chip and
+       WCAG 2.2 minimum touch target. Lifted via .product-page
+       prefix to clear the (0,0,1,0) base rule in
+       product-page.css:374 without !important.
+   (b) Slide-out menu — two groups (categories vs. account)
+       separated only by a hairline; no labels = the second
+       group reads as orphan links. CSS ::before adds an
+       Aesop-style 11px tracked eyebrow on each group without
+       touching JSX. Audit complained about missing dividers/
+       labels — divider exists, labels did not.
+   ============================================================ */
+@media (max-width: 768px) {
+    .product-page-mindbody .color-swatch {
+        width: 44px;
+        height: 44px;
+    }
+
+    .header__nav-list::before {
+        content: "КАТЕГОРІЇ";
+        display: block;
+        font-family: "DM Sans", system-ui, sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        margin-bottom: 20px;
+    }
+    .header__nav-extra::before {
+        content: "АКАУНТ";
+        display: block;
+        font-family: "DM Sans", system-ui, sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+}
+
+/* ============================================================
+   PHASE 5f — PDP POLISH (<=768px)
+   PDP audit (background agent) returned 8 items; these are the
+   4 actionable CSS-only fixes (the other 4 are structural —
+   gallery component, reviews block, CTA-row stacking, sticky
+   CTA scroll-to-size — deferred to Phase 6).
+
+   (a) Disabled CTA — base rule uses only opacity 0.5; in
+       sunlight that vanishes against the enabled teal. Replace
+       with a HOLLOW ghost: transparent bg, border, muted text.
+       Now reads "not yet available" not "press me."
+   (b) Disabled size chip — base only has opacity + line-through;
+       add a faint diagonal slash so the "unavailable" intent is
+       readable from across the room.
+   (c) Related-products card "Швидкий Перегляд" — agent
+       correctly noted it reads like placeholder copy. The whole
+       card is already a Link to the PDP, so QV is redundant on
+       touch. Hide on mobile (desktop hover-flow keeps it).
+   ============================================================ */
+@media (max-width: 768px) {
+    /* (a) Disabled "ОБЕРІТЬ РОЗМІР" — hollow ghost beats opacity. */
+    .btn-primary-add:disabled {
+        background-color: transparent !important;
+        color: var(--color-text-subtle, #777) !important;
+        border: 1px solid var(--color-border, #e8e5e1);
+        opacity: 1;
+        cursor: not-allowed;
+    }
+    /* Mirror on the sticky bottom CTA. */
+    .mobile-sticky-cta__btn:disabled,
+    .mobile-sticky-cta__btn[aria-disabled="true"] {
+        background-color: transparent !important;
+        color: var(--color-text-subtle, #777) !important;
+        border: 1px solid var(--color-border, #e8e5e1);
+        opacity: 1;
+    }
+
+    /* (b) Disabled size chip — diagonal slash + heavier line-through. */
+    .product-page-mindbody .size-chip.unavailable {
+        opacity: 0.55 !important;
+        background-image: linear-gradient(
+            to top right,
+            transparent 48%,
+            var(--color-border-mid, #ddd) 49%,
+            var(--color-border-mid, #ddd) 51%,
+            transparent 52%
+        );
+    }
+
+    /* (c) Hide quick-view on mobile related-product cards —
+       the card itself is a Link to the PDP; the extra label
+       reads as placeholder copy on touch and steals 46px of
+       vertical from each card. */
+    .product-card__quick-view {
+        display: none;
+    }
+}
+
+/* ============================================================
+   PHASE 5e — CART DRAWER HIERARCHY (<=768px)
+   Same audit insight as Phase 5c but for the drawer: the item
+   name (Tenor Sans 13/400) reads quieter than the price
+   (14/600).  Swap visual weight so the *what* leads the
+   *how-much* — consistent with the product-card pass and
+   premium pattern (Aesop / The Row line-items).
+   Selectors raised to (0,0,2,0) so they cross the route-css
+   source-order line without !important.
+   ============================================================ */
+@media (max-width: 768px) {
+    .cart-drawer .cart-drawer__item-name {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.2px;
+    }
+    .cart-drawer .cart-drawer__item-price {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--color-text-secondary);
     }
 }

@@ -996,6 +996,8 @@ export default function ProductDetail() {
                                 <button
                                     className="btn-wishlist hover-scale"
                                     onClick={addToWishlist}
+                                    aria-label="Додати в обране"
+                                    title="Додати в обране"
                                 >
                                     <svg
                                         width="20"

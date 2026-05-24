@@ -114,9 +114,16 @@ export default function HeroSlider({
                         <div className="hero-slider__triptych">
                             {getSlideItems(slide).map((item, imgIndex) => (
                                 <div key={imgIndex} className="hero-slider__triptych-item">
+                                    {/* width / height attrs are nominal — CSS uses object-fit:cover.
+                                        Their job is to give the browser an aspect ratio so the hero
+                                        reserves layout space and we don't get a 0.3 CLS jump when
+                                        the image decodes. 1080x1920 is the typical mobile-portrait
+                                        ratio of our hero uploads. */}
                                     <img
                                         src={item.img}
                                         alt={`${slide.name} Image ${imgIndex + 1}`}
+                                        width={1080}
+                                        height={1920}
                                         style={{ objectPosition: item.pos }}
                                         loading={index === 0 ? "eager" : "lazy"}
                                         decoding={index === 0 ? "sync" : "async"}

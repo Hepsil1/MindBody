@@ -963,7 +963,10 @@
         right: 0;
         background: #fff;
         border-top: 1px solid #e5e7eb;
-        padding: 12px 16px;
+        /* Tightened from 12/16 — the 60px-tall bar ate too
+           much viewport on small phones and pushed related
+           products below the fold. */
+        padding: 10px 14px;
         z-index: 999;
         align-items: center;
         justify-content: space-between;
@@ -981,16 +984,18 @@
 
     .mobile-sticky-cta__btn {
         flex: 1;
-        padding: 14px 20px;
+        /* Down from 14/20 + 15px font — keeps the touch
+           target ~44px tall while shrinking the bar. */
+        padding: 11px 16px;
         background: var(--color-primary, #2a5a5a);
         color: #fff;
         border: none;
-        border-radius: 12px;
-        font-size: 15px;
+        border-radius: 100px;
+        font-size: 14px;
         font-weight: 700;
         cursor: pointer;
         text-transform: uppercase;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.4px;
         transition: opacity 0.2s;
     }
 
