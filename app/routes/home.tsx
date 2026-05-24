@@ -820,18 +820,7 @@ export default function Home() {
                         onTouchEnd={handleTouchEnd}
                     >
                         {newProducts.map((p, i) => (
-                            <ProductCard
-                                key={p.id}
-                                product={p}
-                                priority={i < 4}
-                                /* Mobile: each card is ~78vw in the home carousel;
-                                   desktop: ~25vw in 4-up grid. Without this the
-                                   default 50vw mobile size makes browser pick the
-                                   400w webp variant, which then upscales 1.6× on
-                                   a 318px card and looks soft on retina. Forcing
-                                   78vw makes it pick 800w / 1200w → sharp. */
-                                imageSizes="(max-width: 768px) 78vw, 25vw"
-                            />
+                            <ProductCard key={p.id} product={p} priority={i < 4} />
                         ))}
                     </div>
 
