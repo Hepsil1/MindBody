@@ -392,6 +392,9 @@ export default function Home() {
 
     /* NEW ARRIVALS INFINITE CAROUSEL */
     const carouselRef = useRef<HTMLDivElement>(null);
+    const bwFeaturesRef = useRef<HTMLDivElement>(null);
+    const [activeArrival, setActiveArrival] = useState(0);
+    const [activeFeature, setActiveFeature] = useState(0);
     const CARD_WIDTH = 300; // approximate, updated on layout
     const VISIBLE = 4;
 
@@ -415,6 +418,47 @@ export default function Home() {
         const diff = touchStartX.current - e.changedTouches[0].clientX;
         if (Math.abs(diff) > 50) scrollCarousel(diff > 0 ? "next" : "prev");
     };
+
+    // Mobile carousel scroll tracking — drives the progress bar (New Arrivals)
+    // and the dot indicator (Brand World features). Uses one IntersectionObserver
+    // per carousel root, finds the most-visible child, sets it as active. Skips
+    // entirely on desktop where the original arrow controls drive the UX.
+    useEffect(() => {
+        if (typeof window === "undefined" || window.innerWidth > 768) return;
+        const observers: IntersectionObserver[] = [];
+        const observeChildren = (root: HTMLElement | null, setActive: (i: number) => void) => {
+            if (!root) return;
+            const cards = Array.from(root.children) as HTMLElement[];
+            if (!cards.length) return;
+            const io = new IntersectionObserver(
+                (entries) => {
+                    let best: IntersectionObserverEntry | null = null;
+                    for (const e of entries) {
+                        if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
+                    }
+                    if (best && best.isIntersecting && best.intersectionRatio > 0.55) {
+                        const idx = cards.indexOf(best.target as HTMLElement);
+                        if (idx !== -1) setActive(idx);
+                    }
+                },
+                { root, threshold: [0.4, 0.6, 0.8, 1] },
+            );
+            cards.forEach((c) => io.observe(c));
+            observers.push(io);
+        };
+        observeChildren(carouselRef.current, setActiveArrival);
+        observeChildren(bwFeaturesRef.current, setActiveFeature);
+        return () => observers.forEach((o) => o.disconnect());
+    }, [newProducts.length]);
+
+    // Tap-a-dot navigation for BW features carousel — smooth-scrolls the
+    // tapped feature card into view. Native scroll-snap then locks it.
+    const scrollFeatureToIndex = useCallback((i: number) => {
+        const root = bwFeaturesRef.current;
+        const child = root?.children[i] as HTMLElement | undefined;
+        if (!child) return;
+        child.scrollIntoView({ inline: "start", behavior: "smooth", block: "nearest" });
+    }, []);
     const videoPlaylist = [
         "/uploads/brand-hero.mp4",
         "/uploads/brand-video-2.mp4",
@@ -780,6 +824,28 @@ export default function Home() {
                         ))}
                     </div>
 
+                    {/* Mobile progress bar — desktop hides via CSS @media.
+                        Fills as the active card index advances. Provides the
+                        "where am I in the list" signal that scroll-snap alone
+                        can't deliver. role=progressbar is announced to AT. */}
+                    <div
+                        className="arrival-progress"
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={newProducts.length}
+                        aria-valuenow={activeArrival + 1}
+                        aria-label="Прогрес перегляду новинок"
+                    >
+                        <div
+                            className="arrival-progress__fill"
+                            style={{
+                                width: `${
+                                    ((activeArrival + 1) / Math.max(1, newProducts.length)) * 100
+                                }%`,
+                            }}
+                        />
+                    </div>
+
                     <div className="section__cta-center">
                         <Link to="/shop" className="btn btn--outline">
                             Переглянути всі новинки →
@@ -930,7 +996,7 @@ export default function Home() {
                             </div>
 
                             {/* Right: The Ultra-Clean Feature List (Macro Typography) */}
-                            <div className="bw-v3-features bw-macro-features">
+                            <div className="bw-v3-features bw-macro-features" ref={bwFeaturesRef}>
                                 <div className="bw-feat-item bw-feat-item--1">
                                     <div className="bw-macro-number" data-text="01">
                                         01
@@ -982,6 +1048,30 @@ export default function Home() {
                                             Каталог <span className="bw-feat-link-arr">→</span>
                                         </Link>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Mobile dot navigation — desktop hides via CSS @media.
+                                4 dots = 4 fixed feature cards. Active dot updates
+                                live as user swipes. Tapping a dot smooth-scrolls
+                                to that feature. role=tablist for AT semantics. */}
+                            <div className="bw-feat-dots-wrap">
+                                <div
+                                    className="bw-feat-dots"
+                                    role="tablist"
+                                    aria-label="Перегляд переваг"
+                                >
+                                    {[0, 1, 2, 3].map((i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            role="tab"
+                                            className={`bw-feat-dot ${activeFeature === i ? "is-active" : ""}`}
+                                            aria-selected={activeFeature === i}
+                                            aria-label={`Перевага ${i + 1} з 4`}
+                                            onClick={() => scrollFeatureToIndex(i)}
+                                        />
+                                    ))}
                                 </div>
                             </div>
                         </div>

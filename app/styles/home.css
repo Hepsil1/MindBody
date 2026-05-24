@@ -3454,20 +3454,29 @@
 }
 
 /* ====================================================================
-   Batch 11 — Complete mobile redesign of two sections per user feedback
-   "Это совершенно не телефонная история" + "полностью некрасиво"
+   Batch 11/12 — Mobile redesign of two sections, v2.
+
+   User feedback after v1: "карточки нравится но motion нет, не листаются
+   логически, много боков" → cards visually OK but missing animation,
+   no progress feedback, too many visible borders/edges.
+
+   v2 changes (this block):
+   - Drop mask-image hack → replace with explicit indicators:
+     • New Arrivals: thin progress bar below (smooth fill, fluid feel)
+     • BW features:   4-dot pager below (taps jump to specific card)
+   - BW feat-item: transparent bg, no border, no radius — pure editorial.
+     Big "01" macro-number sits BEHIND the title at low opacity (poster).
+     1px right divider between cards is the only "side" left.
+   - CSS scroll-driven animation (@supports animation-timeline: view) —
+     each card breathes opacity 0.4 → 1.0 → 0.4 as it crosses centre.
+     Pure CSS, GPU, respects prefers-reduced-motion. No JS for motion.
+   - IntersectionObserver in home.tsx drives the indicators (dot/bar).
 
    SCOPE: mobile-only (max-width 768px). Desktop layout unchanged.
-
-   Sections rebuilt:
-   1. .new-arrivals — was arrow-button carousel with 70vw cards
-   2. .bw-unified-section.bw-v3 — was 3-column layout collapsed to
-      stacked text + cramped 2x2 feature grid + breathing video
    ==================================================================== */
 @media (max-width: 768px) {
     /* ---------- 1. НОВІ НАДХОДЖЕННЯ — native mobile carousel ---------- */
 
-    /* Header: stack centered, drop the side-by-side arrows layout */
     .new-arrivals-header {
         display: flex;
         flex-direction: column;
@@ -3487,45 +3496,54 @@
         text-align: center;
     }
 
-    /* Hide arrow buttons — desktop interaction grammar. Mobile uses
-       native swipe + scroll-snap below. */
     .new-arrivals-header__controls,
     .carousel-btn--prev,
     .carousel-btn--next {
         display: none !important;
     }
 
-    /* Carousel: peek-the-next-card pattern. 65vw card = 1 full + 0.5
-       next peek. Right edge fades to signal "more to swipe". */
+    /* Carousel: 68vw cards (1 full + 0.45 peek). NO mask gradient — the
+       explicit progress bar below owns the "where am I" signal. Less
+       visual clutter ("боков"). */
     .products-carousel {
         scroll-padding-inline-start: 16px !important;
-        padding: 0 16px 12px !important;
-        gap: 12px !important;
-        /* Mask-image right-edge fade so peeking card looks intentional */
-        -webkit-mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
-        mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+        padding: 0 16px 8px !important;
+        gap: 10px !important;
+        -webkit-mask-image: none !important;
+        mask-image: none !important;
     }
     .products-carousel > * {
-        flex: 0 0 65vw !important;
+        flex: 0 0 68vw !important;
         scroll-snap-align: start;
         scroll-snap-stop: always;
     }
 
-    /* "Переглянути всі новинки" CTA below carousel: tighten padding */
-    .new-arrivals + .new-arrivals-cta,
-    .new-arrivals__cta {
+    /* Progress bar — sits between carousel and CTA. Single thin visual
+       cue, fluid fill driven by activeArrival React state. */
+    .arrival-progress {
+        display: block;
+        height: 2px;
+        margin: 8px auto 0;
+        width: calc(100% - 80px);
+        max-width: 240px;
+        background: var(--color-border);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    .arrival-progress__fill {
+        height: 100%;
+        background: var(--color-primary);
+        border-radius: 2px;
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: width;
+    }
+
+    .section__cta-center {
         margin-top: 24px;
         text-align: center;
     }
 
-    /* ---------- 2. РУХ ЩО ПЕРЕТВОРЮЄ — mobile narrative + swipe features ---------- */
-
-    /* Layout: completely linear narrative. Order:
-       1. eyebrow + title + subtitle (centered)
-       2. video frame (4:5 ratio, cap height)
-       3. mission text under video
-       4. feature cards as horizontal scroll-snap carousel
-       5. CTA button */
+    /* ---------- 2. РУХ ЩО ПЕРЕТВОРЮЄ — editorial swipe features ---------- */
 
     .bw-v3-layout {
         flex-direction: column !important;
@@ -3534,7 +3552,6 @@
         padding: 0 16px !important;
     }
 
-    /* Manifesto — eyebrow + title + subtitle centered */
     .bw-v3-manifesto {
         order: 0 !important;
         text-align: center !important;
@@ -3561,34 +3578,29 @@
         text-align: center !important;
         font-size: 13px !important;
     }
-    /* Drop the serif top-border decoration left of mission — only works
-       in side-by-side layout */
     .bw-mission-elegant::before {
         display: none !important;
     }
-    /* Hide zen logo magnetic widget — pointless on touch (no parallax) */
     .bw-zen-visual,
     .bw-zen-logo {
         display: none !important;
     }
-    /* CTA: full-width pill, separate row below mission */
     .bw-manifesto-cta {
         margin: 8px auto 0 !important;
     }
 
-    /* Video frame — order: between title block and features */
     .bw-v3-frame-container {
         order: 1 !important;
         margin: 0 auto !important;
     }
     .bw-v3-frame {
-        aspect-ratio: 4 / 5 !important; /* premium portrait, was 3/4 */
+        aspect-ratio: 4 / 5 !important;
         max-width: 320px;
         max-height: 400px;
     }
 
-    /* Features list — horizontal scroll-snap carousel (was 2x2 grid).
-       Cards are full-width-ish with peek of next. */
+    /* Features carousel — full bleed, transparent, no mask. The dot
+       indicator below replaces the mask-fade hint. */
     .bw-v3-features {
         order: 2 !important;
         padding: 0 !important;
@@ -3602,56 +3614,214 @@
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         scroll-padding-inline-start: 16px;
-        padding: 16px 16px 24px;
-        gap: 12px !important;
+        padding: 8px 16px 16px;
+        gap: 0 !important; /* dividers handle separation */
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
-        /* Right-edge mask to hint more content */
-        -webkit-mask-image: linear-gradient(to right, black 0%, black 90%, transparent 100%);
-        mask-image: linear-gradient(to right, black 0%, black 90%, transparent 100%);
-        /* Negative margin to extend full-bleed */
+        -webkit-mask-image: none !important;
+        mask-image: none !important;
         margin: 0 -16px;
     }
     .bw-macro-features::-webkit-scrollbar {
         display: none;
     }
+    /* Editorial card: transparent bg, no chrome. 1px right divider
+       between cards only. Big "01" sits as poster behind title via
+       z-index — depth without borders. */
     .bw-feat-item {
-        flex: 0 0 76vw !important;
+        flex: 0 0 78vw !important;
         scroll-snap-align: start;
         scroll-snap-stop: always;
-        background: var(--color-bg-white);
-        border: 1px solid var(--color-border-light);
-        border-radius: 8px;
-        padding: 24px 20px !important;
-        gap: 12px !important;
-        align-items: flex-start !important;
+        position: relative !important;
+        display: block !important;
+        background: transparent !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        padding: 20px 24px 24px 12px !important;
+        min-height: 180px;
+        overflow: hidden;
     }
-    .bw-macro-number {
-        font-size: 44px !important; /* Premium scale on swipe card */
-        line-height: 0.9 !important;
-        -webkit-text-stroke-width: 1.2px !important;
+    .bw-feat-item:not(:last-child) {
+        border-right: 1px solid var(--color-border-light) !important;
+    }
+    /* Macro number — poster background. Drop liquid-fill desktop effect
+       and just use solid brand teal at low opacity. */
+    .bw-feat-item .bw-macro-number {
+        position: absolute !important;
+        top: -10px;
+        left: 0;
+        color: var(--color-primary) !important;
+        -webkit-text-stroke: 0 !important;
+        opacity: 0.14 !important;
+        font-family: var(--font-display) !important;
+        font-size: 120px !important;
+        font-weight: 500 !important;
+        line-height: 0.85 !important;
+        letter-spacing: -0.05em !important;
+        z-index: 0;
+        pointer-events: none;
+        margin: 0 !important;
+        transition: opacity 0.4s ease;
+    }
+    .bw-feat-item .bw-macro-number::before {
+        display: none !important;
     }
     .bw-macro-content {
-        flex: 1;
+        position: relative;
+        z-index: 1;
+        padding-top: 56px;
+        padding-right: 4px;
     }
     .bw-feat-title {
-        font-size: 1.15rem !important;
-        margin: 0 0 6px 0 !important;
-        line-height: 1.2;
+        font-family: var(--font-display) !important;
+        font-size: 1.5rem !important;
+        font-weight: 500 !important;
+        letter-spacing: var(--tracking-tight) !important;
+        line-height: 1.15 !important;
+        margin: 0 0 10px 0 !important;
+        color: var(--color-text-primary);
     }
     .bw-feat-desc {
-        font-size: 13px !important;
-        line-height: 1.45 !important;
+        font-size: 13.5px !important;
+        line-height: 1.5 !important;
         color: var(--color-text-secondary);
+        margin: 0 !important;
     }
-    /* Dim-when-non-hovered desktop pattern is meaningless on touch */
+    .bw-feat-link {
+        margin-top: 12px !important;
+        font-size: 11px !important;
+        letter-spacing: 0.18em !important;
+    }
     .bw-macro-features:hover .bw-feat-item:not(:hover) {
         opacity: 1 !important;
     }
 
-    /* Hide the playlist dots indicator on mobile — there's no manifest
-       narrative around video on phone, the auto-advance is enough */
+    /* Dot pager — explicit "you are here in a list of 4". Active dot
+       elongates to brand pill; tap on dot smooth-scrolls. */
+    .bw-feat-dots-wrap {
+        display: flex;
+        justify-content: center;
+        margin-top: 16px;
+        order: 3;
+    }
+    .bw-feat-dots {
+        display: flex;
+        gap: 10px;
+        padding: 8px 12px;
+    }
+    .bw-feat-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        border: 0;
+        padding: 0;
+        background: rgba(42, 90, 90, 0.22);
+        cursor: pointer;
+        transition:
+            background 0.3s ease,
+            transform 0.3s ease,
+            width 0.3s ease;
+        position: relative;
+    }
+    .bw-feat-dot::after {
+        /* 44x44 invisible touch target — visual stays 7px */
+        content: "";
+        position: absolute;
+        inset: -18px;
+    }
+    .bw-feat-dot.is-active {
+        background: var(--color-primary);
+        width: 22px;
+        border-radius: 4px;
+    }
+
     .bw-v3-frame-dots {
+        display: none !important;
+    }
+
+    /* ---------- 3. MOTION — CSS scroll-driven card breathe ---------- */
+    /* Pure-CSS scroll-driven animation. Each card breathes opacity
+       0.4 → 1.0 → 0.4 as it crosses the carousel viewport. GPU-only,
+       no JS, respects prefers-reduced-motion. Falls back to flat
+       opacity:1 on older Safari/Firefox (graceful degrade). */
+    @supports (animation-timeline: view()) {
+        .products-carousel > * {
+            animation: cardCentreBreathe linear both;
+            animation-timeline: view(inline);
+            animation-range: cover 0% cover 100%;
+        }
+        @keyframes cardCentreBreathe {
+            0% {
+                opacity: 0.5;
+            }
+            45%,
+            55% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.5;
+            }
+        }
+        .bw-feat-item {
+            animation: featCentreBreathe linear both;
+            animation-timeline: view(inline);
+            animation-range: cover 0% cover 100%;
+        }
+        @keyframes featCentreBreathe {
+            0% {
+                opacity: 0.32;
+                transform: scale(0.97);
+            }
+            45%,
+            55% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0.32;
+                transform: scale(0.97);
+            }
+        }
+        /* Big number gets a brightness lift on the active card */
+        .bw-feat-item .bw-macro-number {
+            animation: featNumberLift linear both;
+            animation-timeline: view(inline);
+            animation-range: cover 0% cover 100%;
+        }
+        @keyframes featNumberLift {
+            0% {
+                opacity: 0.08;
+            }
+            45%,
+            55% {
+                opacity: 0.2;
+            }
+            100% {
+                opacity: 0.08;
+            }
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .products-carousel > *,
+        .bw-feat-item,
+        .bw-feat-item .bw-macro-number {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+        }
+        .bw-feat-item .bw-macro-number {
+            opacity: 0.14 !important;
+        }
+        .arrival-progress__fill {
+            transition: none !important;
+        }
+    }
+}
+
+/* Desktop hides mobile-only indicators (progress bar + dots) */
+@media (min-width: 769px) {
+    .arrival-progress,
+    .bw-feat-dots-wrap {
         display: none !important;
     }
 }
