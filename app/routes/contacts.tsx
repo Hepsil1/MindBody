@@ -174,6 +174,7 @@ export default function Contacts() {
                                             value={form.name}
                                             onChange={handleChange}
                                             placeholder="Ваше ім'я"
+                                            autoComplete="name"
                                             required
                                         />
                                     </div>
@@ -186,7 +187,9 @@ export default function Contacts() {
                                             name="contact"
                                             value={form.contact}
                                             onChange={handleChange}
-                                            placeholder="Як нам з вами зв'язатися"
+                                            placeholder="email або +380..."
+                                            autoComplete="email"
+                                            inputMode="email"
                                             required
                                         />
                                     </div>
@@ -200,6 +203,7 @@ export default function Contacts() {
                                             value={form.message}
                                             onChange={handleChange}
                                             placeholder="Ваше запитання або побажання..."
+                                            autoComplete="off"
                                             required
                                         />
                                     </div>

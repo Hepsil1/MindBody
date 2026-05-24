@@ -149,9 +149,87 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
                             >
                                 <em>{message}</em>
                             </h1>
-                            <p className="auth-hero__subtitle" style={{ marginBottom: "40px" }}>
+                            <p className="auth-hero__subtitle" style={{ marginBottom: "32px" }}>
                                 {details}
                             </p>
+
+                            {/* Atom Q — 404 recovery options.  Background agent
+                                flagged the old version as a styled generic: one
+                                CTA, no popular links, no search.  Now: search
+                                form (GET /search?q=) + popular-category chips. */}
+                            <form
+                                action="/search"
+                                method="get"
+                                style={{
+                                    display: "flex",
+                                    gap: "8px",
+                                    maxWidth: "420px",
+                                    margin: "0 auto 24px",
+                                }}
+                            >
+                                <input
+                                    type="search"
+                                    name="q"
+                                    placeholder="Пошук товарів..."
+                                    aria-label="Пошук товарів"
+                                    style={{
+                                        flex: 1,
+                                        padding: "12px 16px",
+                                        borderRadius: "999px",
+                                        border: "1px solid rgba(255,255,255,0.3)",
+                                        background: "rgba(255,255,255,0.1)",
+                                        color: "#fff",
+                                        fontSize: "15px",
+                                    }}
+                                />
+                                <button
+                                    type="submit"
+                                    className="btn btn--primary"
+                                    style={{
+                                        background: "#fff",
+                                        color: "var(--color-primary)",
+                                    }}
+                                >
+                                    Знайти
+                                </button>
+                            </form>
+
+                            {/* Popular category chips — give the user fast
+                                routes back into the catalogue. */}
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "8px",
+                                    flexWrap: "wrap",
+                                    justifyContent: "center",
+                                    marginBottom: "32px",
+                                }}
+                            >
+                                {[
+                                    { to: "/shop/yoga", label: "Yoga" },
+                                    { to: "/shop/sport", label: "Sport" },
+                                    { to: "/shop/dance", label: "Dance" },
+                                    { to: "/shop/casual", label: "Casual" },
+                                    { to: "/shop/kids", label: "Kids" },
+                                ].map((c) => (
+                                    <a
+                                        key={c.to}
+                                        href={c.to}
+                                        style={{
+                                            padding: "8px 14px",
+                                            borderRadius: "999px",
+                                            border: "1px solid rgba(255,255,255,0.3)",
+                                            color: "#fff",
+                                            fontSize: "13px",
+                                            textDecoration: "none",
+                                            background: "rgba(255,255,255,0.05)",
+                                        }}
+                                    >
+                                        {c.label}
+                                    </a>
+                                ))}
+                            </div>
+
                             <a
                                 href="/"
                                 className="btn btn--primary"
@@ -161,7 +239,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
                                     color: "var(--color-primary)",
                                 }}
                             >
-                                Повернутися на головну
+                                На головну
                             </a>
 
                             {stack && (

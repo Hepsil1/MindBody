@@ -687,3 +687,32 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* Atom P — mobile contacts polish.
+   Agent found: submit button label "НАДIСЛАТИ ПОВIДОМЛЕННЯ" wraps to
+   two lines on 390px; hero padding 140/80 wastes top viewport; the
+   400px image-container with order:-1 pushes the actual form half a
+   screen down on mobile. */
+@media (max-width: 768px) {
+    .contacts-hero {
+        padding: 96px 0 56px;
+    }
+    .contacts-hero__title {
+        font-size: 32px;
+    }
+    /* Tighter submit label so the button stays one line. */
+    .btn-submit {
+        padding: 16px 24px;
+        font-size: 14px;
+        letter-spacing: 0.05em;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Decorative collection image had order:-1 pushing the FORM half a
+       screen down on mobile. The image is brand context, not
+       functional — hide it on the smallest viewports. */
+    .contacts-image-container {
+        display: none;
+    }
+}
