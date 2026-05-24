@@ -832,7 +832,7 @@ export default function ProductDetail() {
                                         <div className="group-head">
                                             <span className="selector-label">
                                                 Колір:{" "}
-                                                <span className="val">
+                                                <span className="val" aria-live="polite">
                                                     {getColorLabel(selectedColor)}
                                                 </span>
                                             </span>
@@ -1168,15 +1168,19 @@ export default function ProductDetail() {
                                     className={`acc-item ${openAccordion === "desc" ? "active" : ""}`}
                                 >
                                     <button
+                                        type="button"
                                         className="acc-head"
                                         onClick={() => toggleAccordion("desc")}
+                                        aria-expanded={openAccordion === "desc"}
+                                        aria-controls="acc-body-desc"
                                     >
                                         <span>Опис</span>
                                         <span
+                                            aria-hidden="true"
                                             className={`acc-icon ${openAccordion === "desc" ? "minus" : "plus"}`}
                                         />
                                     </button>
-                                    <div className="acc-body">
+                                    <div id="acc-body-desc" className="acc-body" role="region">
                                         <div className="acc-inner">
                                             {product.description || "No description."}
                                         </div>
@@ -1186,15 +1190,19 @@ export default function ProductDetail() {
                                     className={`acc-item ${openAccordion === "delivery" ? "active" : ""}`}
                                 >
                                     <button
+                                        type="button"
                                         className="acc-head"
                                         onClick={() => toggleAccordion("delivery")}
+                                        aria-expanded={openAccordion === "delivery"}
+                                        aria-controls="acc-body-delivery"
                                     >
                                         <span>Доставка</span>
                                         <span
+                                            aria-hidden="true"
                                             className={`acc-icon ${openAccordion === "delivery" ? "minus" : "plus"}`}
                                         />
                                     </button>
-                                    <div className="acc-body">
+                                    <div id="acc-body-delivery" className="acc-body" role="region">
                                         <div className="acc-inner">
                                             <p>• Доставка Новою Поштою 1-3 дні</p>
                                             <p>• Оплата карткою або при отриманні</p>
@@ -1247,12 +1255,14 @@ export default function ProductDetail() {
                     {Number(product.price).toLocaleString()} ₴
                 </div>
                 <button
+                    type="button"
                     className="mobile-sticky-cta__btn"
                     onClick={addToCart}
                     disabled={
                         (product.sizes.length > 0 && !selectedSize) ||
                         (!isInStock && product.inventory?.length > 0)
                     }
+                    aria-live="polite"
                 >
                     {!isInStock && product.inventory?.length > 0
                         ? "Немає в наявності"
