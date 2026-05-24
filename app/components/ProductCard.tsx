@@ -17,7 +17,17 @@ export interface Product {
     discount_percent?: number;
 }
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({
+    product,
+    priority = false,
+}: {
+    product: Product;
+    /** When true, the main image loads eager + fetchPriority="high".
+        Pass true for the first 2-4 cards above the fold so LCP doesn't
+        wait on lazy-load. Default false keeps lazy behaviour for the
+        rest of the grid. */
+    priority?: boolean;
+}) {
     const { showToast } = useToast();
     const {
         id,
@@ -96,7 +106,10 @@ export default function ProductCard({ product }: { product: Product }) {
                             src={image}
                             alt={name}
                             className="product-card__img product-card__img--main"
-                            loading="lazy"
+                            loading={priority ? "eager" : "lazy"}
+                            decoding="async"
+                            fetchPriority={priority ? "high" : "auto"}
+                            sizes="(max-width: 768px) 50vw, 25vw"
                             width="400"
                             height="500"
                         />
@@ -117,6 +130,8 @@ export default function ProductCard({ product }: { product: Product }) {
                                 alt={name}
                                 className="product-card__img product-card__img--hover"
                                 loading="lazy"
+                                decoding="async"
+                                sizes="(max-width: 768px) 50vw, 25vw"
                                 width="400"
                                 height="500"
                             />

@@ -750,8 +750,8 @@ export default function Home() {
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
                     >
-                        {newProducts.map((p) => (
-                            <ProductCard key={p.id} product={p} />
+                        {newProducts.map((p, i) => (
+                            <ProductCard key={p.id} product={p} priority={i < 4} />
                         ))}
                     </div>
 

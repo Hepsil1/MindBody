@@ -7644,8 +7644,14 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 }
 
 .wishlist-card__remove {
+    /* Atom B: moved from top-right to top-LEFT.  Cart-bag button
+       sits at bottom-right; these were both on the same right
+       edge, and one is destructive (delete from wishlist) while
+       the other is constructive (add to cart) — fat-thumb taps
+       would land on the wrong one and the wrong action runs
+       silently.  Diagonal opposite corners separate them. */
     top: 12px;
-    right: 12px;
+    left: 12px;
     background: white;
     color: #6b7280;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -9531,8 +9537,21 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     }
 
     .dashboard-tabs {
-        flex-wrap: nowrap;
-        -webkit-overflow-scrolling: touch;
+        /* Atom C: switch to 2x2 grid on mobile.  Audit found
+           scrollWidth 568 / clientWidth 350 — tabs ran off the
+           right edge and the third ("Адреси") was half-cut, the
+           fourth ("Налаштування") entirely invisible.  Grid
+           guarantees all tabs are visible without scrolling. */
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        overflow-x: hidden;
+    }
+    .dashboard-tab {
+        justify-content: center;
+        padding: 12px 8px;
+        font-size: 13px;
+        min-height: 44px;
     }
 
     .dashboard-panel {

@@ -58,7 +58,9 @@ export default function Profile() {
         const initProfile = async () => {
             const authState = await AuthUtils.getAuthStateAsync();
             if (!authState.isAuthenticated || !authState.user) {
-                navigate("/auth");
+                // Atom C: preserve intent so /auth returns user to
+                // /profile after login.  /auth reads ?redirect param.
+                navigate("/auth?redirect=/profile");
                 return;
             }
             setUser(authState.user);
@@ -85,7 +87,9 @@ export default function Profile() {
         const unsubAuth = AuthUtils.subscribeToAuth(() => {
             const state = AuthUtils.getAuthState();
             if (!state.isAuthenticated) {
-                navigate("/auth");
+                // Atom C: preserve intent so /auth returns user to
+                // /profile after login.  /auth reads ?redirect param.
+                navigate("/auth?redirect=/profile");
             } else {
                 setUser(state.user);
             }

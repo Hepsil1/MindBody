@@ -973,7 +973,7 @@ export default function ShopCategory() {
                                                 key={product.id || `product-${idx}`}
                                                 className="luxe-card-wrapper"
                                             >
-                                                <ProductCard product={product} />
+                                                <ProductCard product={product} priority={idx < 4} />
                                             </div>
                                         ))}
                                     </div>

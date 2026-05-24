@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useState, useEffect } from "react";
 import { AuthUtils, validateEmail, validatePassword } from "../utils/auth";
 
@@ -12,6 +12,14 @@ type AuthMode = "login" | "register";
 
 export default function Auth() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    // Atom C: respect ?redirect=... so deep-linked pages (e.g.
+    // /profile or /checkout) return the user there after login.
+    // Whitelist relative paths only to prevent open-redirect.
+    const redirectTo = (() => {
+        const r = searchParams.get("redirect");
+        return r && r.startsWith("/") && !r.startsWith("//") ? r : "/profile";
+    })();
     const [mode, setMode] = useState<AuthMode>("login");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -33,7 +41,7 @@ export default function Auth() {
         const checkAuth = async () => {
             const authState = await AuthUtils.getAuthStateAsync();
             if (authState.isAuthenticated) {
-                navigate("/profile");
+                navigate(redirectTo);
             }
         };
         checkAuth();
@@ -50,7 +58,7 @@ export default function Auth() {
                 const result = await AuthUtils.login(email, password);
                 if (result.success) {
                     setSuccess(result.message);
-                    setTimeout(() => navigate("/profile"), 1000);
+                    setTimeout(() => navigate(redirectTo), 1000);
                 } else {
                     setError(result.message);
                 }
@@ -90,7 +98,7 @@ export default function Auth() {
                 const result = await AuthUtils.register(name, email, password, phone);
                 if (result.success) {
                     setSuccess(result.message);
-                    setTimeout(() => navigate("/profile"), 1500);
+                    setTimeout(() => navigate(redirectTo), 1500);
                 } else {
                     setError(result.message);
                 }
