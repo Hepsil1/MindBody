@@ -21,7 +21,35 @@ export default function Wishlist() {
     }, []);
 
     const removeItem = (id: string | number) => {
+        // Atom J: undo-toast safety pattern.  Wishlist remove × is one
+        // tap away from cart-bag — fat-thumb risk.  After remove we show
+        // a 3.5s toast with a "Скасувати" button that restores the item.
+        // Backup is captured BEFORE removal so subscribeToWishlist doesn't
+        // race us.
+        const backup = items.find((i) => i.id === id);
         StorageUtils.removeFromWishlist(id);
+        if (!backup) return;
+        showToast(
+            <span style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <span>Видалено з обраного</span>
+                <button
+                    type="button"
+                    onClick={() => StorageUtils.addToWishlist(backup)}
+                    style={{
+                        background: "transparent",
+                        border: "1px solid currentColor",
+                        borderRadius: "999px",
+                        padding: "4px 12px",
+                        font: "inherit",
+                        color: "inherit",
+                        cursor: "pointer",
+                    }}
+                >
+                    Скасувати
+                </button>
+            </span>,
+            "info",
+        );
     };
 
     const addToCart = (item: WishlistItem) => {

@@ -45,9 +45,14 @@
 }
 
 .cart-drawer__title {
-    font-family: "Tenor Sans", serif;
+    /* Atom I: Tenor Sans was a 4th font outside our 3-font design
+       system (Cormorant Garamond, DM Sans, Italiana).  Standardised
+       on the body font with the same uppercase tracking that gave
+       the original Tenor Sans look — premium minimalist label, no
+       extra woff2 download. */
+    font-family: "DM Sans", system-ui, sans-serif;
     font-size: 1.1rem;
-    font-weight: 400;
+    font-weight: 500;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: #1a1a1a;
@@ -172,13 +177,17 @@
 }
 
 .cart-drawer__item-name {
-    font-family: "Tenor Sans", serif;
-    font-size: 13px;
-    font-weight: 400;
-    letter-spacing: 0.5px;
+    /* Atom I: was Tenor Sans 13/400 uppercase — replaced with
+       Cormorant Garamond, matching the product-card title pattern
+       (Phase 5e) so cart items read in the same voice as everywhere
+       else.  Item name + tracking now consistent with PDP. */
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
     color: #1a1a1a;
     margin: 0 0 4px 0;
-    text-transform: uppercase;
+    text-transform: none;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
