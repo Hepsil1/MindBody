@@ -7687,7 +7687,18 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     gap: 8px;
     font-size: 15px;
     font-weight: 500;
-    color: #374151;
+    color: var(--color-text-primary);
+}
+/* On mobile the hero already shows "N товарів у списку" — the actions
+   bar count duplicates the same info. Hide the actions copy on mobile
+   and keep just "Очистити все" button. */
+@media (max-width: 768px) {
+    .wishlist-actions__count {
+        display: none;
+    }
+    .wishlist-actions {
+        justify-content: flex-end;
+    }
 }
 
 .wishlist-actions__count svg {
@@ -7961,14 +7972,20 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 }
 
 .wishlist-help-card__link--instagram {
-    background: linear-gradient(135deg, #f472b6 0%, #c026d3 50%, #7c3aed 100%);
-    color: white;
-    box-shadow: 0 4px 15px rgba(192, 38, 211, 0.25);
+    /* Was full Instagram pink-purple gradient — off-brand inside the
+       wellness palette. Use neutral teal so the help card reads as part
+       of the page, not an ad. The Instagram icon stays as the brand
+       signal. */
+    background: var(--color-bg-white);
+    color: var(--color-primary-dark);
+    border: 1px solid var(--color-border-mid);
 }
 
 .wishlist-help-card__link--instagram:hover {
+    background: var(--color-primary);
+    color: var(--color-bg-white);
+    border-color: var(--color-primary);
     transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(192, 38, 211, 0.35);
 }
 
 .wishlist-help-card__link--contact {

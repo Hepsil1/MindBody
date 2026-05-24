@@ -3452,3 +3452,101 @@
         letter-spacing: 0.4px;
     }
 }
+
+/* ====================================================================
+   Batch 7 — MOBILE compression
+   Walkthrough: home page renders at 26,307px on iPhone 14 = 31 scrolls.
+   Premium reference (Sezane, Cuyana, Aesop) ≤8 scrolls. Compress
+   section gaps + grid stacked-to-grid conversions for mobile only.
+   Desktop layout untouched.
+   ==================================================================== */
+@media (max-width: 768px) {
+    /* Brand-World V3 — was gap: 80px between manifesto / frame / features
+       on tablet @900px breakpoint, way too much on phones. Tighten + the
+       4 feat items stack vertically with their own padding — convert to
+       2×2 grid instead. */
+    .bw-v3-layout {
+        gap: 32px !important;
+    }
+    .bw-features {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px 12px;
+        max-width: none !important;
+    }
+    .bw-feat-item {
+        flex-direction: column !important;
+        gap: 8px !important;
+        align-items: flex-start;
+    }
+    .bw-macro-number {
+        font-size: 32px !important; /* was 64 */
+        line-height: 0.9 !important;
+    }
+    .bw-feat-title {
+        font-size: 1rem !important;
+        margin: 0 0 4px 0 !important;
+    }
+    .bw-feat-desc {
+        font-size: 11px !important;
+        line-height: 1.4 !important;
+    }
+    .bw-feat-link {
+        font-size: 10px !important;
+    }
+
+    /* "Зен" visual block: was a meditative animation; on mobile it's just
+       wasted vertical space below the manifesto. Shrink. */
+    .bw-zen-visual,
+    .bw-zen-logo {
+        max-width: 200px !important;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* IG section — was padding-bottom: 120px */
+    .ig-hyper {
+        padding-bottom: 56px !important;
+    }
+    /* Phone mockup wrapper — was set to absurd height on mobile because
+       desktop dimensions cascade down. Cap. */
+    .ig-premium__phone {
+        max-height: 580px !important;
+    }
+
+    /* Stats section — 4 numbers stacked vertically. Convert to 2x2 grid. */
+    .stats-section {
+        padding: 48px 16px !important;
+    }
+    .stats-section__grid,
+    .stats-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px 12px;
+    }
+    .stat-number {
+        font-size: 2rem !important; /* was 3-4rem desktop */
+    }
+    .stat-label {
+        font-size: 11px !important;
+    }
+
+    /* Premium features bar (Українські виробники / Premium якість / etc) —
+       was 4 items, each in its own row. Already grid-ified earlier but
+       padding still bloats it. */
+    .premium-features-bar {
+        padding: 32px 16px !important;
+    }
+
+    /* Section-level rhythm — many sections inherit --space-section 120px.
+       On mobile that's 240px of pure whitespace between two adjacent
+       sections (top + bottom). Drop to 48px. */
+    .home-section,
+    .featured-section,
+    .new-arrivals,
+    .premium-features-bar,
+    .bw-unified-section {
+        padding-top: 48px !important;
+        padding-bottom: 48px !important;
+    }
+}
