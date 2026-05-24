@@ -1734,6 +1734,12 @@ h3 {
 
 .header__burger span {
     display: block;
+    /* CRITICAL: empty <span> defaults to width:fit-content = 0 width
+       on real iOS Safari → burger lines invisible.  The orphan
+       header.css I deleted in Atom E had this width:100% — I missed
+       carrying it over.  Verified user's iPhone screenshot showed
+       wordmark + icons but NO burger lines top-left. */
+    width: 100%;
     height: 2px;
     background: var(--color-text-primary);
     transition: all var(--transition-fast);
@@ -14423,4 +14429,84 @@ a:focus-visible,
 [role="button"]:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+}
+
+/* ============================================================
+   ATOM G — UNIVERSAL CROSS-PLATFORM MOBILE HARDENING
+   ============================================================
+   Not iPhone-specific.  These are the cross-vendor rules every
+   mobile WebKit/Blink browser needs.  Premium brands (Aesop, The
+   Row, COS) include this baseline before any decorative CSS.
+
+   Triggered by: user's real iPhone Safari screenshot showed
+   burger lines invisible because empty <span>s had width:0
+   (orphan header.css carried the width:100% rule).  Reminder
+   that Chromium DevTools emulation ≠ real Safari/Chrome on
+   real phones.  This block hardens for ALL phones:
+       - iOS Safari (WebKit)
+       - Android Chrome / Edge (Blink)
+       - Samsung Internet
+       - Firefox Android (Gecko)
+
+   Issues addressed:
+   (1) iOS auto-rotates body text on landscape orientation
+       (legacy WebKit "automatic adjustment").  -webkit-text-
+       size-adjust: 100% locks it.
+   (2) iOS double-taps in Safari → 300ms delay before click.
+       touch-action: manipulation skips the delay on buttons.
+   (3) Tap → blue/grey flash on Android Chrome + iOS Safari.
+       -webkit-tap-highlight-color: transparent removes the
+       blunt OS feedback (replaced by Phase 5b :active scale).
+   (4) iOS Safari auto-zooms when an input has font-size < 16px.
+       Floor every focusable input/textarea/select at 16px on
+       <=768px viewports.  Real bug seen on /auth, /checkout —
+       fields jumped to zoom level 2.5x on real iPhone before
+       the user even started typing.
+   (5) 100vh on iOS includes the auto-hiding URL bar height, so
+       fullscreen panels were clipped when the bar collapsed.
+       Modern fix: 100dvh (dynamic viewport).  Where the source
+       still has 100vh we keep it as fallback and add 100dvh
+       under @supports.  Targets header__nav (slide-out menu),
+       cart-drawer, search-overlay.
+   ============================================================ */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+button,
+a,
+[role="button"],
+[role="tab"],
+input[type="checkbox"],
+input[type="radio"],
+select {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* iOS auto-zoom prevention: floor input font-size at 16px on
+   the viewports where iOS triggers (<=768px). */
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
+    input[type="search"],
+    input[type="url"],
+    input[type="number"],
+    textarea,
+    select {
+        font-size: 16px;
+    }
+}
+
+/* Dynamic viewport for fullscreen overlays — fallback to 100vh
+   on browsers that don't support dvh. */
+@supports (height: 100dvh) {
+    .header__nav--active,
+    .cart-drawer,
+    .search-overlay {
+        height: 100dvh;
+    }
 }

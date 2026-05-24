@@ -73,7 +73,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <html lang="uk">
             <head>
                 <meta charSet="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                {/* viewport-fit=cover unlocks env(safe-area-inset-*) for
+                    notch/home-indicator on iOS 11+ — fixed bars (checkout
+                    sticky CTA, floating cluster) need it.  Without it the
+                    page draws to the edge but env() returns 0. */}
+                <meta
+                    name="viewport"
+                    content="width=device-width, initial-scale=1, viewport-fit=cover"
+                />
                 <meta name="theme-color" content="#2a5a68" />
                 <Meta />
                 <Links />
