@@ -4037,6 +4037,242 @@
 }
 
 /* ====================================================================
+   Batch 14 — Нові надходження: COMPLETE REWRITE (4th attempt)
+
+   User: "меняй полностью раздел... от а до я не опираясь на старое.
+   Опирайся на общий стиль. Сделай круто."
+
+   Decision after v1 carousel, v2 motion, v3 magazine-flip all rejected:
+   STOP iterating the horizontal carousel pattern. The user keeps saying
+   "different feelings" — and every iteration has felt like a shop feed.
+
+   v4 — Editorial Bento Grid (vertical, no swipe):
+   - DROP horizontal scrolling entirely on mobile.
+   - 6 products as 2-column CSS Grid: pattern BIG / pair / BIG / pair
+     (nth-child 3n+1 spans both columns → 2 big + 4 small = 6 cards).
+   - Reference: Aesop seasonal grid, Cuyana new arrivals, Sezane bento.
+   - Full-bleed escape via width:100vw + margin-left:calc(50%-50vw).
+   - Subtle entry-reveal animation (fade-up as card enters viewport),
+     scroll-driven, no JS.
+   - Heart top-right glass, italic Cormorant "new" pill top-left.
+   - Title in Cormorant — 24px on big cards, 16px on small (rhythm).
+
+   Why this works where the carousel didn't:
+   - Vertical scroll IS the standard for premium editorial browse
+     (magazines turn pages, e-comm doesn't swipe). Removes the
+     "shop feed" feeling instantly.
+   - Each product gets a moment without competing for swipe attention.
+   - Asymmetric sizes create visual interest — not a flat catalogue grid.
+   - 6 hand-picked products = curation; "переглянути всі" CTA leads
+     to full shop for those who want more.
+
+   Specificity note: this block is AFTER Batch 11/12/13 blocks; with
+   matching specificity + !important, last-wins cascade ensures the
+   grid layout overrides the previous flex/scroll definitions.
+   ==================================================================== */
+@media (max-width: 768px) {
+    /* RADICAL CONVERSION — flex horizontal → CSS grid vertical */
+    .products-carousel {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        grid-auto-rows: auto !important;
+        gap: 14px !important;
+        overflow: visible !important;
+        width: 100vw !important;
+        margin-left: calc(50% - 50vw) !important;
+        padding: 0 12px !important;
+        scroll-snap-type: none !important;
+        scroll-padding-inline-start: 0 !important;
+    }
+    .products-carousel > * {
+        flex: none !important;
+        width: 100% !important;
+        scroll-snap-align: none !important;
+    }
+    /* Big hero cards: 1st and 4th (3n+1) span both columns */
+    .products-carousel > *:nth-child(3n + 1) {
+        grid-column: 1 / -1 !important;
+    }
+    /* Show only 6 cards on mobile — curation over inventory */
+    .products-carousel > *:nth-child(n + 7) {
+        display: none !important;
+    }
+
+    /* Strip every shred of card chrome */
+    .products-carousel .product-card,
+    .products-carousel .product-card-luxe {
+        background: transparent !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+
+    /* Image — 4:5 portrait on all sizes, harmonic rhythm */
+    .products-carousel .product-card__image-wrapper {
+        aspect-ratio: 4 / 5 !important;
+        width: 100% !important;
+        border-radius: 0 !important;
+        overflow: hidden;
+        background: var(--color-bg-soft);
+    }
+    .products-carousel .product-card__img--main,
+    .products-carousel .product-card__img--hover {
+        border-radius: 0 !important;
+    }
+
+    /* Cancel Batch 13 ken-burns parallax — not appropriate for static grid */
+    .products-carousel > * .product-card__img--main {
+        animation: none !important;
+        transform: none !important;
+    }
+
+    /* Caption — editorial typography below image */
+    .products-carousel .product-card__details,
+    .products-carousel .product-card-luxe__details {
+        padding: 12px 4px 0 !important;
+        background: transparent !important;
+    }
+    .products-carousel .product-card__title {
+        font-family: var(--font-display) !important;
+        font-weight: 500 !important;
+        letter-spacing: var(--tracking-tight) !important;
+        line-height: 1.15 !important;
+        margin: 0 0 6px 0 !important;
+        text-transform: none !important;
+        color: var(--color-text-primary) !important;
+    }
+    /* Big cards get 24px title; small cards 16px — size = importance */
+    .products-carousel > *:nth-child(3n + 1) .product-card__title {
+        font-size: 1.5rem !important;
+        margin-bottom: 8px !important;
+        line-height: 1.1 !important;
+    }
+    .products-carousel > *:not(:nth-child(3n + 1)) .product-card__title {
+        font-size: 1rem !important;
+    }
+
+    .products-carousel .product-card__price-row {
+        margin: 0 !important;
+        gap: 10px !important;
+        font-family: var(--font-body) !important;
+        font-variant-numeric: tabular-nums;
+    }
+    .products-carousel .product-card__price {
+        font-size: 13px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.04em !important;
+        color: var(--color-text-secondary) !important;
+        text-transform: none !important;
+    }
+    .products-carousel > *:nth-child(3n + 1) .product-card__price {
+        font-size: 14px !important;
+    }
+    .products-carousel .product-card__price--sale {
+        color: var(--color-marsala) !important;
+    }
+    .products-carousel .product-card__price-old {
+        font-size: 12px !important;
+        color: var(--color-text-muted) !important;
+    }
+
+    /* Colour swatches — too noisy under editorial photo */
+    .products-carousel .product-card__colors,
+    .products-carousel .product-card-luxe__colors {
+        display: none !important;
+    }
+
+    /* Heart — top-right glass button */
+    .products-carousel .product-card__heart-btn {
+        top: 10px !important;
+        right: 10px !important;
+        bottom: auto !important;
+        left: auto !important;
+        width: 36px !important;
+        height: 36px !important;
+        background: rgba(255, 255, 255, 0.78) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 0 !important;
+        opacity: 1 !important;
+        border-radius: 999px !important;
+    }
+    .products-carousel .product-card__heart-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* NEW / SALE — italic Cormorant pill, glass background */
+    .products-carousel .product-card__badge,
+    .products-carousel [class*="product-card__badge"],
+    .products-carousel .product-card-luxe__badge {
+        font-family: var(--font-display) !important;
+        font-style: italic !important;
+        font-size: 12px !important;
+        font-weight: 400 !important;
+        text-transform: lowercase !important;
+        letter-spacing: 0.02em !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        color: var(--color-primary) !important;
+        padding: 4px 12px !important;
+        top: 10px !important;
+        left: 10px !important;
+        border-radius: 999px !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* Counter / progress — irrelevant for vertical static grid */
+    .arrival-counter,
+    .arrival-progress {
+        display: none !important;
+    }
+
+    /* Header — generous space before grid */
+    #new-collections .new-arrivals-header {
+        margin-bottom: 28px !important;
+        padding: 0 16px !important;
+    }
+
+    /* CTA — sits at the end of the journey */
+    #new-collections .section__cta-center {
+        margin-top: 40px !important;
+        padding: 0 16px;
+    }
+
+    /* MOTION — staggered fade-up reveal as each card enters viewport.
+       Pure CSS scroll-driven; GPU; respects prefers-reduced-motion. */
+    @supports (animation-timeline: view()) {
+        .products-carousel > * {
+            animation: bentoCardReveal linear both;
+            animation-timeline: view();
+            animation-range: entry 0% entry 45%;
+            will-change: opacity, transform;
+        }
+        @keyframes bentoCardReveal {
+            0% {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .products-carousel > * {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+        }
+    }
+}
+
+/* ====================================================================
    Batch 9 — Mobile video frame: center, hide hover-only, smooth reveal
    On mobile there is no :hover trigger, so the 4 hover-target videos
    (bw-frame-hover-vid--1..4) are never shown but still autoplay+loop.
