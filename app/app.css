@@ -13948,7 +13948,32 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     }
     /* Auth pages hero (login/register). */
     .auth-hero {
-        padding: 100px 0 60px;
+        /* Atom A: tighter padding so the form submit lands above
+           the fold on 844-tall mobile.  Audit found submit was at
+           y=831, just barely below the line, occluded by soft kb. */
+        padding: 64px 0 32px;
+    }
+    .auth-content {
+        padding-top: 24px;
+        padding-bottom: 64px;
+    }
+    /* Google CTA visual subordination — was equal-rank with the
+       primary "Увійти" pill.  Make it look secondary: transparent
+       bg, thinner muted border, weight 400, smaller height. */
+    .auth-google-btn {
+        background: transparent;
+        border-color: var(--color-border, #e8e5e1);
+        font-weight: 400;
+        font-size: 14px;
+        padding: 12px 16px;
+    }
+    /* Forgot-password link — was 14px text with no padding =
+       ~18px tap height.  Bump to 44 via padding (WCAG 2.5.5). */
+    .auth-forgot a {
+        display: inline-block;
+        padding: 12px 4px;
+        min-height: 44px;
+        line-height: 20px;
     }
     /* Cart page surface — match site cream so the page feels
        cohesive with the rest of the brand. */

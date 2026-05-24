@@ -287,12 +287,15 @@
        breadcrumb contrast (hero is dark, default text is 50% white).
        ============================================================ */
 
-    /* (a) Sticky cart CTA — same trick as info step */
+    /* (a) Sticky cart CTA — only the PRIMARY CTA goes fixed at
+       bottom.  Earlier selector accidentally caught .cart-btn--full
+       too, which is the secondary "Продовжити покупки" ghost link —
+       that bug stacked two buttons at the bottom on real iPhone.
+       Now the secondary stays in natural flow, primary is fixed. */
     .cart-page__content {
         padding-bottom: 96px;
     }
-    .cart-summary__card .cart-btn--primary,
-    .cart-summary__card .cart-btn--full {
+    .cart-summary__card .cart-btn--primary {
         position: fixed;
         left: 0;
         right: 0;
