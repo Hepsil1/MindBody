@@ -217,4 +217,52 @@
     .checkout-trust-premium {
         grid-template-columns: 1fr;
     }
+
+    /* ============================================================
+       PHASE 6 atom 2 — FIXED MOBILE SUBMIT CTA (always visible)
+       Agent finding (P0): "Підтвердити замовлення" sits at
+       y=2448px on an 844-tall mobile viewport — user scrolls 3+
+       screens past every section before seeing it.
+
+       position:sticky alone doesn't solve this — sticky only
+       activates once the natural position scrolls past the
+       viewport bottom, which on this 3-screen form means the
+       user has to scroll most of the way down before the button
+       becomes visible.
+
+       position:fixed locks it to the viewport bottom always.
+       User sees the primary CTA from the first field they
+       focus.  env(safe-area-inset-bottom) lifts it above the
+       iPhone home indicator.  Backdrop-filter blurs whatever
+       sits behind it so the form below reads as "more content"
+       not "covered content".
+
+       Companion .checkout-form padding-bottom reserves space at
+       the natural end of the form so the in-flow position of
+       the button (which we cannot easily remove from the DOM
+       without changing JSX) doesn't pile under the fixed bar.
+       ============================================================ */
+    .checkout-form {
+        padding-bottom: 96px;
+    }
+    .checkout-form > button[type="submit"] {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        margin: 0;
+        width: 100%;
+        border-radius: 0;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+        z-index: 5;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    /* Lift the floating social cluster above the fixed CTA bar
+       (mirrors the product-page lift in app.css). */
+    body:has(.checkout-page) .floating-contact {
+        bottom: 80px;
+    }
 }
