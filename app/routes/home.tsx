@@ -85,16 +85,40 @@ export function meta({ data }: Route.MetaArgs) {
             content: "Український бренд спортивного одягу для жінок та дітей.",
         },
         { name: "twitter:image", content: `${siteUrl}/brand-sun.png` },
-        // Preload first hero slide images — critical for LCP
+        // Preload first hero slide triptych — critical for LCP.  Each
+        // preload includes imagesrcset + imagesizes so the browser picks
+        // the responsive variant matching the viewport instead of pre-
+        // fetching the full master and then using src-fallback (which
+        // defeats Atoms R+S srcset entirely).  Mobile gets ~400/800w
+        // (~80-150KB each), desktop gets 1200w (~250KB).
         {
             tagName: "link",
             rel: "preload",
             as: "image",
             href: "/generalpics/333_131123.webp",
+            imagesrcset:
+                "/generalpics/333_131123-400w.webp 400w, /generalpics/333_131123-800w.webp 800w, /generalpics/333_131123-1200w.webp 1200w",
+            imagesizes: "(max-width: 768px) 100vw, 33vw",
             fetchPriority: "high",
         },
-        { tagName: "link", rel: "preload", as: "image", href: "/generalpics/374_131123.webp" },
-        { tagName: "link", rel: "preload", as: "image", href: "/generalpics/338_131123.webp" },
+        {
+            tagName: "link",
+            rel: "preload",
+            as: "image",
+            href: "/generalpics/374_131123.webp",
+            imagesrcset:
+                "/generalpics/374_131123-400w.webp 400w, /generalpics/374_131123-800w.webp 800w, /generalpics/374_131123-1200w.webp 1200w",
+            imagesizes: "(max-width: 768px) 100vw, 33vw",
+        },
+        {
+            tagName: "link",
+            rel: "preload",
+            as: "image",
+            href: "/generalpics/338_131123.webp",
+            imagesrcset:
+                "/generalpics/338_131123-400w.webp 400w, /generalpics/338_131123-800w.webp 800w, /generalpics/338_131123-1200w.webp 1200w",
+            imagesizes: "(max-width: 768px) 100vw, 33vw",
+        },
         {
             "script:ld+json": {
                 "@context": "https://schema.org",
