@@ -865,6 +865,7 @@ export default function Home() {
                                             loop={false}
                                             muted
                                             playsInline
+                                            preload={i === 0 ? "auto" : "metadata"}
                                             onEnded={() => {
                                                 const nextIdx = (i + 1) % videoPlaylist.length;
                                                 setCurrentPlaylistIdx(nextIdx);
@@ -879,13 +880,19 @@ export default function Home() {
                                         />
                                     ))}
 
-                                    {/* 2. Hover specific targets (4 static repeating videos on top) */}
+                                    {/* 2. Hover-target videos (4 static repeating clips overlaid on
+                                        the playlist). All have muted+playsInline to satisfy iOS
+                                        no-sound policy and stay inline. Mobile hides them entirely
+                                        via @media display:none. preload="metadata" cuts initial
+                                        fetch (only first frame + codec metadata) — full stream
+                                        only fetches when autoPlay kicks in on desktop. */}
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--1"
                                         autoPlay
                                         loop
                                         muted
                                         playsInline
+                                        preload="metadata"
                                     >
                                         <source src="/uploads/brand-hero.mp4" type="video/mp4" />
                                     </video>
@@ -895,6 +902,7 @@ export default function Home() {
                                         loop
                                         muted
                                         playsInline
+                                        preload="metadata"
                                     >
                                         <source src="/uploads/brand-video-2.mp4" type="video/mp4" />
                                     </video>
@@ -904,6 +912,7 @@ export default function Home() {
                                         loop
                                         muted
                                         playsInline
+                                        preload="metadata"
                                     >
                                         <source src="/uploads/brand-video-3.mp4" type="video/mp4" />
                                     </video>
@@ -913,6 +922,7 @@ export default function Home() {
                                         loop
                                         muted
                                         playsInline
+                                        preload="metadata"
                                     >
                                         <source src="/uploads/brand-video-2.mp4" type="video/mp4" />
                                     </video>

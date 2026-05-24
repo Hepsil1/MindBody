@@ -3454,6 +3454,56 @@
 }
 
 /* ====================================================================
+   Batch 9 — Mobile video frame: center, hide hover-only, smooth reveal
+   On mobile there is no :hover trigger, so the 4 hover-target videos
+   (bw-frame-hover-vid--1..4) are never shown but still autoplay+loop.
+   That's 4 wasted video streams burning battery on every home view.
+   Hide them entirely on mobile (display:none → browser skips fetch).
+   Also: float-frame breathing animation (translateY) shifts video out
+   of center on phones — disable it on touch devices.
+   ==================================================================== */
+@media (max-width: 768px) {
+    /* Kill hover-trigger videos on touch — they never trigger. */
+    .bw-frame-hover-vid {
+        display: none !important;
+    }
+    /* Stop the floating-frame breathing animation that makes the video
+       drift visually off-center on a phone. Hold it perfectly still. */
+    .bw-v3-frame {
+        animation: none !important;
+        transform: translateY(0) !important;
+    }
+    /* The .bw-frame-img has inset: -15px + width: 100%+30 for desktop
+       parallax. On mobile that creates a 15px offset that reads as
+       "video shifted left" — reset to flush. */
+    .bw-frame-img {
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    /* Frame container: enforce centered placement on the phone. */
+    .bw-v3-frame-container {
+        flex: 0 0 auto !important;
+        width: 100%;
+        max-width: 360px;
+        margin: 0 auto;
+        align-self: center;
+    }
+}
+
+/* Respect prefers-reduced-motion — disable breathing + Ken-Burns
+   parallax for users who set the OS-level preference. */
+@media (prefers-reduced-motion: reduce) {
+    .bw-v3-frame {
+        animation: none !important;
+    }
+    .bw-frame-img,
+    .bw-playlist-vid {
+        transition: opacity 0.2s linear !important;
+    }
+}
+
+/* ====================================================================
    Batch 7 — MOBILE compression
    Walkthrough: home page renders at 26,307px on iPhone 14 = 31 scrolls.
    Premium reference (Sezane, Cuyana, Aesop) ≤8 scrolls. Compress
