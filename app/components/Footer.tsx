@@ -47,11 +47,15 @@ export default function Footer() {
                     {/* LEFT SIDE: LOGO & NAVIGATION */}
                     <div className="footer-puma__left-group">
                         <div className="footer-puma__logo-top">
-                            <img
-                                src="/pics/mind_body_logo_sun.png"
-                                alt="MIND BODY"
-                                className="footer-puma__logo-img"
-                            />
+                            <picture>
+                                <source srcSet="/pics/mind_body_logo_sun.webp" type="image/webp" />
+                                <img
+                                    src="/pics/mind_body_logo_sun.png"
+                                    alt="MIND BODY"
+                                    className="footer-puma__logo-img"
+                                    loading="lazy"
+                                />
+                            </picture>
                         </div>
 
                         <div className="footer-puma__nav-grid">
@@ -278,11 +282,15 @@ export default function Footer() {
                     </div>
 
                     <div className="footer-puma__logo-center">
-                        <img
-                            src="/pics/mind_body_1.png"
-                            alt="MIND BODY"
-                            className="footer-puma__logo-small"
-                        />
+                        <picture>
+                            <source srcSet="/pics/mind_body_1.webp" type="image/webp" />
+                            <img
+                                src="/pics/mind_body_1.png"
+                                alt="MIND BODY"
+                                className="footer-puma__logo-small"
+                                loading="lazy"
+                            />
+                        </picture>
                     </div>
 
                     <div className="footer-puma__copyright-text">

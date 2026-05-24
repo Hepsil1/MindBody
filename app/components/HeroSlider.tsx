@@ -155,10 +155,17 @@ export default function HeroSlider({
                         <div className="hero-slider__logo-container">
                             <div className="hero-slider__brand-block">
                                 <div className="hero-slider__logo">
-                                    <img
-                                        src="/pics/mind_body_logo.png"
-                                        alt="MIND BODY — sport wear"
-                                    />
+                                    <picture>
+                                        <source
+                                            srcSet="/pics/mind_body_logo.webp"
+                                            type="image/webp"
+                                        />
+                                        <img
+                                            src="/pics/mind_body_logo.png"
+                                            alt="MIND BODY — sport wear"
+                                            fetchPriority="high"
+                                        />
+                                    </picture>
                                 </div>
                             </div>
                         </div>

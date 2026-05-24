@@ -169,11 +169,14 @@ export function Header() {
 
                     <div className="top-bar__center">
                         <Link to="/" className="top-bar__logo-link" prefetch="intent">
-                            <img
-                                src="/pics/mind_body_logo_sun.png"
-                                alt="Mind Body"
-                                className="top-bar__logo-icon"
-                            />
+                            <picture>
+                                <source srcSet="/pics/mind_body_logo_sun.webp" type="image/webp" />
+                                <img
+                                    src="/pics/mind_body_logo_sun.png"
+                                    alt="Mind Body"
+                                    className="top-bar__logo-icon"
+                                />
+                            </picture>
                         </Link>
                     </div>
 
@@ -209,11 +212,14 @@ export function Header() {
                     </button>
 
                     <Link to="/" prefetch="intent" className="header__logo">
-                        <img
-                            src="/pics/mind_body_1.png"
-                            alt="MIND BODY"
-                            className="header__logo-img"
-                        />
+                        <picture>
+                            <source srcSet="/pics/mind_body_1.webp" type="image/webp" />
+                            <img
+                                src="/pics/mind_body_1.png"
+                                alt="MIND BODY"
+                                className="header__logo-img"
+                            />
+                        </picture>
                     </Link>
 
                     <nav className={`header__nav ${isMenuOpen ? "header__nav--active" : ""}`}>

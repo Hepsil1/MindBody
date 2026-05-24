@@ -77,11 +77,14 @@ export default function About() {
                 <div className="about-hero-overlay">
                     {/* Centered Brand Logo with Breathing Animation */}
                     <div className="about-hero-logo-wrap">
-                        <img
-                            src="/pics/mind_body_logo.png"
-                            alt="MIND BODY"
-                            className="about-hero-logo"
-                        />
+                        <picture>
+                            <source srcSet="/pics/mind_body_logo.webp" type="image/webp" />
+                            <img
+                                src="/pics/mind_body_logo.png"
+                                alt="MIND BODY"
+                                className="about-hero-logo"
+                            />
+                        </picture>
                     </div>
 
                     {/* Bottom Left Subtitle */}
