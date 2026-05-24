@@ -862,14 +862,16 @@ export default function ProductDetail() {
                                                 return (
                                                     <button
                                                         key={color}
+                                                        type="button"
                                                         className={`color-swatch ${selectedColor === color ? "selected" : ""} ${!available ? "unavailable" : ""}`}
-                                                        onClick={() => setSelectedColor(color)}
+                                                        onClick={() =>
+                                                            available && setSelectedColor(color)
+                                                        }
+                                                        disabled={!available}
                                                         style={{
                                                             backgroundColor: getColorHex(color),
-                                                            opacity: available ? 1 : 0.4,
                                                         }}
                                                         aria-label={`${getColorLabel(color)}${!available ? " — немає в наявності" : ""}`}
-                                                        aria-disabled={!available}
                                                     />
                                                 );
                                             })}
@@ -891,15 +893,10 @@ export default function ProductDetail() {
                                                 return (
                                                     <button
                                                         key={size}
+                                                        type="button"
                                                         className={`size-chip ${selectedSize === size ? "selected" : ""} ${!available ? "unavailable" : ""}`}
                                                         onClick={() => setSelectedSize(size)}
                                                         disabled={!available}
-                                                        style={{
-                                                            opacity: available ? 1 : 0.4,
-                                                            textDecoration: available
-                                                                ? "none"
-                                                                : "line-through",
-                                                        }}
                                                     >
                                                         {size}
                                                     </button>

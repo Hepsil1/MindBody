@@ -172,9 +172,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 ) : (
                     <>
                         <div className="cart-drawer__items">
-                            {cart.map((item, index) => (
+                            {cart.map((item) => (
                                 <div
-                                    key={`${item.id}-${item.size}-${item.color}-${index}`}
+                                    key={`${item.id}-${item.size ?? ""}-${item.color ?? ""}`}
                                     className="cart-drawer__item"
                                 >
                                     <div className="cart-drawer__item-image">

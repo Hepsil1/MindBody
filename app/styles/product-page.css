@@ -393,13 +393,27 @@
     opacity: 1;
 }
 
-.color-swatch:hover {
+.color-swatch:hover:not(:disabled):not(.unavailable) {
     transform: scale(1.1);
 }
-
+.color-swatch:disabled,
 .color-swatch.unavailable {
     opacity: 0.4 !important;
-    cursor: default;
+    cursor: not-allowed;
+    /* Slash through to signal unavailable (matches size-chip pattern) */
+    position: relative;
+}
+.color-swatch:disabled::before,
+.color-swatch.unavailable::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: var(--color-text-primary);
+    transform: rotate(-45deg);
+    transform-origin: center;
 }
 
 /* Sizes */

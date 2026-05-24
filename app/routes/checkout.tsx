@@ -284,6 +284,11 @@ export default function Checkout() {
                 // Promo code usage is already incremented server-side in api.orders.create
                 setOrderNumber(result.orderId);
                 StorageUtils.clearCart();
+                // Reset promo state so back-navigation to /checkout doesn't
+                // show stale "promo applied" UI on an empty cart.
+                setPromoApplied(null);
+                setPromoCode("");
+                setPromoError("");
                 setStep("success");
             } else {
                 showToast("Помилка при створенні замовлення. Спробуйте ще раз.", "error");
