@@ -6890,7 +6890,17 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     letter-spacing: 0.01em;
     margin: 0 0 35px 0;
     color: var(--color-primary);
-    white-space: nowrap;
+    /* Atom L (P0): white-space:nowrap on a clamp(40,6vw,60) font
+       forced the title to a fixed pixel width that exceeded 375px
+       on iPhone SE/8 — page got a horizontal scrollbar.  Allow wrap
+       so the title flows on narrow viewports. */
+    white-space: normal;
+}
+@media (max-width: 768px) {
+    .story-premium__title {
+        font-size: clamp(28px, 8vw, 40px);
+        margin-bottom: 24px;
+    }
 }
 
 .story-premium__text {

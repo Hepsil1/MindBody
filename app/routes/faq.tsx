@@ -72,7 +72,9 @@ export function meta() {
 }
 
 export default function FAQ() {
-    const [open, setOpen] = useState<number | null>(0);
+    // Atom K: start all closed — first-open wasted viewport on mobile
+    // and hid the scope of FAQ scope from the visitor.
+    const [open, setOpen] = useState<number | null>(null);
 
     return (
         <main className="info-page">
@@ -142,8 +144,10 @@ export default function FAQ() {
                                             gap: "16px",
                                             cursor: "pointer",
                                             fontFamily: "'DM Sans', sans-serif",
-                                            fontSize: "17px",
-                                            fontWeight: 500,
+                                            /* Atom K: was 17px/500 — read same weight as body
+                                               paragraph.  18px/600 establishes question-as-heading. */
+                                            fontSize: "18px",
+                                            fontWeight: 600,
                                             color: "var(--color-text-primary)",
                                         }}
                                     >

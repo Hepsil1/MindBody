@@ -36,6 +36,41 @@
 
 .sg-table-wrap {
     overflow-x: auto;
+    position: relative;
+    /* Atom K (P0): table clipped rightmost column on mobile (XL women,
+       134 kids) — users had no idea more sizes exist.  Fade-mask shows
+       there's content past the edge; scroll-snap keeps the swipe
+       discrete; -webkit-overflow-scrolling preserves momentum on iOS. */
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 16px;
+}
+
+@media (max-width: 768px) {
+    .sg-table-wrap {
+        mask-image: linear-gradient(to right, black 88%, transparent);
+        -webkit-mask-image: linear-gradient(to right, black 88%, transparent);
+    }
+    .sg-table-wrap::after {
+        content: "→ свайп";
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--color-text-secondary, #555);
+        background: rgba(255, 255, 255, 0.85);
+        padding: 4px 8px;
+        border-radius: 999px;
+        pointer-events: none;
+        backdrop-filter: blur(4px);
+    }
+    .sg-table td,
+    .sg-table th {
+        scroll-snap-align: start;
+    }
 }
 
 /* Tables */

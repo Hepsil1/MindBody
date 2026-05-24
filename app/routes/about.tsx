@@ -1,6 +1,6 @@
 import type { Route } from "./+types/about";
 import { prisma } from "../db.server";
-import { useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { useState, useEffect } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import "../styles/about-page.css";
@@ -289,8 +289,7 @@ export default function About() {
                     <div className="contact-premium__text">
                         <span className="contact-premium__label">Ми на зв'язку</span>
                         <h2 className="contact-premium__title">
-                            Давай
-                            <br />
+                            Давай <br />
                             <em>поговоримо</em>
                         </h2>
                     </div>
@@ -367,6 +366,20 @@ export default function About() {
                         </svg>
                         <span>Слідкуй за нами в Instagram</span>
                     </a>
+                    {/* Atom L (P0): closing CTA back to /shop — page used to
+                        dead-end in a phone list, no path to the catalog.
+                        Premium /about must land the brand-story reader
+                        back into a buying flow. */}
+                    <Link
+                        to="/shop/yoga"
+                        className="btn btn--primary"
+                        style={{
+                            marginTop: "32px",
+                            alignSelf: "flex-start",
+                        }}
+                    >
+                        Переглянути колекцію
+                    </Link>
                 </div>
             </section>
         </main>
