@@ -4037,229 +4037,246 @@
 }
 
 /* ====================================================================
-   Batch 14 — Нові надходження: COMPLETE REWRITE (4th attempt)
+   Batch 15 — Нові надходження: cards + shadows + IMAGE QUALITY (5th + final)
 
-   User: "меняй полностью раздел... от а до я не опираясь на старое.
-   Опирайся на общий стиль. Сделай круто."
+   Live audit revealed the root cause of 4 failed redesigns: the photos
+   themselves render at 318×398 CSS px while the LOADED webp is 195×260
+   native (the 400w variant on retina = ~3× upscale = blurry). Combined
+   with stripped card chrome (Batch 13-14), the section looks "Shopify
+   demo wedged between two designer sections" (audit agent quote).
 
-   Decision after v1 carousel, v2 motion, v3 magazine-flip all rejected:
-   STOP iterating the horizontal carousel pattern. The user keeps saying
-   "different feelings" — and every iteration has felt like a shop feed.
+   Fix (this block):
+   1. REVERT to horizontal carousel — Batch 14's bento grid was the
+      wrong reaction; the carousel pattern is fine, the photos were bad.
+   2. Cards GET CHROME back: white bg, 20px radius, 3-layer teal-tinted
+      shadow (rgba(42,90,90,...) — pure black on cream reads grey-muddy).
+   3. Image quality fix lives in ProductCard.tsx + home.tsx (imageSizes
+      prop, "(max-width: 768px) 78vw, 25vw" instead of default 50vw),
+      so browser picks 800w/1200w variants on retina instead of 400w.
+   4. INTERACTIVE: :active scale(0.97) + shadow softens (Apple Today
+      pattern). Scroll-driven scale 0.94 → 1.0 → 0.94 across viewport
+      so peeking cards dim — only the centered card is "active".
 
-   v4 — Editorial Bento Grid (vertical, no swipe):
-   - DROP horizontal scrolling entirely on mobile.
-   - 6 products as 2-column CSS Grid: pattern BIG / pair / BIG / pair
-     (nth-child 3n+1 spans both columns → 2 big + 4 small = 6 cards).
-   - Reference: Aesop seasonal grid, Cuyana new arrivals, Sezane bento.
-   - Full-bleed escape via width:100vw + margin-left:calc(50%-50vw).
-   - Subtle entry-reveal animation (fade-up as card enters viewport),
-     scroll-driven, no JS.
-   - Heart top-right glass, italic Cormorant "new" pill top-left.
-   - Title in Cormorant — 24px on big cards, 16px on small (rhythm).
-
-   Why this works where the carousel didn't:
-   - Vertical scroll IS the standard for premium editorial browse
-     (magazines turn pages, e-comm doesn't swipe). Removes the
-     "shop feed" feeling instantly.
-   - Each product gets a moment without competing for swipe attention.
-   - Asymmetric sizes create visual interest — not a flat catalogue grid.
-   - 6 hand-picked products = curation; "переглянути всі" CTA leads
-     to full shop for those who want more.
-
-   Specificity note: this block is AFTER Batch 11/12/13 blocks; with
-   matching specificity + !important, last-wins cascade ensures the
-   grid layout overrides the previous flex/scroll definitions.
+   Reference convergence from 4 parallel research agents:
+   - Devil's advocate: "stop redesigning layout, add motion+shadow"
+   - Cards: "Apple Today + Material 3 elevation, 20px radius, 78vw"
+   - Shadows: "3-layer teal-tinted, 0.04-0.08-0.14 opacity, premium feel"
+   - Gestures: "tilt overkill; tap + scroll-snap is enough for browse"
    ==================================================================== */
 @media (max-width: 768px) {
-    /* RADICAL CONVERSION — flex horizontal → CSS grid vertical */
+    /* REVERT bento grid (Batch 14) → horizontal carousel */
     .products-carousel {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        grid-auto-rows: auto !important;
-        gap: 14px !important;
-        overflow: visible !important;
-        width: 100vw !important;
-        margin-left: calc(50% - 50vw) !important;
-        padding: 0 12px !important;
-        scroll-snap-type: none !important;
-        scroll-padding-inline-start: 0 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        grid-template-columns: none !important;
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        scroll-snap-type: x mandatory !important;
+        scroll-padding-inline-start: 16px !important;
+        padding: 28px 16px 36px !important;
+        gap: 16px !important;
+        width: auto !important;
+        margin-left: 0 !important;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
     }
-    .products-carousel > * {
-        flex: none !important;
-        width: 100% !important;
-        scroll-snap-align: none !important;
-    }
-    /* Big hero cards: 1st and 4th (3n+1) span both columns */
-    .products-carousel > *:nth-child(3n + 1) {
-        grid-column: 1 / -1 !important;
-    }
-    /* Show only 6 cards on mobile — curation over inventory */
-    .products-carousel > *:nth-child(n + 7) {
-        display: none !important;
+    .products-carousel::-webkit-scrollbar {
+        display: none;
     }
 
-    /* Strip every shred of card chrome */
+    /* Cancel bento span + hidden cards (show all 12 again) */
+    .products-carousel > *:nth-child(3n + 1) {
+        grid-column: auto !important;
+    }
+    .products-carousel > *:nth-child(n + 7) {
+        display: block !important;
+    }
+
+    /* Card size + snap */
+    .products-carousel > * {
+        flex: 0 0 78vw !important;
+        width: 78vw !important;
+        max-width: 78vw !important;
+        scroll-snap-align: center !important;
+        scroll-snap-stop: always !important;
+    }
+
+    /* Card object — Apple Today + brand-tinted shadow */
     .products-carousel .product-card,
     .products-carousel .product-card-luxe {
-        background: transparent !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
+        background: #ffffff !important;
+        border-radius: 20px !important;
+        overflow: hidden !important;
         padding: 0 !important;
+        border: 1px solid rgba(42, 90, 90, 0.05) !important;
+        /* 3-layer teal-tinted shadow — brand temperature lift.
+           Black on cream = muddy gray. Teal-tinted = expensive. */
+        box-shadow:
+            0 1px 2px rgba(42, 90, 90, 0.04),
+            0 4px 14px rgba(42, 90, 90, 0.07),
+            0 20px 48px -8px rgba(42, 90, 90, 0.14) !important;
+        transition:
+            box-shadow 0.3s ease,
+            transform 0.18s cubic-bezier(0.2, 0, 0, 1) !important;
+        will-change: transform, box-shadow;
+    }
+    /* Tap state — scale + shadow softens (Apple Today press) */
+    .products-carousel .product-card:active,
+    .products-carousel .product-card-luxe:active {
+        transform: scale(0.97) !important;
+        box-shadow:
+            0 1px 2px rgba(42, 90, 90, 0.03),
+            0 4px 10px rgba(42, 90, 90, 0.05),
+            0 8px 20px -8px rgba(42, 90, 90, 0.1) !important;
     }
 
-    /* Image — 4:5 portrait on all sizes, harmonic rhythm */
+    /* Image — 4:5 portrait, full-bleed top of card */
     .products-carousel .product-card__image-wrapper {
         aspect-ratio: 4 / 5 !important;
         width: 100% !important;
-        border-radius: 0 !important;
+        border-radius: 20px 20px 0 0 !important;
         overflow: hidden;
         background: var(--color-bg-soft);
+        margin: 0 !important;
     }
     .products-carousel .product-card__img--main,
     .products-carousel .product-card__img--hover {
         border-radius: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
     }
 
-    /* Cancel Batch 13 ken-burns parallax — not appropriate for static grid */
+    /* Cancel Batch 13 ken-burns / Batch 14 fade-up */
     .products-carousel > * .product-card__img--main {
         animation: none !important;
         transform: none !important;
     }
 
-    /* Caption — editorial typography below image */
+    /* Caption — Cormorant title, tabular price */
     .products-carousel .product-card__details,
     .products-carousel .product-card-luxe__details {
-        padding: 12px 4px 0 !important;
+        padding: 18px 20px 22px !important;
         background: transparent !important;
     }
     .products-carousel .product-card__title {
         font-family: var(--font-display) !important;
+        font-size: 1.375rem !important; /* 22px */
         font-weight: 500 !important;
         letter-spacing: var(--tracking-tight) !important;
         line-height: 1.15 !important;
-        margin: 0 0 6px 0 !important;
+        margin: 0 0 12px 0 !important;
         text-transform: none !important;
         color: var(--color-text-primary) !important;
     }
-    /* Big cards get 24px title; small cards 16px — size = importance */
-    .products-carousel > *:nth-child(3n + 1) .product-card__title {
-        font-size: 1.5rem !important;
-        margin-bottom: 8px !important;
-        line-height: 1.1 !important;
-    }
-    .products-carousel > *:not(:nth-child(3n + 1)) .product-card__title {
-        font-size: 1rem !important;
-    }
-
     .products-carousel .product-card__price-row {
-        margin: 0 !important;
+        display: flex !important;
+        align-items: baseline !important;
         gap: 10px !important;
+        margin: 0 !important;
         font-family: var(--font-body) !important;
         font-variant-numeric: tabular-nums;
     }
     .products-carousel .product-card__price {
-        font-size: 13px !important;
-        font-weight: 400 !important;
-        letter-spacing: 0.04em !important;
-        color: var(--color-text-secondary) !important;
+        font-size: 15px !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.02em !important;
+        color: var(--color-text-primary) !important;
         text-transform: none !important;
-    }
-    .products-carousel > *:nth-child(3n + 1) .product-card__price {
-        font-size: 14px !important;
     }
     .products-carousel .product-card__price--sale {
         color: var(--color-marsala) !important;
+        font-weight: 600 !important;
     }
+    /* Fix audit-reported collision between sale & old price */
     .products-carousel .product-card__price-old {
-        font-size: 12px !important;
+        font-size: 13px !important;
         color: var(--color-text-muted) !important;
+        margin-left: 0 !important;
     }
 
-    /* Colour swatches — too noisy under editorial photo */
-    .products-carousel .product-card__colors,
-    .products-carousel .product-card-luxe__colors {
-        display: none !important;
+    /* Colour swatches — back, restrained 16px */
+    .products-carousel .product-card__colors {
+        display: flex !important;
+        gap: 8px !important;
+        margin-top: 14px !important;
+    }
+    .products-carousel .product-card__colors > * {
+        width: 16px !important;
+        height: 16px !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
     }
 
     /* Heart — top-right glass button */
     .products-carousel .product-card__heart-btn {
-        top: 10px !important;
-        right: 10px !important;
+        top: 14px !important;
+        right: 14px !important;
         bottom: auto !important;
         left: auto !important;
-        width: 36px !important;
-        height: 36px !important;
-        background: rgba(255, 255, 255, 0.78) !important;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        width: 40px !important;
+        height: 40px !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
         border: 0 !important;
-        opacity: 1 !important;
         border-radius: 999px !important;
+        opacity: 1 !important;
     }
     .products-carousel .product-card__heart-btn svg {
         width: 18px;
         height: 18px;
     }
 
-    /* NEW / SALE — italic Cormorant pill, glass background */
+    /* NEW / SALE badge — italic Cormorant pill, glass */
     .products-carousel .product-card__badge,
-    .products-carousel [class*="product-card__badge"],
-    .products-carousel .product-card-luxe__badge {
+    .products-carousel [class*="product-card__badge"] {
         font-family: var(--font-display) !important;
         font-style: italic !important;
-        font-size: 12px !important;
+        font-size: 13px !important;
         font-weight: 400 !important;
         text-transform: lowercase !important;
         letter-spacing: 0.02em !important;
-        background: rgba(255, 255, 255, 0.85) !important;
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
+        background: rgba(255, 255, 255, 0.92) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         color: var(--color-primary) !important;
-        padding: 4px 12px !important;
-        top: 10px !important;
-        left: 10px !important;
+        padding: 5px 14px !important;
+        top: 14px !important;
+        left: 14px !important;
         border-radius: 999px !important;
         border: 0 !important;
-        box-shadow: none !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
     }
 
-    /* Counter / progress — irrelevant for vertical static grid */
+    /* Hide artifacts from previous batches */
     .arrival-counter,
     .arrival-progress {
         display: none !important;
     }
 
-    /* Header — generous space before grid */
-    #new-collections .new-arrivals-header {
-        margin-bottom: 28px !important;
-        padding: 0 16px !important;
-    }
-
-    /* CTA — sits at the end of the journey */
-    #new-collections .section__cta-center {
-        margin-top: 40px !important;
-        padding: 0 16px;
-    }
-
-    /* MOTION — staggered fade-up reveal as each card enters viewport.
-       Pure CSS scroll-driven; GPU; respects prefers-reduced-motion. */
+    /* MOTION — scroll-driven gentle active-card lift.
+       Pure CSS; centered card opacity 1 + scale 1.0;
+       peeking cards scale 0.94 + opacity 0.6. */
     @supports (animation-timeline: view()) {
         .products-carousel > * {
-            animation: bentoCardReveal linear both;
-            animation-timeline: view();
-            animation-range: entry 0% entry 45%;
-            will-change: opacity, transform;
+            animation: cardCentreActive linear both !important;
+            animation-timeline: view(inline);
+            animation-range: cover 0% cover 100%;
+            will-change: transform, opacity;
         }
-        @keyframes bentoCardReveal {
+        @keyframes cardCentreActive {
             0% {
-                opacity: 0;
-                transform: translateY(24px);
+                transform: scale(0.94);
+                opacity: 0.6;
+            }
+            45%,
+            55% {
+                transform: scale(1);
+                opacity: 1;
             }
             100% {
-                opacity: 1;
-                transform: translateY(0);
+                transform: scale(0.94);
+                opacity: 0.6;
             }
         }
     }
@@ -4270,7 +4287,20 @@
             transform: none !important;
         }
     }
+
+    #new-collections .new-arrivals-header {
+        margin-bottom: 16px !important;
+        padding: 0 16px !important;
+    }
+    #new-collections .section__cta-center {
+        margin-top: 16px !important;
+        padding: 0 16px;
+    }
 }
+
+/* Batch 14 (bento grid) — DELETED in Batch 15 (reverted to carousel).
+   See Batch 15 block above for current owner of .products-carousel
+   mobile styles. */
 
 /* ====================================================================
    Batch 9 — Mobile video frame: center, hide hover-only, smooth reveal

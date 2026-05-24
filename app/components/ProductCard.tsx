@@ -45,6 +45,7 @@ export default function ProductCard({
     product,
     priority = false,
     onSelectColor,
+    imageSizes = "(max-width: 768px) 50vw, 25vw",
 }: {
     product: Product;
     /** When true, the main image loads eager + fetchPriority="high".
@@ -55,6 +56,12 @@ export default function ProductCard({
     /** Optional callback when a color swatch is clicked. When omitted,
         the swatches are display-only (still keyboard-focusable). */
     onSelectColor?: (product: Product, color: string) => void;
+    /** Override the responsive `sizes` attribute. Default is "50vw / 25vw"
+        which matches the shop 2-col mobile grid. When the card is rendered
+        in a larger context (e.g. home page carousel at 78vw) override this
+        so the browser picks 800w/1200w webp variants instead of 400w —
+        otherwise images render upscaled and look blurry on retina screens. */
+    imageSizes?: string;
 }) {
     const { showToast } = useToast();
     const {
@@ -119,7 +126,7 @@ export default function ProductCard({
                     <picture>
                         <source
                             srcSet={buildWebpSrcset(image)}
-                            sizes="(max-width: 768px) 50vw, 25vw"
+                            sizes={imageSizes}
                             type="image/webp"
                         />
                         <img
@@ -137,7 +144,7 @@ export default function ProductCard({
                         <picture>
                             <source
                                 srcSet={buildWebpSrcset(image2)}
-                                sizes="(max-width: 768px) 50vw, 25vw"
+                                sizes={imageSizes}
                                 type="image/webp"
                             />
                             <img
