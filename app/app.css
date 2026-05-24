@@ -1251,7 +1251,12 @@ h3 {
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 500;
-    color: var(--color-primary-light, #4a8a8a);
+    /* #4a8a8a on the top-bar dark gradient = 4.01:1 — fails WCAG
+       AA (4.5).  #7AB0B0 = ~7.9:1 (AAA) and stays in the teal
+       family.  Hover keeps the original brand teal for contrast
+       drop-cue.  Per plan section 9 ("Footer phone-link contrast:
+       #4a8a8a -> ~#7AB0B0"); same shade used on top-bar links. */
+    color: #7ab0b0;
     text-decoration: none;
     transition: color 0.25s ease;
     display: flex;
