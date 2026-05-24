@@ -607,67 +607,96 @@ h3 {
     border: 1px solid var(--color-border-mid);
 }
 
-/* === Badge — single visible at top-left, premium tag, not 90s pill === */
+/* === Badge — single visible at top-left. Premium signals:
+   - NEW: text-only on image, no chunky white pill (Sézane/Cuyana pattern)
+   - SALE: small marsala pill (saved for state, not decoration)
+   - Sold-out: muted grey */
 .product-card__badge {
     position: absolute;
-    top: 16px;
-    left: 16px;
+    top: 14px;
+    left: 14px;
     z-index: 5;
-    padding: 6px 12px;
     font-family: var(--font-body);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     pointer-events: none;
 }
 
 .product-card__badge--new {
-    background: var(--color-bg-white);
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-border-mid);
+    /* Text-only on image — premium minimal. Drop shadow for legibility
+       on light/dark fabrics. */
+    padding: 0;
+    background: transparent;
+    color: var(--color-bg-white);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 .product-card__badge--sale {
+    padding: 5px 10px;
     background: var(--color-marsala);
     color: #fff;
 }
 .product-card__badge--soldout {
+    padding: 5px 10px;
     background: var(--color-text-secondary);
     color: #fff;
 }
 
-/* === Wishlist heart — always visible, 48px WCAG 2.5.5++, premium chrome === */
+/* === Wishlist heart — visually slim (36px), 44px hit target via padding ===
+   Premium brands use small unobtrusive heart icons (Sézane 36, Cuyana 32).
+   We hit WCAG 2.5.5 via invisible 44×44 hit area on touch devices. */
 .product-card__heart-btn {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 44px;
-    height: 44px;
+    top: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--color-text-primary);
     border: none;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
     transition:
         background 0.2s ease,
-        color 0.2s ease;
+        color 0.2s ease,
+        transform 0.2s ease;
     z-index: 6;
+}
+/* Invisible 44×44 hit target overlay — keeps WCAG 2.5.5 while letting
+   the visual heart stay slim premium. */
+.product-card__heart-btn::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
 }
 .product-card__heart-btn:hover {
     background: var(--color-text-primary);
     color: var(--color-bg-white);
 }
+.product-card__heart-btn svg {
+    width: 16px;
+    height: 16px;
+}
 
 @media (min-width: 768px) {
     .product-card__heart-btn {
-        width: 48px;
-        height: 48px;
+        width: 40px;
+        height: 40px;
+        top: 12px;
+        right: 12px;
+    }
+    .product-card__heart-btn svg {
+        width: 18px;
+        height: 18px;
     }
 }
 
