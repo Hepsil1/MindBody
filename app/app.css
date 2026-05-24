@@ -514,34 +514,46 @@ h3 {
 }
 
 /* === Modern Minimal Product Card === */
+/* ====================================================================
+   ProductCard — Phase 1 rewrite (premium, minimal, women's wellness)
+   Reference: Sézane editorial + Cuyana clean rhythm + Polène
+   proportions. Targets women/girls/kids in sport/yoga/lifestyle niche.
+   ==================================================================== */
+
 .product-card {
     position: relative;
-    background: #fff;
-    border-radius: 16px;
+    background: var(--color-bg-white);
+    border-radius: 4px;
     overflow: hidden;
-    transition:
-        transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
-        box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    transform-style: preserve-3d;
-    will-change: transform;
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
-    max-width: 340px;
+    border: 1px solid var(--color-border);
     width: 100%;
-    border: 1px solid #f0f0f0;
+    /* No max-width — let the grid container control width */
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.3s ease;
 }
 
 @media (hover: hover) {
     .product-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+        border-color: var(--color-border-mid);
     }
+}
+
+.product-card--sold-out {
+    opacity: 0.6;
 }
 
 .product-card__image-wrapper {
     position: relative;
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 3 / 4; /* luxury proportions vs 4/5 retail */
     overflow: hidden;
-    background: #fafafa;
+    background: var(--color-bg-soft);
+}
+
+.product-card__image-link {
+    display: block;
+    position: absolute;
+    inset: 0;
 }
 
 .product-card__img {
@@ -550,9 +562,7 @@ h3 {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition:
-        opacity 0.5s ease,
-        transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.3s ease;
 }
 
 .product-card__img--hover {
@@ -563,249 +573,206 @@ h3 {
     .product-card:hover .product-card__img--main {
         opacity: 0;
     }
-
     .product-card:hover .product-card__img--hover {
         opacity: 1;
-        transform: scale(1.05);
     }
 }
 
-.product-card__overlay {
+/* === Sold-out overlay === */
+.product-card__soldout-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.03);
-    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(250, 248, 246, 0.55);
+    z-index: 4;
 }
-
-/* === Badges === */
-.product-card__tag {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 5;
-    padding: 5px 14px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
+.product-card__soldout-overlay span {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    border-radius: 6px;
+    color: var(--color-text-primary);
+    padding: 8px 20px;
+    background: var(--color-bg-white);
+    border: 1px solid var(--color-border-mid);
+}
+
+/* === Badge — single visible at top-left, premium tag, not 90s pill === */
+.product-card__badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 5;
+    padding: 6px 12px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     pointer-events: none;
 }
 
-.product-card__tag--new {
-    background: rgba(255, 255, 255, 0.92);
-    color: #111;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+.product-card__badge--new {
+    background: var(--color-bg-white);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-mid);
 }
-
-.product-card__tag--sale {
-    background: rgba(20, 50, 50, 0.85);
+.product-card__badge--sale {
+    background: var(--color-marsala);
     color: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
+}
+.product-card__badge--soldout {
+    background: var(--color-text-secondary);
+    color: #fff;
 }
 
-/* === Wishlist Heart (always top-right) === */
+/* === Wishlist heart — always visible, 48px WCAG 2.5.5++, premium chrome === */
 .product-card__heart-btn {
     position: absolute;
-    top: 14px;
-    right: 14px;
-    width: 36px;
-    height: 36px;
+    top: 12px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #111;
+    color: var(--color-text-primary);
     border: none;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    /* Visible on touch, hidden until hover on pointer devices */
-    opacity: 1;
-    transform: translateY(0);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
     z-index: 6;
 }
-
-@media (hover: hover) {
-    .product-card__heart-btn {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-}
-
-@media (hover: hover) {
-    .product-card:hover .product-card__heart-btn {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 .product-card__heart-btn:hover {
-    background: #111;
-    color: #fff;
-    transform: scale(1.05);
+    background: var(--color-text-primary);
+    color: var(--color-bg-white);
 }
 
-/* Touch devices: enlarge the wishlist hit target to the 44px WCAG 2.5.5
-   minimum.  IMPORTANT: also force opacity:1 here.  The .header-hover-y
-   stack at lines 633-638 sets opacity:0 inside @media (hover: hover) —
-   which iOS Safari sometimes matches enough to leave the heart invisible
-   on touch.  Audit P1 (shop-yoga). */
-@media (max-width: 768px) {
+@media (min-width: 768px) {
     .product-card__heart-btn {
-        width: 44px;
-        height: 44px;
-        opacity: 1 !important;
-        transform: none !important;
+        width: 48px;
+        height: 48px;
     }
 }
 
-/* === Quick View Base === */
-.product-card__quick-view {
-    position: absolute;
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
-    padding: 14px 0;
-    background: rgba(255, 255, 255, 0.95);
-    color: #111;
-    text-align: center;
-    font-family: var(--font-primary, "Jost", sans-serif);
-    font-size: 0.75rem;
-    letter-spacing: 0.2em;
-    font-weight: 500;
-    text-transform: uppercase;
-    text-decoration: none;
-    transform: translateY(calc(100% + 16px));
-    opacity: 0;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 6;
-}
-
-@media (hover: hover) {
-    .product-card:hover .product-card__quick-view {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.product-card__quick-view:hover {
-    background: #111;
-    color: #fff;
-}
-
-/* Clean Product Info Base */
+/* === Details — text content below image === */
 .product-card__details {
-    padding: 20px 16px 24px;
-    text-align: center;
-    background: #fff;
-}
-
-/* === Rating === */
-.product-card__rating {
-    font-size: 0.75rem;
-    color: #ddb424;
-    /* Premium gold */
-    margin-bottom: 8px;
-    line-height: 1;
+    padding: 16px 14px 20px;
+    background: var(--color-bg-white);
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
+    flex-direction: column;
+    align-items: stretch;
+    flex-grow: 1;
+    text-align: left;
+    gap: 4px;
 }
 
-.product-card__rating .star-half {
-    color: #e0e0e0;
-    position: relative;
-    display: inline-block;
-}
-
-.product-card__rating .star-half::after {
-    content: "★";
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 50%;
-    overflow: hidden;
-    color: #ddb424;
-}
-
-.product-card__rating-count {
-    color: #999;
-    font-size: 0.7rem;
-    margin-left: 6px;
-    font-family: sans-serif;
-    font-weight: 400;
-}
-
-/* === Title === */
+/* === Title — Cormorant serif, sentence case, premium hierarchy === */
 .product-card__title {
-    font-family: var(--font-primary, "Jost", sans-serif);
-    font-size: 0.85rem;
-    font-weight: 400;
-    color: #111;
-    margin: 0 0 10px 0;
-    line-height: 1.4;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: 0;
+    color: var(--color-text-primary);
+    margin: 0;
+    /* Clamp to 2 lines to keep cards aligned */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 42px;
 }
-
 .product-card__title a {
     color: inherit;
     text-decoration: none;
     transition: color 0.2s;
 }
-
 .product-card__title a:hover {
-    color: #555;
+    color: var(--color-primary);
 }
 
+/* === Price — secondary to title, NOT inverted hierarchy === */
 .product-card__price-row {
     display: flex;
-    justify-content: center;
     align-items: baseline;
-    gap: 10px;
-    font-family: var(--font-primary, sans-serif);
-    margin-bottom: 14px;
+    gap: 8px;
+    font-family: var(--font-body);
+    margin-top: 2px;
 }
-
+.product-card__price {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    letter-spacing: 0;
+    line-height: 1.2;
+}
+.product-card__price--sale {
+    color: var(--color-marsala);
+    font-weight: 500;
+}
 .product-card__price-old {
-    font-size: 0.85rem;
+    font-size: 13px;
     font-weight: 400;
-    color: #999;
+    color: var(--color-text-muted);
     text-decoration: line-through;
 }
 
-/* === Color Dots === */
+/* === Color swatches — 24px touch-target, interactive === */
 .product-card__colors {
     display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 4px;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
 }
-
-.product-card__color-dot {
-    width: 14px;
-    height: 14px;
+.product-card__swatch {
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    display: block;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    padding: 0;
     background-color: transparent;
+    display: inline-block;
     cursor: pointer;
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
+    flex-shrink: 0;
+    transition: box-shadow 0.2s ease;
 }
-
-.product-card__color-dot:hover {
-    transform: scale(1.15);
+button.product-card__swatch {
+    /* Larger hit target on touch devices than visual size */
+    position: relative;
+}
+button.product-card__swatch::before {
+    /* Invisible 32×32 hit target overlay */
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+}
+button.product-card__swatch:hover {
     box-shadow:
-        0 0 0 1px #fff,
-        0 0 0 2px #111;
+        0 0 0 1.5px var(--color-bg-white),
+        0 0 0 2.5px var(--color-text-primary);
+}
+button.product-card__swatch.is-selected {
+    box-shadow:
+        0 0 0 1.5px var(--color-bg-white),
+        0 0 0 2.5px var(--color-primary);
+}
+button.product-card__swatch:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 1.5px var(--color-bg-white),
+        0 0 0 3px var(--color-primary);
 }
 
 /* === Category Card - Smaller === */
@@ -10300,21 +10267,25 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 }
 
 /* Luxe Grid */
+/* === Shop grid container — unified mobile/tablet/desktop gap === */
 .luxe-product-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 60px 40px;
+    gap: 48px 32px; /* desktop */
     align-items: stretch;
 }
 
-/* Phase 8 atom 2 — CRITICAL fix.  Without this override the 3-col grid
-   stays at 390px wide, computing to 117px cards and creating a 63px
-   horizontal scroll (body scrollWidth = 453 at 390 viewport).
-   2-col + tighter gap is the standard mobile card grid. */
-@media (max-width: 768px) {
+@media (min-width: 768px) and (max-width: 1023.98px) {
+    .luxe-product-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 36px 24px; /* tablet */
+    }
+}
+
+@media (max-width: 767.98px) {
     .luxe-product-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 28px 12px;
+        gap: 28px 16px; /* mobile */
     }
 }
 
@@ -10322,87 +10293,10 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     display: flex;
 }
 
-/* Luxe Card Overrides - Clean Modern Style */
-.shop-luxe .product-card {
-    border: 1px solid #e8e8e8 !important;
-    background: #fff !important;
-    border-radius: 12px !important;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: none;
-    transition: all 0.4s ease;
-}
-
-.shop-luxe .product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
-    border-color: #d0d0d0 !important;
-}
-
-.shop-luxe .product-card__image-wrapper {
-    aspect-ratio: 3/4;
-    background: #f8f8f8;
-    position: relative;
-    overflow: hidden;
-    border-radius: 0;
-    flex-shrink: 0;
-}
-
-.shop-luxe .product-card:hover .product-card__image-wrapper {
-    transform: none;
-    box-shadow: none;
-}
-
-/* Remove aura effect for cleaner look */
-.shop-luxe .product-card__image-wrapper::before {
-    display: none;
-}
-
-/* Card Details - Equal Height */
-.shop-luxe .product-card__details {
-    padding: 24px 20px 28px;
-    text-align: center;
-    background: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    flex-grow: 1;
-    min-height: 120px;
-}
-
-/* Title - Premium Serif Typography */
-.shop-luxe .product-card__title {
-    font-family: "Cormorant Garamond", Georgia, serif;
-    font-size: 16px;
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0.01em;
-    color: #1a1a1a;
-    margin-bottom: 12px;
-    line-height: 1.45;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: 70px;
-}
-
-/* Price - Balanced & Elegant */
-.shop-luxe .product-card__price-main {
-    font-family: "DM Sans", sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--color-primary);
-    letter-spacing: -0.01em;
-}
-
-.shop-luxe .product-card__price-main--sale {
-    color: var(--color-primary) !important;
-}
+/* .shop-luxe class still applied by shop.$category.tsx — these scoped
+   rules are now legacy. The base .product-card already implements the
+   premium luxe look. Keep this empty hook to avoid breaking the
+   class name reference in case future variants need it. */
 
 /* Luxe Pagination */
 .luxe-pagination {
@@ -11020,22 +10914,8 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     }
 }
 
-.product-card__price-main {
-    font-family: "DM Sans", sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--color-primary);
-    letter-spacing: -0.01em;
-}
-
-.product-card__price-main--sale {
-    color: var(--color-primary) !important;
-}
-
-/* Subtle emphasis on hover */
-.product-card:hover .product-card__price-main {
-    opacity: 0.85;
-}
+/* (Legacy .product-card__price-main rules removed; new structure uses
+   .product-card__price + .product-card__price--sale; defined above.) */
 
 /* === Larger Instagram Icon in Footer === */
 .insta-icon-wrapper {
