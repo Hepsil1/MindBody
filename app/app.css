@@ -651,11 +651,16 @@ h3 {
 }
 
 /* Touch devices: enlarge the wishlist hit target to the 44px WCAG 2.5.5
-   minimum (it stays permanently visible on touch — see opacity rule above). */
+   minimum.  IMPORTANT: also force opacity:1 here.  The .header-hover-y
+   stack at lines 633-638 sets opacity:0 inside @media (hover: hover) —
+   which iOS Safari sometimes matches enough to leave the heart invisible
+   on touch.  Audit P1 (shop-yoga). */
 @media (max-width: 768px) {
     .product-card__heart-btn {
         width: 44px;
         height: 44px;
+        opacity: 1 !important;
+        transform: none !important;
     }
 }
 
@@ -10153,6 +10158,17 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     grid-template-columns: repeat(3, 1fr);
     gap: 60px 40px;
     align-items: stretch;
+}
+
+/* Phase 8 atom 2 — CRITICAL fix.  Without this override the 3-col grid
+   stays at 390px wide, computing to 117px cards and creating a 63px
+   horizontal scroll (body scrollWidth = 453 at 390 viewport).
+   2-col + tighter gap is the standard mobile card grid. */
+@media (max-width: 768px) {
+    .luxe-product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 28px 12px;
+    }
 }
 
 .luxe-card-wrapper {
