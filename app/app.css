@@ -8311,6 +8311,39 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     border-color: var(--color-primary);
 }
 
+/* Phase 7e atom 2 — Password reveal toggle.
+   Wrap that contains the password input + eye-icon toggle button.
+   Mobile users on a soft keyboard can't verify what they typed
+   without it (standard since 2018). */
+.password-input-wrap {
+    position: relative;
+}
+.password-input-wrap input {
+    /* Reserve room for the absolute-positioned button so the dots
+       never sit under it. */
+    padding-right: 48px;
+}
+.password-reveal-btn {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted, #666);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: color 0.2s ease;
+}
+.password-reveal-btn:hover {
+    color: var(--color-primary);
+}
+
 .auth-form input:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 1px;
