@@ -424,20 +424,86 @@ export default function Checkout() {
                                 </svg>
                             </div>
                             <h2>Дякуємо за замовлення!</h2>
-                            <p className="cart-success__order">
-                                Номер замовлення: <strong>{orderNumber}</strong>
+                            {/* Atom O: order number + copy-to-clipboard.  Was just
+                                <strong> with no affordance — user had to manually
+                                select + copy on mobile, friction. */}
+                            <div className="cart-success__order-row">
+                                <span className="cart-success__order-label">Номер замовлення</span>
+                                <div className="cart-success__order-id">
+                                    <strong>{orderNumber}</strong>
+                                    <button
+                                        type="button"
+                                        className="cart-success__copy"
+                                        onClick={() => {
+                                            navigator.clipboard
+                                                .writeText(orderNumber)
+                                                .then(() =>
+                                                    showToast("Номер скопійовано", "success"),
+                                                )
+                                                .catch(() =>
+                                                    showToast("Не вдалося скопіювати", "warning"),
+                                                );
+                                        }}
+                                        aria-label="Скопіювати номер замовлення"
+                                    >
+                                        <svg
+                                            width="18"
+                                            height="18"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="1.6"
+                                        >
+                                            <rect
+                                                x="9"
+                                                y="9"
+                                                width="13"
+                                                height="13"
+                                                rx="2"
+                                                ry="2"
+                                            />
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            {customerInfo.email && (
+                                <p className="cart-success__email">
+                                    Підтвердження надіслано на <strong>{customerInfo.email}</strong>
+                                </p>
+                            )}
+                            <div className="cart-success__eta">
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                    aria-hidden="true"
+                                >
+                                    <rect x="1" y="3" width="15" height="13" />
+                                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                                    <circle cx="5.5" cy="18.5" r="2.5" />
+                                    <circle cx="18.5" cy="18.5" r="2.5" />
+                                </svg>
+                                <span>
+                                    {customerInfo.delivery === "nova_poshta"
+                                        ? "Доставка Новою Поштою 1-3 дні"
+                                        : "Доставка Укрпоштою 3-7 днів"}
+                                </span>
+                            </div>
+                            <p className="cart-success__hint">
+                                Ми зв'яжемося з вами найближчим часом для підтвердження деталей.
                             </p>
-                            <p>
-                                Ми зв'яжемося з вами найближчим часом для підтвердження деталей
-                                доставки.
-                            </p>
-                            <Link
-                                to="/"
-                                className="cart-btn cart-btn--primary"
-                                style={{ maxWidth: "300px", margin: "0 auto" }}
-                            >
-                                Повернутися на головну
-                            </Link>
+                            <div className="cart-success__ctas">
+                                <Link to="/shop/yoga" className="cart-btn cart-btn--primary">
+                                    До магазину
+                                </Link>
+                                <Link to="/" className="cart-btn cart-btn--ghost">
+                                    На головну
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
