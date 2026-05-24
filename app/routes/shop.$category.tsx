@@ -285,17 +285,25 @@ export default function ShopCategory() {
     const layerLabel = "MIND BODY";
 
     // Parse Image Position. Default = "50% 30%" (face-safe crop for
-    // figure-of-woman product photography). DB-set heroImagePos overrides.
+    // figure-of-woman product photography).
+    //
+    // Admin UI defaults newly-created shop pages to "50% 50% 1" (centered),
+    // which slices through the model's torso on portrait shots. Treat that
+    // exact admin-default as "not customized" and substitute face-safe.
+    // Only honour DB values where an admin actually adjusted the position.
     const imagePosStyle = useMemo(() => {
         const defaultX = "50%";
-        const defaultY = "30%"; // upper third — keeps face visible
-        if (!shopPage?.heroImagePos) {
+        const defaultY = "30%";
+        const raw = shopPage?.heroImagePos?.trim() || "";
+        const isAdminDefault = raw === "50% 50% 1" || raw === "50% 50%" || raw === "";
+
+        if (isAdminDefault) {
             return {
                 objectPosition: `${defaultX} ${defaultY}`,
                 transformOrigin: `${defaultX} ${defaultY}`,
             };
         }
-        const parts = shopPage.heroImagePos.split(" ");
+        const parts = raw.split(" ");
         const x = parts[0] || defaultX;
         const y = parts[1] || defaultY;
         const scale = parseFloat(parts[2]) || 1;
