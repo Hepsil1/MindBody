@@ -824,26 +824,26 @@ export default function Home() {
                         ))}
                     </div>
 
-                    {/* Mobile progress bar — desktop hides via CSS @media.
-                        Fills as the active card index advances. Provides the
-                        "where am I in the list" signal that scroll-snap alone
-                        can't deliver. role=progressbar is announced to AT. */}
+                    {/* Mobile counter — "01 — 12" in Cormorant italic, large.
+                        Editorial pacing cue: signals curation ("12 chosen
+                        pieces") rather than inventory. Desktop hides via CSS
+                        @media. aria-live announces position to AT. */}
                     <div
-                        className="arrival-progress"
-                        role="progressbar"
-                        aria-valuemin={0}
-                        aria-valuemax={newProducts.length}
-                        aria-valuenow={activeArrival + 1}
-                        aria-label="Прогрес перегляду новинок"
+                        className="arrival-counter"
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                        aria-label={`Новинка ${activeArrival + 1} з ${newProducts.length}`}
                     >
-                        <div
-                            className="arrival-progress__fill"
-                            style={{
-                                width: `${
-                                    ((activeArrival + 1) / Math.max(1, newProducts.length)) * 100
-                                }%`,
-                            }}
-                        />
+                        <span className="arrival-counter__num">
+                            {String(activeArrival + 1).padStart(2, "0")}
+                        </span>
+                        <span className="arrival-counter__sep" aria-hidden="true">
+                            —
+                        </span>
+                        <span className="arrival-counter__total">
+                            {String(newProducts.length).padStart(2, "0")}
+                        </span>
                     </div>
 
                     <div className="section__cta-center">

@@ -3818,11 +3818,221 @@
     }
 }
 
-/* Desktop hides mobile-only indicators (progress bar + dots) */
+/* Desktop hides mobile-only indicators (counter + dots) */
 @media (min-width: 769px) {
-    .arrival-progress,
+    .arrival-counter,
     .bw-feat-dots-wrap {
         display: none !important;
+    }
+}
+
+/* ====================================================================
+   Batch 13 — Magazine-flip redo of Нові надходження (mobile-only)
+
+   User: "просто ужас. полностью переделай. посмотри как у других брендов.
+   Ощущения сделай совершенно другие когда их смотришь перебираешь."
+
+   v3 approach (after v1 carousel + v2 motion both rejected as "uglyy"):
+   Editorial magazine-flip pattern. Reference: Loro Piana, Aesop seasonal,
+   Polène, Lemaire. Confirmed by external research agent as the only
+   pattern that fits premium wellness brand voice.
+
+   Differences vs v2:
+   - Card 88vw (was 68vw), center snap-align (was start) — deliberate
+     full-bleed full-card focus, not "shop-feed" peek.
+   - STRIP all card chrome: bg, border, radius, shadow → 0. Image is
+     the card. Caption sits below as editorial baseline.
+   - Title in Cormorant 20px (was DM Sans). Price tabular-nums right-
+     aligned. Subtle 1px divider between title and price row optional.
+   - Heart: smaller (36px), bottom-right of image, semi-transparent
+     glass effect (backdrop-filter blur).
+   - NEW badge: Cormorant italic "новинка" 11px, transparent bg,
+     brand-teal color — not a label, a whisper.
+   - Hide color swatches on mobile (too noisy under editorial photo).
+   - Ken-burns parallax: image translates -6% → 0% → +6% as card
+     crosses viewport (CSS scroll-driven, no JS).
+   - Counter: "01 — 12" Cormorant italic 30px, brand teal, centered
+     below carousel. Replaces the 2px progress bar (Batch 12).
+   - Gap 4vw, padding-inline 6vw — generous breathing room.
+   ==================================================================== */
+@media (max-width: 768px) {
+    /* Carousel: deliberate full-bleed feel, slower pace */
+    .products-carousel {
+        scroll-padding-inline-start: 6vw !important;
+        padding: 0 6vw 0 !important;
+        gap: 4vw !important;
+        scroll-snap-type: x mandatory;
+    }
+    .products-carousel > * {
+        flex: 0 0 88vw !important;
+        scroll-snap-align: center !important;
+        scroll-snap-stop: always !important;
+    }
+
+    /* Strip the card chrome — image becomes the card */
+    .products-carousel .product-card,
+    .products-carousel .product-card-luxe {
+        background: transparent !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+    .products-carousel .product-card__image-wrapper {
+        aspect-ratio: 4 / 5 !important;
+        border-radius: 0 !important;
+        overflow: hidden;
+        box-shadow: none !important;
+        background: var(--color-bg-soft);
+    }
+    .products-carousel .product-card__img--main,
+    .products-carousel .product-card__img--hover {
+        border-radius: 0 !important;
+    }
+
+    /* Ken-burns parallax: image translates as card crosses viewport */
+    @supports (animation-timeline: view()) {
+        .products-carousel > * .product-card__img--main {
+            animation: cardImgKenBurns linear both;
+            animation-timeline: view(inline);
+            animation-range: cover 0% cover 100%;
+            transform-origin: center center;
+            will-change: transform;
+        }
+        @keyframes cardImgKenBurns {
+            0% {
+                transform: translate3d(6%, 0, 0) scale(1.08);
+            }
+            50% {
+                transform: translate3d(0%, 0, 0) scale(1.04);
+            }
+            100% {
+                transform: translate3d(-6%, 0, 0) scale(1.08);
+            }
+        }
+    }
+
+    /* Caption — editorial baseline */
+    .products-carousel .product-card__details,
+    .products-carousel .product-card-luxe__details {
+        padding: 18px 2px 0 !important;
+        background: transparent !important;
+    }
+    .products-carousel .product-card__title {
+        font-family: var(--font-display) !important;
+        font-size: 1.25rem !important; /* 20px */
+        font-weight: 500 !important;
+        letter-spacing: var(--tracking-tight) !important;
+        line-height: 1.15 !important;
+        margin: 0 0 8px 0 !important;
+        text-transform: none !important;
+        color: var(--color-text-primary) !important;
+    }
+    .products-carousel .product-card__price-row {
+        margin-top: 0 !important;
+        gap: 12px !important;
+        font-family: var(--font-body) !important;
+        font-variant-numeric: tabular-nums;
+    }
+    .products-carousel .product-card__price {
+        font-size: 13px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.04em !important;
+        color: var(--color-text-secondary) !important;
+        text-transform: none !important;
+    }
+    .products-carousel .product-card__price--sale {
+        color: var(--color-marsala) !important;
+    }
+    .products-carousel .product-card__price-old {
+        font-size: 12px !important;
+        color: var(--color-text-muted) !important;
+    }
+
+    /* Heart: smaller glass button, bottom-right of image */
+    .products-carousel .product-card__heart-btn {
+        width: 36px !important;
+        height: 36px !important;
+        background: rgba(255, 255, 255, 0.78) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        top: auto !important;
+        bottom: 12px !important;
+        right: 12px !important;
+        left: auto !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 0 !important;
+        opacity: 1 !important;
+    }
+    .products-carousel .product-card__heart-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* NEW / SALE badge: whisper not shout. Italic Cormorant. */
+    .products-carousel .product-card__badge,
+    .products-carousel [class*="product-card__badge"],
+    .products-carousel .product-card-luxe__badge {
+        font-family: var(--font-display) !important;
+        font-style: italic !important;
+        font-size: 12px !important;
+        font-weight: 400 !important;
+        text-transform: lowercase !important;
+        letter-spacing: 0.02em !important;
+        background: transparent !important;
+        color: var(--color-primary) !important;
+        padding: 0 !important;
+        top: 12px !important;
+        left: 14px !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+    /* Hide colour swatches under cards — they fight the editorial feel */
+    .products-carousel .product-card__colors,
+    .products-carousel .product-card-luxe__colors {
+        display: none !important;
+    }
+
+    /* Counter — "01 — 12" Cormorant italic, brand teal */
+    .arrival-counter {
+        display: flex;
+        justify-content: center;
+        align-items: baseline;
+        gap: 16px;
+        margin: 36px auto 0;
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: 30px;
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: var(--tracking-tight);
+        color: var(--color-primary);
+    }
+    .arrival-counter__num {
+        font-variant-numeric: tabular-nums;
+        min-width: 1.6ch;
+        text-align: right;
+        transition: opacity 0.35s ease;
+    }
+    .arrival-counter__sep {
+        font-style: normal;
+        opacity: 0.35;
+        font-size: 22px;
+    }
+    .arrival-counter__total {
+        font-variant-numeric: tabular-nums;
+        color: var(--color-primary);
+        opacity: 0.45;
+    }
+
+    /* CTA: more breathing room below counter */
+    #new-collections .section__cta-center {
+        margin-top: 32px !important;
+    }
+
+    /* Tighten header spacing — counter takes over visual rhythm */
+    #new-collections .new-arrivals-header {
+        margin-bottom: 20px !important;
     }
 }
 
