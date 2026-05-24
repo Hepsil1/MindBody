@@ -1,0 +1,9 @@
+# Cross-device visual baseline screenshots are intentionally not
+# committed by default — they're a per-run artifact, not a contract.
+# Run `npm run visual-snapshot` locally to regenerate.
+# If you want to track a known-good baseline in git, remove this file
+# (or replace with negation rules for specific devices).
+*.png
+*.jpg
+*.jpeg
+*.webp

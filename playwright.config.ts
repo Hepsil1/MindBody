@@ -55,6 +55,25 @@ export default defineConfig({
             use: { ...devices["Pixel 7"] },
             testMatch: /mobile-.*\.spec\.ts/,
         },
+        {
+            // iPhone 14 — real WebKit engine.  This is the closest free
+            // approximation to Safari iOS: it's the same engine, with the
+            // same default CSS behaviours that Chromium-with-iOS-UA gets
+            // wrong (empty <span> width, 100vh URL-bar quirk, hover:hover
+            // matching).  Caught the .header__burger span 0-width bug
+            // that Chromium emulation missed.
+            name: "Mobile Safari",
+            use: { ...devices["iPhone 14"] },
+            testMatch: /mobile-.*\.spec\.ts/,
+        },
+        {
+            // iPhone SE — smallest viable current iPhone (375×667 DPR 2).
+            // Catches narrow-viewport overflow + sticky-CTA-clearance bugs
+            // that the bigger phones hide.
+            name: "Mobile Safari SE",
+            use: { ...devices["iPhone SE"] },
+            testMatch: /mobile-.*\.spec\.ts/,
+        },
     ],
 
     // Auto-start the React Router dev server before tests, kill it after.

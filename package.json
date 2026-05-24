@@ -16,6 +16,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "visual-snapshot": "node scripts/visual-snapshot.mjs",
+    "visual-snapshot:local": "node scripts/visual-snapshot.mjs --local",
     "deploy": "pwsh ./scripts/deploy.ps1",
     "backup:db": "pwsh ./scripts/backup-db.ps1",
     "postinstall": "prisma generate",
