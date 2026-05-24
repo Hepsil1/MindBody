@@ -527,7 +527,8 @@ export default function Checkout() {
                                             name="name"
                                             value={customerInfo.name}
                                             onChange={handleInputChange}
-                                            placeholder="Олена Шевченко"
+                                            placeholder="Ваше повне ім'я"
+                                            autoComplete="name"
                                             required
                                         />
                                         {errors.name && (
@@ -558,6 +559,8 @@ export default function Checkout() {
                                             value={customerInfo.email}
                                             onChange={handleInputChange}
                                             placeholder="olena@example.com"
+                                            autoComplete="email"
+                                            inputMode="email"
                                         />
                                     </div>
                                     <div className="form-group">
@@ -575,6 +578,8 @@ export default function Checkout() {
                                                 }));
                                             }}
                                             placeholder="+380 (XX) XXX-XX-XX"
+                                            autoComplete="tel"
+                                            inputMode="tel"
                                             required
                                         />
                                         {errors.phone && (

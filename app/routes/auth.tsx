@@ -2,6 +2,12 @@ import { Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { AuthUtils, validateEmail, validatePassword } from "../utils/auth";
 
+// Tab title — without this, /auth shows blank in browser tab + history.
+// SEO + UX (audit P2).
+export function meta() {
+    return [{ title: "Вхід / Реєстрація | MIND BODY" }];
+}
+
 type AuthMode = "login" | "register";
 
 export default function Auth() {
@@ -169,14 +175,22 @@ export default function Auth() {
                 <div className="container">
                     <div className="auth-card">
                         {/* Mode Tabs */}
-                        <div className="auth-tabs">
+                        <div className="auth-tabs" role="tablist" aria-label="Вхід або реєстрація">
                             <button
+                                type="button"
+                                role="tab"
+                                aria-selected={mode === "login"}
+                                aria-controls="auth-panel"
                                 className={`auth-tab ${mode === "login" ? "active" : ""}`}
                                 onClick={() => switchMode("login")}
                             >
                                 Вхід
                             </button>
                             <button
+                                type="button"
+                                role="tab"
+                                aria-selected={mode === "register"}
+                                aria-controls="auth-panel"
                                 className={`auth-tab ${mode === "register" ? "active" : ""}`}
                                 onClick={() => switchMode("register")}
                             >
@@ -254,7 +268,12 @@ export default function Auth() {
                         </div>
 
                         {/* Form */}
-                        <form className="auth-form" onSubmit={handleSubmit}>
+                        <form
+                            id="auth-panel"
+                            role="tabpanel"
+                            className="auth-form"
+                            onSubmit={handleSubmit}
+                        >
                             {mode === "register" && (
                                 <div className="form-group">
                                     <label htmlFor="name">Ім'я та прізвище</label>
@@ -263,7 +282,8 @@ export default function Auth() {
                                         id="name"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
-                                        placeholder="Олена Шевченко"
+                                        placeholder="Ваше повне ім'я"
+                                        autoComplete="name"
                                         required
                                     />
                                 </div>
@@ -277,6 +297,8 @@ export default function Auth() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="email@example.com"
+                                    autoComplete="email"
+                                    inputMode="email"
                                     required
                                 />
                             </div>
@@ -290,6 +312,8 @@ export default function Auth() {
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
                                         placeholder="+380 XX XXX XX XX"
+                                        autoComplete="tel"
+                                        inputMode="tel"
                                     />
                                 </div>
                             )}
@@ -302,6 +326,9 @@ export default function Auth() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
+                                    autoComplete={
+                                        mode === "register" ? "new-password" : "current-password"
+                                    }
                                     required
                                 />
                                 {mode === "register" && (
@@ -321,6 +348,7 @@ export default function Auth() {
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                             placeholder="••••••••"
+                                            autoComplete="new-password"
                                             required
                                         />
                                     </div>
