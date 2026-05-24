@@ -30,6 +30,8 @@ export function buildWebpSrcset(url: string): string {
         `${base}-400w.webp 400w`,
         `${base}-800w.webp 800w`,
         `${base}-1200w.webp 1200w`,
-        `${base}.webp 2400w`, // master fallback for retina desktop / hi-DPR
+        `${base}-1600w.webp 1600w`,
+        `${base}-2000w.webp 2000w`,
+        `${base}.webp 2400w`, // master fallback for 4K+ retina
     ].join(", ");
 }
