@@ -235,6 +235,18 @@ export default function Checkout() {
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             showToast("Будь ласка, перевірте правильність заповнення полів", "warning");
+            // After React paints the new error spans, scroll the first one
+            // into view + focus the offending field so the user lands
+            // directly on what to fix. requestAnimationFrame ensures the
+            // DOM has the new aria-invalid + error spans before we query.
+            requestAnimationFrame(() => {
+                const firstErrorField = Object.keys(newErrors)[0];
+                const el = document.getElementById(firstErrorField);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                    (el as HTMLInputElement).focus({ preventScroll: true });
+                }
+            });
             return;
         }
 
@@ -532,15 +544,7 @@ export default function Checkout() {
                                             required
                                         />
                                         {errors.name && (
-                                            <span
-                                                className="field-error-text"
-                                                style={{
-                                                    color: "#dc2626",
-                                                    fontSize: "0.85rem",
-                                                    marginTop: "4px",
-                                                    display: "block",
-                                                }}
-                                            >
+                                            <span className="field-error-text" role="alert">
                                                 {errors.name}
                                             </span>
                                         )}
@@ -583,15 +587,7 @@ export default function Checkout() {
                                             required
                                         />
                                         {errors.phone && (
-                                            <span
-                                                className="field-error-text"
-                                                style={{
-                                                    color: "#dc2626",
-                                                    fontSize: "0.85rem",
-                                                    marginTop: "4px",
-                                                    display: "block",
-                                                }}
-                                            >
+                                            <span className="field-error-text" role="alert">
                                                 {errors.phone}
                                             </span>
                                         )}
@@ -692,15 +688,7 @@ export default function Checkout() {
                                                     autoComplete="off"
                                                 />
                                                 {errors.city && (
-                                                    <span
-                                                        className="field-error-text"
-                                                        style={{
-                                                            color: "#dc2626",
-                                                            fontSize: "0.85rem",
-                                                            marginTop: "4px",
-                                                            display: "block",
-                                                        }}
-                                                    >
+                                                    <span className="field-error-text" role="alert">
                                                         {errors.city}
                                                     </span>
                                                 )}
@@ -761,15 +749,7 @@ export default function Checkout() {
                                                     autoComplete="off"
                                                 />
                                                 {errors.warehouse && (
-                                                    <span
-                                                        className="field-error-text"
-                                                        style={{
-                                                            color: "#dc2626",
-                                                            fontSize: "0.85rem",
-                                                            marginTop: "4px",
-                                                            display: "block",
-                                                        }}
-                                                    >
+                                                    <span className="field-error-text" role="alert">
                                                         {errors.warehouse}
                                                     </span>
                                                 )}
@@ -825,15 +805,7 @@ export default function Checkout() {
                                                     placeholder="Введіть назву міста"
                                                 />
                                                 {errors.city && (
-                                                    <span
-                                                        className="field-error-text"
-                                                        style={{
-                                                            color: "#dc2626",
-                                                            fontSize: "0.85rem",
-                                                            marginTop: "4px",
-                                                            display: "block",
-                                                        }}
-                                                    >
+                                                    <span className="field-error-text" role="alert">
                                                         {errors.city}
                                                     </span>
                                                 )}
@@ -855,15 +827,7 @@ export default function Checkout() {
                                                     placeholder="вул. Хрещатик, 1 або 01001"
                                                 />
                                                 {errors.warehouse && (
-                                                    <span
-                                                        className="field-error-text"
-                                                        style={{
-                                                            color: "#dc2626",
-                                                            fontSize: "0.85rem",
-                                                            marginTop: "4px",
-                                                            display: "block",
-                                                        }}
-                                                    >
+                                                    <span className="field-error-text" role="alert">
                                                         {errors.warehouse}
                                                     </span>
                                                 )}
@@ -990,6 +954,9 @@ export default function Checkout() {
                                 <div className="form-section">
                                     <h3>Коментар до замовлення</h3>
                                     <div className="form-group">
+                                        <label htmlFor="comment" className="visually-hidden">
+                                            Коментар до замовлення
+                                        </label>
                                         <textarea
                                             id="comment"
                                             name="comment"

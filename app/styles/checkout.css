@@ -11,6 +11,17 @@
     gap: 24px;
 }
 
+/* Phase 6 atom 3 — error text: moved out of 6 copy-pasted inline
+   styles into a single class. role="alert" on each span now lets
+   screen readers actually announce the error.  --color-error is
+   the design-system token. */
+.field-error-text {
+    color: var(--color-error, #dc2626);
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: block;
+}
+
 .checkout-sidebar {
     position: sticky;
     top: 120px;
