@@ -626,6 +626,45 @@ export default function ProductDetail() {
 
             <div className="container main-content-container">
                 <div className="product-layout">
+                    {/* Atom M (P0): mobile-only swipe carousel — desktop
+                        thumbs+main below stays hidden on mobile via CSS.
+                        Background audit found mobile users only ever saw
+                        image 1 (no thumbs, no swipe on `.main-img-wrap`).
+                        Premium activewear sells on multi-angle fabric +
+                        fit — this fixes that. Dot indicator below tracks
+                        active slide via scroll-snap + IntersectionObserver
+                        is overkill; we'll just show "{i+1} / N" via state
+                        on scroll. */}
+                    {product.images.length > 0 && (
+                        <div
+                            className="pdp-mobile-gallery"
+                            onScroll={(e) => {
+                                const el = e.currentTarget;
+                                const idx = Math.round(el.scrollLeft / el.clientWidth);
+                                if (idx !== activeImage) setActiveImage(idx);
+                            }}
+                        >
+                            {product.images.map((img: string, idx: number) => (
+                                <div key={idx} className="pdp-mobile-gallery__slide">
+                                    <img
+                                        src={img}
+                                        alt={`${product.name} — фото ${idx + 1}`}
+                                        loading={idx === 0 ? "eager" : "lazy"}
+                                        decoding="async"
+                                        fetchPriority={idx === 0 ? "high" : "auto"}
+                                        sizes="100vw"
+                                        onClick={() => setZoomOpen(true)}
+                                    />
+                                </div>
+                            ))}
+                            {product.images.length > 1 && (
+                                <div className="pdp-mobile-gallery__counter" aria-live="polite">
+                                    {activeImage + 1} / {product.images.length}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Visuals: Puma Style (Vertical Thumbs Left + Main Right) */}
                     <div className="visuals-gallery-puma">
                         {/* Left Column: Vertical Thumbnails */}

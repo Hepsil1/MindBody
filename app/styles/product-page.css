@@ -934,18 +934,66 @@
         gap: 40px;
     }
 
+    /* Atom M: hide the desktop thumbs+main on mobile in favour of
+       the new .pdp-mobile-gallery swipe carousel.  Old single-image
+       view stays for desktop / tablet >=769px. */
     .visuals-gallery-puma {
-        display: block;
-        height: auto;
-        position: relative;
-    }
-
-    .thumbs-col-vertical {
         display: none;
     }
+}
 
-    .main-visual-puma {
+/* Atom M — PDP mobile swipe gallery (only renders <=768px because the
+   `.pdp-mobile-gallery` element is hidden on desktop). */
+.pdp-mobile-gallery {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .pdp-mobile-gallery {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        gap: 0;
+        margin: 0 -16px;
+        position: relative;
+    }
+    .pdp-mobile-gallery::-webkit-scrollbar {
+        display: none;
+    }
+    .pdp-mobile-gallery {
+        scrollbar-width: none;
+    }
+    .pdp-mobile-gallery__slide {
+        flex: 0 0 100vw;
+        scroll-snap-align: start;
         aspect-ratio: 4/5;
+        background: var(--color-bg-soft, #f4f1ed);
+    }
+    .pdp-mobile-gallery__slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        cursor: zoom-in;
+        display: block;
+    }
+    .pdp-mobile-gallery__counter {
+        position: absolute;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-family: "DM Sans", sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        padding: 6px 12px;
+        border-radius: 999px;
+        backdrop-filter: blur(8px);
+        pointer-events: none;
     }
 }
 
