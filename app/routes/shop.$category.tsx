@@ -13,6 +13,7 @@ import {
     loadShopData,
     type ShopProductCard as SharedShopProductCard,
 } from "../utils/shopProducts.server";
+import { buildWebpSrcset } from "../utils/responsive-image";
 
 // Product card shape used by the render side (filtering, sorting). The
 // loader returns this through the shared loadShopData() helper — re-export
@@ -408,16 +409,25 @@ export default function ShopCategory() {
                 {/* Dynamic Background Image */}
                 {shopPage?.heroImage && (
                     <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-                        <img
-                            src={shopPage.heroImage}
-                            alt="Background"
-                            style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                                ...imagePosStyle,
-                            }}
-                        />
+                        <picture>
+                            <source
+                                srcSet={buildWebpSrcset(shopPage.heroImage)}
+                                sizes="100vw"
+                                type="image/webp"
+                            />
+                            <img
+                                src={shopPage.heroImage}
+                                alt="Background"
+                                fetchPriority="high"
+                                decoding="async"
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                    ...imagePosStyle,
+                                }}
+                            />
+                        </picture>
                         {/* Overlay to ensure text readability */}
                         <div
                             style={{
