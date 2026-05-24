@@ -537,7 +537,10 @@ export default function Home() {
             </h1>
             <HeroSlider slides={slides} />
             {/* Premium Features Bar */}
-            <section className="premium-features-bar">
+            <section className="premium-features-bar" aria-labelledby="features-heading">
+                <h2 id="features-heading" className="visually-hidden">
+                    Переваги бренду
+                </h2>
                 <div className="container" style={{ maxWidth: "1440px" }}>
                     <div className="features-bar__grid">
                         <div className="feature-item group">
@@ -563,7 +566,7 @@ export default function Home() {
                                 </svg>
                             </div>
                             <div className="feature-item__text">
-                                <h4 className="feature-item__title">Українське виробництво</h4>
+                                <h3 className="feature-item__title">Українське виробництво</h3>
                                 <p className="feature-item__desc">
                                     100% контроль якості у своєму цеху
                                 </p>
@@ -588,7 +591,7 @@ export default function Home() {
                                 </svg>
                             </div>
                             <div className="feature-item__text">
-                                <h4 className="feature-item__title">Premium Supplex</h4>
+                                <h3 className="feature-item__title">Premium Supplex</h3>
                                 <p className="feature-item__desc">
                                     Технологічні тканини, що дихають
                                 </p>
@@ -613,7 +616,7 @@ export default function Home() {
                                 </svg>
                             </div>
                             <div className="feature-item__text">
-                                <h4 className="feature-item__title">Повернення 14 днів</h4>
+                                <h3 className="feature-item__title">Повернення 14 днів</h3>
                                 <p className="feature-item__desc">
                                     Обмін та повернення без проблем
                                 </p>
@@ -650,7 +653,7 @@ export default function Home() {
                                 </svg>
                             </div>
                             <div className="feature-item__text">
-                                <h4 className="feature-item__title">Швидка оплата</h4>
+                                <h3 className="feature-item__title">Швидка оплата</h3>
                                 <p className="feature-item__desc">
                                     Безпечно карткою або при отриманні
                                 </p>
