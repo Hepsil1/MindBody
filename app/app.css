@@ -1251,12 +1251,15 @@ h3 {
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 500;
-    /* #4a8a8a on the top-bar dark gradient = 4.01:1 — fails WCAG
-       AA (4.5).  #7AB0B0 = ~7.9:1 (AAA) and stays in the teal
-       family.  Hover keeps the original brand teal for contrast
-       drop-cue.  Per plan section 9 ("Footer phone-link contrast:
-       #4a8a8a -> ~#7AB0B0"); same shade used on top-bar links. */
-    color: #7ab0b0;
+    /* header.css declares a dark gradient bg for .top-bar — but
+       that file is NEVER imported (only app.css/cart.css/home.css/
+       loading-screen.css are).  So the actual top-bar renders on
+       a plain white surface.  #4a8a8a on white = 3.5:1 (fails AA);
+       my earlier attempt #7AB0B0 was 2.1:1 (worse).  Brand primary
+       teal #2a5a5a on white = 7.78:1 (passes AAA), reads as the
+       same teal family — no visible jump for users used to the
+       site. */
+    color: var(--color-primary, #2a5a5a);
     text-decoration: none;
     transition: color 0.25s ease;
     display: flex;
