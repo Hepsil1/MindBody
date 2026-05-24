@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { StorageUtils } from "../utils/storage";
 import { AuthUtils, type User } from "../utils/auth";
 import { useDebounce } from "../hooks/useDebounce";
+import { buildWebpSrcset } from "../utils/responsive-image";
 import CartDrawer from "./CartDrawer";
 
 interface SearchResult {
@@ -298,11 +299,21 @@ export function Header() {
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img
-                                                    src="/pics1cloths/IMG_6201.webp"
-                                                    alt="Yoga Collection"
-                                                    loading="lazy"
-                                                />
+                                                <picture>
+                                                    <source
+                                                        srcSet={buildWebpSrcset(
+                                                            "/pics1cloths/IMG_6201.webp",
+                                                        )}
+                                                        sizes="(max-width: 1024px) 50vw, 300px"
+                                                        type="image/webp"
+                                                    />
+                                                    <img
+                                                        src="/pics1cloths/IMG_6201.webp"
+                                                        alt="Yoga Collection"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                    />
+                                                </picture>
                                                 <div className="mega-menu__featured-badge">
                                                     YOGA
                                                 </div>
@@ -403,11 +414,21 @@ export function Header() {
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img
-                                                    src="/generalpics/333_131123.webp"
-                                                    alt="Sport Collection"
-                                                    loading="lazy"
-                                                />
+                                                <picture>
+                                                    <source
+                                                        srcSet={buildWebpSrcset(
+                                                            "/generalpics/333_131123.webp",
+                                                        )}
+                                                        sizes="(max-width: 1024px) 50vw, 300px"
+                                                        type="image/webp"
+                                                    />
+                                                    <img
+                                                        src="/generalpics/333_131123.webp"
+                                                        alt="Sport Collection"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                    />
+                                                </picture>
                                                 <div className="mega-menu__featured-badge">
                                                     SPORT
                                                 </div>
@@ -476,11 +497,21 @@ export function Header() {
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img
-                                                    src="/generalpics/374_131123.webp"
-                                                    alt="Dance Collection"
-                                                    loading="lazy"
-                                                />
+                                                <picture>
+                                                    <source
+                                                        srcSet={buildWebpSrcset(
+                                                            "/generalpics/374_131123.webp",
+                                                        )}
+                                                        sizes="(max-width: 1024px) 50vw, 300px"
+                                                        type="image/webp"
+                                                    />
+                                                    <img
+                                                        src="/generalpics/374_131123.webp"
+                                                        alt="Dance Collection"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                    />
+                                                </picture>
                                                 <div className="mega-menu__featured-badge">
                                                     DANCE
                                                 </div>
@@ -592,11 +623,21 @@ export function Header() {
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img
-                                                    src="/generalpics/595_131123.webp"
-                                                    alt="Casual Collection"
-                                                    loading="lazy"
-                                                />
+                                                <picture>
+                                                    <source
+                                                        srcSet={buildWebpSrcset(
+                                                            "/generalpics/595_131123.webp",
+                                                        )}
+                                                        sizes="(max-width: 1024px) 50vw, 300px"
+                                                        type="image/webp"
+                                                    />
+                                                    <img
+                                                        src="/generalpics/595_131123.webp"
+                                                        alt="Casual Collection"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                    />
+                                                </picture>
                                                 <div className="mega-menu__featured-badge">
                                                     CASUAL
                                                 </div>
@@ -649,11 +690,21 @@ export function Header() {
                                         </div>
                                         <div className="mega-menu__featured">
                                             <div className="mega-menu__featured-img">
-                                                <img
-                                                    src="/pics2cloths/IMG_5222.webp"
-                                                    alt="Kids Collection"
-                                                    loading="lazy"
-                                                />
+                                                <picture>
+                                                    <source
+                                                        srcSet={buildWebpSrcset(
+                                                            "/pics2cloths/IMG_5222.webp",
+                                                        )}
+                                                        sizes="(max-width: 1024px) 50vw, 300px"
+                                                        type="image/webp"
+                                                    />
+                                                    <img
+                                                        src="/pics2cloths/IMG_5222.webp"
+                                                        alt="Kids Collection"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                    />
+                                                </picture>
                                             </div>
                                             <div className="mega-menu__featured-content">
                                                 <h5>Дитяча Колекція</h5>
