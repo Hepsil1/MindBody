@@ -12,36 +12,28 @@
     padding-bottom: 120px;
 }
 
-/* --- LUXE HERO COMPACT (Product breadcrumb bar) --- */
+/* --- PDP breadcrumb bar — minimal premium, cream background ---
+   Previous design was a 190px teal banner with logo-sun watermark
+   + light-leak gradients. Felt heavy for what is just a breadcrumb +
+   product name. Premium e-commerce (Sezane, Cuyana, Polene) uses a
+   thin transparent strip before the gallery, not a full hero band. */
 .shop-hero-luxe.compact {
     position: relative;
-    background: linear-gradient(135deg, #204545 0%, #2a5a5a 40%, #3e7575 100%);
-    height: 190px;
-    padding-top: 50px;
+    background: var(--color-bg-cream);
+    height: auto;
+    padding: 24px 0 16px;
     display: flex;
     align-items: center;
     overflow: hidden;
-    margin-bottom: 60px;
-    box-shadow: 0 10px 40px rgba(42, 90, 90, 0.2);
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--color-border-light);
 }
 
-/* Branded Watermark */
-.shop-hero-luxe.compact::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    right: 0%;
-    transform: translateY(-50%);
-    width: 500px;
-    height: 500px;
-    background-image: url("/logo-sun.png");
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    opacity: 0.1;
-    mix-blend-mode: screen;
-    pointer-events: none;
-    z-index: 0;
+/* Watermark / drift effects removed — they read as decoration noise
+   on this short band. */
+.shop-hero-luxe.compact::after,
+.shop-hero-luxe.compact .shop-hero-luxe__drift {
+    display: none;
 }
 
 /* Vibrant Light Leaks */
@@ -121,29 +113,33 @@
 }
 
 .luxe-breadcrumb .current {
-    color: #fff;
-    font-family: var(--f-serif, "Cormorant Garamond", serif);
-    font-style: italic;
-    font-size: 22px;
+    color: var(--color-text-primary);
+    font-family: "Cormorant Garamond", serif;
+    font-style: normal; /* roman, not italic — premium product naming */
+    font-weight: 500;
+    font-size: 20px;
     text-transform: none;
-    letter-spacing: 0.05em;
-    position: relative;
-    top: 2px;
+    letter-spacing: 0;
     padding-left: 12px;
-    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 1px solid var(--color-border);
+}
+/* Override the previous cream-hero breadcrumb link color (white on dark)
+   now that hero is cream — links should be neutral with hover teal. */
+.shop-hero-luxe.compact .luxe-breadcrumb a {
+    color: var(--color-text-secondary);
+}
+.shop-hero-luxe.compact .luxe-breadcrumb a:hover {
+    color: var(--color-primary);
+}
+.shop-hero-luxe.compact .luxe-breadcrumb .sep {
+    color: var(--color-text-subtle);
 }
 
-/* Mobile PDP header. The desktop layout is a fixed 190px teal band with
-   a single nowrap breadcrumb row — on a phone that left a big empty
-   teal void and pushed the italic product title into the right corner.
-   Collapse the band to its content height and stack the breadcrumb so
-   the title sits on its own line at a readable size. */
+/* Mobile PDP — stack the title on its own line. */
 @media (max-width: 600px) {
     .shop-hero-luxe.compact {
-        height: auto;
-        padding-top: 18px;
-        padding-bottom: 18px;
-        margin-bottom: 32px;
+        padding: 16px 0 12px;
+        margin-bottom: 20px;
     }
     .luxe-breadcrumb {
         flex-wrap: wrap;
@@ -155,11 +151,10 @@
     }
     .luxe-breadcrumb .current {
         flex-basis: 100%;
-        font-size: 20px;
+        font-size: 22px;
         padding-left: 0;
         border-left: none;
-        top: 0;
-        margin-top: 4px;
+        margin-top: 6px;
     }
 }
 
