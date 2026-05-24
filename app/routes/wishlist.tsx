@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { useState, useEffect } from "react";
 import { StorageUtils, type WishlistItem } from "../utils/storage";
 import { useToast } from "../components/Toast";
+import { pluralizeUA } from "../utils/plural";
 import "../styles/wishlist.css";
 
 export default function Wishlist() {
@@ -110,8 +111,7 @@ export default function Wishlist() {
                             Моє <em>Улюблене</em>
                         </h1>
                         <p className="wishlist-count">
-                            {items.length}{" "}
-                            {items.length === 1 ? "товар" : items.length < 5 ? "товари" : "товарів"}{" "}
+                            {items.length} {pluralizeUA(items.length, "товар", "товари", "товарів")}{" "}
                             у списку
                         </p>
                     </div>
@@ -176,7 +176,9 @@ export default function Wishlist() {
                                         >
                                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                         </svg>
-                                        {items.length} товарів збережено
+                                        {items.length}{" "}
+                                        {pluralizeUA(items.length, "товар", "товари", "товарів")}{" "}
+                                        збережено
                                     </span>
                                     <button
                                         className="wishlist-actions__clear"

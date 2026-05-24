@@ -8285,12 +8285,12 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 .auth-hero__title em {
     font-family: var(--font-script);
     font-style: normal;
-    /* var(--color-primary) #2a5a5a on the dark teal hero gradient
-       computes to 1.4:1 — the script word ("акаунт") is almost
-       invisible.  Light teal #7AB0B0 (the same fix used on top-bar)
-       lifts contrast to ~5.5:1 (passes AA) and stays in the teal
-       family.  Audit wishlist+profile P0. */
-    color: #7ab0b0;
+    /* Previous #7AB0B0 calculated to 5.5:1 contrast but the script font
+       Italiana has very thin strokes — visually reads at ~3:1. Bump to
+       rgba(255,255,255,0.85) for a clear premium signal on the dark
+       teal hero. The em segment is still differentiated from "Вхід в"
+       (white 100%) by the script font + slight opacity drop. */
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .auth-hero__subtitle {
@@ -10815,11 +10815,26 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     position: fixed;
     bottom: 24px;
     right: 24px;
-    z-index: 9000;
+    /* z-index drops from 9000 to 80 — was high enough to cover the
+       mobile menu, footer CTA, and modal close buttons. 80 keeps it
+       above page content (which sits at 0-10) but below header
+       (1000), nav menu (999), drawers (1200), modals (10000). */
+    z-index: 80;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
+}
+
+/* Hide floating cluster when an interactive overlay is on screen.
+   The mobile menu, cart drawer, search overlay, and checkout's
+   fixed bottom CTA all occupy real estate the social buttons would
+   otherwise obscure. */
+body:has(.header.is-menu-open) .floating-contact,
+body:has(.cart-drawer.is-open) .floating-contact,
+body:has(.search-overlay) .floating-contact,
+body:has(.checkout-page) .floating-contact {
+    display: none;
 }
 
 /* Mobile: pull the column tighter into the corner and use 44px buttons

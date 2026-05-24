@@ -4,6 +4,7 @@ import { StorageUtils, type CartItem } from "../utils/storage";
 import { AuthUtils } from "../utils/auth";
 import { useToast } from "../components/Toast";
 import { formatPhoneUA, getPhoneDigits } from "../utils/phone";
+import { countLabel } from "../utils/plural";
 import {
     useNovaPoshtaAutocomplete,
     type NovaPoshtaCity,
@@ -1111,7 +1112,12 @@ export default function Checkout() {
                         Мій <em>Кошик</em>
                     </>
                 }
-                subtitle={`${items.reduce((a, b) => a + b.quantity, 0)} товарів у списку`}
+                subtitle={`${countLabel(
+                    items.reduce((a, b) => a + b.quantity, 0),
+                    "товар",
+                    "товари",
+                    "товарів",
+                )} у списку`}
             />
             <div className="cart-page__content">
                 <div className="container">

@@ -4,6 +4,7 @@ import { StorageUtils } from "../utils/storage";
 import { AuthUtils, type User } from "../utils/auth";
 import { useDebounce } from "../hooks/useDebounce";
 import { buildWebpSrcset } from "../utils/responsive-image";
+import { pluralizeUA } from "../utils/plural";
 import CartDrawer from "./CartDrawer";
 
 interface SearchResult {
@@ -850,7 +851,7 @@ export function Header() {
                         </Link>
                         <button
                             className="header__action-btn header__action-btn--cart"
-                            aria-label={`Кошик${cartCount > 0 ? `: ${cartCount} товарів` : ""}`}
+                            aria-label={`Кошик${cartCount > 0 ? `: ${cartCount} ${pluralizeUA(cartCount, "товар", "товари", "товарів")}` : ""}`}
                             onClick={() => setIsCartOpen(true)}
                         >
                             <svg
