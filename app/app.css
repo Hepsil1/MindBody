@@ -4483,16 +4483,13 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     position: relative;
 }
 
-/* Mobile: solid black footer was too heavy + occupied ~30% of every
-   page. Use dark teal (brand-primary-dark) — premium signal that stays
-   in the palette + softer presence than pure black. Tighter padding so
-   the footer reads as a closing band rather than a content section. */
+/* Mobile: footer color stays #000 per user preference. Only tighten
+   padding so the footer reads as a closing band rather than a content
+   section taking ~30% of the page. */
 @media (max-width: 768px) {
     .footer-puma {
-        background: var(--color-primary-dark);
         padding-top: 40px;
         padding-bottom: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 }
 
