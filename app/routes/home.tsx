@@ -6,6 +6,7 @@ import CategoryCard from "../components/CategoryCard";
 import ProductCard from "../components/ProductCard";
 import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
+import { buildWebpSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
 
 const DEFAULT_SITE_URL = "https://saleid.icu";
@@ -1424,11 +1425,28 @@ export default function Home() {
                                                                 rel="noopener noreferrer"
                                                                 className="ig-ui-feed-post"
                                                             >
-                                                                <img
-                                                                    src={post.mediaUrl}
-                                                                    alt={`Post ${i + 1}`}
-                                                                    loading="lazy"
-                                                                />
+                                                                {/* Atom T (cont.): IG-mock grid was the
+                                                                    biggest remaining master-fetch on
+                                                                    home (slots are ~120px wide on
+                                                                    mobile but loaded 2000w masters).
+                                                                    Picture/source/srcset = -400w
+                                                                    variant picked → ~30KB instead
+                                                                    of 150KB per tile. */}
+                                                                <picture>
+                                                                    <source
+                                                                        srcSet={buildWebpSrcset(
+                                                                            post.mediaUrl,
+                                                                        )}
+                                                                        sizes="(max-width: 768px) 33vw, 120px"
+                                                                        type="image/webp"
+                                                                    />
+                                                                    <img
+                                                                        src={post.mediaUrl}
+                                                                        alt={`Post ${i + 1}`}
+                                                                        loading="lazy"
+                                                                        decoding="async"
+                                                                    />
+                                                                </picture>
                                                             </a>
                                                         );
                                                     })}
