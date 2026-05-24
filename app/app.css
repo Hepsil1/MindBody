@@ -545,9 +545,16 @@ h3 {
 
 .product-card__image-wrapper {
     position: relative;
-    aspect-ratio: 3 / 4; /* luxury proportions vs 4/5 retail */
+    /* 4:5 on mobile/tablet (more cards visible above the fold).
+       3:4 on desktop where vertical space is plentiful. */
+    aspect-ratio: 4 / 5;
     overflow: hidden;
     background: var(--color-bg-soft);
+}
+@media (min-width: 1024px) {
+    .product-card__image-wrapper {
+        aspect-ratio: 3 / 4;
+    }
 }
 
 .product-card__image-link {
@@ -736,8 +743,8 @@ h3 {
     flex-wrap: wrap;
 }
 .product-card__swatch {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     border: 1px solid rgba(0, 0, 0, 0.12);
     padding: 0;
@@ -746,6 +753,12 @@ h3 {
     cursor: pointer;
     flex-shrink: 0;
     transition: box-shadow 0.2s ease;
+}
+@media (min-width: 768px) {
+    .product-card__swatch {
+        width: 20px;
+        height: 20px;
+    }
 }
 button.product-card__swatch {
     /* Larger hit target on touch devices than visual size */
@@ -9827,11 +9840,13 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     justify-content: flex-end;
     gap: 12px;
     margin-bottom: 40px;
-    font-size: 9px;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.25em;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.35);
+    /* WCAG: 4.5:1 minimum on the gradient-darkened bottom of the hero. */
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
 .luxe-breadcrumb a {
@@ -9965,16 +9980,16 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     position: relative;
 }
 
-/* Top line: small elegant slogan */
+/* Top line: small elegant slogan — on dark hero, soft white reads
+   premium (not the off-brand cyan that was here). */
 .luxe-title__prefix {
     font-family: var(--font-body);
     font-size: 11px;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.35em;
-    color: #8fd4d4;
+    color: rgba(255, 255, 255, 0.7);
     margin-bottom: 12px;
-    opacity: 0.9;
 }
 
 /* Main title: elegant serif, larger, impactful */
@@ -9990,19 +10005,19 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     text-shadow: 0 2px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* Subtitle: elegant accent font - more visible */
+/* Subtitle "КОЛЕКЦІЯ" — was off-brand cyan, now sage/cream on dark
+   hero. Matches brand palette + WCAG 4.5:1 contrast on overlay. */
 .luxe-title__sub {
     font-family: var(--font-accent);
     font-size: clamp(15px, 2.2vw, 20px);
     font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    color: #7fd4d4;
+    color: rgba(255, 255, 255, 0.92);
     margin-top: 0;
     margin-left: 3px;
-    filter: none;
     z-index: 2;
-    text-shadow: 0 0 30px rgba(127, 212, 212, 0.3);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
 }
 
 /* Horizontal divider line */
@@ -10490,11 +10505,12 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 }
 
 .sort-label {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: 11px;
-    font-weight: 700;
-    color: #999;
-    letter-spacing: 0.15em;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
     white-space: nowrap;
 }
 
@@ -13965,8 +13981,9 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
        modifier on product pages has its own @media in
        product-page.css and is untouched. */
     .shop-hero-luxe:not(.compact) {
-        padding: 48px 0 24px;
-        min-height: 0;
+        padding: 40px 0 24px;
+        min-height: 220px;
+        max-height: 280px;
     }
     /* Auth pages hero (login/register). */
     .auth-hero {

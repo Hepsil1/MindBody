@@ -284,12 +284,20 @@ export default function ShopCategory() {
     const mainLabel = shopPage?.title || (category === "kids" ? "Діти" : "Жіноча");
     const layerLabel = "MIND BODY";
 
-    // Parse Image Position
+    // Parse Image Position. Default = "50% 30%" (face-safe crop for
+    // figure-of-woman product photography). DB-set heroImagePos overrides.
     const imagePosStyle = useMemo(() => {
-        if (!shopPage?.heroImagePos) return {};
+        const defaultX = "50%";
+        const defaultY = "30%"; // upper third — keeps face visible
+        if (!shopPage?.heroImagePos) {
+            return {
+                objectPosition: `${defaultX} ${defaultY}`,
+                transformOrigin: `${defaultX} ${defaultY}`,
+            };
+        }
         const parts = shopPage.heroImagePos.split(" ");
-        const x = parts[0] || "50%";
-        const y = parts[1] || "50%";
+        const x = parts[0] || defaultX;
+        const y = parts[1] || defaultY;
         const scale = parseFloat(parts[2]) || 1;
         return {
             objectPosition: `${x} ${y}`,
