@@ -3714,48 +3714,10 @@
    Desktop layout untouched.
    ==================================================================== */
 @media (max-width: 768px) {
-    /* Brand-World V3 — was gap: 80px between manifesto / frame / features
-       on tablet @900px breakpoint, way too much on phones. Tighten + the
-       4 feat items stack vertically with their own padding — convert to
-       2×2 grid instead. */
-    .bw-v3-layout {
-        gap: 32px !important;
-    }
-    .bw-features {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px 12px;
-        max-width: none !important;
-    }
-    .bw-feat-item {
-        flex-direction: column !important;
-        gap: 8px !important;
-        align-items: flex-start;
-    }
-    .bw-macro-number {
-        font-size: 32px !important; /* was 64 */
-        line-height: 0.9 !important;
-    }
-    .bw-feat-title {
-        font-size: 1rem !important;
-        margin: 0 0 4px 0 !important;
-    }
-    .bw-feat-desc {
-        font-size: 11px !important;
-        line-height: 1.4 !important;
-    }
-    .bw-feat-link {
-        font-size: 10px !important;
-    }
-
-    /* "Зен" visual block: was a meditative animation; on mobile it's just
-       wasted vertical space below the manifesto. Shrink. */
-    .bw-zen-visual,
-    .bw-zen-logo {
-        max-width: 200px !important;
-        margin-left: auto;
-        margin-right: auto;
-    }
+    /* NOTE: Brand-World V3 mobile rules (bw-v3-layout, bw-features grid,
+       bw-feat-item, bw-macro-number, bw-feat-title/desc/link, bw-zen-visual)
+       were removed in Batch 11 — that block now owns the entire mobile
+       redesign of "Рух що перетворює". See block "Batch 11" above. */
 
     /* IG section — was padding-bottom: 120px */
     .ig-hyper {
