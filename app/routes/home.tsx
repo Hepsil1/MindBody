@@ -1009,31 +1009,10 @@ export default function Home() {
 
                 {/* Instagram Premium Section (Merged visually into the About section logic) */}
                 <div className="ig-hyper" id="instagram">
-                    {/* Infinite Photo Background Wall */}
-                    <div className="ig-hyper__wall">
-                        <div className="ig-hyper__marquee ig-hyper__marquee--left">
-                            {[...postsToRender, ...postsToRender, ...postsToRender].map(
-                                (post: InstagramPost, i: number) => (
-                                    <div
-                                        key={`left-${i}`}
-                                        className="ig-hyper__photo"
-                                        style={{ backgroundImage: `url(${post.mediaUrl})` }}
-                                    />
-                                ),
-                            )}
-                        </div>
-                        <div className="ig-hyper__marquee ig-hyper__marquee--right">
-                            {[...postsToRender, ...postsToRender, ...postsToRender]
-                                .reverse()
-                                .map((post: InstagramPost, i: number) => (
-                                    <div
-                                        key={`right-${i}`}
-                                        className="ig-hyper__photo"
-                                        style={{ backgroundImage: `url(${post.mediaUrl})` }}
-                                    />
-                                ))}
-                        </div>
-                    </div>
+                    {/* Photo wall removed: was rendering 36 hidden <div> elements
+                        with backgroundImage URLs (postsToRender × 6 × 2 sides).
+                        Globally display:none in home.css since redesign — pure DOM
+                        bloat. Removing saves ~3 KB HTML + skips inline-style parsing. */}
 
                     {/* The center content container */}
                     <div className="ig-hyper__content container">
