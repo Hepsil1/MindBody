@@ -1340,19 +1340,41 @@ export default function Home() {
                                                         "SALE FLUID",
                                                         "SALE SET",
                                                         "ВІДГУКИ 11",
-                                                    ].map((name, idx) => (
-                                                        <div key={idx} className="ig-ui-highlight">
-                                                            <div className="ig-ui-hl-ring">
-                                                                <div
-                                                                    className="ig-ui-hl-img"
-                                                                    style={{
-                                                                        backgroundImage: `url(${postsToRender[idx % postsToRender.length]?.mediaUrl})`,
-                                                                    }}
-                                                                ></div>
+                                                    ].map((name, idx) => {
+                                                        const hlImg =
+                                                            postsToRender[
+                                                                idx % postsToRender.length
+                                                            ]?.mediaUrl;
+                                                        return (
+                                                            <div
+                                                                key={idx}
+                                                                className="ig-ui-highlight"
+                                                            >
+                                                                <div className="ig-ui-hl-ring">
+                                                                    <div className="ig-ui-hl-img">
+                                                                        {hlImg && (
+                                                                            <picture>
+                                                                                <source
+                                                                                    srcSet={buildWebpSrcset(
+                                                                                        hlImg,
+                                                                                    )}
+                                                                                    sizes="64px"
+                                                                                    type="image/webp"
+                                                                                />
+                                                                                <img
+                                                                                    src={hlImg}
+                                                                                    alt=""
+                                                                                    loading="lazy"
+                                                                                    decoding="async"
+                                                                                />
+                                                                            </picture>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <span>{name}</span>
                                                             </div>
-                                                            <span>{name}</span>
-                                                        </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
 
                                                 {/* Tabs */}
