@@ -13193,28 +13193,8 @@ body:has(.checkout-page) .floating-contact {
     grid-row: span 1;
 }
 
-/* MOBILE: 12-col bento collapses to tiny ~30px columns where each
-   spanning card becomes invisible — causes the huge empty whitespace
-   on mobile home between trust badges and "Нові надходження".
-   Override: 2-col equal grid, each card span 1×1, shorter row height. */
-@media (max-width: 768px) {
-    .editorial-categories-grid {
-        grid-template-columns: 1fr 1fr !important;
-        grid-auto-rows: 180px !important;
-        gap: 12px !important;
-    }
-    .category-card-editorial,
-    .category-card-editorial:nth-child(n) {
-        grid-column: span 1 !important;
-        grid-row: span 1 !important;
-    }
-    /* First card stays hero-sized — span both columns + taller row */
-    .category-card-editorial:nth-child(1) {
-        grid-column: span 2 !important;
-        grid-row: span 1 !important;
-        min-height: 240px;
-    }
-}
+/* Mobile override removed per user — keep original 12-col bento layout
+   on all viewports. */
 
 .category-card-editorial:hover {
     transform: scale(0.985); /* Sophisticated subtle shrink */
