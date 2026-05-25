@@ -92,13 +92,20 @@ export function meta({ data }: Route.MetaArgs) {
         // fetching the full master and then using src-fallback (which
         // defeats Atoms R+S srcset entirely).  Mobile gets ~400/800w
         // (~80-150KB each), desktop gets 1200w (~250KB).
+        /* Hero triptych preload — must match buildWebpSrcset() output
+           (400/800/1200/1600/2000w + master). Previously capped at
+           1200w which meant retina desktop (1920×2 = 1266 phys px or
+           4K 3840 phys px) preloaded the 1200w → cached → used even
+           though the <picture> offered larger variants = soft slides.
+           Now preload offers all variants so browser picks the right
+           one at preload time and uses the same cached entry. */
         {
             tagName: "link",
             rel: "preload",
             as: "image",
             href: "/generalpics/333_131123.webp",
             imagesrcset:
-                "/generalpics/333_131123-400w.webp 400w, /generalpics/333_131123-800w.webp 800w, /generalpics/333_131123-1200w.webp 1200w",
+                "/generalpics/333_131123-400w.webp 400w, /generalpics/333_131123-800w.webp 800w, /generalpics/333_131123-1200w.webp 1200w, /generalpics/333_131123-1600w.webp 1600w, /generalpics/333_131123.webp 2400w",
             imagesizes: "(max-width: 768px) 100vw, 33vw",
             fetchPriority: "high",
         },
@@ -108,7 +115,7 @@ export function meta({ data }: Route.MetaArgs) {
             as: "image",
             href: "/generalpics/374_131123.webp",
             imagesrcset:
-                "/generalpics/374_131123-400w.webp 400w, /generalpics/374_131123-800w.webp 800w, /generalpics/374_131123-1200w.webp 1200w",
+                "/generalpics/374_131123-400w.webp 400w, /generalpics/374_131123-800w.webp 800w, /generalpics/374_131123-1200w.webp 1200w, /generalpics/374_131123-1600w.webp 1600w, /generalpics/374_131123.webp 2400w",
             imagesizes: "(max-width: 768px) 100vw, 33vw",
         },
         {
@@ -117,7 +124,7 @@ export function meta({ data }: Route.MetaArgs) {
             as: "image",
             href: "/generalpics/338_131123.webp",
             imagesrcset:
-                "/generalpics/338_131123-400w.webp 400w, /generalpics/338_131123-800w.webp 800w, /generalpics/338_131123-1200w.webp 1200w",
+                "/generalpics/338_131123-400w.webp 400w, /generalpics/338_131123-800w.webp 800w, /generalpics/338_131123-1200w.webp 1200w, /generalpics/338_131123-1600w.webp 1600w, /generalpics/338_131123.webp 2400w",
             imagesizes: "(max-width: 768px) 100vw, 33vw",
         },
         {
