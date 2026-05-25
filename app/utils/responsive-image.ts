@@ -26,12 +26,19 @@
 export function buildWebpSrcset(url: string): string {
     // Strip any extension (jpg/jpeg/png/webp) — variants are always .webp.
     const base = url.replace(/\.(jpg|jpeg|JPG|JPEG|png|PNG)$/, ".webp").replace(/\.webp$/, "");
+    // Dropped the 2000w entry: the variant-generation script only creates
+    // `-2000w.webp` when the master is ≥2000px wide. For 1920-wide CMS
+    // uploads (the common case) the 2000w file doesn't exist, but the
+    // browser still picks it as the closest-≥-need match for a 1920×1
+    // desktop and then 404s — image fails to load entirely. By keeping
+    // 1600w → master only, the browser jumps from 1600w to master
+    // (which always exists), losing granularity for >1600px display but
+    // staying functional.
     return [
         `${base}-400w.webp 400w`,
         `${base}-800w.webp 800w`,
         `${base}-1200w.webp 1200w`,
         `${base}-1600w.webp 1600w`,
-        `${base}-2000w.webp 2000w`,
-        `${base}.webp 2400w`, // master fallback for 4K+ retina
+        `${base}.webp 2400w`, // master fallback for ≥1600px display
     ].join(", ");
 }
