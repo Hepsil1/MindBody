@@ -196,6 +196,17 @@ export default function HeroSlider({
                                             src="/pics/mind_body_logo.png"
                                             alt="MIND BODY — sport wear"
                                             fetchPriority="high"
+                                            /* Master PNG artwork is black on transparent. CSS
+                                               applies `filter: brightness(0) invert(1)` (in
+                                               hero.css) to render it white. But between HTML
+                                               rendering this <img> and the external CSS file
+                                               loading, the unfiltered black PNG flashes for
+                                               ~100-200ms = FOUC. Apply the filter inline so
+                                               it takes effect immediately from the SSR HTML,
+                                               before any stylesheet is parsed. */
+                                            style={{
+                                                filter: "brightness(0) invert(1)",
+                                            }}
                                         />
                                     </picture>
                                 </div>
