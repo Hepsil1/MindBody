@@ -142,7 +142,7 @@ export default function Footer() {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label="Instagram MindBody"
-                                            className="footer-puma__social-link"
+                                            className="footer-puma__social-link footer-puma__social-link--ig"
                                         >
                                             <svg
                                                 aria-hidden="true"
@@ -161,7 +161,7 @@ export default function Footer() {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label="Telegram MindBody"
-                                            className="footer-puma__social-link"
+                                            className="footer-puma__social-link footer-puma__social-link--tg"
                                         >
                                             <svg
                                                 aria-hidden="true"
@@ -180,7 +180,7 @@ export default function Footer() {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label="Viber MindBody"
-                                            className="footer-puma__social-link"
+                                            className="footer-puma__social-link footer-puma__social-link--viber"
                                         >
                                             <svg
                                                 aria-hidden="true"
@@ -199,7 +199,7 @@ export default function Footer() {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label="WhatsApp MindBody"
-                                            className="footer-puma__social-link"
+                                            className="footer-puma__social-link footer-puma__social-link--wa"
                                         >
                                             <svg
                                                 aria-hidden="true"
