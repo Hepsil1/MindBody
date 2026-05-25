@@ -131,34 +131,47 @@ export default function HeroSlider({
                         className={`hero-slider__slide ${index === activeSlide ? "is-active" : ""}`}
                         data-slide={index}
                     >
-                        <div className="hero-slider__triptych">
-                            {getSlideItems(slide).map((item, imgIndex) => (
-                                <div key={imgIndex} className="hero-slider__triptych-item">
-                                    {/* width / height attrs are nominal — CSS uses object-fit:cover.
-                                        Their job is to give the browser an aspect ratio so the hero
-                                        reserves layout space and we don't get a 0.3 CLS jump when
-                                        the image decodes. 1080x1920 is the typical mobile-portrait
-                                        ratio of our hero uploads. */}
-                                    <picture>
-                                        <source
-                                            srcSet={buildWebpSrcset(item.img)}
-                                            sizes="(max-width: 768px) 100vw, 33vw"
-                                            type="image/webp"
-                                        />
-                                        <img
-                                            src={item.img}
-                                            alt={`${slide.name} Image ${imgIndex + 1}`}
-                                            width={1080}
-                                            height={1920}
-                                            style={{ objectPosition: item.pos }}
-                                            loading={index === 0 ? "eager" : "lazy"}
-                                            decoding={index === 0 ? "sync" : "async"}
-                                            fetchPriority={index === 0 ? "high" : "low"}
-                                        />
-                                    </picture>
+                        {(() => {
+                            const items = getSlideItems(slide);
+                            // Dynamic `sizes` based on item count:
+                            // - single (1 item) → image fills 100vw on desktop
+                            // - triptych (3 items) → each takes 33vw
+                            // Previously hardcoded "33vw" → browser loaded the
+                            // 800w variant for single slides which CSS then
+                            // stretched to 100vw = ~3× upscale = mushy.
+                            const desktopFrac = Math.floor(100 / items.length);
+                            const sizesAttr = `(max-width: 768px) 100vw, ${desktopFrac}vw`;
+                            return (
+                                <div className="hero-slider__triptych">
+                                    {items.map((item, imgIndex) => (
+                                        <div key={imgIndex} className="hero-slider__triptych-item">
+                                            {/* width / height attrs are nominal — CSS uses object-fit:cover.
+                                                Their job is to give the browser an aspect ratio so the hero
+                                                reserves layout space and we don't get a 0.3 CLS jump when
+                                                the image decodes. 1080x1920 is the typical mobile-portrait
+                                                ratio of our hero uploads. */}
+                                            <picture>
+                                                <source
+                                                    srcSet={buildWebpSrcset(item.img)}
+                                                    sizes={sizesAttr}
+                                                    type="image/webp"
+                                                />
+                                                <img
+                                                    src={item.img}
+                                                    alt={`${slide.name} Image ${imgIndex + 1}`}
+                                                    width={1080}
+                                                    height={1920}
+                                                    style={{ objectPosition: item.pos }}
+                                                    loading={index === 0 ? "eager" : "lazy"}
+                                                    decoding={index === 0 ? "sync" : "async"}
+                                                    fetchPriority={index === 0 ? "high" : "low"}
+                                                />
+                                            </picture>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+                            );
+                        })()}
                         <div className="hero-slider__overlay"></div>
                     </div>
                 ))}
