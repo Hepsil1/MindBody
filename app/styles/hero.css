@@ -156,11 +156,10 @@
 .hero-slider__logo img {
     width: clamp(220px, 32vw, 380px);
     height: auto;
-    /* drop-shadow MUST equal logoGlowPulse 0% keyframe (also 30px).
-       Earlier value 40px created a delta with the keyframe at animation
-       start (2s) → browser interpolated the filter and momentarily
-       computed an invalid value → 1-frame BLACK FLASH on cold load. */
-    filter: brightness(0) invert(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.2));
+    /* Batch 30: logo asset is now PRE-RENDERED WHITE (mind_body_logo_white.png).
+       No brightness/invert needed → no chance of black-flash during webp
+       progressive decode. Filter is now just the soft white glow. */
+    filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.2));
     animation: logoGlowPulse 5s ease-in-out infinite 2s;
 }
 
@@ -175,12 +174,12 @@
 @keyframes logoGlowPulse {
     0%,
     100% {
-        filter: brightness(0) invert(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.2));
+        filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.2));
         transform: scale(1);
     }
 
     50% {
-        filter: brightness(0) invert(1) drop-shadow(0 0 80px rgba(255, 255, 255, 0.45))
+        filter: drop-shadow(0 0 80px rgba(255, 255, 255, 0.45))
             drop-shadow(0 0 120px rgba(61, 122, 140, 0.2));
         transform: scale(1.015);
     }

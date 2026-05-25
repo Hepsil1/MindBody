@@ -188,28 +188,23 @@ export default function HeroSlider({
                             <div className="hero-slider__brand-block">
                                 <div className="hero-slider__logo">
                                     <picture>
+                                        {/* Batch 30: serve a PRE-RENDERED WHITE version of
+                                            the logo so the rasterised pixels are already
+                                            white. No CSS filter dependency = no progressive-
+                                            decode flash. The previous Batch 26/28 inline
+                                            filter approach left a window where webp was
+                                            partially decoded but the composited filter
+                                            hadn't run yet, briefly showing the underlying
+                                            black artwork. Generated via
+                                            scripts/gen-white-logo.mjs (sharp .negate()). */}
                                         <source
-                                            srcSet="/pics/mind_body_logo.webp"
+                                            srcSet="/pics/mind_body_logo_white.webp"
                                             type="image/webp"
                                         />
                                         <img
-                                            src="/pics/mind_body_logo.png"
+                                            src="/pics/mind_body_logo_white.png"
                                             alt="MIND BODY — sport wear"
                                             fetchPriority="high"
-                                            /* Master PNG is black-on-transparent. CSS uses
-                                               filter to render it white. Inline filter is
-                                               applied from SSR HTML so the logo is white
-                                               before external CSS loads (Batch 26 fix).
-                                               CRITICAL (Batch 28): the inline filter MUST
-                                               include the same drop-shadow as the CSS rule
-                                               AND the animation 0% keyframe — otherwise the
-                                               browser interpolates filter property values
-                                               at animation start (2s) and can momentarily
-                                               compute an invalid/empty filter = 1-frame
-                                               BLACK FLASH (the bug the user reported). */
-                                            style={{
-                                                filter: "brightness(0) invert(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.2))",
-                                            }}
                                         />
                                     </picture>
                                 </div>
