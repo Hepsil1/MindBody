@@ -14736,3 +14736,279 @@ select {
         --container-padding: 40px;
     }
 }
+
+/* ====================================================================
+   Batch 25 — Mobile burger menu: premium editorial drawer (<=768px)
+
+   User: "Полностью передеать кнопку Меню. Куча нюансов этого списка
+   и он не красивый."
+
+   What was wrong:
+   - 6 categories rendered as small 14px DM Sans uppercase = monotone
+   - No visual hierarchy between primary nav and secondary (АКАУНТ)
+   - No tap affordance (chevron, arrow)
+   - Phone link mixed with regular links
+   - No entry motion
+   - No active-route indicator
+
+   v2 design (Aesop / Polène / Cuyana mobile reference):
+   - Primary categories: Cormorant Garamond 28px, lowercase, with
+     right-chevron arrow → reads as editorial menu, not nav list
+   - Hairline dividers between items (rgba 0,0,0,0.05)
+   - Eyebrow tags "КАТЕГОРІЇ" / "АКАУНТ" refined (smaller, more
+     tracked) — already exist, just tighten
+   - Active route gets italic + brand-teal + "— " prefix
+   - Secondary "АКАУНТ" links smaller DM Sans 14px, same chevron
+   - Phone number promoted to brand-teal pill CTA at bottom
+   - Stagger fade-up entry animation (respects prefers-reduced-motion)
+   - All targets ≥44px (WCAG 2.5.5)
+   - Solid cream bg, scroll-locked
+
+   Cascade note: this block lives at end of app.css, after the
+   Phase 5d/7b mobile rules — last-wins with same specificity.
+   ==================================================================== */
+@media (max-width: 768px) {
+    /* The drawer itself — solid cream, generous padding */
+    .header__nav--active {
+        background: var(--color-bg-cream) !important;
+        padding: 24px 22px 40px !important;
+    }
+
+    /* Refine the existing КАТЕГОРІЇ / АКАУНТ eyebrows — smaller,
+       more tracked, softer color */
+    .header__nav-list::before,
+    .header__nav-extra::before {
+        font-size: 10px !important;
+        letter-spacing: 0.28em !important;
+        color: var(--color-text-subtle) !important;
+        margin-bottom: 18px !important;
+        font-weight: 600 !important;
+    }
+
+    /* Primary nav list — column with no gap (dividers handle separation) */
+    .header__nav--active .header__nav-list {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0 !important;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .header__nav--active .header__nav-item {
+        list-style: none;
+        padding: 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .header__nav--active .header__nav-item:last-child {
+        border-bottom: 0;
+    }
+
+    /* Category link — editorial Cormorant serif, big tap row */
+    .header__nav--active .header__nav-link {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 20px 4px !important;
+        font-family: var(--font-display) !important;
+        font-size: 1.75rem !important; /* 28px */
+        font-weight: 500 !important;
+        letter-spacing: var(--tracking-tight) !important;
+        line-height: 1 !important;
+        color: var(--color-text-primary) !important;
+        text-transform: none !important;
+        text-decoration: none !important;
+        min-height: 64px;
+        position: relative;
+        transition:
+            color 0.2s ease,
+            transform 0.15s cubic-bezier(0.2, 0, 0, 1);
+    }
+    /* Right chevron — "→" rendered via ::after so JSX is untouched */
+    .header__nav--active .header__nav-link::after {
+        content: "→";
+        font-family: var(--font-body);
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 1;
+        color: var(--color-text-muted);
+        opacity: 0.4;
+        transition:
+            transform 0.25s cubic-bezier(0.2, 0, 0, 1),
+            opacity 0.2s ease,
+            color 0.2s ease;
+    }
+    .header__nav--active .header__nav-link:hover::after,
+    .header__nav--active .header__nav-link:focus-visible::after {
+        transform: translateX(4px);
+        color: var(--color-primary);
+        opacity: 1;
+    }
+    /* Tap state */
+    .header__nav--active .header__nav-link:active {
+        transform: scale(0.99);
+        color: var(--color-primary) !important;
+    }
+    /* Active route — italic + brand-teal + leading em-dash mark */
+    .header__nav--active .header__nav-link[aria-current="page"],
+    .header__nav--active .header__nav-link.active {
+        color: var(--color-primary) !important;
+        font-style: italic;
+    }
+    .header__nav--active .header__nav-link[aria-current="page"]::before,
+    .header__nav--active .header__nav-link.active::before {
+        content: "—";
+        margin-right: 12px;
+        color: var(--color-primary);
+        opacity: 0.7;
+        font-style: normal;
+    }
+
+    /* Secondary section — АКАУНТ links */
+    .header__nav-extra {
+        margin-top: 32px !important;
+        padding-top: 24px !important;
+        gap: 0 !important;
+        display: flex !important;
+        flex-direction: column;
+        border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+    }
+    .header__nav-extra-link {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 4px !important;
+        font-family: var(--font-body) !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.02em !important;
+        text-transform: none !important;
+        color: var(--color-text-secondary) !important;
+        text-decoration: none !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+        min-height: 44px;
+        transition: color 0.2s ease;
+        position: relative;
+    }
+    .header__nav-extra-link::after {
+        content: "→";
+        font-size: 14px;
+        font-weight: 400;
+        color: var(--color-text-muted);
+        opacity: 0.4;
+        transition:
+            transform 0.2s ease,
+            color 0.2s ease,
+            opacity 0.2s ease;
+    }
+    .header__nav-extra-link:hover::after,
+    .header__nav-extra-link:focus-visible::after {
+        transform: translateX(3px);
+        color: var(--color-primary);
+        opacity: 1;
+    }
+    .header__nav-extra-link:active {
+        color: var(--color-primary) !important;
+    }
+
+    /* Phone CTA — promoted to brand-teal pill, drops chevron */
+    .header__nav-extra-link--phone {
+        margin-top: 28px !important;
+        padding: 16px 24px !important;
+        background: var(--color-primary) !important;
+        color: var(--color-text-white) !important;
+        border: 0 !important;
+        border-bottom: 0 !important;
+        border-radius: 999px !important;
+        font-family: var(--font-body) !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.04em !important;
+        text-align: center !important;
+        justify-content: center !important;
+        min-height: 50px;
+        box-shadow: 0 4px 16px rgba(42, 90, 90, 0.18);
+        transition:
+            transform 0.18s cubic-bezier(0.2, 0, 0, 1),
+            box-shadow 0.2s ease;
+    }
+    .header__nav-extra-link--phone::after {
+        display: none !important;
+    }
+    .header__nav-extra-link--phone:active {
+        transform: scale(0.97);
+        box-shadow: 0 2px 8px rgba(42, 90, 90, 0.14);
+    }
+
+    /* Stagger fade-up entry animation. Respect reduced-motion via
+       wrapper @media. Items animate as drawer opens. */
+    @media (prefers-reduced-motion: no-preference) {
+        .header__nav--active .header__nav-list::before,
+        .header__nav--active .header__nav-item,
+        .header__nav--active .header__nav-extra::before,
+        .header__nav--active .header__nav-extra > * {
+            animation: navItemFadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+        }
+        .header__nav--active .header__nav-list::before {
+            animation-delay: 0.04s;
+        }
+        .header__nav--active .header__nav-item:nth-child(1) {
+            animation-delay: 0.08s;
+        }
+        .header__nav--active .header__nav-item:nth-child(2) {
+            animation-delay: 0.12s;
+        }
+        .header__nav--active .header__nav-item:nth-child(3) {
+            animation-delay: 0.16s;
+        }
+        .header__nav--active .header__nav-item:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+        .header__nav--active .header__nav-item:nth-child(5) {
+            animation-delay: 0.24s;
+        }
+        .header__nav--active .header__nav-item:nth-child(6) {
+            animation-delay: 0.28s;
+        }
+        .header__nav--active .header__nav-extra::before {
+            animation-delay: 0.32s;
+        }
+        .header__nav--active .header__nav-extra > *:nth-child(1) {
+            animation-delay: 0.34s;
+        }
+        .header__nav--active .header__nav-extra > *:nth-child(2) {
+            animation-delay: 0.37s;
+        }
+        .header__nav--active .header__nav-extra > *:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        .header__nav--active .header__nav-extra > *:nth-child(4) {
+            animation-delay: 0.43s;
+        }
+        .header__nav--active .header__nav-extra > *:nth-child(5) {
+            animation-delay: 0.46s;
+        }
+        @keyframes navItemFadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    }
+
+    /* Focus ring — explicit per a11y skill (WCAG 2.4.7).
+       Brand teal, 2px offset, generous so it's visible on the row. */
+    .header__nav--active .header__nav-link:focus-visible,
+    .header__nav-extra-link:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 4px;
+        border-radius: 4px;
+    }
+    .header__nav-extra-link--phone:focus-visible {
+        outline-offset: 2px;
+    }
+}
