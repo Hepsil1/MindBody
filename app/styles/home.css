@@ -4061,22 +4061,24 @@
      Cormorant 16px title (2-line clamp), glass 34px heart, etc.
    ==================================================================== */
 @media (max-width: 768px) {
-    /* 2-col CSS Grid with bulletproof column sizing */
+    /* 2-col CSS Grid with bulletproof column sizing.
+       Negative margin escapes container padding → cards ~22% bigger
+       on iPhone 14 (was 149.5px → now ~182px each). */
     .products-carousel {
         display: grid !important;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
         grid-auto-rows: auto !important;
-        gap: 12px !important;
-        overflow: hidden !important; /* clip any rogue child overflow */
+        gap: 10px !important;
+        overflow: hidden !important;
         overflow-x: hidden !important;
         overflow-y: visible !important;
         scroll-snap-type: none !important;
         scroll-padding: 0 !important;
-        padding: 8px 12px 24px !important;
+        padding: 8px 8px 24px !important;
+        margin: 0 -8px !important;
         flex-direction: row;
-        width: 100% !important;
-        max-width: 100vw !important;
-        margin: 0 !important;
+        width: auto !important;
+        max-width: none !important;
         box-sizing: border-box;
         scrollbar-width: auto;
     }
@@ -4411,5 +4413,249 @@
     .bw-unified-section {
         padding-top: 48px !important;
         padding-bottom: 48px !important;
+    }
+}
+
+/* ====================================================================
+   Batch 20 — Рух що перетворює: video + 2x2 features grid (mobile)
+
+   User: "переделай полностью раздел с видео. Сделай интерактивный
+   анимированный дизайн с видео."
+
+   Redesign over Batch 11/12 BW rules (which made it horizontal
+   carousel with dots). Cascade order: this block is last in file,
+   wins with matching specificity + !important.
+
+   Changes:
+   1. Video frame BIGGER — was capped 320×400, now ~88vw with proper
+      premium framing. Brand-tinted shadow lifts it off cream bg.
+   2. Features convert from horizontal carousel → 2x2 grid layout
+      (matches Нові надходження 2-col cards = brand cohesion).
+   3. Cards get chrome: white bg, 14px radius, teal-tinted shadow
+      (same recipe as new arrivals = visual consistency).
+   4. Big editorial number (60px) sits as background poster behind
+      the title with z-index layering (depth without borders).
+   5. Active card via :active scale(0.96) + shadow softens.
+   6. Scroll-driven entry: each card fades up as it enters viewport.
+   7. Active video pulse (subtle scale) when section is centered.
+   8. Hide the dot indicator (no horizontal scroll = no need).
+   ==================================================================== */
+@media (max-width: 768px) {
+    /* Video frame — bigger, more dramatic. Brand-tinted shadow. */
+    .bw-v3-frame {
+        aspect-ratio: 4 / 5 !important;
+        max-width: 88vw !important;
+        max-height: none !important;
+        width: 88vw !important;
+        border-radius: 18px !important;
+        overflow: hidden;
+        box-shadow:
+            0 1px 2px rgba(42, 90, 90, 0.04),
+            0 6px 18px rgba(42, 90, 90, 0.08),
+            0 28px 64px -16px rgba(42, 90, 90, 0.16) !important;
+    }
+    .bw-v3-frame-container {
+        order: 1 !important;
+        margin: 0 auto !important;
+        padding: 4px 0 !important;
+        width: 100%;
+    }
+    /* Scroll-driven video active-state: subtle scale up when centered */
+    @supports (animation-timeline: view()) {
+        .bw-v3-frame {
+            animation: bwVideoActive linear both !important;
+            animation-timeline: view();
+            animation-range: cover 0% cover 100%;
+            transform-origin: center center;
+        }
+        @keyframes bwVideoActive {
+            0% {
+                transform: scale(0.96);
+            }
+            50% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(0.96);
+            }
+        }
+    }
+
+    /* Features — 2x2 GRID instead of horizontal scroll-snap carousel */
+    .bw-v3-features {
+        order: 2 !important;
+        padding: 0 8px !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 8px 0 0 !important;
+    }
+    .bw-macro-features {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+        grid-auto-rows: auto !important;
+        flex-direction: row;
+        gap: 10px !important;
+        overflow: hidden !important;
+        overflow-x: hidden !important;
+        scroll-snap-type: none !important;
+        scroll-padding: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        -webkit-mask-image: none !important;
+        mask-image: none !important;
+        box-sizing: border-box;
+    }
+    .bw-macro-features::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Feature card — white bg, chrome, teal shadow (matches NA grid) */
+    .bw-feat-item {
+        flex: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        scroll-snap-align: none !important;
+        scroll-snap-stop: normal !important;
+        position: relative !important;
+        display: block !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(42, 90, 90, 0.05) !important;
+        border-radius: 14px !important;
+        padding: 14px 14px 16px 14px !important;
+        min-height: 160px;
+        overflow: hidden;
+        box-sizing: border-box;
+        box-shadow:
+            0 1px 2px rgba(42, 90, 90, 0.04),
+            0 3px 10px rgba(42, 90, 90, 0.06),
+            0 12px 28px -8px rgba(42, 90, 90, 0.1) !important;
+        transition:
+            box-shadow 0.3s ease,
+            transform 0.18s cubic-bezier(0.2, 0, 0, 1) !important;
+        will-change: transform, box-shadow;
+    }
+    .bw-feat-item:active {
+        transform: scale(0.96) !important;
+        box-shadow:
+            0 1px 2px rgba(42, 90, 90, 0.03),
+            0 3px 8px rgba(42, 90, 90, 0.04),
+            0 6px 16px -8px rgba(42, 90, 90, 0.08) !important;
+    }
+    .bw-feat-item:not(:last-child) {
+        border-right: 0 !important; /* cancel old divider */
+    }
+
+    /* Big editorial macro-number — background poster */
+    .bw-feat-item .bw-macro-number {
+        position: absolute !important;
+        top: -16px !important;
+        right: -4px !important;
+        left: auto !important;
+        color: var(--color-primary) !important;
+        -webkit-text-stroke: 0 !important;
+        opacity: 0.1 !important;
+        font-family: var(--font-display) !important;
+        font-size: 76px !important;
+        font-weight: 500 !important;
+        line-height: 1 !important;
+        letter-spacing: -0.05em !important;
+        z-index: 0;
+        pointer-events: none;
+        margin: 0 !important;
+        transition: opacity 0.4s ease;
+    }
+    .bw-feat-item .bw-macro-number::before {
+        display: none !important;
+    }
+    .bw-macro-content {
+        position: relative;
+        z-index: 1;
+        padding: 0 !important;
+    }
+    .bw-feat-title {
+        font-family: var(--font-display) !important;
+        font-size: 1.05rem !important; /* ~17px */
+        font-weight: 500 !important;
+        letter-spacing: var(--tracking-tight) !important;
+        line-height: 1.18 !important;
+        margin: 26px 0 6px 0 !important;
+        color: var(--color-text-primary);
+        word-break: break-word;
+    }
+    .bw-feat-desc {
+        font-size: 12px !important;
+        line-height: 1.45 !important;
+        color: var(--color-text-secondary);
+        margin: 0 !important;
+    }
+    .bw-feat-link {
+        margin-top: 10px !important;
+        font-size: 11px !important;
+        letter-spacing: 0.16em !important;
+        display: inline-flex !important;
+        align-items: center;
+        gap: 4px;
+    }
+    /* Cancel desktop dim-on-not-hover pattern */
+    .bw-macro-features:hover .bw-feat-item:not(:hover) {
+        opacity: 1 !important;
+    }
+
+    /* Hide dot pager — grid doesn't need it */
+    .bw-feat-dots-wrap {
+        display: none !important;
+    }
+
+    /* SCROLL-DRIVEN entry animation: each feature card fades up
+       as it enters viewport. Pure CSS, GPU. */
+    @supports (animation-timeline: view()) {
+        .bw-feat-item {
+            animation: bwFeatEntry linear both !important;
+            animation-timeline: view();
+            animation-range: entry 0% entry 40%;
+            will-change: opacity, transform;
+        }
+        @keyframes bwFeatEntry {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.96);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        /* Macro number subtle pulse on active card */
+        .bw-feat-item .bw-macro-number {
+            animation: bwNumberPulse linear both;
+            animation-timeline: view();
+            animation-range: cover 30% cover 70%;
+        }
+        @keyframes bwNumberPulse {
+            0% {
+                opacity: 0.06;
+            }
+            50% {
+                opacity: 0.16;
+            }
+            100% {
+                opacity: 0.06;
+            }
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .bw-feat-item,
+        .bw-feat-item .bw-macro-number,
+        .bw-v3-frame {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+        }
+        .bw-feat-item .bw-macro-number {
+            opacity: 0.1 !important;
+        }
     }
 }
