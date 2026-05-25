@@ -15012,3 +15012,383 @@ select {
         outline-offset: 2px;
     }
 }
+
+/* ====================================================================
+   Batch 27 — Mobile footer premium redesign (<=768px, 10-agent synthesis)
+
+   Constraint: footer stays BLACK (user-preserved palette).
+
+   Convergence from 10 parallel research agents:
+   - Drop "Каталог" column (user request)
+   - Drop "Догляд за виробами", "Умови користування" (folded into FAQ/ToS)
+   - Drop country selector (false affordance for single-market UA)
+   - Drop messenger TEXT links (collapsed to icon row in Footer.tsx)
+   - Newsletter at TOP of mobile footer via CSS order
+   - Off-white #f0ece4 primary (warm, 18:1 on black; not harsh pure #fff)
+   - Warm gray #a89e8c for headings (eyebrow tag style)
+   - Cormorant italic 26px for "Давай поговоримо" — editorial CTA
+   - All touch targets ≥44px (live audit: was 17-23px FAIL)
+   - 2-col nav grid (Допомога / Про компанію side-by-side)
+   - Phone CTA: full-width teal pill (highest conversion link)
+   - Social icons row: IG/TG/Viber/WA, 44×44 target, 20px visual
+   - Bottom row stacked centered (logo → caption → copyright)
+   - "Зроблено в Україні · Доставка Новою Поштою" replaces country
+   - Hairline dividers @ 8-15% cream opacity
+   - Scroll-driven stagger entry (60-280ms cascade)
+   - Cream focus ring on dark (teal #2a5a5a fails 1.6:1 on black)
+   - Footer bg #0a0a0a (warmer than #000, avoids OLED bloom)
+   ==================================================================== */
+@media (max-width: 768px) {
+    /* Footer base — soft black, edge-to-edge content area */
+    .footer-puma {
+        background: #0a0a0a !important;
+        padding: 0 !important;
+    }
+    .footer-puma__container {
+        padding: 0 20px !important;
+        max-width: 100% !important;
+    }
+    .footer-puma__content-wrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 32px !important;
+        padding: 40px 0 32px !important;
+    }
+
+    /* Newsletter card MOVED to top of mobile footer via CSS order */
+    .footer-puma__right-group {
+        order: -1 !important;
+        width: 100% !important;
+    }
+    .mind-feedback {
+        width: 100% !important;
+        max-width: none !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(240, 236, 228, 0.1) !important;
+        border-radius: 16px !important;
+        padding: 24px 20px !important;
+        box-shadow: none !important;
+    }
+    .mind-feedback__header {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between;
+        margin-bottom: 18px !important;
+    }
+    .mind-feedback__title-wrap {
+        flex: 1;
+    }
+    .mind-feedback__title {
+        font-family: var(--font-display) !important;
+        font-size: 26px !important; /* Cormorant — editorial CTA moment */
+        font-weight: 400 !important;
+        font-style: italic !important;
+        letter-spacing: -0.01em !important;
+        line-height: 1.1 !important;
+        color: #f0ece4 !important;
+        margin: 0 !important;
+        text-transform: none !important;
+    }
+    .mind-feedback__subtitle {
+        font-family: var(--font-body) !important;
+        font-size: 12px !important;
+        color: #b8b0a0 !important;
+        margin-top: 4px !important;
+        display: block;
+        letter-spacing: 0.02em;
+    }
+    .mind-feedback__form {
+        display: flex !important;
+        flex-direction: column;
+        gap: 10px !important;
+    }
+    .mind-feedback__input {
+        width: 100% !important;
+        padding: 14px 16px !important;
+        background: transparent !important;
+        border: 1px solid rgba(240, 236, 228, 0.2) !important;
+        border-radius: 999px !important;
+        color: #f0ece4 !important;
+        font-family: var(--font-body) !important;
+        font-size: 14px !important;
+        min-height: 48px;
+        outline: 0;
+        transition: border-color 0.2s ease;
+    }
+    .mind-feedback__input::placeholder {
+        color: #8a8276 !important;
+    }
+    .mind-feedback__input:focus-visible {
+        border-color: #f0ece4 !important;
+        outline: 2px solid #f0ece4;
+        outline-offset: 2px;
+    }
+    .mind-feedback__btn {
+        width: 100% !important;
+        min-height: 48px;
+        background: #f0ece4 !important;
+        color: #0a0a0a !important;
+        border: 0 !important;
+        border-radius: 999px !important;
+        font-family: var(--font-body) !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.2em !important;
+        text-transform: uppercase;
+        transition:
+            transform 0.18s cubic-bezier(0.2, 0, 0, 1),
+            background-color 0.2s ease;
+    }
+    .mind-feedback__btn:active {
+        transform: scale(0.97);
+        background: #d4c9b4 !important;
+    }
+
+    /* LEFT GROUP — logo (hidden on mobile) + nav */
+    .footer-puma__left-group {
+        width: 100% !important;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+    }
+    .footer-puma__logo-top {
+        display: none !important; /* logo lives in bottom row on mobile */
+    }
+
+    /* Nav grid — 2 cols (Допомога + Про компанію) + contact spans full */
+    .footer-puma__nav-grid {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+        gap: 28px 20px !important;
+        flex-direction: row;
+    }
+    .footer-puma__nav-col--contact {
+        grid-column: 1 / -1 !important;
+        border-top: 1px solid rgba(240, 236, 228, 0.08);
+        padding-top: 24px !important;
+        margin-top: 4px;
+    }
+
+    /* Column heading — eyebrow tag style */
+    .footer-puma__col-header {
+        font-family: var(--font-body) !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.22em !important;
+        text-transform: uppercase !important;
+        color: #a89e8c !important;
+        margin: 0 0 16px 0 !important;
+        line-height: 1;
+    }
+
+    /* Nav list — generous tap rows */
+    .footer-puma__nav-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+    .footer-puma__nav-list li {
+        margin: 0;
+    }
+    .footer-puma__nav-list a {
+        display: block;
+        padding: 10px 0 !important;
+        font-family: var(--font-body) !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        line-height: 1.4 !important;
+        letter-spacing: 0.01em !important;
+        color: #f0ece4 !important;
+        text-decoration: none !important;
+        text-transform: none !important;
+        min-height: 44px;
+        transition: color 0.2s ease;
+    }
+    .footer-puma__nav-list a:hover,
+    .footer-puma__nav-list a:focus-visible {
+        color: #d4c9b4 !important;
+    }
+    .footer-puma__nav-list a:focus-visible {
+        outline: 2px solid #f0ece4;
+        outline-offset: 2px;
+        border-radius: 2px;
+    }
+
+    /* Phone CTA — teal pill, full-width, the conversion link */
+    .footer-puma__phone-cta {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 14px 20px !important;
+        margin: 0 0 18px 0;
+        background: var(--color-primary) !important;
+        color: #f0ece4 !important;
+        border-radius: 999px !important;
+        font-family: var(--font-body) !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.04em !important;
+        text-decoration: none !important;
+        min-height: 50px;
+        box-shadow: 0 4px 14px rgba(42, 90, 90, 0.25);
+        transition:
+            transform 0.18s cubic-bezier(0.2, 0, 0, 1),
+            box-shadow 0.2s ease;
+    }
+    .footer-puma__phone-cta:active {
+        transform: scale(0.97);
+        box-shadow: 0 2px 8px rgba(42, 90, 90, 0.18);
+    }
+    .footer-puma__phone-cta:focus-visible {
+        outline: 2px solid #f0ece4;
+        outline-offset: 3px;
+    }
+
+    /* Social icons row — IG / TG / Viber / WA, 44×44 hit area */
+    .footer-puma__social-icons {
+        display: flex !important;
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        gap: 12px;
+        justify-content: center;
+    }
+    .footer-puma__social-icons li {
+        margin: 0 !important;
+    }
+    .footer-puma__social-link {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        border: 1px solid rgba(240, 236, 228, 0.15) !important;
+        color: #f0ece4 !important;
+        background: rgba(255, 255, 255, 0.03);
+        transition:
+            border-color 0.2s ease,
+            background-color 0.2s ease,
+            transform 0.15s ease;
+        text-decoration: none !important;
+        padding: 0 !important;
+    }
+    .footer-puma__social-link:hover,
+    .footer-puma__social-link:focus-visible {
+        border-color: #f0ece4 !important;
+        background: rgba(240, 236, 228, 0.08);
+    }
+    .footer-puma__social-link:focus-visible {
+        outline: 2px solid #f0ece4;
+        outline-offset: 2px;
+    }
+    .footer-puma__social-link:active {
+        transform: scale(0.94);
+    }
+
+    /* Hairline divider before bottom */
+    .footer-puma__full-divider {
+        height: 1px !important;
+        background: rgba(240, 236, 228, 0.08) !important;
+        margin: 0 20px !important;
+    }
+
+    /* Bottom row — stacked centered, premium minimal */
+    .footer-puma__bottom-row {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 14px !important;
+        padding: 28px 0 32px !important;
+        text-align: center;
+    }
+    .footer-puma__logo-center {
+        order: 0;
+    }
+    .footer-puma__logo-center img {
+        height: 22px;
+        width: auto;
+        opacity: 0.85;
+    }
+    /* "Зроблено в Україні · Доставка Новою Поштою" — replaces country selector */
+    .footer-puma__made-in {
+        order: 1;
+        font-family: var(--font-body);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #a89e8c;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+    .footer-puma__made-in .footer-puma__dot {
+        opacity: 0.45;
+    }
+    .footer-puma__copyright-text {
+        order: 2;
+        font-family: var(--font-body) !important;
+        font-size: 11px !important;
+        letter-spacing: 0.06em !important;
+        color: #7a7264 !important;
+        text-align: center !important;
+        margin: 0 !important;
+    }
+
+    /* SCROLL-DRIVEN entry — stagger cascade as footer enters viewport */
+    @supports (animation-timeline: view()) {
+        .footer-puma__right-group,
+        .footer-puma__nav-col,
+        .footer-puma__bottom-row > * {
+            animation: footerColRise linear both;
+            animation-timeline: view();
+            animation-range: entry 0% entry 45%;
+            will-change: transform, opacity;
+        }
+        .footer-puma__right-group {
+            animation-delay: 0s;
+        }
+        .footer-puma__nav-col:nth-child(1) {
+            animation-delay: 60ms;
+        }
+        .footer-puma__nav-col:nth-child(2) {
+            animation-delay: 120ms;
+        }
+        .footer-puma__nav-col--contact {
+            animation-delay: 180ms;
+        }
+        .footer-puma__bottom-row > *:nth-child(1) {
+            animation-delay: 240ms;
+        }
+        .footer-puma__bottom-row > *:nth-child(2) {
+            animation-delay: 280ms;
+        }
+        .footer-puma__bottom-row > *:nth-child(3) {
+            animation-delay: 320ms;
+        }
+        @keyframes footerColRise {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .footer-puma__right-group,
+        .footer-puma__nav-col,
+        .footer-puma__bottom-row > * {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+        }
+    }
+}
