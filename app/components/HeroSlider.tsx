@@ -196,16 +196,19 @@ export default function HeroSlider({
                                             src="/pics/mind_body_logo.png"
                                             alt="MIND BODY — sport wear"
                                             fetchPriority="high"
-                                            /* Master PNG artwork is black on transparent. CSS
-                                               applies `filter: brightness(0) invert(1)` (in
-                                               hero.css) to render it white. But between HTML
-                                               rendering this <img> and the external CSS file
-                                               loading, the unfiltered black PNG flashes for
-                                               ~100-200ms = FOUC. Apply the filter inline so
-                                               it takes effect immediately from the SSR HTML,
-                                               before any stylesheet is parsed. */
+                                            /* Master PNG is black-on-transparent. CSS uses
+                                               filter to render it white. Inline filter is
+                                               applied from SSR HTML so the logo is white
+                                               before external CSS loads (Batch 26 fix).
+                                               CRITICAL (Batch 28): the inline filter MUST
+                                               include the same drop-shadow as the CSS rule
+                                               AND the animation 0% keyframe — otherwise the
+                                               browser interpolates filter property values
+                                               at animation start (2s) and can momentarily
+                                               compute an invalid/empty filter = 1-frame
+                                               BLACK FLASH (the bug the user reported). */
                                             style={{
-                                                filter: "brightness(0) invert(1)",
+                                                filter: "brightness(0) invert(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.2))",
                                             }}
                                         />
                                     </picture>
