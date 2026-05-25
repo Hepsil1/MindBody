@@ -4548,17 +4548,20 @@
         border-right: 0 !important; /* cancel old divider */
     }
 
-    /* Big editorial macro-number — background poster */
+    /* Big editorial macro-number — sits in TOP-RIGHT CORNER of the card,
+       poking out so it reads as a corner ornament rather than overlapping
+       the title text. Audit agent flagged previous position (right: -4px)
+       as making "03" sit behind "Ідеальна посадка" headline. */
     .bw-feat-item .bw-macro-number {
         position: absolute !important;
-        top: -16px !important;
-        right: -4px !important;
+        top: -22px !important;
+        right: -14px !important;
         left: auto !important;
         color: var(--color-primary) !important;
         -webkit-text-stroke: 0 !important;
-        opacity: 0.1 !important;
+        opacity: 0.08 !important;
         font-family: var(--font-display) !important;
-        font-size: 76px !important;
+        font-size: 92px !important;
         font-weight: 500 !important;
         line-height: 1 !important;
         letter-spacing: -0.05em !important;
@@ -4636,13 +4639,13 @@
         }
         @keyframes bwNumberPulse {
             0% {
-                opacity: 0.06;
+                opacity: 0.05;
             }
             50% {
-                opacity: 0.16;
+                opacity: 0.12;
             }
             100% {
-                opacity: 0.06;
+                opacity: 0.05;
             }
         }
     }

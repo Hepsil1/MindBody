@@ -4645,9 +4645,13 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 .mind-feedback {
     width: 380px;
     /* Reverted to 380 for better balance with dividers */
-    background: rgba(255, 255, 255, 0.03);
+    /* Mobile audit flagged this as "unfinished placeholder" — bumped
+       background alpha + border + added radius so it reads as a real
+       card on the black footer instead of a faint outline. */
+    background: rgba(255, 255, 255, 0.06);
 
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
     padding: 30px;
     position: relative;
     transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
@@ -13944,11 +13948,12 @@ body:has(.checkout-page) .floating-contact {
         letter-spacing: 0.04em;
     }
 
-    /* Floating contact — compact 40px cluster, tight to the
-       corner so it clears the centred hero CTA. */
+    /* Floating contact — audit flagged it as overlapping hero CTA + footer
+       submit on mobile. Bumped bottom from 20→80px so cluster sits above
+       the typical CTA-fold zone instead of next to it. */
     .floating-contact {
         right: 12px;
-        bottom: 20px;
+        bottom: 80px;
         gap: 10px;
     }
     .floating-contact__btn,
