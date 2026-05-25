@@ -4037,99 +4037,111 @@
 }
 
 /* ====================================================================
-   Batch 17 — Нові надходження: 1-col HERO cards (7th)
+   Batch 18 — Нові надходження: 2-col grid + iPhone Safari fix (8th)
 
-   User feedback on Batch 16 (2-col grid): "на айфон смешно выглядит" =
-   looks funny/comical on iPhone. Diagnosis: 200px cards look puny
-   after the dramatic full-bleed Categories section above and the
-   editorial Brand World below. Visual scale mismatch = funny.
+   User feedback on Batch 17 (1-col hero): "как в прошлый раз было
+   красивее только я на айфоне видел не по 2 карточки а по полторы" =
+   the 2-col grid was prettier; but on iPhone Safari rendered 1.5
+   cards instead of 2 (grid blowout — children's intrinsic min-content
+   wider than 1fr column).
 
-   v7 — DROP 2-col. 1-COLUMN HERO CARDS:
-   - Each card 100% width of the section (~358px on iPhone 14)
-   - 4:5 portrait image fills full card width (dramatic)
-   - Big chrome: 20px radius, multi-layer teal shadow scaled up
-   - Show only first 4 (curated hero showcase); CTA → all 12
-   - Each product gets a FULL STAGE not a thumbnail
-   - Vertical scroll naturally (no snap jank)
-
-   Reference: Sézane mobile, Loro Piana mobile, Polène mobile — all
-   use 1-col hero stack for new arrivals. Each product feels like an
-   editorial spread page, not a catalogue tile.
-
-   This matches the visual scale of:
-   - Categories section above (full-bleed cinematic)
-   - Brand World below (large editorial)
-   = same dramatic feel, brand cohesion.
+   v8 — RESTORE 2-col grid + bulletproof iPhone fix:
+   - grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)
+     ← The canonical fix. Default `1fr` resolves to `minmax(auto, 1fr)`
+        where `auto` = min-content of children. If a child has an
+        image with intrinsic width 304px, the column inflates to 304px
+        regardless of viewport. minmax(0, 1fr) forces min to 0 so
+        the column always equals exactly half of available space.
+   - min-width: 0 on each grid item (belt + suspenders)
+   - overflow-x: hidden on parent (clip overflow if it sneaks in)
+   - Tightened padding 12px (was 16px) to give cards more breath
+   - Tighter gap 12px (was 14px) for denser feel
+   - 6 cards visible (was 4 in v7); show 7-12 hidden, CTA → all
+   - Card chrome restored from Batch 16: 16px radius, 3-layer shadow,
+     Cormorant 16px title (2-line clamp), glass 34px heart, etc.
    ==================================================================== */
 @media (max-width: 768px) {
-    /* 1-column vertical stack — each card full width */
+    /* 2-col CSS Grid with bulletproof column sizing */
     .products-carousel {
-        display: flex !important;
-        flex-direction: column !important;
-        grid-template-columns: none !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
         grid-auto-rows: auto !important;
-        gap: 28px !important;
-        overflow: visible !important;
-        overflow-x: visible !important;
+        gap: 12px !important;
+        overflow: hidden !important; /* clip any rogue child overflow */
+        overflow-x: hidden !important;
         overflow-y: visible !important;
         scroll-snap-type: none !important;
         scroll-padding: 0 !important;
-        padding: 8px 16px 24px !important;
-        width: auto !important;
+        padding: 8px 12px 24px !important;
+        flex-direction: row;
+        width: 100% !important;
+        max-width: 100vw !important;
         margin: 0 !important;
+        box-sizing: border-box;
         scrollbar-width: auto;
     }
 
-    /* Show only first 4 hero cards — curated showcase, CTA → all 12 */
+    /* Show only first 6 (curated); CTA → all 12 */
     .products-carousel > *:nth-child(3n + 1) {
         grid-column: auto !important; /* cancel any bento span */
     }
-    .products-carousel > *:nth-child(n + 5) {
+    .products-carousel > *:nth-child(n + 7) {
         display: none !important;
     }
 
+    /* min-width: 0 on grid items = canonical fix for grid blowout */
     .products-carousel > * {
         flex: none !important;
         width: 100% !important;
-        max-width: none !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
         scroll-snap-align: none !important;
         scroll-snap-stop: normal !important;
+        box-sizing: border-box;
     }
 
-    /* Hero card — full width, dramatic chrome with bigger shadow */
+    /* Card object — Apple Today + brand-tinted shadow.
+       Smaller radius (16px) tuned for ~half-viewport card width. */
     .products-carousel .product-card,
     .products-carousel .product-card-luxe {
         background: #ffffff !important;
-        border-radius: 20px !important;
+        border-radius: 16px !important;
         overflow: hidden !important;
         padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box;
         border: 1px solid rgba(42, 90, 90, 0.05) !important;
-        /* 3-layer teal-tinted shadow — bigger for hero cards.
-           Provides real lift against cream bg. */
+        /* 3-layer teal-tinted shadow */
         box-shadow:
             0 1px 2px rgba(42, 90, 90, 0.04),
-            0 4px 14px rgba(42, 90, 90, 0.06),
-            0 24px 56px -12px rgba(42, 90, 90, 0.12) !important;
+            0 3px 10px rgba(42, 90, 90, 0.06),
+            0 12px 30px -8px rgba(42, 90, 90, 0.1) !important;
         transition:
             box-shadow 0.3s ease,
             transform 0.18s cubic-bezier(0.2, 0, 0, 1) !important;
         will-change: transform, box-shadow;
     }
-    /* Tap state — gentle scale + shadow softens */
+    /* Tap state — scale + shadow softens (Apple Today press) */
     .products-carousel .product-card:active,
     .products-carousel .product-card-luxe:active {
-        transform: scale(0.985) !important;
+        transform: scale(0.97) !important;
         box-shadow:
             0 1px 2px rgba(42, 90, 90, 0.03),
-            0 4px 10px rgba(42, 90, 90, 0.05),
-            0 12px 28px -12px rgba(42, 90, 90, 0.08) !important;
+            0 3px 8px rgba(42, 90, 90, 0.04),
+            0 6px 16px -8px rgba(42, 90, 90, 0.08) !important;
     }
 
-    /* Image — 4:5 portrait, full-bleed top of card */
+    /* Image — 4:5 portrait, full-bleed top of card.
+       width: 100% + max-width 100% + min-width 0 = bulletproof
+       against intrinsic content blowing out the grid column. */
     .products-carousel .product-card__image-wrapper {
         aspect-ratio: 4 / 5 !important;
         width: 100% !important;
-        border-radius: 20px 20px 0 0 !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        border-radius: 16px 16px 0 0 !important;
         overflow: hidden;
         background: var(--color-bg-soft);
         margin: 0 !important;
@@ -4147,36 +4159,41 @@
         transform: none !important;
     }
 
-    /* Caption — editorial scale for hero cards */
+    /* Caption — tuned for ~half-viewport card */
     .products-carousel .product-card__details,
     .products-carousel .product-card-luxe__details {
-        padding: 22px 24px 26px !important;
+        padding: 12px 14px 14px !important;
         background: transparent !important;
+        min-width: 0 !important;
     }
     .products-carousel .product-card__title {
         font-family: var(--font-display) !important;
-        font-size: 1.5rem !important; /* 24px Cormorant for hero */
+        font-size: 1rem !important; /* 16px - fits 2-line on ~half-viewport */
         font-weight: 500 !important;
         letter-spacing: var(--tracking-tight) !important;
-        line-height: 1.15 !important;
-        margin: 0 0 14px 0 !important;
+        line-height: 1.2 !important;
+        margin: 0 0 8px 0 !important;
         text-transform: none !important;
         color: var(--color-text-primary) !important;
-        display: block;
-        -webkit-line-clamp: unset;
-        overflow: visible;
-        min-height: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.4em;
+        word-break: break-word;
     }
     .products-carousel .product-card__price-row {
         display: flex !important;
         align-items: baseline !important;
-        gap: 12px !important;
+        gap: 8px !important;
         margin: 0 !important;
         font-family: var(--font-body) !important;
         font-variant-numeric: tabular-nums;
+        min-width: 0 !important;
+        flex-wrap: wrap;
     }
     .products-carousel .product-card__price {
-        font-size: 17px !important;
+        font-size: 13px !important;
         font-weight: 500 !important;
         letter-spacing: 0.02em !important;
         color: var(--color-text-primary) !important;
@@ -4187,63 +4204,56 @@
         font-weight: 600 !important;
     }
     .products-carousel .product-card__price-old {
-        font-size: 14px !important;
+        font-size: 11px !important;
         color: var(--color-text-muted) !important;
         margin-left: 0 !important;
     }
 
-    /* Colour swatches visible — hero card has room */
+    /* Hide colour swatches — too cramped on half-viewport card */
     .products-carousel .product-card__colors {
-        display: flex !important;
-        gap: 10px !important;
-        margin-top: 18px !important;
-    }
-    .products-carousel .product-card__colors > * {
-        width: 20px !important;
-        height: 20px !important;
-        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        display: none !important;
     }
 
-    /* Heart — top-right glass button, hero size */
+    /* Heart — top-right glass button */
     .products-carousel .product-card__heart-btn {
-        top: 16px !important;
-        right: 16px !important;
+        top: 10px !important;
+        right: 10px !important;
         bottom: auto !important;
         left: auto !important;
-        width: 44px !important;
-        height: 44px !important;
+        width: 34px !important;
+        height: 34px !important;
         background: rgba(255, 255, 255, 0.85) !important;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         border: 0 !important;
         border-radius: 999px !important;
         opacity: 1 !important;
     }
     .products-carousel .product-card__heart-btn svg {
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
     }
 
-    /* NEW / SALE — italic Cormorant pill, hero size */
+    /* NEW / SALE — italic Cormorant pill, glass */
     .products-carousel .product-card__badge,
     .products-carousel [class*="product-card__badge"] {
         font-family: var(--font-display) !important;
         font-style: italic !important;
-        font-size: 14px !important;
+        font-size: 11px !important;
         font-weight: 400 !important;
         text-transform: lowercase !important;
         letter-spacing: 0.02em !important;
-        background: rgba(255, 255, 255, 0.92) !important;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
         color: var(--color-primary) !important;
-        padding: 5px 14px !important;
-        top: 16px !important;
-        left: 16px !important;
+        padding: 3px 10px !important;
+        top: 10px !important;
+        left: 10px !important;
         border-radius: 999px !important;
         border: 0 !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
     }
 
     /* Hide artifacts from previous batches */
