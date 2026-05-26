@@ -6,15 +6,39 @@ const VIBER_URL = `viber://chat?number=%2B${PHONE}`;
 const WHATSAPP_URL = `https://wa.me/380973542848`;
 const TELEGRAM_URL = `https://t.me/+${PHONE}`;
 
+// localStorage key for the user's expanded/collapsed preference.
+// Sticks across page loads so a user who minimised once doesn't have
+// to do it again on every navigation.
+const STORAGE_KEY = "mb-floating-contact-collapsed";
+
 /**
  * Floating contact widget.
  *
- * The three messenger buttons (Telegram, Viber, WhatsApp) stay
- * permanently visible at every width — no toggle FAB. A "back to
- * top" button fades in once the user scrolls past 400px.
+ * UX model: messenger panel is EXPANDED by default (Telegram + Viber +
+ * WhatsApp visible). A small × on top of the cluster minimises it to a
+ * single discreet chat-bubble FAB that sits flush against the right
+ * edge — small footprint so it stops overlapping product cards on
+ * mobile. The chat-bubble re-expands on tap. Preference is persisted.
+ *
+ * A "back to top" button fades in once the user scrolls past 400px and
+ * stays available regardless of collapse state.
  */
 export default function FloatingContact() {
     const [showBackToTop, setShowBackToTop] = useState(false);
+    const [collapsed, setCollapsed] = useState(false);
+
+    // Restore user's last collapse preference. Default is expanded
+    // (no localStorage entry = false) so first-time visitors always
+    // see all three messenger options.
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored === "1") setCollapsed(true);
+        } catch {
+            // localStorage may be unavailable (private browsing,
+            // strict ITP). Fall back to expanded.
+        }
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -28,9 +52,51 @@ export default function FloatingContact() {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
+    const toggleCollapsed = () => {
+        setCollapsed((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
+            } catch {
+                // ignore — preference just won't persist this session
+            }
+            return next;
+        });
+    };
+
     return (
-        <div className="floating-contact">
-            {/* Messenger panel — three social buttons, always visible */}
+        <div className={`floating-contact ${collapsed ? "is-collapsed" : ""}`}>
+            {/* Minimise affordance — small subtle × above the panel.
+                Only visible when the cluster is expanded. Sized
+                deliberately small (28px) so it doesn't visually
+                compete with the three brand-coloured messenger
+                buttons; it reads as a secondary control. */}
+            {!collapsed && (
+                <button
+                    type="button"
+                    onClick={toggleCollapsed}
+                    className="floating-contact__minimize"
+                    aria-label="Згорнути контакти"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            )}
+
+            {/* Messenger panel — three social buttons. Hidden via
+                display:none when collapsed; we keep them in the JSX
+                because they're not heavy and we want React to retain
+                ref/state simplicity. */}
             <div className="floating-contact__panel">
                 {/* Telegram */}
                 <a
@@ -71,6 +137,31 @@ export default function FloatingContact() {
                     </svg>
                 </a>
             </div>
+
+            {/* Peek FAB — single small chat-bubble that replaces the
+                3-icon column when the cluster is collapsed. Brand
+                teal so it reads as a UI element, not site chrome.
+                Tapping it re-expands. */}
+            {collapsed && (
+                <button
+                    type="button"
+                    onClick={toggleCollapsed}
+                    className="floating-contact__peek"
+                    aria-label="Зв'язатись через месенджер"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    </svg>
+                </button>
+            )}
 
             {/* Back to top */}
             <button

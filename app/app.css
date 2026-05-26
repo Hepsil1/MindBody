@@ -11005,6 +11005,160 @@ body:has(.checkout-page) .floating-contact {
     }
 }
 
+/* === Floating Contact: collapse / expand affordances ===
+   The cluster ships expanded (T + V + W visible). A small × at the
+   top minimises it to a single chat-bubble peek that sits flush
+   against the right edge, so it stops overlapping product cards on
+   mobile. The choice is persisted in localStorage. */
+
+/* Tiny × that minimises the cluster. Sized small (28×28) on purpose
+   so it reads as a secondary affordance and doesn't compete with the
+   three brand-coloured messenger buttons below it. */
+.floating-contact__minimize {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease,
+        opacity 0.2s ease;
+    opacity: 0.7;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    padding: 0;
+    margin-bottom: -2px;
+}
+.floating-contact__minimize:hover,
+.floating-contact__minimize:focus-visible {
+    opacity: 1;
+    background: #fff;
+    color: var(--color-text-primary);
+    transform: scale(1.08);
+    outline: none;
+}
+.floating-contact__minimize:active {
+    transform: scale(0.94);
+}
+.floating-contact__minimize svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.2;
+}
+
+/* Peek FAB — the single chat-bubble that appears in place of the
+   three-button column when the cluster is collapsed. Brand teal, so
+   it reads clearly as a contact affordance even at small size. */
+.floating-contact__peek {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(42, 90, 90, 0.28);
+    transition:
+        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.25s ease,
+        opacity 0.25s ease;
+    opacity: 0.92;
+    padding: 0;
+    animation: floatingPeekIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.floating-contact__peek:hover,
+.floating-contact__peek:focus-visible {
+    opacity: 1;
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(42, 90, 90, 0.38);
+    outline: none;
+}
+.floating-contact__peek:active {
+    transform: scale(0.95);
+}
+.floating-contact__peek svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* When collapsed: drop the messenger panel from layout entirely so the
+   floating cluster shrinks to just the peek FAB (+ back-to-top when
+   visible). This is what frees the right edge of every product card. */
+.floating-contact.is-collapsed .floating-contact__panel {
+    display: none;
+}
+
+/* Reveal animation for the peek FAB (slides in from the right edge). */
+@keyframes floatingPeekIn {
+    from {
+        opacity: 0;
+        transform: translateX(12px) scale(0.85);
+    }
+    to {
+        opacity: 0.92;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Same gentle reveal for the panel when the user re-expands. */
+.floating-contact:not(.is-collapsed) .floating-contact__panel {
+    animation: floatingPanelIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+@keyframes floatingPanelIn {
+    from {
+        opacity: 0;
+        transform: translateX(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Respect reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+    .floating-contact__peek,
+    .floating-contact:not(.is-collapsed) .floating-contact__panel {
+        animation: none;
+    }
+}
+
+/* On mobile the collapsed peek sits tighter against the right edge —
+   keep it compact (40px) and a hair closer to the edge so it reads as
+   a quiet edge marker rather than a competing FAB. */
+@media (max-width: 768px) {
+    .floating-contact.is-collapsed {
+        right: 10px;
+    }
+    .floating-contact__peek {
+        width: 40px;
+        height: 40px;
+    }
+    .floating-contact__peek svg {
+        width: 18px;
+        height: 18px;
+    }
+    .floating-contact__minimize {
+        width: 26px;
+        height: 26px;
+    }
+    .floating-contact__minimize svg {
+        width: 13px;
+        height: 13px;
+    }
+}
+
 /* (Legacy .product-card__price-main rules removed; new structure uses
    .product-card__price + .product-card__price--sale; defined above.) */
 
