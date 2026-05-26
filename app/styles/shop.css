@@ -501,3 +501,351 @@
     font-weight: 700;
     cursor: pointer;
 }
+
+/* ====================================================================
+   Batch 34 — Shop category page mobile redesign
+
+   Synthesis from 4 parallel research agents:
+   1. Premium shop UX (Aesop / Polène / Reformation / Sézane)
+   2. Whisper Card patterns (kill mass-market chrome)
+   3. Live audit (broken grid, 3-row sort chips, no empty state)
+   4. Sort UI deep dive (bottom sheet > chip row > native select)
+
+   THIS PASS — pure CSS only (low-risk, high-impact):
+   - Fix .luxe-grid: kill ghost 310px sidebar column + 70px gap on mobile
+   - Sort chips: replace 3-row wrap with horizontal scroll-snap + chevron
+   - Drop "СОРТУВАТИ ЗА" label clutter, dedupe count
+   - Card whisper rebuild: drop chrome, outline heart, inline italic badge,
+     refined typography (Cormorant 16px / DM Sans 14px tabular)
+   - Hero h1 readability: add text-shadow + darker overlay gradient
+   - Load-more button refined to editorial cream pill
+
+   Deferred to next batch (requires JSX/state):
+   - Bottom-sheet sort component (Polène/The Row pattern)
+   - Full-screen filter takeover with accordion sections
+   - Active filter pills row
+   - Shared-element transition card→PDP (Framer Motion layoutId)
+   ==================================================================== */
+@media (max-width: 768px) {
+    /* (1) FIX BROKEN GRID — kill the ghost 310px sidebar column.
+       Desktop has `grid-template-columns: 310px 1fr; gap: 70px` for
+       sidebar+content. On mobile the sidebar is display:none but the
+       grid template still allocates the 310px AND the 70px gap, eating
+       half the viewport. The audit measured `310px 0px` as the rendered
+       value — broken either way. Force single-column. */
+    .luxe-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+    }
+
+    /* (2) MB-TOOLBAR: tighten + drop "СОРТУВАТИ ЗА" label + count dup */
+    .mb-toolbar {
+        margin-bottom: 16px !important;
+        padding: 8px 0 !important;
+    }
+    .toolbar-top-row {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center;
+        gap: 8px !important;
+        padding-bottom: 0 !important;
+        border-bottom: 0 !important;
+    }
+    /* Hide the redundant uppercase label — sort chips speak for themselves */
+    .sort-label {
+        display: none !important;
+    }
+    /* Hide the duplicate product count — .mobile-filter-bar shows it once */
+    .toolbar-top-row .product-count {
+        display: none !important;
+    }
+    /* Sort chips: horizontal scroll-snap row, no wrap, mask-fade right
+       edge to signal "more to scroll". Previously chips wrapped to 3
+       rows eating 124px of vertical real estate. */
+    .sort-chips {
+        flex: 1 1 auto !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 4px 24px 4px 0 !important;
+        margin: 0 !important;
+        mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+    }
+    .sort-chips::-webkit-scrollbar {
+        display: none;
+    }
+    .sort-chip {
+        flex: 0 0 auto !important;
+        min-height: 36px;
+        padding: 8px 14px !important;
+        background: var(--color-bg-white, #fff) !important;
+        border: 1px solid var(--color-border, #e8e5e1) !important;
+        border-radius: 999px !important;
+        font-family: var(--font-body, "DM Sans", sans-serif) !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.02em !important;
+        text-transform: none !important;
+        color: var(--color-text-secondary, #555) !important;
+        white-space: nowrap;
+        scroll-snap-align: start;
+        transition:
+            background 0.2s ease,
+            color 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.15s ease;
+    }
+    .sort-chip.active {
+        background: var(--color-primary) !important;
+        border-color: var(--color-primary) !important;
+        color: #fff !important;
+        box-shadow: 0 4px 12px rgba(42, 90, 90, 0.18) !important;
+    }
+    .sort-chip:active {
+        transform: scale(0.96);
+    }
+    /* (audit) Drop the "✕" on the active default sort — it implies the
+       chip is removable but tapping does nothing useful. Use a subtle
+       dot indicator instead (rendered via ::after for active chips). */
+    .sort-chip .close-x {
+        display: none !important;
+    }
+    .sort-chip.active::after {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 4px;
+        margin-left: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.85;
+        vertical-align: middle;
+    }
+
+    /* (3) WHISPER CARD — strip mass-market chrome on shop grid only.
+       Drops the 16px-radius white box + multi-layer shadow inherited
+       from the home New Arrivals styling. Card itself is transparent;
+       only the image gets a subtle teal-tinted shadow.
+       Targeted to .luxe-product-grid descendants so home page cards
+       (which keep their chrome by design) are unaffected. */
+    .luxe-product-grid .product-card,
+    .luxe-product-grid .product-card-luxe {
+        background: transparent !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        transition: transform 0.2s ease !important;
+    }
+    .luxe-product-grid .product-card__image-wrapper {
+        border-radius: 6px !important;
+        overflow: hidden;
+        background: var(--color-bg-soft);
+        box-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.04),
+            0 8px 24px -8px rgba(42, 90, 90, 0.08) !important;
+    }
+    .luxe-product-grid .product-card__img--main,
+    .luxe-product-grid .product-card__img--hover {
+        border-radius: 0 !important;
+    }
+    /* Tap state: tiny scale + brightness on image only (not whole card) */
+    .luxe-product-grid .product-card:active,
+    .luxe-product-grid .product-card-luxe:active {
+        transform: scale(0.985) !important;
+    }
+    .luxe-product-grid .product-card:active .product-card__image-wrapper {
+        filter: brightness(0.96);
+    }
+
+    /* Caption typography */
+    .luxe-product-grid .product-card__details {
+        padding: 10px 2px 0 !important;
+        background: transparent !important;
+    }
+    .luxe-product-grid .product-card__title {
+        font-family: var(--font-display) !important;
+        font-size: 15px !important;
+        font-weight: 400 !important;
+        line-height: 1.25 !important;
+        letter-spacing: var(--tracking-tight) !important;
+        margin: 0 0 4px 0 !important;
+        text-transform: none !important;
+        color: var(--color-text-primary) !important;
+        /* 2-line clamp so cards align even with long names */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.5em;
+    }
+    .luxe-product-grid .product-card__price-row {
+        display: flex !important;
+        gap: 6px !important;
+        align-items: baseline !important;
+        margin: 0 !important;
+        font-family: var(--font-body) !important;
+        font-variant-numeric: tabular-nums;
+    }
+    .luxe-product-grid .product-card__price {
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        color: var(--color-text-primary) !important;
+        text-transform: none !important;
+        letter-spacing: 0.02em !important;
+    }
+    .luxe-product-grid .product-card__price--sale {
+        color: var(--color-marsala) !important;
+    }
+    .luxe-product-grid .product-card__price-old {
+        font-size: 11px !important;
+        color: var(--color-text-muted) !important;
+        opacity: 0.7;
+    }
+
+    /* Heart: ditch the glass pill (Shopify-template-2022 signal).
+       20px outline icon, no background, top-right of image. Marsala fill
+       when active state via JS class. */
+    .luxe-product-grid .product-card__heart-btn {
+        top: 8px !important;
+        right: 8px !important;
+        bottom: auto !important;
+        left: auto !important;
+        width: 32px !important;
+        height: 32px !important;
+        background: rgba(255, 255, 255, 0.55) !important;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border: 0 !important;
+        border-radius: 999px !important;
+        box-shadow: none !important;
+        opacity: 0.85 !important;
+        transition:
+            opacity 0.2s ease,
+            background 0.2s ease,
+            transform 0.15s ease;
+    }
+    .luxe-product-grid .product-card__heart-btn:active {
+        transform: scale(0.9);
+        opacity: 1 !important;
+    }
+    .luxe-product-grid .product-card__heart-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Badge: replace pill-over-image with italic Cormorant eyebrow text */
+    .luxe-product-grid .product-card__badge,
+    .luxe-product-grid [class*="product-card__badge"] {
+        font-family: var(--font-display) !important;
+        font-style: italic !important;
+        font-size: 11px !important;
+        font-weight: 400 !important;
+        text-transform: lowercase !important;
+        letter-spacing: 0.02em !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        color: var(--color-primary) !important;
+        padding: 3px 10px !important;
+        top: 8px !important;
+        left: 8px !important;
+        border-radius: 999px !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* Hide color swatches on small shop card — too cramped at 165-180px */
+    .luxe-product-grid .product-card__colors {
+        display: none !important;
+    }
+
+    /* (4) LOAD MORE button — refined editorial pill, cream outline */
+    .load-more-wrap {
+        margin-top: 32px !important;
+        padding-top: 24px !important;
+    }
+    .load-more-btn {
+        padding: 14px 36px !important;
+        background: transparent !important;
+        border: 1px solid var(--color-border) !important;
+        color: var(--color-text-primary) !important;
+        border-radius: 999px !important;
+        font-family: var(--font-body) !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.16em !important;
+        text-transform: uppercase;
+        min-height: 48px;
+        transition:
+            background 0.2s ease,
+            color 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.15s ease;
+    }
+    .load-more-btn:hover,
+    .load-more-btn:focus-visible {
+        background: var(--color-primary) !important;
+        color: #fff !important;
+        border-color: var(--color-primary) !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    .load-more-btn:active {
+        transform: scale(0.97) !important;
+    }
+    .load-more-progress {
+        font-family: var(--font-body) !important;
+        font-size: 11px !important;
+        color: var(--color-text-muted) !important;
+        letter-spacing: 0.18em !important;
+    }
+
+    /* (5) HERO category band — h1 readability fix.
+       Live audit: title was #1a1a1a 16px/400 on photo with no
+       overlay/shadow = unreadable. Add darkening gradient overlay
+       and white display heading. */
+    .shop-hero h1,
+    .shop-hero__title,
+    .mb-shop-hero h1,
+    .mb-shop-hero__title {
+        color: #ffffff !important;
+        text-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.45),
+            0 1px 2px rgba(0, 0, 0, 0.3);
+        font-family: var(--font-display) !important;
+        font-size: clamp(2rem, 7vw, 2.5rem) !important;
+        font-weight: 500 !important;
+        letter-spacing: var(--tracking-tight);
+    }
+    /* Card entry stagger — fade-up as cards enter viewport */
+    @supports (animation-timeline: view()) {
+        .luxe-product-grid .luxe-card-wrapper {
+            animation: shopCardEnter linear both;
+            animation-timeline: view();
+            animation-range: entry 0% entry 35%;
+        }
+        @keyframes shopCardEnter {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .luxe-product-grid .luxe-card-wrapper {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+        }
+    }
+}
