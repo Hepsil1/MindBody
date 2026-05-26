@@ -1,23 +1,31 @@
 {
 	# Global options
 	email your_email@example.com
+
+	# Batch 40 atom 4: enable HTTP/3 (QUIC) on all origin sites.
+	# Cloudflare in front already advertises h3 via alt-svc, but if
+	# a client bypasses the CDN (admin tooling, direct-IP probe) we
+	# want them on the fast transport too.  QUIC 1-RTT handshake saves
+	# 10-30 ms on lossy mobile.  `protocols` lives at the GLOBAL options
+	# block in Caddyfile syntax; per-site placement is rejected.
+	servers {
+		protocols h1 h2 h3
+	}
 }
 
 saleid.icu {
-	# Batch 40 atom 4: enable HTTP/3 (QUIC) on origin.  Cloudflare in
-	# front already advertises h3 via alt-svc, but if a client bypasses
-	# the CDN (admin-tooling, direct-IP probe) we want them on a fast
-	# transport too.  QUIC 1-RTT handshake saves 10-30 ms on lossy mobile.
-	protocols h1 h2 h3
-
 	reverse_proxy localhost:3000
 
 	# Gzip + Zstandard compression
 	encode zstd gzip
 
-	# Aggressive cache for static assets (images, fonts, JS, CSS)
+	# Aggressive cache for static assets (images, fonts, JS, CSS).
+	# Batch 40: added *.avif (the format we now serve first via <picture>)
+	# so it lands on the same 1-year immutable cache as .webp.  Without
+	# this, AVIF requests were falling through to Cloudflare's default
+	# 4-hour TTL — defeating the long-term cache strategy.
 	@static {
-		path *.webp *.png *.jpg *.jpeg *.gif *.ico *.svg
+		path *.webp *.avif *.png *.jpg *.jpeg *.gif *.ico *.svg
 		path *.woff *.woff2 *.ttf *.otf
 		path *.js *.css *.map
 	}
