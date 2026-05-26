@@ -109,6 +109,13 @@ model Category {
   link       String
   buttonText String   @default("Переглянути все")
   order      Int      @default(0)
+  // Batch 41: mood metadata for theme-appropriate card styling.
+  // Values: 'yoga' | 'sport' | 'dance' | 'casual' | 'kids' | null.
+  // When null the card renders in the existing neutral style. When set,
+  // app/utils/moods.ts provides a preset (tint overlay + Cormorant
+  // weight + letter-spacing) so /shop/yoga reads visually distinct from
+  // /shop/sport without changing brand language.
+  moodType   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

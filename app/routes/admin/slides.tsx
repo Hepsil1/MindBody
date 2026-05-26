@@ -43,7 +43,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 import { uploadFile } from "../../utils/upload.server";
 import { isAuthenticated } from "../../utils/admin.server";
-import { invalidateAll } from "../../utils/cache.server";
+import { invalidateAll, invalidateCache } from "../../utils/cache.server";
 import { redirect } from "react-router";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -157,6 +157,13 @@ export async function action({ request }: Route.ActionArgs) {
             const buttonText = (formData.get("buttonText") as string) || "Переглянути все";
             const imagePos = (formData.get("imagePos") as string) || "center center";
 
+            // Batch 41: moodType is optional.  Empty string from the
+            // dropdown ("Без mood") translates to NULL so the card
+            // renders neutrally; only valid mood values get persisted.
+            const moodRaw = (formData.get("moodType") as string) || "";
+            const ALLOWED_MOODS = ["yoga", "sport", "dance", "casual", "kids"];
+            const moodType = ALLOWED_MOODS.includes(moodRaw) ? moodRaw : null;
+
             let image = (formData.get("image_url") as string) || "";
             const imageFile = formData.get("image_file");
 
@@ -164,15 +171,20 @@ export async function action({ request }: Route.ActionArgs) {
             if (uploaded) image = uploaded;
 
             await prisma.$executeRawUnsafe(
-                `UPDATE "Category" SET title = $1, subtitle = $2, link = $3, "buttonText" = $4, image = $5, "imagePos" = $6, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $7`,
+                `UPDATE "Category" SET title = $1, subtitle = $2, link = $3, "buttonText" = $4, image = $5, "imagePos" = $6, "moodType" = $7, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $8`,
                 title,
                 subtitle,
                 link,
                 buttonText,
                 image,
                 imagePos,
+                moodType,
                 id,
             );
+
+            // Bust the home loader cache so the new mood shows up on
+            // the next page render instead of waiting 60 s.
+            invalidateCache("home:categories");
 
             return { success: true };
         }
@@ -1340,6 +1352,76 @@ export default function AdminVisualEditor() {
                                                                         fontSize: "13px",
                                                                     }}
                                                                 />
+                                                            </div>
+
+                                                            {/* Batch 41: mood dropdown — pilot ships YOGA only;
+                                                                остальные mood-варианты будут включены в Batch 42+
+                                                                после визуальной валидации на проде. */}
+                                                            <div>
+                                                                <label
+                                                                    style={{
+                                                                        display: "block",
+                                                                        fontSize: "11px",
+                                                                        color: "#64748b",
+                                                                        marginBottom: "4px",
+                                                                    }}
+                                                                >
+                                                                    Mood (опціонально)
+                                                                </label>
+                                                                <select
+                                                                    name="moodType"
+                                                                    defaultValue={
+                                                                        (
+                                                                            cat as {
+                                                                                moodType?:
+                                                                                    | string
+                                                                                    | null;
+                                                                            }
+                                                                        ).moodType || ""
+                                                                    }
+                                                                    style={{
+                                                                        width: "100%",
+                                                                        background: "#0a0c10",
+                                                                        border: "1px solid rgba(255,255,255,0.1)",
+                                                                        color: "#fff",
+                                                                        padding: "8px 12px",
+                                                                        borderRadius: 8,
+                                                                        fontSize: "13px",
+                                                                    }}
+                                                                >
+                                                                    <option value="">
+                                                                        Без mood (стандартний
+                                                                        вигляд)
+                                                                    </option>
+                                                                    <option value="yoga">
+                                                                        Yoga — calm teal, light
+                                                                        Cormorant
+                                                                    </option>
+                                                                    <option value="sport" disabled>
+                                                                        Sport (скоро)
+                                                                    </option>
+                                                                    <option value="dance" disabled>
+                                                                        Dance (скоро)
+                                                                    </option>
+                                                                    <option value="casual" disabled>
+                                                                        Casual (скоро)
+                                                                    </option>
+                                                                    <option value="kids" disabled>
+                                                                        Kids (скоро)
+                                                                    </option>
+                                                                </select>
+                                                                <small
+                                                                    style={{
+                                                                        display: "block",
+                                                                        marginTop: "4px",
+                                                                        fontSize: "10px",
+                                                                        color: "#64748b",
+                                                                    }}
+                                                                >
+                                                                    Yoga додає легкий теал-tint та
+                                                                    витончений Cormorant — у дусі
+                                                                    Sézane / Cuyana.
+                                                                </small>
                                                             </div>
 
                                                             <ImageCropSelector

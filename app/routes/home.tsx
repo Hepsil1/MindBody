@@ -34,6 +34,11 @@ interface HomeCategoryCard {
     imagePos?: string;
     link: string;
     buttonText: string;
+    // Batch 41: optional theme mood. Read from the new `moodType` column
+    // on Category via raw SQL (the Prisma client wasn't regenerated to
+    // avoid the PM2 DLL lock on Windows — DB column exists, types catch
+    // up on the next clean deploy).
+    moodType?: string | null;
 }
 
 // New-products card on the home page.
@@ -178,19 +183,27 @@ export async function loader({ request }: Route.LoaderArgs) {
                         }>
                     >`SELECT id, name, type, link, image1, image2, image3, "image1Pos", "image2Pos", "image3Pos" FROM "Slide" WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC`,
             ),
-            cachedFetch("home:categories", CACHE_TTL, () =>
-                prisma.category.findMany({
-                    orderBy: { order: "asc" },
-                    select: {
-                        id: true,
-                        title: true,
-                        subtitle: true,
-                        image: true,
-                        imagePos: true,
-                        link: true,
-                        buttonText: true,
-                    },
-                }),
+            cachedFetch(
+                "home:categories",
+                CACHE_TTL,
+                () =>
+                    /* Batch 41: switched to raw SQL so we can read the new
+                   `moodType` column without forcing a `prisma generate`
+                   on a Windows host where PM2 has the query engine DLL
+                   locked.  Type-wise we cast through HomeCategoryCard
+                   below — runtime shape matches. */
+                    prisma.$queryRaw<
+                        Array<{
+                            id: string;
+                            title: string;
+                            subtitle: string | null;
+                            image: string;
+                            imagePos: string;
+                            link: string;
+                            buttonText: string;
+                            moodType: string | null;
+                        }>
+                    >`SELECT id, title, subtitle, image, "imagePos", link, "buttonText", "moodType" FROM "Category" ORDER BY "order" ASC`,
             ),
             cachedFetch("home:products", CACHE_TTL, () =>
                 prisma.product.findMany({
@@ -262,6 +275,11 @@ export async function loader({ request }: Route.LoaderArgs) {
                 image: "/pics1cloths/IMG_6201.webp",
                 link: "/shop/yoga",
                 buttonText: "Переглянути",
+                // Batch 41 pilot: Yoga is the first mood-tagged category.
+                // The DB row (set via admin) overrides this; the fallback
+                // value just lets local-dev / empty-DB render the pilot
+                // visual immediately.
+                moodType: "yoga",
             },
             {
                 id: "2",
@@ -768,6 +786,7 @@ export default function Home() {
                                 imagePos={cat.imagePos}
                                 link={cat.link}
                                 buttonText={cat.buttonText}
+                                moodType={cat.moodType}
                             />
                         ))}
                     </div>
