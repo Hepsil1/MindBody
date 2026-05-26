@@ -10864,7 +10864,8 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 body:has(.header.is-menu-open) .floating-contact,
 body:has(.cart-drawer.is-open) .floating-contact,
 body:has(.search-overlay) .floating-contact,
-body:has(.checkout-page) .floating-contact {
+body:has(.checkout-page) .floating-contact,
+body:has(.filter-drawer-overlay) .floating-contact {
     display: none;
 }
 

@@ -411,19 +411,27 @@
     }
 }
 
-/* Filter Drawer Overlay */
+/* Filter Drawer Overlay
+   z-index 1200 must stay ABOVE the fixed header (z-index 1000) — earlier
+   value of 200 left the header's translucent white bar covering the
+   drawer's close button on iPhone, making the X impossible to tap. */
 .filter-drawer-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 200;
+    z-index: 1200;
     display: flex;
     align-items: flex-end;
 }
 
 .filter-drawer {
     width: 100%;
-    max-height: 88vh;
+    /* Cap height a hair below 100vh so the drawer doesn't stretch all
+       the way to the status bar / notch on iOS — leaves a visual margin
+       and guarantees the close affordance never collides with any
+       browser chrome. */
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
     background: var(--color-bg-white);
     border-radius: 20px 20px 0 0;
     display: flex;
@@ -445,7 +453,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px 16px;
+    /* Tighter vertical padding because the close button now owns its
+       own 44px hit area — keeps the header bar visually compact. */
+    padding: 12px 16px 12px 24px;
     border-bottom: 1px solid var(--color-border);
     font-family: var(--font-body);
     font-size: 13px;
@@ -455,13 +465,32 @@
 }
 
 .filter-drawer__close {
+    /* 44×44 minimum tap target (Apple HIG / WCAG 2.2 AA). The previous
+       padding-4 button was ~24×24, which combined with the z-index bug
+       made it nearly impossible to close on iPhone. */
+    width: 44px;
+    height: 44px;
     background: none;
     border: none;
     cursor: pointer;
     color: var(--color-text-secondary);
-    padding: 4px;
     display: flex;
     align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+    margin-right: -8px; /* visually align icon with right edge */
+}
+.filter-drawer__close:hover,
+.filter-drawer__close:focus-visible {
+    background: var(--color-bg-soft);
+    color: var(--color-text-primary);
+    outline: none;
+}
+.filter-drawer__close:active {
+    transform: scale(0.94);
 }
 
 .filter-drawer__body {

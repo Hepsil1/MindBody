@@ -190,6 +190,22 @@ export default function ShopCategory() {
     });
     const LOAD_MORE_COUNT = 12;
 
+    // Lock body scroll + listen for Escape while the mobile filter
+    // drawer is open. Mirrors the CartDrawer pattern — without it the
+    // page scrolls under the modal and there's no keyboard escape.
+    useEffect(() => {
+        if (!isFilterOpen) return;
+        document.body.style.overflow = "hidden";
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setIsFilterOpen(false);
+        };
+        window.addEventListener("keydown", handler);
+        return () => {
+            document.body.style.overflow = "";
+            window.removeEventListener("keydown", handler);
+        };
+    }, [isFilterOpen]);
+
     // Legacy ?cat= redirect: convert Cyrillic label to slug
     useEffect(() => {
         const cat = searchParams.get("cat");
