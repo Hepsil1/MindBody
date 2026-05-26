@@ -148,7 +148,17 @@
 }
 
 .hero-slider__logo {
-    opacity: 0;
+    /* Batch 32: removed opacity:0 initial state. The full pixel-flow
+       was: SSR HTML rendered → IMG visible (default opacity 1, WHITE) →
+       external CSS loads and applies `opacity: 0` to the wrapper → for
+       ~200-300ms the wrapper is INVISIBLE → user sees the dark hero
+       background through it → animation fades back to 1.
+       The user perceived this gap as "white logo, then black flash,
+       then white again" because the dark hero bg was leaking through
+       the transparent wrapper. The logo image itself was correct white
+       throughout — the WRAPPER was disappearing.
+       Fix: keep opacity 1 always; just animate scale + translateY for
+       the "settle in" reveal motion. */
     transform: scale(0.85) translateY(20px);
     animation: logoRevealPremium 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
 }
@@ -163,10 +173,13 @@
     animation: logoGlowPulse 5s ease-in-out infinite 2s;
 }
 
-/* === Premium Logo Animation === */
+/* === Premium Logo Animation ===
+   Batch 32: dropped `opacity: 1` from `to` state since the wrapper
+   no longer starts at opacity 0 — the prior fade-in created a window
+   where the dark hero bg showed through the transparent wrapper,
+   which read as a "black flash" on the white logo. */
 @keyframes logoRevealPremium {
     to {
-        opacity: 1;
         transform: scale(1) translateY(0);
     }
 }
