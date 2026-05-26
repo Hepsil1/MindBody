@@ -501,3 +501,38 @@
     font-weight: 700;
     cursor: pointer;
 }
+
+/* ====================================================================
+   Batch 35 — Shop mobile MINOR improvements only
+
+   User feedback on Batch 34: "нет на телефоне совсем ужас. Лучше как
+   было раньше но улучши."
+
+   Batch 34 was reverted in full (full Whisper Card rebuild +
+   hero rewrite + sort chip horizontal scroll). The previous look
+   was actually working — user wanted "improve, don't redesign".
+
+   This block keeps the previous design and patches only the two
+   real BUGS from the audit:
+
+   (1) .luxe-grid on mobile inherits desktop
+       `grid-template-columns: 310px 1fr; gap: 70px` even though
+       .mb-shop-sidebar has display:none. Result: ghost 310px
+       column + 70px gap wasted on mobile. Force 1fr / 0.
+
+   (2) Active sort chip carries a "✕" close glyph that implies the
+       default sort is removable (it isn't). Hide it — the brand-teal
+       fill is signal enough.
+   ==================================================================== */
+@media (max-width: 768px) {
+    /* (1) Kill the ghost sidebar column + 70px gap on mobile */
+    .luxe-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+    }
+
+    /* (2) Drop the misleading "✕" on active sort chip */
+    .sort-chip .close-x {
+        display: none !important;
+    }
+}
