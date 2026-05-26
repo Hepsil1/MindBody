@@ -72,6 +72,18 @@ export default function About() {
 
     return (
         <main className="about-dynamic">
+            {/*
+                Batch 39 atom 1: a11y/SEO H1.  The page leads with a
+                HeroSlider showing the brand logo image, then jumps to
+                story-premium H2.  Screen readers and crawlers had no
+                document-level H1 to anchor the page.  Visually-hidden
+                heading preserves the editorial layout while making the
+                page properly addressable.
+            */}
+            <h1 className="visually-hidden">
+                Про бренд MIND BODY — преміум одяг для йоги, спорту та активного життя
+            </h1>
+
             {/* Full-Screen Hero with Slides using HeroSlider */}
             <HeroSlider slides={slides}>
                 <div className="about-hero-overlay">

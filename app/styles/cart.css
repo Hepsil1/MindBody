@@ -217,13 +217,15 @@
 }
 
 .cart-drawer__qty button {
-    /* 36×36 visual + invisible 44×44 hit area via padding pattern.
-       Was 30×30 — failed WCAG 2.5.5 on small viewports (iPhone SE). */
-    width: 36px;
-    height: 36px;
+    /* Batch 39 atom 2: 36→40 visible, hit-area shrinks from -4 to -2
+       so total touch zone stays ≥44 with no overshoot. Matches the
+       heart-button treatment from Batch 38: honest affordance —
+       users can see the full area they need to tap. */
+    width: 40px;
+    height: 40px;
     background: transparent;
     border: none;
-    font-size: 14px;
+    font-size: 15px;
     cursor: pointer;
     color: var(--color-text-muted);
     display: flex;
@@ -234,12 +236,12 @@
         background 0.15s,
         transform 0.1s ease;
 }
-/* Invisible 44×44 hit target overlay — passes WCAG 2.5.5 without
-   bloating the visual button size. */
+/* Small hit-extension keeps total touch zone ≥44 without overshooting
+   the natural button bounds. */
 .cart-drawer__qty button::before {
     content: "";
     position: absolute;
-    inset: -4px;
+    inset: -2px;
     border-radius: 6px;
 }
 .cart-drawer__qty button:hover {
