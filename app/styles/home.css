@@ -1512,15 +1512,29 @@
 .hero-slider__content > * {
     pointer-events: auto;
 }
+/* Batch 33: DROPPED `opacity: 0` here. This block was a DUPLICATE of
+   the hero.css rule, with the same broken initial-state pattern:
+   wrapper opacity 0 → CSS loads → wrapper invisible → dark hero bg
+   shows through where logo was = "black flash" the user kept seeing.
+   home.css loads AFTER hero.css in the cascade so this rule overrode
+   my Batch 32 fix in hero.css. */
 .hero-slider__logo {
-    opacity: 0;
     transform: scale(0.8);
     animation: logoReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0s forwards;
 }
 .hero-slider__logo img {
     width: clamp(200px, 35vw, 400px);
     height: auto;
-    filter: brightness(0) invert(1) drop-shadow(0 0 60px rgba(255, 255, 255, 0.25));
+    /* Batch 33: dropped `brightness(0) invert(1)` from the filter
+       chain. The hero logo asset is now pre-rendered WHITE
+       (/pics/mind_body_logo_white.{png,webp}, Batch 31), so the
+       black→white inversion is no longer needed. Worse, applying
+       brightness(0) to an already-white image makes pixels BLACK
+       on the first stage of the filter cascade; invert(1) then
+       flips them back to white. Browser intermediate frames during
+       this filter chain composition can show the BLACK stage =
+       another source of the flash. Keep only the soft glow. */
+    filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.25));
     animation: logoPulse 6s ease-in-out infinite 0.5s;
 }
 .hero-slider__title {
@@ -1787,16 +1801,26 @@
     background: rgba(0, 0, 0, 0.1);
 }
 
-/* === Required keyframes for homepage animations === */
+/* === Required keyframes for homepage animations ===
+   Batch 33: dropped `brightness(0) invert(1)` from logoPulse — the
+   hero logo asset is pre-rendered WHITE since Batch 31, the inversion
+   is no longer needed. Keeping it caused the filter property to
+   alternate between [brightness invert drop-shadow] (keyframes) and
+   [drop-shadow only] (static rule) every cycle — browsers interpolate
+   filter chains and can render a stage where brightness(0) has applied
+   but invert(1) hasn't = 1-2 frame BLACK flash per pulse.
+   Keyframe 0% drop-shadow value now matches the static filter rule
+   (60px @ 0.25) exactly so the animation starts with zero filter
+   delta (no transition glitch). */
 @keyframes logoPulse {
     0%,
     100% {
         transform: scale(1);
-        filter: brightness(0) invert(1) drop-shadow(0 0 40px rgba(255, 255, 255, 0.3));
+        filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.25));
     }
     50% {
         transform: scale(1.02);
-        filter: brightness(0) invert(1) drop-shadow(0 0 60px rgba(255, 255, 255, 0.5));
+        filter: drop-shadow(0 0 90px rgba(255, 255, 255, 0.45));
     }
 }
 @keyframes phoneFloat {
