@@ -545,16 +545,14 @@ h3 {
 
 .product-card__image-wrapper {
     position: relative;
-    /* 4:5 on mobile/tablet (more cards visible above the fold).
-       3:4 on desktop where vertical space is plentiful. */
-    aspect-ratio: 4 / 5;
+    /* Batch 38 atom 2: unified to 3:4 on every breakpoint. The earlier
+       4:5-on-mobile compromise squeezed model figures vertically and
+       broke the Sézane/Cuyana-style premium proportion the design
+       system codifies. User loses ~0.4 of a card row above the fold,
+       but each card reads correctly proportioned. */
+    aspect-ratio: 3 / 4;
     overflow: hidden;
     background: var(--color-bg-soft);
-}
-@media (min-width: 1024px) {
-    .product-card__image-wrapper {
-        aspect-ratio: 3 / 4;
-    }
 }
 
 .product-card__image-link {
@@ -625,12 +623,16 @@ h3 {
 }
 
 .product-card__badge--new {
-    /* Text-only on image — premium minimal. Drop shadow for legibility
-       on light/dark fabrics. */
-    padding: 0;
-    background: transparent;
-    color: var(--color-bg-white);
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    /* Batch 38 atom 4: was a text-only badge with drop-shadow.  That
+       reads fine on dark fabrics but contrast collapsed to ~3:1 on
+       white/cream pieces — failing WCAG.  Replaced with a subtle
+       cream pill + dark text — premium tag that stays legible on any
+       background. */
+    padding: 5px 10px;
+    background: rgba(250, 248, 246, 0.92);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: var(--color-text-primary);
 }
 .product-card__badge--sale {
     padding: 5px 10px;
@@ -643,15 +645,18 @@ h3 {
     color: #fff;
 }
 
-/* === Wishlist heart — visually slim (36px), 44px hit target via padding ===
-   Premium brands use small unobtrusive heart icons (Sézane 36, Cuyana 32).
-   We hit WCAG 2.5.5 via invisible 44×44 hit area on touch devices. */
+/* === Wishlist heart — Batch 38 atom 6: 36→40 mobile / 40→44 desktop ===
+   The earlier 36px-with-invisible-overlay approach was technically
+   WCAG-compliant (hit area 44px via ::before), but users had to aim
+   for an invisible 4px ring around the visible heart — easy to miss
+   on touch.  Bumping the visible button to 40/44 keeps the premium
+   minimalist look while making the affordance honest. */
 .product-card__heart-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 36px;
-    height: 36px;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.85);
@@ -670,12 +675,12 @@ h3 {
         transform 0.2s ease;
     z-index: 6;
 }
-/* Invisible 44×44 hit target overlay — keeps WCAG 2.5.5 while letting
-   the visual heart stay slim premium. */
+/* Small 4px hit-area extension keeps total touch zone ≥44 with no
+   overshoot beyond the natural button bounds. */
 .product-card__heart-btn::before {
     content: "";
     position: absolute;
-    inset: -4px;
+    inset: -2px;
     border-radius: 50%;
 }
 .product-card__heart-btn:hover {
@@ -683,20 +688,20 @@ h3 {
     color: var(--color-bg-white);
 }
 .product-card__heart-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
 }
 
 @media (min-width: 768px) {
     .product-card__heart-btn {
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         top: 12px;
         right: 12px;
     }
     .product-card__heart-btn svg {
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
     }
 }
 
@@ -772,8 +777,12 @@ h3 {
     flex-wrap: wrap;
 }
 .product-card__swatch {
-    width: 16px;
-    height: 16px;
+    /* Batch 38 atom 3: 16→20 on mobile, 20→24 on desktop.  Brings the
+       swatch up to the design-system contract (24 desktop) and stops
+       it reading as a pixel-dot at mobile sizes.  Hit target via
+       ::before pseudo stays ≥32px on mobile / ≥36 desktop. */
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     border: 1px solid rgba(0, 0, 0, 0.12);
     padding: 0;
@@ -785,8 +794,8 @@ h3 {
 }
 @media (min-width: 768px) {
     .product-card__swatch {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
     }
 }
 button.product-card__swatch {
@@ -794,10 +803,10 @@ button.product-card__swatch {
     position: relative;
 }
 button.product-card__swatch::before {
-    /* Invisible 32×32 hit target overlay */
+    /* Invisible hit target overlay — 32×32 mobile / 36×36 desktop */
     content: "";
     position: absolute;
-    inset: -7px;
+    inset: -6px;
     border-radius: 50%;
 }
 button.product-card__swatch:hover {
@@ -14832,8 +14841,21 @@ button:disabled:hover {
 }
 .form-error,
 .field-error,
-.error-message {
+.error-message,
+.field-error-text {
     animation: errorSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Batch 38 atom 1: .field-error-text moved here from checkout.css so
+   it's available globally — routes/auth.tsx uses it but didn't pull
+   in checkout.css, so /auth errors were rendering as unstyled grey
+   body text. role="alert" on the span (in route JSX) lets screen
+   readers announce the error; this rule gives the visual treatment. */
+.field-error-text {
+    color: var(--color-error, #dc2626);
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: block;
 }
 
 /* Form-input focus polish — 250ms transition instead of 150ms snap.

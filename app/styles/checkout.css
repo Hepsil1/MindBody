@@ -14,13 +14,12 @@
 /* Phase 6 atom 3 — error text: moved out of 6 copy-pasted inline
    styles into a single class. role="alert" on each span now lets
    screen readers actually announce the error.  --color-error is
-   the design-system token. */
-.field-error-text {
-    color: var(--color-error, #dc2626);
-    font-size: 0.85rem;
-    margin-top: 4px;
-    display: block;
-}
+   the design-system token.
+
+   Batch 38 atom 1: rule moved to app/app.css so other routes that use
+   the class (e.g. routes/auth.tsx) get the same styling.  Keeping
+   the comment here for future-grep but the declaration now lives
+   globally. */
 
 .checkout-sidebar {
     position: sticky;
