@@ -1,5 +1,6 @@
 import { Link } from "react-router";
-import { buildWebpSrcset } from "../utils/responsive-image";
+import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
+import { getLqipStyle } from "../utils/lqip";
 
 interface CategoryCardProps {
     title: string;
@@ -32,8 +33,20 @@ export default function CategoryCard({
 
     return (
         <Link to={link} prefetch="intent" className="category-card-editorial">
-            <div className="category-card-editorial__image-wrapper">
+            <div
+                className="category-card-editorial__image-wrapper"
+                /* Batch 40 atom 8: LQIP blur-up backdrop for instant
+                   visual context while the variant loads. */
+                style={getLqipStyle(image)}
+            >
                 <picture>
+                    {/* Batch 40 atom 6: AVIF first for -25/-30% wire bytes
+                        at premium-equivalent visual quality (q=80). */}
+                    <source
+                        srcSet={buildAvifSrcset(image)}
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                        type="image/avif"
+                    />
                     <source
                         srcSet={buildWebpSrcset(image)}
                         sizes="(max-width: 768px) 50vw, 33vw"
@@ -44,6 +57,12 @@ export default function CategoryCard({
                         alt={title}
                         loading="lazy"
                         decoding="async"
+                        /* Batch 40 atom 5: explicit width/height pair so the
+                           browser reserves layout space and avoids the CLS
+                           jump when the image decodes. Aspect 3:4 to match
+                           the wrapper. CSS keeps object-fit: cover. */
+                        width="800"
+                        height="1067"
                         style={{
                             objectPosition: position,
                             transform: scale !== 1 ? `scale(${scale})` : undefined,

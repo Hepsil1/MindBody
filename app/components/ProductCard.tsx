@@ -3,7 +3,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { StorageUtils } from "../utils/storage";
 import { useToast } from "./Toast";
-import { buildWebpSrcset } from "../utils/responsive-image";
+import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
+import { getLqipStyle } from "../utils/lqip";
 
 export interface Product {
     id: string;
@@ -121,9 +122,24 @@ export default function ProductCard({
             whileHover={{ y: -4, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } }}
             whileTap={{ scale: 0.99 }}
         >
-            <div className="product-card__image-wrapper">
+            <div
+                className="product-card__image-wrapper"
+                /* Batch 40 atom 8: LQIP blur-up — apply the tiny base64
+                   placeholder as background-image so visitors see the
+                   image's overall composition instantly instead of a
+                   blank cream rectangle while the sharp variant decodes.
+                   When the <img> finishes loading it covers the blur. */
+                style={getLqipStyle(image)}
+            >
                 <Link to={`/product/${id}`} prefetch="intent" className="product-card__image-link">
                     <picture>
+                        {/* Batch 40 atom 6: AVIF first — browser picks if
+                            supported (96%+ modern), falls back to WebP. */}
+                        <source
+                            srcSet={buildAvifSrcset(image)}
+                            sizes={imageSizes}
+                            type="image/avif"
+                        />
                         <source
                             srcSet={buildWebpSrcset(image)}
                             sizes={imageSizes}
@@ -142,6 +158,11 @@ export default function ProductCard({
                     </picture>
                     {image2 && (
                         <picture>
+                            <source
+                                srcSet={buildAvifSrcset(image2)}
+                                sizes={imageSizes}
+                                type="image/avif"
+                            />
                             <source
                                 srcSet={buildWebpSrcset(image2)}
                                 sizes={imageSizes}

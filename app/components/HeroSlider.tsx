@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { Link } from "react-router";
-import { buildWebpSrcset } from "../utils/responsive-image";
+import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
+import { getLqipStyle } from "../utils/lqip";
 
 // Define the Slide type that matches the database model
 export interface SlideData {
@@ -144,13 +145,28 @@ export default function HeroSlider({
                             return (
                                 <div className="hero-slider__triptych">
                                     {items.map((item, imgIndex) => (
-                                        <div key={imgIndex} className="hero-slider__triptych-item">
+                                        <div
+                                            key={imgIndex}
+                                            className="hero-slider__triptych-item"
+                                            /* Batch 40 atom 8: LQIP blur-up so the
+                                               hero never opens to blank cream on
+                                               4G — visitors see the slide's
+                                               composition immediately. */
+                                            style={getLqipStyle(item.img)}
+                                        >
                                             {/* width / height attrs are nominal — CSS uses object-fit:cover.
                                                 Their job is to give the browser an aspect ratio so the hero
                                                 reserves layout space and we don't get a 0.3 CLS jump when
                                                 the image decodes. 1080x1920 is the typical mobile-portrait
                                                 ratio of our hero uploads. */}
                                             <picture>
+                                                {/* Batch 40 atom 6: AVIF first
+                                                    for -25/-30% mobile payload. */}
+                                                <source
+                                                    srcSet={buildAvifSrcset(item.img)}
+                                                    sizes={sizesAttr}
+                                                    type="image/avif"
+                                                />
                                                 <source
                                                     srcSet={buildWebpSrcset(item.img)}
                                                     sizes={sizesAttr}

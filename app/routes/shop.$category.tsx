@@ -13,7 +13,9 @@ import {
     loadShopData,
     type ShopProductCard as SharedShopProductCard,
 } from "../utils/shopProducts.server";
-import { buildWebpSrcset } from "../utils/responsive-image";
+import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
+import { getLqipStyle } from "../utils/lqip";
+import { cachedFetch } from "../utils/cache.server";
 
 // Product card shape used by the render side (filtering, sorting). The
 // loader returns this through the shared loadShopData() helper — re-export
@@ -143,7 +145,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
     // Single source of truth for the data fetch — same helper that the
     // /shop/:category/:subcategory route calls (with subcategoryFilter).
-    return loadShopData(categorySlug);
+    //
+    // Batch 40 atom 2: wrap in cachedFetch (60 s TTL) mirroring the home
+    // loader pattern.  Shop category pages were re-running 3+ Prisma
+    // queries on every request — 50–200 ms TTFB that's invisible to the
+    // first visitor in the window but greatly helps everyone else.  Cache
+    // key includes the category slug so /shop/yoga and /shop/sport stay
+    // independent.  Admin product writes should call invalidateCache.
+    return cachedFetch(`shop:${categorySlug}`, 60_000, () => loadShopData(categorySlug));
 }
 import { useSearchParams, useParams, useNavigate } from "react-router";
 import "../styles/shop.css";
@@ -442,8 +451,25 @@ export default function ShopCategory() {
             >
                 {/* Dynamic Background Image */}
                 {shopPage?.heroImage && (
-                    <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+                    <div
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            zIndex: 0,
+                            /* Batch 40 atom 8: LQIP blur-up on the shop
+                               hero so the band never opens blank during
+                               the hero image decode. */
+                            ...getLqipStyle(shopPage.heroImage),
+                        }}
+                    >
                         <picture>
+                            {/* Batch 40 atom 6: AVIF first for premium
+                                quality + smaller wire bytes. */}
+                            <source
+                                srcSet={buildAvifSrcset(shopPage.heroImage)}
+                                sizes="100vw"
+                                type="image/avif"
+                            />
                             <source
                                 srcSet={buildWebpSrcset(shopPage.heroImage)}
                                 sizes="100vw"

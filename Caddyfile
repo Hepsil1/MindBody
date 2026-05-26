@@ -4,6 +4,12 @@
 }
 
 saleid.icu {
+	# Batch 40 atom 4: enable HTTP/3 (QUIC) on origin.  Cloudflare in
+	# front already advertises h3 via alt-svc, but if a client bypasses
+	# the CDN (admin-tooling, direct-IP probe) we want them on a fast
+	# transport too.  QUIC 1-RTT handshake saves 10-30 ms on lossy mobile.
+	protocols h1 h2 h3
+
 	reverse_proxy localhost:3000
 
 	# Gzip + Zstandard compression
