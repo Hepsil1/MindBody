@@ -30,8 +30,25 @@
  * wasted HEAD request in the rare narrow-master case, no broken UI.
  */
 
-const VARIANT_WIDTHS = [400, 800, 1200, 1600, 2400];
-const MASTER_WIDTH_DESCRIPTOR = 3200;
+/**
+ * Variant widths that the generator emits IF the master is wide enough.
+ * For an image with natural width 2000px, only -400/-800/-1200/-1600w
+ * variants exist on disk — -2400w would be silently skipped at gen
+ * time because we don't upscale.
+ *
+ * Critical: srcset entries that point to non-existent variant files
+ * break `<picture>` rendering on Chrome — the browser picks the closest
+ * descriptor, hits 404, and refuses to fall back to the `<img>` src.
+ * That's why this list stops at 1600w (the largest variant we
+ * unconditionally generate for our 2000w-class hero masters) and we
+ * use the master file itself as the high-end endpoint.
+ *
+ * The master is always written by the generator at min(natural, 3200w)
+ * so it covers retina desktop / 4K demand even though the descriptor
+ * we attach to it (2400w) is conservative.
+ */
+const VARIANT_WIDTHS = [400, 800, 1200, 1600];
+const MASTER_WIDTH_DESCRIPTOR = 2400;
 
 function stripExt(url: string): string {
     return url.replace(/\.(jpg|jpeg|JPG|JPEG|png|PNG|webp|avif)$/, "");
@@ -41,7 +58,8 @@ export function buildWebpSrcset(url: string): string {
     const base = stripExt(url);
     return [
         ...VARIANT_WIDTHS.map((w) => `${base}-${w}w.webp ${w}w`),
-        // Master fallback for ≥2400px display
+        // Master endpoint — file is ≤3200w wide; descriptor is 2400w so
+        // the browser still picks it for ≥1600w displays.
         `${base}.webp ${MASTER_WIDTH_DESCRIPTOR}w`,
     ].join(", ");
 }
