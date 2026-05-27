@@ -3567,125 +3567,246 @@
         text-align: center;
     }
 
-    /* ---------- 2. РУХ ЩО ПЕРЕТВОРЮЄ — editorial swipe features ---------- */
+    /* ---------- 2. РУХ ЩО ПЕРЕТВОРЮЄ — Batch 43 "Cinematic Portrait" ----------
+       Mobile-only redesign.  Video = окно через которое viewer смотрит
+       на бренд.  Текст и features обрамляют видео, не конкурируют с ним.
+
+       Order на mobile (flex-order overrides DOM):
+         1. manifesto-head  (eyebrow + H2)
+         2. frame-container (full-bleed 9:16 video)
+         3. manifesto-body  (paragraph + mission + CTA)
+         4. features        (vertical stack with reveal animation)
+       -------------------------------------------------------------- */
 
     .bw-v3-layout {
+        display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 28px !important;
-        padding: 0 16px !important;
+        padding: 0 !important; /* allow full-bleed video — container padding off */
     }
 
+    /* Manifesto wraps both head+body; on mobile we let the inner
+       wrappers flex into their own order (display: contents). */
     .bw-v3-manifesto {
-        order: 0 !important;
-        text-align: center !important;
-        padding: 0 !important;
+        display: contents !important;
+    }
+    .bw-manifesto-head {
+        order: 1;
+        padding: 0 24px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .bw-manifesto-body {
+        order: 3;
+        padding: 0 24px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
         gap: 14px;
+        align-items: center;
     }
     .bw-eyebrow-minimal {
         margin: 0 auto;
     }
     .bw-heading-elegant {
-        margin: 0 auto 12px !important;
+        margin: 0 auto !important;
         max-width: 320px;
-        font-size: clamp(2rem, 8vw, 2.4rem) !important;
+        font-size: clamp(2.2rem, 9vw, 2.6rem) !important;
+        line-height: 1.05 !important;
     }
     .bw-body-minimal {
-        margin: 0 auto 16px !important;
+        margin: 0 auto !important;
         max-width: 320px;
         text-align: center;
+        line-height: 1.6;
     }
     .bw-mission-elegant {
         margin: 0 auto !important;
         padding-left: 0 !important;
         max-width: 300px;
         text-align: center !important;
-        font-size: 13px !important;
+        font-size: 14px !important;
+        font-style: italic;
     }
     .bw-mission-elegant::before {
         display: none !important;
     }
+    /* Magnetic logo + kinetic ring — useless без mouse on touch.
+       Освобождает место для full-bleed видео. */
     .bw-zen-visual,
-    .bw-zen-logo {
+    .bw-zen-logo,
+    .bw-kinetic-ring,
+    .bw-magnetic-wrapper {
         display: none !important;
     }
-    .bw-manifesto-cta {
-        margin: 8px auto 0 !important;
-    }
-
-    .bw-v3-frame-container {
-        order: 1 !important;
+    .bw-btn-elegant {
         margin: 0 auto !important;
     }
-    .bw-v3-frame {
-        aspect-ratio: 4 / 5 !important;
-        max-width: 320px;
-        max-height: 400px;
-    }
 
-    /* Features carousel — full bleed, transparent, no mask. The dot
-       indicator below replaces the mask-fade hint. */
-    .bw-v3-features {
-        order: 2 !important;
+    /* ----- Full-bleed cinematic video frame ----- */
+    .bw-v3-frame-container {
+        order: 2;
+        width: 100vw !important;
+        margin-left: calc(-50vw + 50%) !important;
+        margin-right: calc(-50vw + 50%) !important;
+        position: relative;
         padding: 0 !important;
+    }
+    .bw-v3-frame {
+        aspect-ratio: 9 / 16 !important;
+        max-height: 75vh;
+        max-height: 75dvh;
         width: 100% !important;
         max-width: none !important;
-        margin-top: 4px;
+        position: relative;
+        overflow: hidden;
+        border-radius: 0 !important;
+        background: var(--color-bg-soft);
+    }
+    .bw-frame-img,
+    .bw-playlist-vid {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        animation: bwKenBurns 14s ease-in-out infinite alternate;
+    }
+    @keyframes bwKenBurns {
+        from {
+            transform: scale(1);
+        }
+        to {
+            transform: scale(1.05);
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .bw-frame-img,
+        .bw-playlist-vid {
+            animation: none !important;
+        }
+    }
+
+    /* Dot indicators positioned ON video, bottom-center.
+       Instagram Stories pattern.  Replaces the dots-above-frame
+       block that lived in .bw-v3-frame-dots по умолчанию. */
+    .bw-v3-frame-dots {
+        display: flex !important;
+        position: absolute;
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        gap: 8px;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .bw-v3-frame-dots .bw-v3-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.45);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+        transition:
+            background 0.3s ease,
+            transform 0.3s ease;
+    }
+    .bw-v3-frame-dots .bw-v3-dot--active {
+        background: rgba(255, 255, 255, 1);
+        transform: scale(1.35);
+    }
+
+    /* ----- Features: vertical stack with reveal-up animation ----- */
+    .bw-v3-features {
+        order: 4;
+        padding: 0 24px !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
     }
     .bw-macro-features {
         display: flex !important;
-        flex-direction: row !important;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        scroll-padding-inline-start: 16px;
-        padding: 8px 16px 16px;
-        gap: 0 !important; /* dividers handle separation */
-        scrollbar-width: none;
-        -webkit-overflow-scrolling: touch;
+        flex-direction: column !important;
+        overflow: visible !important;
+        scroll-snap-type: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        gap: 36px !important;
         -webkit-mask-image: none !important;
         mask-image: none !important;
-        margin: 0 -16px;
     }
-    .bw-macro-features::-webkit-scrollbar {
-        display: none;
-    }
-    /* Editorial card: transparent bg, no chrome. 1px right divider
-       between cards only. Big "01" sits as poster behind title via
-       z-index — depth without borders. */
     .bw-feat-item {
-        flex: 0 0 78vw !important;
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
+        flex: 0 0 auto !important;
+        scroll-snap-align: none !important;
+        scroll-snap-stop: normal !important;
         position: relative !important;
-        display: block !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: flex-start;
+        gap: 18px;
         background: transparent !important;
         border: 0 !important;
+        border-right: 0 !important;
         border-radius: 0 !important;
-        padding: 20px 24px 24px 12px !important;
-        min-height: 180px;
-        overflow: hidden;
+        padding: 0 !important;
+        min-height: 0;
+        overflow: visible;
+        /* Reveal animation — staggered fade-up.  Inert if user has
+           prefers-reduced-motion. */
+        opacity: 0;
+        transform: translateY(24px);
+        animation: bwFeatRevealUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .bw-feat-item--1 {
+        animation-delay: 0.05s;
+    }
+    .bw-feat-item--2 {
+        animation-delay: 0.15s;
+    }
+    .bw-feat-item--3 {
+        animation-delay: 0.25s;
+    }
+    .bw-feat-item--4 {
+        animation-delay: 0.35s;
+    }
+    @keyframes bwFeatRevealUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .bw-feat-item {
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+        }
     }
     .bw-feat-item:not(:last-child) {
-        border-right: 1px solid var(--color-border-light) !important;
+        border-right: 0 !important;
     }
-    /* Macro number — poster background. Drop liquid-fill desktop effect
-       and just use solid brand teal at low opacity. */
+    /* Macro number — big italic Cormorant, NEXT TO content (not behind).
+       Tabular-nums lock width so all four columns align vertically. */
     .bw-feat-item .bw-macro-number {
-        position: absolute !important;
-        top: -10px;
-        left: 0;
+        position: static !important;
+        top: auto;
+        left: auto;
         color: var(--color-primary) !important;
         -webkit-text-stroke: 0 !important;
-        opacity: 0.14 !important;
+        opacity: 1 !important;
         font-family: var(--font-display) !important;
-        font-size: 120px !important;
-        font-weight: 500 !important;
-        line-height: 0.85 !important;
-        letter-spacing: -0.05em !important;
-        z-index: 0;
+        font-style: italic;
+        font-size: 44px !important;
+        font-weight: 300 !important;
+        line-height: 1 !important;
+        letter-spacing: -0.02em !important;
+        z-index: auto;
         pointer-events: none;
         margin: 0 !important;
-        transition: opacity 0.4s ease;
+        flex-shrink: 0;
+        min-width: 56px;
+        font-variant-numeric: tabular-nums;
+        transition: none;
     }
     .bw-feat-item .bw-macro-number::before {
         display: none !important;
@@ -3693,73 +3814,38 @@
     .bw-macro-content {
         position: relative;
         z-index: 1;
-        padding-top: 56px;
-        padding-right: 4px;
+        padding-top: 6px !important;
+        padding-right: 0 !important;
+        flex: 1;
     }
     .bw-feat-title {
         font-family: var(--font-display) !important;
-        font-size: 1.5rem !important;
-        font-weight: 500 !important;
+        font-size: 22px !important;
+        font-weight: 400 !important;
         letter-spacing: var(--tracking-tight) !important;
-        line-height: 1.15 !important;
-        margin: 0 0 10px 0 !important;
+        line-height: 1.2 !important;
+        margin: 0 0 6px 0 !important;
         color: var(--color-text-primary);
     }
     .bw-feat-desc {
-        font-size: 13.5px !important;
-        line-height: 1.5 !important;
+        font-size: 14px !important;
+        line-height: 1.55 !important;
         color: var(--color-text-secondary);
         margin: 0 !important;
     }
     .bw-feat-link {
-        margin-top: 12px !important;
+        margin-top: 14px !important;
         font-size: 11px !important;
         letter-spacing: 0.18em !important;
+        display: inline-block;
     }
     .bw-macro-features:hover .bw-feat-item:not(:hover) {
         opacity: 1 !important;
     }
 
-    /* Dot pager — explicit "you are here in a list of 4". Active dot
-       elongates to brand pill; tap on dot smooth-scrolls. */
+    /* Old horizontal feature-pager — disabled.  Vertical list provides
+       its own scroll affordance via natural document flow. */
     .bw-feat-dots-wrap {
-        display: flex;
-        justify-content: center;
-        margin-top: 16px;
-        order: 3;
-    }
-    .bw-feat-dots {
-        display: flex;
-        gap: 10px;
-        padding: 8px 12px;
-    }
-    .bw-feat-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        border: 0;
-        padding: 0;
-        background: rgba(42, 90, 90, 0.22);
-        cursor: pointer;
-        transition:
-            background 0.3s ease,
-            transform 0.3s ease,
-            width 0.3s ease;
-        position: relative;
-    }
-    .bw-feat-dot::after {
-        /* 44x44 invisible touch target — visual stays 7px */
-        content: "";
-        position: absolute;
-        inset: -18px;
-    }
-    .bw-feat-dot.is-active {
-        background: var(--color-primary);
-        width: 22px;
-        border-radius: 4px;
-    }
-
-    .bw-v3-frame-dots {
         display: none !important;
     }
 

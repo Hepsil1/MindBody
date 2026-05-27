@@ -917,22 +917,32 @@ export default function Home() {
                                     />
                                 </div>
 
+                                {/* Batch 43: split into head + body wrappers so on
+                                    mobile the H2 can sit ABOVE the video while
+                                    the paragraph + mission + CTA stack AFTER
+                                    the video.  On desktop these wrappers are
+                                    transparent divs — original visual unchanged. */}
                                 <div className="bw-manifesto-text">
-                                    <span className="bw-eyebrow-minimal">MIND BODY®</span>
-                                    <h2 className="bw-heading-elegant">
-                                        Рух що <em>перетворює</em>
-                                    </h2>
-                                    <p className="bw-body-minimal">
-                                        Ми не просто шиємо одяг — ми створюємо другу шкіру, що
-                                        слідує за кожним рухом. Кожна колекція народжується з
-                                        глибокою увагою до деталей та любов'ю до тіла.
-                                    </p>
-                                    <div className="bw-mission-elegant">
-                                        Подаруй собі <em>комфорт</em> — і ти подаруєш собі крила
+                                    <div className="bw-manifesto-head">
+                                        <span className="bw-eyebrow-minimal">MIND BODY®</span>
+                                        <h2 className="bw-heading-elegant">
+                                            Рух що <em>перетворює</em>
+                                        </h2>
                                     </div>
-                                    <Link to="/about" className="bw-btn-elegant">
-                                        Філософія бренду<span className="bw-btn-arr">→</span>
-                                    </Link>
+                                    <div className="bw-manifesto-body">
+                                        <p className="bw-body-minimal">
+                                            Ми не просто шиємо одяг — ми створюємо другу шкіру, що
+                                            слідує за кожним рухом. Кожна колекція народжується з
+                                            глибокою увагою до деталей та любов'ю до тіла.
+                                        </p>
+                                        <div className="bw-mission-elegant">
+                                            Подаруй собі <em>комфорт</em> — і ти подаруєш собі крила
+                                        </div>
+                                        <Link to="/about" className="bw-btn-elegant">
+                                            Філософія бренду
+                                            <span className="bw-btn-arr">→</span>
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
 
