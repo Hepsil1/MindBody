@@ -3591,6 +3591,14 @@
     .bw-v3-manifesto {
         display: contents !important;
     }
+    /* JSX nests head + body inside .bw-manifesto-text (which lives
+       inside .bw-v3-manifesto).  Both wrappers need display: contents
+       to flatten head/body up to bw-v3-layout for flex-order routing.
+       Without this, head/body stay grouped at manifesto's slot and
+       can't appear AFTER frame on mobile. */
+    .bw-manifesto-text {
+        display: contents !important;
+    }
     .bw-manifesto-head {
         order: 1;
         padding: 0 24px;
@@ -4558,6 +4566,14 @@
         padding: 0 !important;
     }
     .bw-v3-manifesto {
+        display: contents !important;
+    }
+    /* JSX nests head + body inside .bw-manifesto-text (which lives
+       inside .bw-v3-manifesto).  Both wrappers need display: contents
+       to flatten head/body up to bw-v3-layout for flex-order routing.
+       Without this, head/body stay grouped at manifesto's slot and
+       can't appear AFTER frame on mobile. */
+    .bw-manifesto-text {
         display: contents !important;
     }
     .bw-manifesto-head {
