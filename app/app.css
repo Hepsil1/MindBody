@@ -645,6 +645,26 @@ h3 {
     color: #fff;
 }
 
+/* Batch 44 A4: SALE badge on mobile — "Sale" word instead of "−9%".
+   Math discount badges signal mid-market ("we negotiate"). Premium
+   fashion (Sézane / Polène / Cuyana) shows just "Sale" word or only
+   strikethrough in price. Hide the percent text via font-size:0 on
+   the actual span, then render "Sale" through ::after on the badge.
+   Marsala colour kept — still signals "different", just not math.
+   Desktop keeps "−9%" — separate batch for that. */
+@media (max-width: 768px) {
+    .product-card__badge--sale {
+        font-size: 0;
+    }
+    .product-card__badge--sale::after {
+        content: "Sale";
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+    }
+}
+
 /* === Wishlist heart — Batch 38 atom 6: 36→40 mobile / 40→44 desktop ===
    The earlier 36px-with-invisible-overlay approach was technically
    WCAG-compliant (hit area 44px via ::before), but users had to aim
@@ -702,6 +722,30 @@ h3 {
     .product-card__heart-btn svg {
         width: 20px;
         height: 20px;
+    }
+}
+
+/* Batch 44 B2: Subtle heart on mobile.
+   Always-on heart at full opacity = engagement-hungry pattern (Pinterest,
+   Wish, Shein). Premium brands hide hearts until hover/focus or only show
+   them in-list. We can't fully hide (sacrifices wishlist affordance), so
+   we dim to 0.55 default → 1.0 on tap/focus. Filled state (aria-pressed)
+   stays full opacity so favorited items remain visually distinct. */
+@media (max-width: 768px) {
+    .product-card__heart-btn {
+        opacity: 0.55;
+        transition:
+            background 0.2s ease,
+            color 0.2s ease,
+            opacity 0.2s ease;
+    }
+    .product-card__heart-btn:active,
+    .product-card__heart-btn:focus-visible,
+    .product-card__heart-btn:hover {
+        opacity: 1;
+    }
+    .product-card__heart-btn[aria-pressed="true"] {
+        opacity: 1;
     }
 }
 
@@ -10938,19 +10982,31 @@ body:has(.filter-drawer-overlay) .floating-contact {
     height: 24px;
 }
 
-/* Viber — flat purple */
-.floating-contact__btn--viber {
-    background: #7a469c;
-}
-
-/* WhatsApp — flat green */
-.floating-contact__btn--whatsapp {
-    background: #25d366;
-}
-
-/* Telegram — flat blue */
+/* Messenger cluster — monochrome premium treatment.
+   Platform-brand colours (TG blue / Viber purple / WA green) make 3
+   competing brand identities crowd the corner — SMB signature. Single
+   palette (cream surface, teal stroke + icon) reads as one cohesive
+   contact affordance, like the rest of the site. Batch 44. */
+.floating-contact__btn--viber,
+.floating-contact__btn--whatsapp,
 .floating-contact__btn--telegram {
-    background: #28a8ea;
+    background: var(--color-bg-cream);
+    color: var(--color-primary);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.floating-contact__btn--viber svg,
+.floating-contact__btn--whatsapp svg,
+.floating-contact__btn--telegram svg {
+    fill: var(--color-primary);
+}
+.floating-contact__btn--viber:hover,
+.floating-contact__btn--whatsapp:hover,
+.floating-contact__btn--telegram:hover {
+    background: #fff;
+    border-color: var(--color-primary);
+    color: var(--color-primary-dark);
+    box-shadow: 0 4px 12px rgba(42, 90, 90, 0.18);
 }
 
 /* Scroll-top button */
@@ -11016,10 +11072,10 @@ body:has(.filter-drawer-overlay) .floating-contact {
 }
 
 /* === Floating Contact: collapse / expand affordances ===
-   The cluster ships expanded (T + V + W visible). A small × at the
-   top minimises it to a single chat-bubble peek that sits flush
-   against the right edge, so it stops overlapping product cards on
-   mobile. The choice is persisted in localStorage. */
+   The cluster ships COLLAPSED (Batch 44) — first visit shows only the
+   discreet peek FAB. Tapping it expands to T + V + W (monochrome). A
+   small × minimises it back. The choice is persisted in localStorage,
+   so once a user expands, the cluster stays expanded on return. */
 
 /* Tiny × that minimises the cluster. Sized small (28×28) on purpose
    so it reads as a secondary affordance and doesn't compete with the
@@ -11066,10 +11122,11 @@ body:has(.filter-drawer-overlay) .floating-contact {
 
 /* Peek FAB — the single chat-bubble that appears in place of the
    three-button column when the cluster is collapsed. Brand teal, so
-   it reads clearly as a contact affordance even at small size. */
+   it reads clearly as a contact affordance even at small size.
+   Batch 44: tightened to 40px, opacity 0.85 for subtler first-paint. */
 .floating-contact__peek {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: var(--color-primary);
     color: #fff;
@@ -11078,12 +11135,12 @@ body:has(.filter-drawer-overlay) .floating-contact {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 14px rgba(42, 90, 90, 0.28);
+    box-shadow: 0 4px 14px rgba(42, 90, 90, 0.22);
     transition:
         transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
         box-shadow 0.25s ease,
         opacity 0.25s ease;
-    opacity: 0.92;
+    opacity: 0.85;
     padding: 0;
     animation: floatingPeekIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
@@ -15428,36 +15485,47 @@ select {
         border-radius: 2px;
     }
 
-    /* Phone CTA — teal pill, full-width, the conversion link */
+    /* Batch 44 A5: Phone CTA demoted from teal pill to inline text.
+       Huge phone-pill in footer = signature of service businesses
+       (clinics, salons, ателье). Premium fashion brands never use
+       phone as a primary CTA — phone exists as one of many contact
+       options, never the loudest. The number is still a tel: link;
+       just visually quiet. Saves vertical space too. */
     .footer-puma__phone-cta {
-        display: flex !important;
+        display: inline-flex !important;
         align-items: center;
-        justify-content: center;
-        gap: 8px;
-        width: 100%;
-        padding: 14px 20px !important;
-        margin: 0 0 18px 0;
-        background: var(--color-primary) !important;
-        color: #f0ece4 !important;
-        border-radius: 999px !important;
+        gap: 6px;
+        width: auto;
+        padding: 6px 0 !important;
+        margin: 0 0 4px 0;
+        background: transparent !important;
+        color: rgba(240, 236, 228, 0.7) !important;
+        border-radius: 0 !important;
         font-family: var(--font-body) !important;
-        font-size: 15px !important;
-        font-weight: 600 !important;
+        font-size: 13px !important;
+        font-weight: 400 !important;
         letter-spacing: 0.04em !important;
         text-decoration: none !important;
-        min-height: 50px;
-        box-shadow: 0 4px 14px rgba(42, 90, 90, 0.25);
-        transition:
-            transform 0.18s cubic-bezier(0.2, 0, 0, 1),
-            box-shadow 0.2s ease;
+        min-height: 0;
+        box-shadow: none;
+        transition: color 0.2s ease;
+    }
+    .footer-puma__phone-cta svg {
+        width: 13px;
+        height: 13px;
+        opacity: 0.7;
+    }
+    .footer-puma__phone-cta:hover,
+    .footer-puma__phone-cta:focus-visible {
+        color: #f0ece4 !important;
     }
     .footer-puma__phone-cta:active {
-        transform: scale(0.97);
-        box-shadow: 0 2px 8px rgba(42, 90, 90, 0.18);
+        opacity: 0.7;
     }
     .footer-puma__phone-cta:focus-visible {
-        outline: 2px solid #f0ece4;
+        outline: 1px solid rgba(240, 236, 228, 0.5);
         outline-offset: 3px;
+        border-radius: 2px;
     }
 
     /* HIDE the desktop vertical gradient divider that leaked into
@@ -15471,10 +15539,13 @@ select {
         content: none !important;
     }
 
-    /* Social icons — brand-colored circular buttons, animated.
-       User: "сделай иконки красивыми, анимированными и яркими".
-       Each platform gets its iconic gradient; gentle continuous
-       float; press scales 0.92 + colored shadow boost. */
+    /* Social icons — Batch 44 A3: monochrome on mobile.
+       Previous vibrant per-platform gradient circles read as 2018
+       web-template signature. Premium standards (Sézane / Aesop /
+       Polène / Cuyana) use either monochrome line-icons or text
+       links. Mobile gets subtle outline circles with white SVG fill
+       on the black footer — single visual language. Desktop block
+       (outside this media query) keeps gradients for now. */
     .footer-puma__social-icons {
         display: flex !important;
         list-style: none !important;
@@ -15490,146 +15561,53 @@ select {
         display: flex !important;
         align-items: center;
         justify-content: center;
-        width: 46px;
-        height: 46px;
+        width: 36px;
+        height: 36px;
         border-radius: 999px;
-        border: 0 !important;
-        color: #ffffff !important;
+        background: transparent !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        color: rgba(255, 255, 255, 0.85) !important;
         text-decoration: none !important;
         padding: 0 !important;
         position: relative;
-        overflow: hidden;
-        isolation: isolate;
-        will-change: transform, box-shadow;
+        will-change: opacity, border-color;
         transition:
-            transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-            box-shadow 0.3s ease,
-            filter 0.3s ease;
+            border-color 0.25s ease,
+            opacity 0.25s ease;
+        opacity: 0.85;
     }
-    /* White icon glyph stays on top of gradient bg */
     .footer-puma__social-link svg {
-        position: relative;
-        z-index: 2;
-        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.12));
+        width: 16px;
+        height: 16px;
+        fill: rgba(255, 255, 255, 0.85);
     }
-    /* Glossy highlight overlay — adds depth */
-    .footer-puma__social-link::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        background: linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.25) 0%,
-            rgba(255, 255, 255, 0) 50%
-        );
-        pointer-events: none;
-        z-index: 1;
-        opacity: 0.9;
-    }
-    /* Per-platform brand gradients */
-    .footer-puma__social-link--ig {
-        background: radial-gradient(
-            circle at 30% 110%,
-            #fdf497 0%,
-            #fd5949 25%,
-            #d6249f 60%,
-            #285aeb 100%
-        );
-        box-shadow:
-            0 4px 14px rgba(225, 48, 108, 0.4),
-            0 0 0 1px rgba(225, 48, 108, 0.18) inset;
-    }
-    .footer-puma__social-link--tg {
-        background: linear-gradient(135deg, #2aabee 0%, #229ed9 60%, #0088cc 100%);
-        box-shadow:
-            0 4px 14px rgba(34, 158, 217, 0.4),
-            0 0 0 1px rgba(34, 158, 217, 0.18) inset;
-    }
-    .footer-puma__social-link--viber {
-        background: linear-gradient(135deg, #8e7cee 0%, #7360f2 60%, #5d4ee3 100%);
-        box-shadow:
-            0 4px 14px rgba(115, 96, 242, 0.4),
-            0 0 0 1px rgba(115, 96, 242, 0.18) inset;
-    }
+    /* No platform-specific gradients on mobile — single monochrome
+       treatment. Per-platform classes still exist so desktop styles
+       work; we just normalise them here. */
+    .footer-puma__social-link--ig,
+    .footer-puma__social-link--tg,
+    .footer-puma__social-link--viber,
     .footer-puma__social-link--wa {
-        background: linear-gradient(135deg, #4ade80 0%, #25d366 60%, #128c7e 100%);
-        box-shadow:
-            0 4px 14px rgba(37, 211, 102, 0.4),
-            0 0 0 1px rgba(37, 211, 102, 0.18) inset;
+        background: transparent !important;
+        box-shadow: none !important;
     }
-    /* Hover/focus — lift + brighter shadow + tiny rotate hint */
     .footer-puma__social-link:hover,
     .footer-puma__social-link:focus-visible {
-        transform: translateY(-3px) scale(1.06);
-        filter: brightness(1.1) saturate(1.15);
-    }
-    .footer-puma__social-link--ig:hover,
-    .footer-puma__social-link--ig:focus-visible {
-        box-shadow:
-            0 8px 24px rgba(225, 48, 108, 0.55),
-            0 0 0 1px rgba(225, 48, 108, 0.28) inset;
-    }
-    .footer-puma__social-link--tg:hover,
-    .footer-puma__social-link--tg:focus-visible {
-        box-shadow:
-            0 8px 24px rgba(34, 158, 217, 0.55),
-            0 0 0 1px rgba(34, 158, 217, 0.28) inset;
-    }
-    .footer-puma__social-link--viber:hover,
-    .footer-puma__social-link--viber:focus-visible {
-        box-shadow:
-            0 8px 24px rgba(115, 96, 242, 0.55),
-            0 0 0 1px rgba(115, 96, 242, 0.28) inset;
-    }
-    .footer-puma__social-link--wa:hover,
-    .footer-puma__social-link--wa:focus-visible {
-        box-shadow:
-            0 8px 24px rgba(37, 211, 102, 0.55),
-            0 0 0 1px rgba(37, 211, 102, 0.28) inset;
+        border-color: rgba(255, 255, 255, 0.65) !important;
+        opacity: 1;
     }
     .footer-puma__social-link:active {
-        transform: translateY(0) scale(0.92);
+        opacity: 0.7;
         transition-duration: 0.1s;
     }
     .footer-puma__social-link:focus-visible {
-        outline: 2px solid #f0ece4;
-        outline-offset: 3px;
+        outline: 1px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 2px;
     }
-    /* Gentle stagger float — continuous brand presence.
-       Each icon offsets phase by 0.6s so they never bob in unison. */
-    @media (prefers-reduced-motion: no-preference) {
-        .footer-puma__social-link {
-            animation: footerSocialFloat 3.6s ease-in-out infinite;
-        }
-        .footer-puma__social-icons li:nth-child(1) .footer-puma__social-link {
-            animation-delay: 0s;
-        }
-        .footer-puma__social-icons li:nth-child(2) .footer-puma__social-link {
-            animation-delay: 0.6s;
-        }
-        .footer-puma__social-icons li:nth-child(3) .footer-puma__social-link {
-            animation-delay: 1.2s;
-        }
-        .footer-puma__social-icons li:nth-child(4) .footer-puma__social-link {
-            animation-delay: 1.8s;
-        }
-        @keyframes footerSocialFloat {
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-3px);
-            }
-        }
-        /* Pause float while hovered/focused (lift state owns transform) */
-        .footer-puma__social-link:hover,
-        .footer-puma__social-link:focus-visible,
-        .footer-puma__social-link:active {
-            animation-play-state: paused;
-        }
-    }
+    /* Batch 44 A3: Float animation removed.
+       On vibrant gradient circles the subtle bob added brand presence;
+       on quiet monochrome outlines it just reads as fidgety. Premium
+       brands keep social icons static. */
 
     /* Hairline divider before bottom */
     .footer-puma__full-divider {

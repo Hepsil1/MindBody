@@ -4497,28 +4497,24 @@
         max-height: 580px !important;
     }
 
-    /* Stats section — 4 numbers stacked vertically. Convert to 2x2 grid. */
+    /* Batch 44 A2: Vanity stats counters hidden on mobile.
+       4-digit "5 000+ клієнтів" + follower counts are SMB signal in
+       premium segment — The Row / Lemaire / Bonpoint / Aesop /
+       Sézane / Cuyana / Polène all show zero counters. Saves ~413px
+       vertical (~0.5 scroll) and lifts brand perception.
+       Desktop unchanged. */
     .stats-section {
-        padding: 48px 16px !important;
-    }
-    .stats-section__grid,
-    .stats-grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr;
-        gap: 32px 12px;
-    }
-    .stat-number {
-        font-size: 2rem !important; /* was 3-4rem desktop */
-    }
-    .stat-label {
-        font-size: 11px !important;
+        display: none !important;
     }
 
-    /* Premium features bar (Українські виробники / Premium якість / etc) —
-       was 4 items, each in its own row. Already grid-ified earlier but
-       padding still bloats it. */
+    /* Batch 44 B1: Trust-badges bar hidden on mobile homepage.
+       4 trust signals (Українське виробництво / Premium Supplex /
+       Повернення / Швидка оплата) on home reads as clearance-store /
+       dropshipping signature. Premium hides trust signals in checkout
+       (where relevant) or footer micro-copy. Saves ~447px vertical.
+       Desktop bar untouched. */
     .premium-features-bar {
-        padding: 32px 16px !important;
+        display: none !important;
     }
 
     /* Section-level rhythm — many sections inherit --space-section 120px.
