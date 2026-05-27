@@ -14,34 +14,29 @@ const STORAGE_KEY = "mb-floating-contact-collapsed";
 /**
  * Floating contact widget.
  *
- * UX model: messenger panel is COLLAPSED by default — a single discreet
- * chat-bubble FAB sits flush against the right edge. Tapping it expands
- * to show Telegram + Viber + WhatsApp. A small × minimises it back. The
- * preference is persisted in localStorage so a user who expanded once
- * sees the panel pre-expanded on subsequent visits.
- *
- * Rationale: 3 always-visible vibrant messenger icons read as SMB on
- * first paint and crowd the thumb zone. Default-collapsed delivers a
- * single subtle affordance that opens on user intent — premium pattern.
+ * UX model: messenger panel is EXPANDED by default (Telegram + Viber +
+ * WhatsApp visible). A small × on top of the cluster minimises it to a
+ * single discreet chat-bubble FAB that sits flush against the right
+ * edge — small footprint so it stops overlapping product cards on
+ * mobile. The chat-bubble re-expands on tap. Preference is persisted.
  *
  * A "back to top" button fades in once the user scrolls past 400px and
  * stays available regardless of collapse state.
  */
 export default function FloatingContact() {
     const [showBackToTop, setShowBackToTop] = useState(false);
-    const [collapsed, setCollapsed] = useState(true);
+    const [collapsed, setCollapsed] = useState(false);
 
-    // Restore user's last collapse preference. Default is collapsed
-    // (no localStorage entry = true) so first-time visitors see only
-    // the discreet peek FAB. Once a user explicitly expands the panel,
-    // we persist "0" and keep it expanded on return visits.
+    // Restore user's last collapse preference. Default is expanded
+    // (no localStorage entry = false) so first-time visitors always
+    // see all three messenger options.
     useEffect(() => {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored === "0") setCollapsed(false);
+            if (stored === "1") setCollapsed(true);
         } catch {
             // localStorage may be unavailable (private browsing,
-            // strict ITP). Fall back to collapsed default.
+            // strict ITP). Fall back to expanded.
         }
     }, []);
 
