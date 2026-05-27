@@ -4527,158 +4527,277 @@
 }
 
 /* ====================================================================
-   Batch 20 — Рух що перетворює: video + 2x2 features grid (mobile)
+   Batch 43 — Рух що перетворює: Cinematic Portrait (mobile-only)
 
-   User: "переделай полностью раздел с видео. Сделай интерактивный
-   анимированный дизайн с видео."
+   User: "переделай полностью моб версию. Видео = основа, вокруг
+   видео сделай эффект вау."
 
-   Redesign over Batch 11/12 BW rules (which made it horizontal
-   carousel with dots). Cascade order: this block is last in file,
-   wins with matching specificity + !important.
+   Replaces Batch 11/12 horizontal carousel AND Batch 20 2x2 grid.
+   This block lives LAST in the file so cascade wins via source order
+   + !important without re-architecting earlier rules.
 
-   Changes:
-   1. Video frame BIGGER — was capped 320×400, now ~88vw with proper
-      premium framing. Brand-tinted shadow lifts it off cream bg.
-   2. Features convert from horizontal carousel → 2x2 grid layout
-      (matches Нові надходження 2-col cards = brand cohesion).
-   3. Cards get chrome: white bg, 14px radius, teal-tinted shadow
-      (same recipe as new arrivals = visual consistency).
-   4. Big editorial number (60px) sits as background poster behind
-      the title with z-index layering (depth without borders).
-   5. Active card via :active scale(0.96) + shadow softens.
-   6. Scroll-driven entry: each card fades up as it enters viewport.
-   7. Active video pulse (subtle scale) when section is centered.
-   8. Hide the dot indicator (no horizontal scroll = no need).
+   Mental model: video — окно через которое viewer смотрит на бренд.
+   Текст и features обрамляют окно, не конкурируют с ним.
+
+   Mobile order (flex-order на bw-v3-layout flex column):
+     1. .bw-manifesto-head      (eyebrow + H2)
+     2. .bw-v3-frame-container  (full-bleed 9:16 video)
+     3. .bw-manifesto-body      (paragraph + mission + CTA)
+     4. .bw-v3-features         (vertical stack)
    ==================================================================== */
 @media (max-width: 768px) {
-    /* Video frame — bigger, more dramatic. Brand-tinted shadow. */
-    .bw-v3-frame {
-        aspect-ratio: 4 / 5 !important;
-        max-width: 88vw !important;
-        max-height: none !important;
-        width: 88vw !important;
-        border-radius: 18px !important;
-        overflow: hidden;
-        box-shadow:
-            0 1px 2px rgba(42, 90, 90, 0.04),
-            0 6px 18px rgba(42, 90, 90, 0.08),
-            0 28px 64px -16px rgba(42, 90, 90, 0.16) !important;
+    /* Layout: column with explicit order chain.  display: contents
+       on .bw-v3-manifesto pulls head + body up as direct children
+       of bw-v3-layout so their `order` values land in the same
+       flex axis as frame-container + features. */
+    .bw-v3-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 32px !important;
+        padding: 0 !important;
+    }
+    .bw-v3-manifesto {
+        display: contents !important;
+    }
+    .bw-manifesto-head {
+        order: 1 !important;
+        padding: 0 24px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .bw-manifesto-body {
+        order: 3 !important;
+        padding: 0 24px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
     }
     .bw-v3-frame-container {
-        order: 1 !important;
-        margin: 0 auto !important;
-        padding: 4px 0 !important;
-        width: 100%;
+        order: 2 !important;
+        width: 100vw !important;
+        max-width: none !important;
+        margin-left: calc(-50vw + 50%) !important;
+        margin-right: calc(-50vw + 50%) !important;
+        padding: 0 !important;
+        position: relative;
+        flex: 0 0 auto !important;
+        align-self: auto !important;
     }
-    /* Scroll-driven video active-state: subtle scale up when centered */
-    @supports (animation-timeline: view()) {
-        .bw-v3-frame {
-            animation: bwVideoActive linear both !important;
-            animation-timeline: view();
-            animation-range: cover 0% cover 100%;
-            transform-origin: center center;
+    .bw-v3-features {
+        order: 4 !important;
+        padding: 0 24px !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+    }
+
+    /* Typography on manifesto */
+    .bw-eyebrow-minimal {
+        margin: 0 auto;
+    }
+    .bw-heading-elegant {
+        margin: 0 auto !important;
+        max-width: 320px;
+        font-size: clamp(2.2rem, 9vw, 2.6rem) !important;
+        line-height: 1.05 !important;
+    }
+    .bw-body-minimal {
+        margin: 0 auto !important;
+        max-width: 320px;
+        text-align: center;
+        line-height: 1.6;
+    }
+    .bw-mission-elegant {
+        margin: 0 auto !important;
+        padding-left: 0 !important;
+        max-width: 320px;
+        text-align: center !important;
+        font-size: 14px !important;
+        font-style: italic;
+    }
+    .bw-mission-elegant::before {
+        display: none !important;
+    }
+    .bw-btn-elegant {
+        margin: 4px auto 0 !important;
+    }
+
+    /* Magnetic logo + kinetic ring — disabled на touch (нужен mouse).
+       Освобождает место для full-bleed видео. */
+    .bw-zen-visual,
+    .bw-zen-logo,
+    .bw-kinetic-ring,
+    .bw-magnetic-wrapper {
+        display: none !important;
+    }
+
+    /* Full-bleed cinematic video frame.  Border-radius gone, shadow
+       gone — видео работает как portal, не как card.  Aspect 9:16
+       — premium portrait that respects mobile viewport. */
+    .bw-v3-frame {
+        aspect-ratio: 9 / 16 !important;
+        max-height: 75vh;
+        max-height: 75dvh;
+        max-width: none !important;
+        width: 100% !important;
+        border-radius: 0 !important;
+        overflow: hidden !important;
+        box-shadow: none !important;
+        background: var(--color-bg-soft);
+        position: relative;
+    }
+    .bw-frame-img,
+    .bw-playlist-vid {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        animation: bwKenBurns 14s ease-in-out infinite alternate !important;
+    }
+    @keyframes bwKenBurns {
+        from {
+            transform: scale(1);
         }
-        @keyframes bwVideoActive {
-            0% {
-                transform: scale(0.96);
-            }
-            50% {
-                transform: scale(1);
-            }
-            100% {
-                transform: scale(0.96);
-            }
+        to {
+            transform: scale(1.05);
         }
     }
 
-    /* Features — 2x2 GRID instead of horizontal scroll-snap carousel */
-    .bw-v3-features {
-        order: 2 !important;
-        padding: 0 8px !important;
-        width: 100% !important;
-        max-width: none !important;
-        margin: 8px 0 0 !important;
+    /* Override the desktop scroll-driven pulse — на mobile видео
+       работает в полный размер, не "вдыхает" по scroll. */
+    @supports (animation-timeline: view()) {
+        .bw-v3-frame {
+            animation: none !important;
+        }
     }
+
+    /* Dot indicators ON video, bottom-center.  Stories-style. */
+    .bw-v3-frame-dots {
+        display: flex !important;
+        position: absolute !important;
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        gap: 8px;
+        z-index: 2;
+        pointer-events: none;
+        margin: 0 !important;
+        justify-content: center;
+    }
+    .bw-v3-frame-dots .bw-v3-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.45);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+        transition:
+            background 0.3s ease,
+            transform 0.3s ease;
+    }
+    .bw-v3-frame-dots .bw-v3-dot--active {
+        background: rgba(255, 255, 255, 1);
+        transform: scale(1.35);
+    }
+
+    /* Features: vertical stack (NOT 2x2 grid, NOT carousel) */
     .bw-macro-features {
-        display: grid !important;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-        grid-auto-rows: auto !important;
-        flex-direction: row;
-        gap: 10px !important;
-        overflow: hidden !important;
-        overflow-x: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        grid-template-columns: none !important;
+        overflow: visible !important;
+        overflow-x: visible !important;
         scroll-snap-type: none !important;
-        scroll-padding: 0 !important;
+        gap: 36px !important;
         padding: 0 !important;
         margin: 0 !important;
         width: 100% !important;
         max-width: none !important;
         -webkit-mask-image: none !important;
         mask-image: none !important;
-        box-sizing: border-box;
     }
     .bw-macro-features::-webkit-scrollbar {
         display: none;
     }
-
-    /* Feature card — white bg, chrome, teal shadow (matches NA grid) */
     .bw-feat-item {
-        flex: none !important;
+        flex: 0 0 auto !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
         scroll-snap-align: none !important;
         scroll-snap-stop: normal !important;
         position: relative !important;
-        display: block !important;
-        background: #ffffff !important;
-        border: 1px solid rgba(42, 90, 90, 0.05) !important;
-        border-radius: 14px !important;
-        padding: 14px 14px 16px 14px !important;
-        min-height: 160px;
-        overflow: hidden;
-        box-sizing: border-box;
-        box-shadow:
-            0 1px 2px rgba(42, 90, 90, 0.04),
-            0 3px 10px rgba(42, 90, 90, 0.06),
-            0 12px 28px -8px rgba(42, 90, 90, 0.1) !important;
-        transition:
-            box-shadow 0.3s ease,
-            transform 0.18s cubic-bezier(0.2, 0, 0, 1) !important;
-        will-change: transform, box-shadow;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: flex-start;
+        gap: 18px;
+        background: transparent !important;
+        border: 0 !important;
+        border-right: 0 !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        min-height: 0;
+        overflow: visible;
+        box-shadow: none !important;
+        opacity: 0;
+        transform: translateY(24px);
+        animation: bwFeatRevealUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        animation-timeline: auto !important;
+        will-change: auto;
+        transition: none !important;
+    }
+    .bw-feat-item--1 {
+        animation-delay: 0.05s;
+    }
+    .bw-feat-item--2 {
+        animation-delay: 0.15s;
+    }
+    .bw-feat-item--3 {
+        animation-delay: 0.25s;
+    }
+    .bw-feat-item--4 {
+        animation-delay: 0.35s;
+    }
+    @keyframes bwFeatRevealUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     .bw-feat-item:active {
-        transform: scale(0.96) !important;
-        box-shadow:
-            0 1px 2px rgba(42, 90, 90, 0.03),
-            0 3px 8px rgba(42, 90, 90, 0.04),
-            0 6px 16px -8px rgba(42, 90, 90, 0.08) !important;
+        transform: none !important;
     }
     .bw-feat-item:not(:last-child) {
-        border-right: 0 !important; /* cancel old divider */
+        border-right: 0 !important;
     }
 
-    /* Big editorial macro-number — sits in TOP-RIGHT CORNER of the card,
-       poking out so it reads as a corner ornament rather than overlapping
-       the title text. Audit agent flagged previous position (right: -4px)
-       as making "03" sit behind "Ідеальна посадка" headline. */
+    /* Macro number — italic Cormorant 44px NEXT TO content (not behind).
+       Tabular-nums для вертикальной выравненности. */
     .bw-feat-item .bw-macro-number {
-        position: absolute !important;
-        top: -22px !important;
-        right: -14px !important;
+        position: static !important;
+        top: auto !important;
         left: auto !important;
+        right: auto !important;
         color: var(--color-primary) !important;
         -webkit-text-stroke: 0 !important;
-        opacity: 0.08 !important;
+        opacity: 1 !important;
         font-family: var(--font-display) !important;
-        font-size: 92px !important;
-        font-weight: 500 !important;
+        font-style: italic;
+        font-size: 44px !important;
+        font-weight: 300 !important;
         line-height: 1 !important;
-        letter-spacing: -0.05em !important;
-        z-index: 0;
+        letter-spacing: -0.02em !important;
+        z-index: auto;
         pointer-events: none;
         margin: 0 !important;
-        transition: opacity 0.4s ease;
+        flex-shrink: 0;
+        min-width: 56px;
+        font-variant-numeric: tabular-nums;
+        animation: none !important;
+        transition: none !important;
     }
     .bw-feat-item .bw-macro-number::before {
         display: none !important;
@@ -4686,89 +4805,52 @@
     .bw-macro-content {
         position: relative;
         z-index: 1;
-        padding: 0 !important;
+        padding: 6px 0 0 0 !important;
+        flex: 1;
     }
     .bw-feat-title {
         font-family: var(--font-display) !important;
-        font-size: 1.05rem !important; /* ~17px */
-        font-weight: 500 !important;
+        font-size: 22px !important;
+        font-weight: 400 !important;
         letter-spacing: var(--tracking-tight) !important;
-        line-height: 1.18 !important;
-        margin: 26px 0 6px 0 !important;
+        line-height: 1.2 !important;
+        margin: 0 0 6px 0 !important;
         color: var(--color-text-primary);
-        word-break: break-word;
+        word-break: normal;
     }
     .bw-feat-desc {
-        font-size: 12px !important;
-        line-height: 1.45 !important;
+        font-size: 14px !important;
+        line-height: 1.55 !important;
         color: var(--color-text-secondary);
         margin: 0 !important;
     }
     .bw-feat-link {
-        margin-top: 10px !important;
+        margin-top: 14px !important;
         font-size: 11px !important;
-        letter-spacing: 0.16em !important;
+        letter-spacing: 0.18em !important;
         display: inline-flex !important;
         align-items: center;
         gap: 4px;
     }
-    /* Cancel desktop dim-on-not-hover pattern */
     .bw-macro-features:hover .bw-feat-item:not(:hover) {
         opacity: 1 !important;
     }
 
-    /* Hide dot pager — grid doesn't need it */
+    /* Old horizontal feat-dots pager — disabled (vertical stack
+       doesn't need pager nav, document scroll handles it). */
     .bw-feat-dots-wrap {
         display: none !important;
     }
 
-    /* SCROLL-DRIVEN entry animation: each feature card fades up
-       as it enters viewport. Pure CSS, GPU. */
-    @supports (animation-timeline: view()) {
-        .bw-feat-item {
-            animation: bwFeatEntry linear both !important;
-            animation-timeline: view();
-            animation-range: entry 0% entry 40%;
-            will-change: opacity, transform;
-        }
-        @keyframes bwFeatEntry {
-            0% {
-                opacity: 0;
-                transform: translateY(20px) scale(0.96);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-        /* Macro number subtle pulse on active card */
-        .bw-feat-item .bw-macro-number {
-            animation: bwNumberPulse linear both;
-            animation-timeline: view();
-            animation-range: cover 30% cover 70%;
-        }
-        @keyframes bwNumberPulse {
-            0% {
-                opacity: 0.05;
-            }
-            50% {
-                opacity: 0.12;
-            }
-            100% {
-                opacity: 0.05;
-            }
-        }
-    }
     @media (prefers-reduced-motion: reduce) {
         .bw-feat-item,
         .bw-feat-item .bw-macro-number,
-        .bw-v3-frame {
+        .bw-v3-frame,
+        .bw-frame-img,
+        .bw-playlist-vid {
             animation: none !important;
             opacity: 1 !important;
             transform: none !important;
-        }
-        .bw-feat-item .bw-macro-number {
-            opacity: 0.1 !important;
         }
     }
 }
