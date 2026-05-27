@@ -648,20 +648,34 @@ h3 {
 /* Batch 44 A4: SALE badge on mobile — "Sale" word instead of "−9%".
    Math discount badges signal mid-market ("we negotiate"). Premium
    fashion (Sézane / Polène / Cuyana) shows just "Sale" word or only
-   strikethrough in price. Hide the percent text via font-size:0 on
-   the actual span, then render "Sale" through ::after on the badge.
-   Marsala colour kept — still signals "different", just not math.
+   strikethrough in price. We hide the original percent text via
+   color: transparent + smaller font, then overlay ::after with the
+   word "Sale" absolutely positioned. Original text still sets the
+   layout box (so the badge keeps roughly the same footprint), the
+   overlay renders the new label on top. Marsala colour preserved.
    Desktop keeps "−9%" — separate batch for that. */
 @media (max-width: 768px) {
     .product-card__badge--sale {
-        font-size: 0;
+        color: transparent !important;
+        font-size: 9px !important;
+        letter-spacing: 0 !important;
+        position: absolute;
+        min-width: 48px;
+        text-align: center;
     }
     .product-card__badge--sale::after {
         content: "Sale";
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
         font-size: 10px;
         font-weight: 500;
         letter-spacing: 0.18em;
         text-transform: uppercase;
+        pointer-events: none;
     }
 }
 
