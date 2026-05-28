@@ -4614,57 +4614,46 @@
 }
 
 /* ====================================================================
-   Batch 46 — Рух що перетворює: Editorial Sandwich (mobile-only)
+   Batch 48 — Рух що перетворює: Cinematic + Editorial Snap Strip
 
-   User: "переделай полностью моб версию.  Сделай красиво вокруг
-   видео, а не просто списком.  Продумай, сделай куча вариантов,
-   выбери лучший."
+   User feedback on Batch 46 sandwich: "Переделай раздел на телефоне
+   в целом. Придумай крутой раздел вокруг этих видео на телефоне.
+   Мне не нравится 12 23 4." → rejected 2x2 grid as predictable.
 
-   Replaces Batch 43 Cinematic Portrait (which still left features
-   as a flat list AFTER everything).  New mental model: video is the
-   centerpiece of an editorial spread — features WRAP video (2 above,
-   2 below), mission becomes pull-quote OVER video bottom (cinematic
-   caption style, Polène / Loewe references).
+   New mental model:
+   • Video remains SINGULAR cinematic moment (full-bleed 9:16, no
+     content competing for attention beside or wrapping it)
+   • Features become an EDITORIAL SNAP STRIP — horizontal scroll-snap
+     carousel below video.  Each card sized 82vw so next card peeks
+     at edge (signature mobile gesture from Aesop / Sézane mobile)
+   • Each card gets the full horizontal canvas — big italic Cormorant
+     number (52px) + serif title + readable description (was hidden
+     in sandwich due to 2-col crampedness, restored here)
 
-   Mobile layout via CSS Grid with named areas:
-     ┌──── head ─────┐
-     ┌─ f1 ─┬─ f2 ─┐
-     ├──── frame ────┤  ← video + quote-overlay inside
-     ├─ f3 ─┼─ f4 ─┤
-     ├──── body ─────┤  ← manifesto paragraph + CTA
-     └───────────────┘
-
-   `display: contents` is used on .bw-v3-manifesto, .bw-manifesto-text,
-   and .bw-v3-features so their children flatten into the grid and
-   each get a discrete grid-area assignment.
+   Mobile order (vertical flex column, explicit order):
+     1. .bw-manifesto-head    (eyebrow + H2 «Рух що перетворює»)
+     2. .bw-v3-frame-container (full-bleed video + pull-quote overlay)
+     3. .bw-v3-features       (horizontal snap strip)
+     4. .bw-manifesto-body    (manifesto paragraph + CTA)
    ==================================================================== */
 @media (max-width: 768px) {
-    /* Layout: CSS Grid with named areas for sandwich composition. */
+    /* Layout: vertical flex column, explicit order chain */
     .bw-v3-layout {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr;
-        gap: 28px 16px !important;
-        grid-template-areas:
-            "head head"
-            "f1 f2"
-            "frame frame"
-            "f3 f4"
-            "body body";
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 32px !important;
         padding: 0 !important;
-        align-items: start !important;
     }
-
-    /* Flatten 3 wrapper levels into grid: manifesto > manifesto-text
-       > head/body. All need display:contents so head/body/features
-       land as direct grid children. */
+    /* Flatten manifesto wrappers so head + body get individual
+       flex-order routing in the layout flex root */
     .bw-v3-manifesto,
-    .bw-manifesto-text,
-    .bw-v3-features {
+    .bw-manifesto-text {
         display: contents !important;
     }
 
     .bw-manifesto-head {
-        grid-area: head;
+        order: 1 !important;
         padding: 0 24px;
         text-align: center;
         display: flex;
@@ -4672,39 +4661,28 @@
         gap: 8px;
     }
     .bw-v3-frame-container {
-        grid-area: frame;
+        order: 2 !important;
         width: 100vw !important;
         max-width: none !important;
         margin-left: calc(-50vw + 50%) !important;
         margin-right: calc(-50vw + 50%) !important;
         padding: 0 !important;
         position: relative;
+        flex: 0 0 auto !important;
+    }
+    .bw-v3-features {
+        order: 3 !important;
+        /* Native flex container retained — children stay grouped for
+           horizontal snap-strip layout (see .bw-macro-features below). */
     }
     .bw-manifesto-body {
-        grid-area: body;
+        order: 5 !important;
         padding: 0 24px;
         text-align: center;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 14px;
-    }
-
-    /* Features split into 4 separate grid areas: 1+2 above video,
-       3+4 below.  Each feature becomes a compact card with number
-       + title.  Description hidden on mobile (preserved in DOM for
-       screen readers via aria; visible on desktop). */
-    .bw-feat-item--1 {
-        grid-area: f1;
-    }
-    .bw-feat-item--2 {
-        grid-area: f2;
-    }
-    .bw-feat-item--3 {
-        grid-area: f3;
-    }
-    .bw-feat-item--4 {
-        grid-area: f4;
     }
 
     /* Typography on manifesto head + body */
@@ -4858,58 +4836,79 @@
         transform: scale(1.4);
     }
 
-    /* Features — compact 2-col grid (1+2 above video, 3+4 below).
-       Each feat-item lives in its own grid-area, becomes a vertical
-       mini-card with italic Cormorant number + DM Sans title.
-       Description hidden on mobile to keep cards compact; preserved
-       in DOM for screen readers (display: none acceptable since
-       title carries semantic meaning). */
+    /* Batch 48 v2: Features as Cinematic Vertical Moments.
+       After thrashing through grid + carousel attempts, settled on the
+       boldest reliable approach: vertical stack where each feature is
+       a DRAMATIC editorial moment — number is OVERSIZED italic Cormorant
+       (76px), title is generously sized serif, description readable.
+       Each card breathes — 32px gap between items.
+
+       This feels like turning pages in an art book.  Video → feature 1
+       (huge moment) → feature 2 (huge moment) → ... → manifesto.
+       Differentiation from prior batches:
+       — Not a flat list (numbers are MASSIVE editorial display)
+       — Not a 2x2 grid (single column with breathing)
+       — Not a horizontal carousel (no layout fragility)
+       — IS premium magazine spread aesthetic */
     .bw-macro-features {
-        display: contents !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        gap: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        overflow: visible !important;
+        scroll-snap-type: none !important;
+        -webkit-mask-image: none !important;
+        mask-image: none !important;
     }
+
+    /* Each feature — dramatic editorial moment.  Number sits in upper-
+       left, large italic Cormorant 76px.  Title + description below.
+       Top hairline separator gives visual rhythm between items. */
     .bw-feat-item {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        scroll-snap-align: none !important;
+        scroll-snap-stop: normal !important;
         position: relative !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-start;
-        gap: 6px;
-        padding: 0 16px 0 24px !important;
+        gap: 4px;
         background: transparent !important;
         border: 0 !important;
-        border-right: 0 !important;
+        border-top: 1px solid var(--color-border-light) !important;
         border-radius: 0 !important;
+        padding: 28px 8px 8px !important;
         min-height: 0;
-        max-width: none !important;
-        width: auto !important;
-        min-width: 0 !important;
         overflow: visible;
         box-shadow: none !important;
         opacity: 0;
-        transform: translateY(16px);
-        animation: bwFeatRevealUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        transform: translateY(20px);
+        animation: bwFeatRevealUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
         will-change: auto;
         transition: none !important;
-        /* No-op for legacy carousel rules */
-        flex: 0 0 auto !important;
-        scroll-snap-align: none !important;
     }
-    /* Right-column features (02, 04) — flip padding so number sits
-       toward inner gutter, content reads outward */
-    .bw-feat-item--2,
-    .bw-feat-item--4 {
-        padding: 0 24px 0 16px !important;
+    .bw-feat-item:first-child {
+        border-top: 0 !important;
+        padding-top: 8px !important;
     }
     .bw-feat-item--1 {
         animation-delay: 0.1s;
     }
     .bw-feat-item--2 {
-        animation-delay: 0.2s;
+        animation-delay: 0.15s;
     }
     .bw-feat-item--3 {
-        animation-delay: 0.3s;
+        animation-delay: 0.2s;
     }
     .bw-feat-item--4 {
-        animation-delay: 0.4s;
+        animation-delay: 0.25s;
     }
     @keyframes bwFeatRevealUp {
         to {
@@ -4918,8 +4917,9 @@
         }
     }
 
-    /* Macro number — italic Cormorant 32px (was 44px in vertical stack;
-       smaller here because 2-col grid = half-width).  Tabular-nums. */
+    /* Macro number — OVERSIZED italic Cormorant (76px) — the dramatic
+       editorial moment of each feature.  Reads as a chapter number in
+       an art book. Color subtly faded so it doesn't fight title. */
     .bw-feat-item .bw-macro-number {
         position: static !important;
         top: auto !important;
@@ -4927,16 +4927,16 @@
         right: auto !important;
         color: var(--color-primary) !important;
         -webkit-text-stroke: 0 !important;
-        opacity: 1 !important;
+        opacity: 0.95 !important;
         font-family: var(--font-display) !important;
         font-style: italic;
-        font-size: 32px !important;
+        font-size: 76px !important;
         font-weight: 300 !important;
-        line-height: 1 !important;
-        letter-spacing: -0.02em !important;
+        line-height: 0.95 !important;
+        letter-spacing: -0.04em !important;
         z-index: auto;
         pointer-events: none;
-        margin: 0 0 2px 0 !important;
+        margin: 0 0 -8px 0 !important;
         min-width: 0;
         font-variant-numeric: tabular-nums;
         animation: none !important;
@@ -4950,35 +4950,42 @@
         z-index: 1;
         padding: 0 !important;
         flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
     }
     .bw-feat-title {
         font-family: var(--font-display) !important;
-        font-size: 15px !important;
+        font-size: 26px !important;
         font-weight: 400 !important;
         letter-spacing: var(--tracking-tight) !important;
-        line-height: 1.25 !important;
+        line-height: 1.15 !important;
         margin: 0 !important;
         color: var(--color-text-primary);
         word-break: normal;
     }
-    /* Description hidden on mobile — too cramped in 2-col grid.
-       Number + title carry the semantic; full description still
-       readable on desktop. */
+    /* Description RESTORED on mobile — each card has 82vw of width
+       so 3-line description reads comfortably (was hidden in
+       Batch 46 sandwich where 2-col grid couldn't fit it). */
     .bw-feat-desc {
-        display: none !important;
+        display: block !important;
+        font-family: var(--font-body) !important;
+        font-size: 14px !important;
+        line-height: 1.55 !important;
+        color: var(--color-text-secondary) !important;
+        margin: 0 !important;
     }
     .bw-feat-link {
-        margin-top: 8px !important;
-        font-size: 10px !important;
+        margin-top: 12px !important;
+        font-size: 11px !important;
         letter-spacing: 0.18em !important;
         display: inline-flex !important;
         align-items: center;
         gap: 4px;
     }
 
-    /* Old horizontal feat-dots pager — disabled (Editorial Sandwich
-       doesn't need feature-pager nav; document scroll surfaces all
-       4 features in 2x2 grid). */
+    /* Pager dots not needed for vertical stack — document scroll surfaces
+       all 4 features naturally. */
     .bw-feat-dots-wrap {
         display: none !important;
     }
