@@ -484,6 +484,19 @@ export default function Home() {
         if (!child) return;
         child.scrollIntoView({ inline: "start", behavior: "smooth", block: "nearest" });
     }, []);
+
+    // Batch 51: Auto-cycle activeFeature on mobile every 5s (Stories-style).
+    // Resets when user manually changes feature (via chip tap) because
+    // setInterval is dependency-keyed on activeFeature — any state change
+    // tears down the old interval and starts a fresh 5s window.  Skips
+    // desktop entirely (where the 4 features render as a full row).
+    useEffect(() => {
+        if (typeof window === "undefined" || window.innerWidth > 768) return;
+        const id = setInterval(() => {
+            setActiveFeature((prev) => (prev + 1) % 4);
+        }, 5000);
+        return () => clearInterval(id);
+    }, [activeFeature]);
     const videoPlaylist = [
         "/uploads/brand-hero.mp4",
         "/uploads/brand-video-2.mp4",
@@ -946,6 +959,32 @@ export default function Home() {
                                 </div>
                             </div>
 
+                            {/* Batch 51: Story-Strip chips above video frame.
+                                Mobile-only — tap-to-jump between 4 features.
+                                Each chip shows the active state via .is-active
+                                class.  Desktop hides via @media. */}
+                            <div
+                                className="bw-v3-chips"
+                                role="tablist"
+                                aria-label="Переваги бренду"
+                            >
+                                {[0, 1, 2, 3].map((i) => (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        role="tab"
+                                        className={`bw-v3-chip ${activeFeature === i ? "is-active" : ""}`}
+                                        aria-selected={activeFeature === i}
+                                        aria-controls={`bw-feat-item--${i + 1}`}
+                                        onClick={() => setActiveFeature(i)}
+                                    >
+                                        <span className="bw-v3-chip__num">
+                                            {String(i + 1).padStart(2, "0")}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+
                             {/* Center: The Floating Image Reveal Frame */}
                             <div className="bw-v3-frame-container">
                                 <div className="bw-v3-frame-dots">
@@ -1047,9 +1086,19 @@ export default function Home() {
                                 </div>
                             </div>
 
-                            {/* Right: The Ultra-Clean Feature List (Macro Typography) */}
+                            {/* Right: The Ultra-Clean Feature List (Macro Typography)
+                                Batch 51: data-active controls which feature is
+                                shown on mobile (only one visible at a time, tied
+                                to activeFeature state).  Desktop ignores
+                                data-active and shows all four. */}
                             <div className="bw-v3-features bw-macro-features" ref={bwFeaturesRef}>
-                                <div className="bw-feat-item bw-feat-item--1">
+                                <div
+                                    id="bw-feat-item--1"
+                                    className="bw-feat-item bw-feat-item--1"
+                                    data-active={activeFeature === 0 ? "true" : "false"}
+                                    role="tabpanel"
+                                    aria-hidden={activeFeature !== 0}
+                                >
                                     <div className="bw-macro-number" data-text="01">
                                         01
                                     </div>
@@ -1062,7 +1111,13 @@ export default function Home() {
                                     </div>
                                 </div>
 
-                                <div className="bw-feat-item bw-feat-item--2">
+                                <div
+                                    id="bw-feat-item--2"
+                                    className="bw-feat-item bw-feat-item--2"
+                                    data-active={activeFeature === 1 ? "true" : "false"}
+                                    role="tabpanel"
+                                    aria-hidden={activeFeature !== 1}
+                                >
                                     <div className="bw-macro-number" data-text="02">
                                         02
                                     </div>
@@ -1074,7 +1129,13 @@ export default function Home() {
                                     </div>
                                 </div>
 
-                                <div className="bw-feat-item bw-feat-item--3">
+                                <div
+                                    id="bw-feat-item--3"
+                                    className="bw-feat-item bw-feat-item--3"
+                                    data-active={activeFeature === 2 ? "true" : "false"}
+                                    role="tabpanel"
+                                    aria-hidden={activeFeature !== 2}
+                                >
                                     <div className="bw-macro-number" data-text="03">
                                         03
                                     </div>
@@ -1086,7 +1147,13 @@ export default function Home() {
                                     </div>
                                 </div>
 
-                                <div className="bw-feat-item bw-feat-item--4">
+                                <div
+                                    id="bw-feat-item--4"
+                                    className="bw-feat-item bw-feat-item--4"
+                                    data-active={activeFeature === 3 ? "true" : "false"}
+                                    role="tabpanel"
+                                    aria-hidden={activeFeature !== 3}
+                                >
                                     <div className="bw-macro-number" data-text="04">
                                         04
                                     </div>

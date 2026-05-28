@@ -2019,11 +2019,12 @@
     justify-content: center;
 }
 
-/* Batch 46: Quote overlay over video bottom — mobile-only.
-   Hidden on desktop because the manifesto + mission text lives in
-   the left column on desktop layout. */
+/* Batch 46/49/51: Mobile-only overlays / interactive UI hidden on
+   desktop because the manifesto + features render as a 3-col layout
+   on large screens. */
 .bw-v3-video-quote,
-.bw-v3-video-title {
+.bw-v3-video-title,
+.bw-v3-chips {
     display: none;
 }
 
@@ -4667,8 +4668,62 @@
         /* Hidden — title now overlays video top */
         display: none !important;
     }
-    .bw-v3-frame-container {
+    /* Batch 51: Story-Strip chips ABOVE video (interactive nav).
+       4 chips show 01-04, active chip highlighted teal.  Tap → jump
+       to that feature instantly.  Auto-cycles every 5s. */
+    .bw-v3-chips {
         order: 2 !important;
+        display: flex !important;
+        gap: 8px;
+        padding: 0 24px;
+        justify-content: center;
+        margin: 0;
+    }
+    .bw-v3-chip {
+        flex: 0 0 auto;
+        min-width: 56px;
+        min-height: 36px;
+        padding: 8px 16px;
+        /* CRITICAL: appearance: none disables WebKit/Blink native button
+           styling that ignores CSS backgrounds.  Without this, our active
+           teal background never paints. */
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+        border: 1px solid var(--color-border);
+        border-radius: 999px;
+        color: var(--color-text-secondary);
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.01em;
+        cursor: pointer;
+        transition:
+            background 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+            color 0.3s ease,
+            border-color 0.3s ease,
+            transform 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .bw-v3-chip:active {
+        transform: scale(0.95);
+    }
+    .bw-v3-chip.is-active {
+        background: #2a5a5a !important;
+        background-color: #2a5a5a !important;
+        border-color: #2a5a5a !important;
+        color: #fff !important;
+    }
+    .bw-v3-chip__num {
+        display: inline-block;
+        line-height: 1;
+    }
+
+    .bw-v3-frame-container {
+        order: 3 !important;
         width: 100vw !important;
         max-width: none !important;
         margin-left: calc(-50vw + 50%) !important;
@@ -4677,17 +4732,18 @@
         position: relative;
         flex: 0 0 auto !important;
     }
-    .bw-body-minimal {
-        order: 3 !important;
-        margin: 0 auto !important;
-        padding: 0 24px;
-    }
     .bw-v3-features {
         order: 4 !important;
         padding: 0 24px !important;
+        min-height: 140px;
+    }
+    .bw-body-minimal {
+        order: 5 !important;
+        margin: 0 auto !important;
+        padding: 0 24px;
     }
     .bw-btn-elegant {
-        order: 5 !important;
+        order: 6 !important;
         align-self: center !important;
     }
 
@@ -4933,13 +4989,13 @@
         transform: scale(1.4);
     }
 
-    /* Batch 49: Features as TIGHT ENUMERATION row.
-       Compressed to single-line listing: number | title (no description
-       on mobile).  Each row = compact horizontal pair.  No cards, no
-       boxes — just typographic enumeration of brand principles.
-       Reads as a film-credits list ("Director / Cinematographer / ..."). */
+    /* Batch 51: Story-Strip — only the ACTIVE feature is visible.
+       Container becomes a positioning context for ONE feature at a time.
+       Non-active features collapse to display:none.  Active feature
+       fades + slides in from below. */
     .bw-macro-features {
-        display: flex !important;
+        display: block !important;
+        position: relative;
         flex-direction: column !important;
         flex-wrap: nowrap !important;
         gap: 0 !important;
@@ -4953,58 +5009,47 @@
         mask-image: none !important;
     }
 
-    /* Each feature — compact row: italic number + title side by side.
-       No hairlines, no cards.  Just type rhythm. */
-    .bw-feat-item {
-        flex: 0 0 auto !important;
+    /* Inactive features — hidden entirely */
+    .bw-feat-item[data-active="false"] {
+        display: none !important;
+    }
+    /* Active feature — dramatic editorial card with big italic number
+       on top, generous serif title, readable description. */
+    .bw-feat-item[data-active="true"],
+    .bw-feat-item:not([data-active]) {
+        display: flex !important;
+        flex: 1 1 auto !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
         scroll-snap-align: none !important;
         scroll-snap-stop: normal !important;
         position: relative !important;
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: baseline !important;
-        gap: 18px;
+        flex-direction: column !important;
+        align-items: flex-start;
+        gap: 6px;
         background: transparent !important;
         border: 0 !important;
         border-radius: 0 !important;
-        padding: 0 !important;
+        padding: 12px 4px !important;
         min-height: 0;
         overflow: visible;
         box-shadow: none !important;
         opacity: 0;
-        transform: translateY(12px);
-        animation: bwFeatRevealUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-        will-change: auto;
+        transform: translateY(8px);
+        animation: bwFeatActiveIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        will-change: opacity, transform;
         transition: none !important;
+        margin: 0 !important;
     }
-    .bw-feat-item:not(:last-child) {
-        margin-bottom: 14px !important;
-    }
-    .bw-feat-item--1 {
-        animation-delay: 0.1s;
-    }
-    .bw-feat-item--2 {
-        animation-delay: 0.15s;
-    }
-    .bw-feat-item--3 {
-        animation-delay: 0.2s;
-    }
-    .bw-feat-item--4 {
-        animation-delay: 0.25s;
-    }
-    @keyframes bwFeatRevealUp {
+    @keyframes bwFeatActiveIn {
         to {
             opacity: 1;
             transform: translateY(0);
         }
     }
 
-    /* Number — italic Cormorant teal 24px, fixed width for grid alignment.
-       Acts as enumeration marker, not display moment.  Tabular-nums to
-       align all 4 numbers vertically. */
+    /* Number — BIG italic Cormorant teal 48px, prominent. */
     .bw-feat-item .bw-macro-number {
         position: static !important;
         top: auto !important;
@@ -5015,15 +5060,15 @@
         opacity: 1 !important;
         font-family: var(--font-display) !important;
         font-style: italic;
-        font-size: 24px !important;
-        font-weight: 400 !important;
-        line-height: 1.2 !important;
-        letter-spacing: -0.02em !important;
+        font-size: 48px !important;
+        font-weight: 300 !important;
+        line-height: 0.95 !important;
+        letter-spacing: -0.04em !important;
         z-index: auto;
         pointer-events: none;
-        margin: 0 !important;
+        margin: 0 0 -4px 0 !important;
         flex: 0 0 auto;
-        min-width: 32px;
+        min-width: 0;
         font-variant-numeric: tabular-nums;
         animation: none !important;
         transition: none !important;
@@ -5036,26 +5081,33 @@
         z-index: 1;
         padding: 0 !important;
         flex: 1;
-        display: block;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
     }
-    /* Title — DM Sans body, NOT serif (this is enumeration, not chapter
-       heading).  Smaller + lighter so it sits next to the number as
-       a peer in a list row. */
+    /* Title — Cormorant serif 22px, generous */
     .bw-feat-title {
-        font-family: var(--font-body) !important;
-        font-size: 16px !important;
+        font-family: var(--font-display) !important;
+        font-size: 22px !important;
         font-weight: 400 !important;
-        letter-spacing: 0 !important;
-        line-height: 1.35 !important;
+        letter-spacing: var(--tracking-tight) !important;
+        line-height: 1.2 !important;
         margin: 0 !important;
         color: var(--color-text-primary);
         word-break: normal;
     }
-    /* Description hidden on mobile — features are just enumeration here.
-       Full description lives on desktop. */
-    .bw-feat-desc {
-        display: none !important;
+    /* Description — RESTORED, visible when feature is active */
+    .bw-feat-item[data-active="true"] .bw-feat-desc {
+        display: block !important;
+        font-family: var(--font-body) !important;
+        font-size: 14px !important;
+        line-height: 1.55 !important;
+        color: var(--color-text-secondary) !important;
+        margin: 0 !important;
     }
+    /* Batch 51: Description visibility controlled per-active-feature
+       above (via [data-active="true"] selector).  Default = hidden for
+       inactive features, shown for active. */
     /* "Каталог →" feat-link inside feature 4 — hide on mobile since
        we have a dedicated CTA at section end. */
     .bw-feat-link {
