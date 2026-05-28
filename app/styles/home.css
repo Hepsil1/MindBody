@@ -3024,6 +3024,20 @@
     }
 }
 
+/* Batch 45 B1: Hide IG mockup vanity counters on mobile.
+   Inside the iPhone-mockup screen we render
+   "2168 публікації / 63.9 тис підписники / 1257 підписки".
+   Same SMB-signal counters Batch 44 A2 removed from .stats-section,
+   just in miniature. Premium brands (The Row / Lemaire / Bonpoint
+   / Aesop / Sézane / Cuyana / Polène) — zero counters anywhere on
+   their site. The remaining profile row (avatar + handle + bio) is
+   enough. Desktop keeps full mockup. */
+@media (max-width: 768px) {
+    .ig-ui-stats {
+        display: none !important;
+    }
+}
+
 /* =============================================
    NEW ARRIVALS — CAROUSEL
    ============================================= */
@@ -4104,6 +4118,38 @@
         left: 14px !important;
         border: 0 !important;
         box-shadow: none !important;
+    }
+    /* Batch 45 A4: SALE badge "−9%" → "sale" word in carousel.
+       The whisper-italic treatment above runs on every badge including
+       SALE; without overriding text-content, sale items render math
+       discount "−9%" in italic. Premium standard — never show
+       percent. We hide the original text via color: transparent +
+       font-size:0 (overriding parent rule), then ::after injects
+       the word "sale" in the same italic teal style. Surface
+       consistency: shop = uppercase "SALE" pill, home = lowercase
+       italic "sale". Both communicate sale state without math. */
+    .products-carousel .product-card__badge--sale {
+        color: transparent !important;
+        font-size: 0 !important;
+        position: relative;
+        min-width: 32px;
+        line-height: 1.4;
+    }
+    .products-carousel .product-card__badge--sale::after {
+        content: "sale";
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        color: var(--color-primary) !important;
+        font-family: var(--font-display) !important;
+        font-style: italic !important;
+        font-size: 12px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.02em !important;
+        text-transform: none !important;
+        pointer-events: none;
     }
     /* Hide colour swatches under cards — they fight the editorial feel */
     .products-carousel .product-card__colors,

@@ -2202,6 +2202,19 @@ button.product-card__swatch:focus-visible {
     filter: brightness(0) invert(1) sepia(0.15) saturate(3) hue-rotate(155deg);
 }
 
+/* Batch 45 A1: Hide sun-mandala watermark tiles on mobile.
+   On large viewports the tiled brand-mark reads as subtle texture
+   behind collections + product grid. On mobile (390-768px) the tile
+   density + visible-tile count creates yoga-studio kitsch — same
+   mark repeating 4-6 times in the visible region. Premium standard
+   is ONE brand mark, sparingly. Desktop keeps texture. */
+@media (max-width: 768px) {
+    .logo-pattern-bg::before,
+    .logo-pattern-bg::after {
+        display: none !important;
+    }
+}
+
 /* ── LAYER 1 (far): Large logos, very soft, blurred ── */
 .logo-pattern-bg::before {
     background-image:
@@ -14403,13 +14416,15 @@ body:has(.filter-drawer-overlay) .floating-contact {
         opacity: 0.9;
     }
 
-    /* Category card "ПЕРЕГЛЯНУТИ →" link reveals on hover on
-       desktop; on touch hover never fires, so the affordance is
-       invisible. Force visible. */
+    /* Batch 45 A3: Hide "ПЕРЕГЛЯНУТИ →" CTA pill on mobile.
+       Card itself is wrapped in <Link> (CategoryCard.tsx line 43),
+       so tap-on-image already navigates. Premium e-comm pattern
+       (Sézane / Cuyana / Polène / Aesop) — no explicit CTA on
+       category cards mobile, the card image IS the affordance.
+       Removes 6 robotic "ПЕРЕГЛЯНУТИ →" repeats on home. */
     .category-card-editorial__reveal-wrap,
     .category-card-editorial__link {
-        opacity: 1 !important;
-        transform: none !important;
+        display: none !important;
     }
 
     /* Card hover-flip image can't trigger on touch and leaves
