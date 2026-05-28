@@ -2022,7 +2022,8 @@
 /* Batch 46: Quote overlay over video bottom — mobile-only.
    Hidden on desktop because the manifesto + mission text lives in
    the left column on desktop layout. */
-.bw-v3-video-quote {
+.bw-v3-video-quote,
+.bw-v3-video-title {
     display: none;
 }
 
@@ -4614,21 +4615,26 @@
 }
 
 /* ====================================================================
-   Batch 48 — Рух що перетворює: Cinematic + Editorial Snap Strip
+   Batch 49 — Рух що перетворює: Cinema Title + Bold Quote Manifesto
 
-   User feedback on Batch 46 sandwich: "Переделай раздел на телефоне
-   в целом. Придумай крутой раздел вокруг этих видео на телефоне.
-   Мне не нравится 12 23 4." → rejected 2x2 grid as predictable.
+   User feedback on Batch 48 v2 vertical moments: "фигня. меняй прям
+   полностью от а до я все кроме видео" → reject vertical chapter
+   stacking entirely.  Radical redesign: ONLY video preserved, rest
+   completely restructured.
 
-   New mental model:
-   • Video remains SINGULAR cinematic moment (full-bleed 9:16, no
-     content competing for attention beside or wrapping it)
-   • Features become an EDITORIAL SNAP STRIP — horizontal scroll-snap
-     carousel below video.  Each card sized 82vw so next card peeks
-     at edge (signature mobile gesture from Aesop / Sézane mobile)
-   • Each card gets the full horizontal canvas — big italic Cormorant
-     number (52px) + serif title + readable description (was hidden
-     in sandwich due to 2-col crampedness, restored here)
+   New mental model — film poster:
+   • Title "Рух що перетворює" OVERLAYS the video top as cinematic
+     film-poster heading.  Italic Cormorant 38px white with shadow
+     over dark gradient.  Drops the boring "title above video" pattern.
+   • Pull-quote (mission) stays bottom of video (kept from B46).
+   • Below video: manifesto paragraph becomes the BOLD READABLE
+     centerpiece — black serif, generous size, centered.  Was muted
+     gray in previous batches; now it OWNS the post-video space.
+   • Features compressed to TIGHT ENUMERATION — number + title only,
+     row format, no descriptions on mobile.  4 lines of editorial
+     listing, not 4 separate "moments".
+   • CTA becomes prominent outlined PILL (was a tiny text-link in
+     previous batches).  Bottom-center.  Anchors the section.
 
    Mobile order (vertical flex column, explicit order):
      1. .bw-manifesto-head    (eyebrow + H2 «Рух що перетворює»)
@@ -4645,20 +4651,21 @@
         gap: 32px !important;
         padding: 0 !important;
     }
-    /* Flatten manifesto wrappers so head + body get individual
-       flex-order routing in the layout flex root */
+    /* Flatten ALL manifesto wrappers so body's paragraph and CTA can
+       get individual flex-order routing in the layout flex root.
+       New chain (Batch 49):
+         (head hidden) → video (2) → manifesto paragraph (3)
+         → features (4) → CTA (5).
+       Narrative: see brand → read philosophy → see proof points → act. */
     .bw-v3-manifesto,
-    .bw-manifesto-text {
+    .bw-manifesto-text,
+    .bw-manifesto-body {
         display: contents !important;
     }
 
     .bw-manifesto-head {
-        order: 1 !important;
-        padding: 0 24px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+        /* Hidden — title now overlays video top */
+        display: none !important;
     }
     .bw-v3-frame-container {
         order: 2 !important;
@@ -4670,44 +4677,79 @@
         position: relative;
         flex: 0 0 auto !important;
     }
-    .bw-v3-features {
+    .bw-body-minimal {
         order: 3 !important;
-        /* Native flex container retained — children stay grouped for
-           horizontal snap-strip layout (see .bw-macro-features below). */
-    }
-    .bw-manifesto-body {
-        order: 5 !important;
+        margin: 0 auto !important;
         padding: 0 24px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 14px;
+    }
+    .bw-v3-features {
+        order: 4 !important;
+        padding: 0 24px !important;
+    }
+    .bw-btn-elegant {
+        order: 5 !important;
+        align-self: center !important;
     }
 
-    /* Typography on manifesto head + body */
+    /* Typography on manifesto body — Batch 49 redesign.
+       Manifesto paragraph becomes the prominent readable centerpiece
+       after the video.  Larger, BLACK serif (Cormorant), centered.
+       Was muted gray DM Sans 14px in prior batches — now owns the
+       post-video space. */
     .bw-eyebrow-minimal {
         margin: 0 auto;
     }
     .bw-heading-elegant {
-        margin: 0 auto !important;
-        max-width: 320px;
-        font-size: clamp(2.2rem, 9vw, 2.6rem) !important;
-        line-height: 1.05 !important;
+        /* Hidden — title moved to overlay on video in Batch 49 */
+        display: none !important;
     }
     .bw-body-minimal {
         margin: 0 auto !important;
-        max-width: 320px;
+        max-width: 340px;
         text-align: center;
-        line-height: 1.6;
+        line-height: 1.45 !important;
+        font-family: var(--font-display) !important;
+        font-size: 18px !important;
+        font-weight: 400 !important;
+        color: var(--color-text-primary) !important;
+        letter-spacing: -0.005em;
     }
     /* Mission text lives as quote-overlay inside video on mobile
        (Batch 46).  Hide the body copy to avoid duplication. */
     .bw-mission-elegant {
         display: none !important;
     }
+    /* CTA — prominent outlined pill, was a tiny text-link in prior
+       batches.  Now full-width-ish container with serif label and
+       teal border + arrow.  Anchors the section. */
     .bw-btn-elegant {
-        margin: 4px auto 0 !important;
+        margin: 6px auto 0 !important;
+        display: inline-flex !important;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 32px !important;
+        background: transparent !important;
+        border: 1px solid var(--color-primary) !important;
+        border-radius: 999px !important;
+        color: var(--color-primary) !important;
+        font-family: var(--font-body) !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.16em !important;
+        text-transform: uppercase !important;
+        text-decoration: none !important;
+        transition:
+            background 0.3s ease,
+            color 0.3s ease;
+    }
+    .bw-btn-elegant:hover,
+    .bw-btn-elegant:active {
+        background: var(--color-primary) !important;
+        color: var(--color-bg-white) !important;
+    }
+    .bw-btn-arr {
+        font-size: 14px;
+        line-height: 1;
     }
 
     /* Magnetic logo + kinetic ring — disabled на touch (нужен mouse).
@@ -4756,6 +4798,61 @@
         .bw-v3-frame {
             animation: none !important;
         }
+    }
+
+    /* Batch 49: Title overlay OVER video TOP — film-poster heading.
+       "Рух що перетворює" appears as cinematic title overlay at top
+       of the video, white italic Cormorant with dark gradient backdrop
+       and subtle text-shadow for legibility on any video frame.
+       Mirror of the bottom quote overlay — together they bracket the
+       video like film opening + closing credits. */
+    .bw-v3-video-title {
+        display: block !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        padding: 32px 28px 56px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.98);
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: clamp(2rem, 8vw, 2.4rem);
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+        pointer-events: none;
+        background: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.45) 0%,
+            rgba(0, 0, 0, 0.25) 55%,
+            rgba(0, 0, 0, 0) 100%
+        );
+        animation: bwTitleFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s backwards;
+    }
+    .bw-v3-video-title em {
+        font-style: italic;
+        color: #fff;
+    }
+    @keyframes bwTitleFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    /* Hide the original H2 heading on mobile — it lives now in
+       the video-title overlay above the video. */
+    .bw-manifesto-head .bw-heading-elegant,
+    .bw-manifesto-head .bw-eyebrow-minimal {
+        display: none !important;
+    }
+    .bw-manifesto-head {
+        display: none !important;
     }
 
     /* Batch 46: Quote overlay OVER video bottom — cinematic caption.
@@ -4836,20 +4933,11 @@
         transform: scale(1.4);
     }
 
-    /* Batch 48 v2: Features as Cinematic Vertical Moments.
-       After thrashing through grid + carousel attempts, settled on the
-       boldest reliable approach: vertical stack where each feature is
-       a DRAMATIC editorial moment — number is OVERSIZED italic Cormorant
-       (76px), title is generously sized serif, description readable.
-       Each card breathes — 32px gap between items.
-
-       This feels like turning pages in an art book.  Video → feature 1
-       (huge moment) → feature 2 (huge moment) → ... → manifesto.
-       Differentiation from prior batches:
-       — Not a flat list (numbers are MASSIVE editorial display)
-       — Not a 2x2 grid (single column with breathing)
-       — Not a horizontal carousel (no layout fragility)
-       — IS premium magazine spread aesthetic */
+    /* Batch 49: Features as TIGHT ENUMERATION row.
+       Compressed to single-line listing: number | title (no description
+       on mobile).  Each row = compact horizontal pair.  No cards, no
+       boxes — just typographic enumeration of brand principles.
+       Reads as a film-credits list ("Director / Cinematographer / ..."). */
     .bw-macro-features {
         display: flex !important;
         flex-direction: column !important;
@@ -4865,9 +4953,8 @@
         mask-image: none !important;
     }
 
-    /* Each feature — dramatic editorial moment.  Number sits in upper-
-       left, large italic Cormorant 76px.  Title + description below.
-       Top hairline separator gives visual rhythm between items. */
+    /* Each feature — compact row: italic number + title side by side.
+       No hairlines, no cards.  Just type rhythm. */
     .bw-feat-item {
         flex: 0 0 auto !important;
         width: 100% !important;
@@ -4877,26 +4964,24 @@
         scroll-snap-stop: normal !important;
         position: relative !important;
         display: flex !important;
-        flex-direction: column !important;
-        align-items: flex-start;
-        gap: 4px;
+        flex-direction: row !important;
+        align-items: baseline !important;
+        gap: 18px;
         background: transparent !important;
         border: 0 !important;
-        border-top: 1px solid var(--color-border-light) !important;
         border-radius: 0 !important;
-        padding: 28px 8px 8px !important;
+        padding: 0 !important;
         min-height: 0;
         overflow: visible;
         box-shadow: none !important;
         opacity: 0;
-        transform: translateY(20px);
-        animation: bwFeatRevealUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        transform: translateY(12px);
+        animation: bwFeatRevealUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
         will-change: auto;
         transition: none !important;
     }
-    .bw-feat-item:first-child {
-        border-top: 0 !important;
-        padding-top: 8px !important;
+    .bw-feat-item:not(:last-child) {
+        margin-bottom: 14px !important;
     }
     .bw-feat-item--1 {
         animation-delay: 0.1s;
@@ -4917,9 +5002,9 @@
         }
     }
 
-    /* Macro number — OVERSIZED italic Cormorant (76px) — the dramatic
-       editorial moment of each feature.  Reads as a chapter number in
-       an art book. Color subtly faded so it doesn't fight title. */
+    /* Number — italic Cormorant teal 24px, fixed width for grid alignment.
+       Acts as enumeration marker, not display moment.  Tabular-nums to
+       align all 4 numbers vertically. */
     .bw-feat-item .bw-macro-number {
         position: static !important;
         top: auto !important;
@@ -4927,17 +5012,18 @@
         right: auto !important;
         color: var(--color-primary) !important;
         -webkit-text-stroke: 0 !important;
-        opacity: 0.95 !important;
+        opacity: 1 !important;
         font-family: var(--font-display) !important;
         font-style: italic;
-        font-size: 76px !important;
-        font-weight: 300 !important;
-        line-height: 0.95 !important;
-        letter-spacing: -0.04em !important;
+        font-size: 24px !important;
+        font-weight: 400 !important;
+        line-height: 1.2 !important;
+        letter-spacing: -0.02em !important;
         z-index: auto;
         pointer-events: none;
-        margin: 0 0 -8px 0 !important;
-        min-width: 0;
+        margin: 0 !important;
+        flex: 0 0 auto;
+        min-width: 32px;
         font-variant-numeric: tabular-nums;
         animation: none !important;
         transition: none !important;
@@ -4950,38 +5036,30 @@
         z-index: 1;
         padding: 0 !important;
         flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        display: block;
     }
+    /* Title — DM Sans body, NOT serif (this is enumeration, not chapter
+       heading).  Smaller + lighter so it sits next to the number as
+       a peer in a list row. */
     .bw-feat-title {
-        font-family: var(--font-display) !important;
-        font-size: 26px !important;
+        font-family: var(--font-body) !important;
+        font-size: 16px !important;
         font-weight: 400 !important;
-        letter-spacing: var(--tracking-tight) !important;
-        line-height: 1.15 !important;
+        letter-spacing: 0 !important;
+        line-height: 1.35 !important;
         margin: 0 !important;
         color: var(--color-text-primary);
         word-break: normal;
     }
-    /* Description RESTORED on mobile — each card has 82vw of width
-       so 3-line description reads comfortably (was hidden in
-       Batch 46 sandwich where 2-col grid couldn't fit it). */
+    /* Description hidden on mobile — features are just enumeration here.
+       Full description lives on desktop. */
     .bw-feat-desc {
-        display: block !important;
-        font-family: var(--font-body) !important;
-        font-size: 14px !important;
-        line-height: 1.55 !important;
-        color: var(--color-text-secondary) !important;
-        margin: 0 !important;
+        display: none !important;
     }
+    /* "Каталог →" feat-link inside feature 4 — hide on mobile since
+       we have a dedicated CTA at section end. */
     .bw-feat-link {
-        margin-top: 12px !important;
-        font-size: 11px !important;
-        letter-spacing: 0.18em !important;
-        display: inline-flex !important;
-        align-items: center;
-        gap: 4px;
+        display: none !important;
     }
 
     /* Pager dots not needed for vertical stack — document scroll surfaces

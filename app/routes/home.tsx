@@ -956,6 +956,14 @@ export default function Home() {
                                         />
                                     ))}
                                 </div>
+                                {/* Batch 49: title overlay on video TOP (mobile-only).
+                                    "Рух що перетворює" appears as cinematic film-
+                                    poster title at top of video.  Desktop hides
+                                    this via @media (title lives in left column
+                                    of bw-v3-manifesto on desktop). */}
+                                <div className="bw-v3-video-title" aria-hidden="true">
+                                    Рух що <em>перетворює</em>
+                                </div>
                                 {/* Batch 46: pull-quote overlay over video bottom.
                                     Mobile-only — desktop hides via @media.  Mission
                                     text duplicates intentionally (also lives in
