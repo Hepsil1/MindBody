@@ -4581,6 +4581,36 @@
         padding-top: 48px !important;
         padding-bottom: 48px !important;
     }
+
+    /* Batch 47: tighter section-header rhythm on mobile.
+       Default `.section__header { margin-bottom: var(--space-2xl) }` =
+       48px is generous for desktop; on mobile we already have section
+       padding 48px above + 48px header gap = 96px between section start
+       and content. Drop to 28px header gap → 76px total = breathing
+       room without dead space.  Applies to all .section__header wrappers
+       (collections, new-arrivals, brand-video, instagram). */
+    .section__header {
+        margin-bottom: 28px !important;
+    }
+
+    /* Batch 47: shop-collections-group bottom padding was already 48
+       (from app.css 600px rule).  Drop trailing padding to 32 since
+       next section (brand-video) has its own 48 top padding already
+       — 32+48 = 80 between cards bottom and brand-video heading. */
+    .shop-collections-group {
+        padding-bottom: 32px !important;
+    }
+
+    /* IG section — tighten internal padding + header rhythm.  Phone
+       mockup widget is intentionally preserved (per user); but section
+       padding can shrink. */
+    .ig-hyper {
+        padding-top: 48px !important;
+        padding-bottom: 48px !important;
+    }
+    .ig-hyper__header {
+        margin-bottom: 32px !important;
+    }
 }
 
 /* ====================================================================
