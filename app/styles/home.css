@@ -2019,6 +2019,13 @@
     justify-content: center;
 }
 
+/* Batch 46: Quote overlay over video bottom — mobile-only.
+   Hidden on desktop because the manifesto + mission text lives in
+   the left column on desktop layout. */
+.bw-v3-video-quote {
+    display: none;
+}
+
 .bw-v3-frame {
     width: 100%;
     aspect-ratio: 3/4;
@@ -4577,57 +4584,74 @@
 }
 
 /* ====================================================================
-   Batch 43 — Рух що перетворює: Cinematic Portrait (mobile-only)
+   Batch 46 — Рух що перетворює: Editorial Sandwich (mobile-only)
 
-   User: "переделай полностью моб версию. Видео = основа, вокруг
-   видео сделай эффект вау."
+   User: "переделай полностью моб версию.  Сделай красиво вокруг
+   видео, а не просто списком.  Продумай, сделай куча вариантов,
+   выбери лучший."
 
-   Replaces Batch 11/12 horizontal carousel AND Batch 20 2x2 grid.
-   This block lives LAST in the file so cascade wins via source order
-   + !important without re-architecting earlier rules.
+   Replaces Batch 43 Cinematic Portrait (which still left features
+   as a flat list AFTER everything).  New mental model: video is the
+   centerpiece of an editorial spread — features WRAP video (2 above,
+   2 below), mission becomes pull-quote OVER video bottom (cinematic
+   caption style, Polène / Loewe references).
 
-   Mental model: video — окно через которое viewer смотрит на бренд.
-   Текст и features обрамляют окно, не конкурируют с ним.
+   Mobile layout via CSS Grid with named areas:
+     ┌──── head ─────┐
+     ┌─ f1 ─┬─ f2 ─┐
+     ├──── frame ────┤  ← video + quote-overlay inside
+     ├─ f3 ─┼─ f4 ─┤
+     ├──── body ─────┤  ← manifesto paragraph + CTA
+     └───────────────┘
 
-   Mobile order (flex-order на bw-v3-layout flex column):
-     1. .bw-manifesto-head      (eyebrow + H2)
-     2. .bw-v3-frame-container  (full-bleed 9:16 video)
-     3. .bw-manifesto-body      (paragraph + mission + CTA)
-     4. .bw-v3-features         (vertical stack)
+   `display: contents` is used on .bw-v3-manifesto, .bw-manifesto-text,
+   and .bw-v3-features so their children flatten into the grid and
+   each get a discrete grid-area assignment.
    ==================================================================== */
 @media (max-width: 768px) {
-    /* Layout: column with explicit order chain.  display: contents
-       on .bw-v3-manifesto pulls head + body up as direct children
-       of bw-v3-layout so their `order` values land in the same
-       flex axis as frame-container + features. */
+    /* Layout: CSS Grid with named areas for sandwich composition. */
     .bw-v3-layout {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 32px !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px 16px !important;
+        grid-template-areas:
+            "head head"
+            "f1 f2"
+            "frame frame"
+            "f3 f4"
+            "body body";
         padding: 0 !important;
+        align-items: start !important;
     }
-    .bw-v3-manifesto {
+
+    /* Flatten 3 wrapper levels into grid: manifesto > manifesto-text
+       > head/body. All need display:contents so head/body/features
+       land as direct grid children. */
+    .bw-v3-manifesto,
+    .bw-manifesto-text,
+    .bw-v3-features {
         display: contents !important;
     }
-    /* JSX nests head + body inside .bw-manifesto-text (which lives
-       inside .bw-v3-manifesto).  Both wrappers need display: contents
-       to flatten head/body up to bw-v3-layout for flex-order routing.
-       Without this, head/body stay grouped at manifesto's slot and
-       can't appear AFTER frame on mobile. */
-    .bw-manifesto-text {
-        display: contents !important;
-    }
+
     .bw-manifesto-head {
-        order: 1 !important;
+        grid-area: head;
         padding: 0 24px;
         text-align: center;
         display: flex;
         flex-direction: column;
         gap: 8px;
     }
+    .bw-v3-frame-container {
+        grid-area: frame;
+        width: 100vw !important;
+        max-width: none !important;
+        margin-left: calc(-50vw + 50%) !important;
+        margin-right: calc(-50vw + 50%) !important;
+        padding: 0 !important;
+        position: relative;
+    }
     .bw-manifesto-body {
-        order: 3 !important;
+        grid-area: body;
         padding: 0 24px;
         text-align: center;
         display: flex;
@@ -4635,26 +4659,25 @@
         align-items: center;
         gap: 14px;
     }
-    .bw-v3-frame-container {
-        order: 2 !important;
-        width: 100vw !important;
-        max-width: none !important;
-        margin-left: calc(-50vw + 50%) !important;
-        margin-right: calc(-50vw + 50%) !important;
-        padding: 0 !important;
-        position: relative;
-        flex: 0 0 auto !important;
-        align-self: auto !important;
+
+    /* Features split into 4 separate grid areas: 1+2 above video,
+       3+4 below.  Each feature becomes a compact card with number
+       + title.  Description hidden on mobile (preserved in DOM for
+       screen readers via aria; visible on desktop). */
+    .bw-feat-item--1 {
+        grid-area: f1;
     }
-    .bw-v3-features {
-        order: 4 !important;
-        padding: 0 24px !important;
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
+    .bw-feat-item--2 {
+        grid-area: f2;
+    }
+    .bw-feat-item--3 {
+        grid-area: f3;
+    }
+    .bw-feat-item--4 {
+        grid-area: f4;
     }
 
-    /* Typography on manifesto */
+    /* Typography on manifesto head + body */
     .bw-eyebrow-minimal {
         margin: 0 auto;
     }
@@ -4670,15 +4693,9 @@
         text-align: center;
         line-height: 1.6;
     }
+    /* Mission text lives as quote-overlay inside video on mobile
+       (Batch 46).  Hide the body copy to avoid duplication. */
     .bw-mission-elegant {
-        margin: 0 auto !important;
-        padding-left: 0 !important;
-        max-width: 320px;
-        text-align: center !important;
-        font-size: 14px !important;
-        font-style: italic;
-    }
-    .bw-mission-elegant::before {
         display: none !important;
     }
     .bw-btn-elegant {
@@ -4699,8 +4716,8 @@
        — premium portrait that respects mobile viewport. */
     .bw-v3-frame {
         aspect-ratio: 9 / 16 !important;
-        max-height: 75vh;
-        max-height: 75dvh;
+        max-height: 78vh;
+        max-height: 78dvh;
         max-width: none !important;
         width: 100% !important;
         border-radius: 0 !important;
@@ -4733,22 +4750,72 @@
         }
     }
 
-    /* Dot indicators ON video, bottom-center.  Stories-style. */
+    /* Batch 46: Quote overlay OVER video bottom — cinematic caption.
+       Mission text rendered as <div class="bw-v3-video-quote"> sibling
+       of .bw-v3-frame inside .bw-v3-frame-container.  Positioned
+       absolute over bottom ~30% of video.  Dark gradient backdrop
+       (built into ::before) ensures legibility on any video frame.
+       This is the signature "pull-quote over hero image" pattern
+       from Polène / Loewe / Aesop story pages. */
+    .bw-v3-video-quote {
+        display: block !important;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        padding: 80px 28px 56px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.96);
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: clamp(1.1rem, 4.5vw, 1.35rem);
+        line-height: 1.4;
+        letter-spacing: -0.005em;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+        pointer-events: none;
+        /* Soft dark gradient from transparent → black for text legibility */
+        background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.55) 0%,
+            rgba(0, 0, 0, 0.35) 45%,
+            rgba(0, 0, 0, 0) 100%
+        );
+        animation: bwQuoteFadeIn 1.4s ease-out 0.4s backwards;
+    }
+    .bw-v3-video-quote em {
+        font-style: italic;
+        color: #fff;
+    }
+    @keyframes bwQuoteFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Dot indicators ON video, bottom-center.  Stories-style.
+       Lifted to bottom: 26px so they sit ABOVE the gradient quote
+       region (which extends ~120px from bottom). */
     .bw-v3-frame-dots {
         display: flex !important;
         position: absolute !important;
-        bottom: 18px;
+        bottom: 26px;
         left: 50%;
         transform: translateX(-50%);
         gap: 8px;
-        z-index: 2;
+        z-index: 3;
         pointer-events: none;
         margin: 0 !important;
         justify-content: center;
     }
     .bw-v3-frame-dots .bw-v3-dot {
-        width: 6px;
-        height: 6px;
+        width: 5px;
+        height: 5px;
         border-radius: 50%;
         background: rgba(255, 255, 255, 0.45);
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
@@ -4758,66 +4825,61 @@
     }
     .bw-v3-frame-dots .bw-v3-dot--active {
         background: rgba(255, 255, 255, 1);
-        transform: scale(1.35);
+        transform: scale(1.4);
     }
 
-    /* Features: vertical stack (NOT 2x2 grid, NOT carousel) */
+    /* Features — compact 2-col grid (1+2 above video, 3+4 below).
+       Each feat-item lives in its own grid-area, becomes a vertical
+       mini-card with italic Cormorant number + DM Sans title.
+       Description hidden on mobile to keep cards compact; preserved
+       in DOM for screen readers (display: none acceptable since
+       title carries semantic meaning). */
     .bw-macro-features {
-        display: flex !important;
-        flex-direction: column !important;
-        grid-template-columns: none !important;
-        overflow: visible !important;
-        overflow-x: visible !important;
-        scroll-snap-type: none !important;
-        gap: 36px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-        max-width: none !important;
-        -webkit-mask-image: none !important;
-        mask-image: none !important;
-    }
-    .bw-macro-features::-webkit-scrollbar {
-        display: none;
+        display: contents !important;
     }
     .bw-feat-item {
-        flex: 0 0 auto !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        scroll-snap-align: none !important;
-        scroll-snap-stop: normal !important;
         position: relative !important;
         display: flex !important;
-        flex-direction: row !important;
+        flex-direction: column !important;
         align-items: flex-start;
-        gap: 18px;
+        gap: 6px;
+        padding: 0 16px 0 24px !important;
         background: transparent !important;
         border: 0 !important;
         border-right: 0 !important;
         border-radius: 0 !important;
-        padding: 0 !important;
         min-height: 0;
+        max-width: none !important;
+        width: auto !important;
+        min-width: 0 !important;
         overflow: visible;
         box-shadow: none !important;
         opacity: 0;
-        transform: translateY(24px);
-        animation: bwFeatRevealUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-        animation-timeline: auto !important;
+        transform: translateY(16px);
+        animation: bwFeatRevealUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
         will-change: auto;
         transition: none !important;
+        /* No-op for legacy carousel rules */
+        flex: 0 0 auto !important;
+        scroll-snap-align: none !important;
+    }
+    /* Right-column features (02, 04) — flip padding so number sits
+       toward inner gutter, content reads outward */
+    .bw-feat-item--2,
+    .bw-feat-item--4 {
+        padding: 0 24px 0 16px !important;
     }
     .bw-feat-item--1 {
-        animation-delay: 0.05s;
+        animation-delay: 0.1s;
     }
     .bw-feat-item--2 {
-        animation-delay: 0.15s;
+        animation-delay: 0.2s;
     }
     .bw-feat-item--3 {
-        animation-delay: 0.25s;
+        animation-delay: 0.3s;
     }
     .bw-feat-item--4 {
-        animation-delay: 0.35s;
+        animation-delay: 0.4s;
     }
     @keyframes bwFeatRevealUp {
         to {
@@ -4825,15 +4887,9 @@
             transform: translateY(0);
         }
     }
-    .bw-feat-item:active {
-        transform: none !important;
-    }
-    .bw-feat-item:not(:last-child) {
-        border-right: 0 !important;
-    }
 
-    /* Macro number — italic Cormorant 44px NEXT TO content (not behind).
-       Tabular-nums для вертикальной выравненности. */
+    /* Macro number — italic Cormorant 32px (was 44px in vertical stack;
+       smaller here because 2-col grid = half-width).  Tabular-nums. */
     .bw-feat-item .bw-macro-number {
         position: static !important;
         top: auto !important;
@@ -4844,15 +4900,14 @@
         opacity: 1 !important;
         font-family: var(--font-display) !important;
         font-style: italic;
-        font-size: 44px !important;
+        font-size: 32px !important;
         font-weight: 300 !important;
         line-height: 1 !important;
         letter-spacing: -0.02em !important;
         z-index: auto;
         pointer-events: none;
-        margin: 0 !important;
-        flex-shrink: 0;
-        min-width: 56px;
+        margin: 0 0 2px 0 !important;
+        min-width: 0;
         font-variant-numeric: tabular-nums;
         animation: none !important;
         transition: none !important;
@@ -4863,39 +4918,37 @@
     .bw-macro-content {
         position: relative;
         z-index: 1;
-        padding: 6px 0 0 0 !important;
+        padding: 0 !important;
         flex: 1;
     }
     .bw-feat-title {
         font-family: var(--font-display) !important;
-        font-size: 22px !important;
+        font-size: 15px !important;
         font-weight: 400 !important;
         letter-spacing: var(--tracking-tight) !important;
-        line-height: 1.2 !important;
-        margin: 0 0 6px 0 !important;
+        line-height: 1.25 !important;
+        margin: 0 !important;
         color: var(--color-text-primary);
         word-break: normal;
     }
+    /* Description hidden on mobile — too cramped in 2-col grid.
+       Number + title carry the semantic; full description still
+       readable on desktop. */
     .bw-feat-desc {
-        font-size: 14px !important;
-        line-height: 1.55 !important;
-        color: var(--color-text-secondary);
-        margin: 0 !important;
+        display: none !important;
     }
     .bw-feat-link {
-        margin-top: 14px !important;
-        font-size: 11px !important;
+        margin-top: 8px !important;
+        font-size: 10px !important;
         letter-spacing: 0.18em !important;
         display: inline-flex !important;
         align-items: center;
         gap: 4px;
     }
-    .bw-macro-features:hover .bw-feat-item:not(:hover) {
-        opacity: 1 !important;
-    }
 
-    /* Old horizontal feat-dots pager — disabled (vertical stack
-       doesn't need pager nav, document scroll handles it). */
+    /* Old horizontal feat-dots pager — disabled (Editorial Sandwich
+       doesn't need feature-pager nav; document scroll surfaces all
+       4 features in 2x2 grid). */
     .bw-feat-dots-wrap {
         display: none !important;
     }
@@ -4905,7 +4958,8 @@
         .bw-feat-item .bw-macro-number,
         .bw-v3-frame,
         .bw-frame-img,
-        .bw-playlist-vid {
+        .bw-playlist-vid,
+        .bw-v3-video-quote {
             animation: none !important;
             opacity: 1 !important;
             transform: none !important;

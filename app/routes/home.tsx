@@ -956,6 +956,14 @@ export default function Home() {
                                         />
                                     ))}
                                 </div>
+                                {/* Batch 46: pull-quote overlay over video bottom.
+                                    Mobile-only — desktop hides via @media.  Mission
+                                    text duplicates intentionally (also lives in
+                                    body section); CSS hides the body copy on
+                                    mobile so user sees the quote only here. */}
+                                <div className="bw-v3-video-quote" aria-hidden="true">
+                                    Подаруй собі <em>комфорт</em> — і ти подаруєш собі крила
+                                </div>
                                 <div className="bw-v3-frame">
                                     {/* 1. Sequential continuous playlist (3 videos) with smooth crossfade */}
                                     {videoPlaylist.map((src, i) => (
