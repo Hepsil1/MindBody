@@ -13538,10 +13538,14 @@ body:has(.filter-drawer-overlay) .floating-contact {
     text-transform: uppercase;
 }
 
+/* Subtitle + "ПЕРЕГЛЯНУТИ" link now ALWAYS visible (was reveal-on-
+   hover via 0fr→1fr).  User: cards looked empty — only the title
+   showed until hover, and touch devices never hover.  Keeping them
+   open on every card reads as a proper labelled category tile on
+   both desktop and mobile.  The hover arrow-nudge still fires. */
 .category-card-editorial__reveal-wrap {
     display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    grid-template-rows: 1fr;
 }
 
 .category-card-editorial__reveal-inner {
@@ -14447,15 +14451,15 @@ body:has(.filter-drawer-overlay) .floating-contact {
         opacity: 0.9;
     }
 
-    /* Batch 45 A3: Hide "ПЕРЕГЛЯНУТИ →" CTA pill on mobile.
-       Card itself is wrapped in <Link> (CategoryCard.tsx line 43),
-       so tap-on-image already navigates. Premium e-comm pattern
-       (Sézane / Cuyana / Polène / Aesop) — no explicit CTA on
-       category cards mobile, the card image IS the affordance.
-       Removes 6 robotic "ПЕРЕГЛЯНУТИ →" repeats on home. */
+    /* Batch 45 A3 REVERTED — user wants the labels back.  Subtitle +
+       "ПЕРЕГЛЯНУТИ →" stay visible on mobile category cards (they were
+       hidden here, leaving title-only cards that read as empty). */
     .category-card-editorial__reveal-wrap,
     .category-card-editorial__link {
-        display: none !important;
+        display: grid !important;
+    }
+    .category-card-editorial__link {
+        display: inline-flex !important;
     }
 
     /* Card hover-flip image can't trigger on touch and leaves
