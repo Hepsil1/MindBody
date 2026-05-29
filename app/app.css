@@ -13432,8 +13432,39 @@ body:has(.filter-drawer-overlay) .floating-contact {
     grid-row: span 1;
 }
 
-/* Mobile override removed per user — keep original 12-col bento layout
-   on all viewports. */
+/* Mobile override — RESTORED.  The desktop 12-col bento
+   (repeat(12, 1fr) + span-7/5/4) blows out on a 390px viewport: the
+   card images force each 1fr track to ~800px, so the whole grid
+   overflows ~800px wide and the cards slide off-screen, leaving an
+   empty grey band (the visible slice is just blank photo edges).
+   On mobile we drop the bento entirely and stack the cards full-width
+   single-column with a fixed aspect so each photo + its label/subtitle/
+   CTA renders cleanly.  Desktop bento is untouched. */
+@media (max-width: 768px) {
+    .editorial-categories-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        grid-template-columns: none !important;
+        grid-auto-rows: auto !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+    .category-card-editorial,
+    .category-card-editorial:nth-child(1),
+    .category-card-editorial:nth-child(2),
+    .category-card-editorial:nth-child(3),
+    .category-card-editorial:nth-child(4),
+    .category-card-editorial:nth-child(5),
+    .category-card-editorial:nth-child(6),
+    .category-card-editorial:nth-child(n + 7) {
+        grid-column: auto !important;
+        grid-row: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        aspect-ratio: 16 / 11;
+        min-height: 220px;
+    }
+}
 
 .category-card-editorial:hover {
     transform: scale(0.985); /* Sophisticated subtle shrink */
