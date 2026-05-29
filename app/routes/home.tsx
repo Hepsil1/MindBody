@@ -485,18 +485,10 @@ export default function Home() {
         child.scrollIntoView({ inline: "start", behavior: "smooth", block: "nearest" });
     }, []);
 
-    // Batch 51: Auto-cycle activeFeature on mobile every 5s (Stories-style).
-    // Resets when user manually changes feature (via chip tap) because
-    // setInterval is dependency-keyed on activeFeature — any state change
-    // tears down the old interval and starts a fresh 5s window.  Skips
-    // desktop entirely (where the 4 features render as a full row).
-    useEffect(() => {
-        if (typeof window === "undefined" || window.innerWidth > 768) return;
-        const id = setInterval(() => {
-            setActiveFeature((prev) => (prev + 1) % 4);
-        }, 5000);
-        return () => clearInterval(id);
-    }, [activeFeature]);
+    // Batch 52: Auto-cycle removed — mobile is now minimalist (video +
+    // 1 phrase + button), features hidden, so cycling activeFeature had
+    // no visible effect and just churned re-renders.  Desktop drives
+    // activeFeature via the IntersectionObserver above.
     const videoPlaylist = [
         "/uploads/brand-hero.mp4",
         "/uploads/brand-video-2.mp4",

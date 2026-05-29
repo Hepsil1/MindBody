@@ -4664,66 +4664,34 @@
         display: contents !important;
     }
 
+    /* ════════════════════════════════════════════════════════════
+       Batch 52 — MINIMALISM: video + 1 phrase + button.
+       User: "Минимализм: видео + 1 фраза + кнопка."
+       Mobile shows ONLY: full-bleed video (with title overlay top +
+       mission-phrase overlay bottom) and a CTA button.  Everything
+       else — interactive chips, all 4 feature cards, the long
+       manifesto paragraph — is hidden.  Premium-through-emptiness
+       (Aesop / The Row).  Desktop keeps the full 3-col layout.
+       ════════════════════════════════════════════════════════════ */
     .bw-manifesto-head {
         /* Hidden — title now overlays video top */
         display: none !important;
     }
-    /* Batch 51: Story-Strip chips ABOVE video (interactive nav).
-       4 chips show 01-04, active chip highlighted teal.  Tap → jump
-       to that feature instantly.  Auto-cycles every 5s. */
-    .bw-v3-chips {
-        order: 2 !important;
-        display: flex !important;
-        gap: 8px;
-        padding: 0 24px;
-        justify-content: center;
-        margin: 0;
-    }
-    .bw-v3-chip {
-        flex: 0 0 auto;
-        min-width: 56px;
-        min-height: 36px;
-        padding: 8px 16px;
-        /* CRITICAL: appearance: none disables WebKit/Blink native button
-           styling that ignores CSS backgrounds.  Without this, our active
-           teal background never paints. */
-        -webkit-appearance: none;
-        appearance: none;
-        background: transparent;
-        border: 1px solid var(--color-border);
-        border-radius: 999px;
-        color: var(--color-text-secondary);
-        font-family: var(--font-display);
-        font-style: italic;
-        font-size: 16px;
-        font-weight: 400;
-        line-height: 1;
-        font-variant-numeric: tabular-nums;
-        letter-spacing: -0.01em;
-        cursor: pointer;
-        transition:
-            background 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-            color 0.3s ease,
-            border-color 0.3s ease,
-            transform 0.2s ease;
-        -webkit-tap-highlight-color: transparent;
-    }
-    .bw-v3-chip:active {
-        transform: scale(0.95);
-    }
-    .bw-v3-chip.is-active {
-        background: #2a5a5a !important;
-        background-color: #2a5a5a !important;
-        border-color: #2a5a5a !important;
-        color: #fff !important;
-    }
-    .bw-v3-chip__num {
-        display: inline-block;
-        line-height: 1;
+    /* Batch 52: chips, all features, long manifesto paragraph — HIDDEN.
+       Minimalism keeps only video + 1 phrase (overlay) + button.
+       NB: .bw-v3-features and .bw-macro-features are the SAME element
+       (both classes on one div); a later .bw-macro-features rule with
+       !important would otherwise win, so hide BOTH selectors here. */
+    .bw-v3-chips,
+    .bw-v3-features,
+    .bw-macro-features,
+    .bw-body-minimal,
+    .bw-feat-dots-wrap {
+        display: none !important;
     }
 
     .bw-v3-frame-container {
-        order: 3 !important;
+        order: 1 !important;
         width: 100vw !important;
         max-width: none !important;
         margin-left: calc(-50vw + 50%) !important;
@@ -4732,19 +4700,11 @@
         position: relative;
         flex: 0 0 auto !important;
     }
-    .bw-v3-features {
-        order: 4 !important;
-        padding: 0 24px !important;
-        min-height: 140px;
-    }
-    .bw-body-minimal {
-        order: 5 !important;
-        margin: 0 auto !important;
-        padding: 0 24px;
-    }
+    /* CTA — the only element after the video.  Centered, prominent. */
     .bw-btn-elegant {
-        order: 6 !important;
+        order: 2 !important;
         align-self: center !important;
+        margin-top: 28px !important;
     }
 
     /* Typography on manifesto body — Batch 49 redesign.
@@ -4989,24 +4949,13 @@
         transform: scale(1.4);
     }
 
-    /* Batch 51: Story-Strip — only the ACTIVE feature is visible.
-       Container becomes a positioning context for ONE feature at a time.
-       Non-active features collapse to display:none.  Active feature
-       fades + slides in from below. */
+    /* Batch 52: features container hidden on mobile (minimalism).
+       Was Batch 51 Story-Strip display:block — now display:none since
+       mobile shows only video + phrase + button.  This rule comes
+       AFTER the grouped hide above, so it must also be none to win
+       the source-order tiebreaker. */
     .bw-macro-features {
-        display: block !important;
-        position: relative;
-        flex-direction: column !important;
-        flex-wrap: nowrap !important;
-        gap: 0 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-        max-width: none !important;
-        overflow: visible !important;
-        scroll-snap-type: none !important;
-        -webkit-mask-image: none !important;
-        mask-image: none !important;
+        display: none !important;
     }
 
     /* Inactive features — hidden entirely */
