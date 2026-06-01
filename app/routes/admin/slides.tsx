@@ -42,14 +42,12 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 import { uploadFileChecked } from "../../utils/upload.server";
-import { isAuthenticated } from "../../utils/admin.server";
+import { requireAdmin } from "../../utils/admin-guard.server";
 import { invalidateAll, invalidateCache } from "../../utils/cache.server";
-import { redirect } from "react-router";
 
 export async function action({ request }: Route.ActionArgs) {
-    if (!(await isAuthenticated(request))) {
-        return redirect("/admin/login");
-    }
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     // Clear home page cache on any admin change (slides, categories, filters)
     invalidateAll();
     // Resolve an uploaded image field: keep `current` when no file was chosen,
@@ -396,14 +394,15 @@ export default function AdminVisualEditor() {
         }
     };
 
-    // Close manager on successful submit
+    // Toast feedback on submit (replaces a blocking alert()).
     useEffect(() => {
-        if (fetcher.state === "idle" && fetcher.data?.success) {
+        if (fetcher.state !== "idle" || !fetcher.data) return;
+        if (fetcher.data.success) {
             (document.getElementById("create-slide-form") as HTMLFormElement)?.reset();
-        }
-
-        if (fetcher.state === "idle" && fetcher.data?.error) {
-            alert(`Помилка: ${fetcher.data.error}`);
+            void import("sonner").then(({ toast }) => toast.success("Збережено"));
+        } else if (fetcher.data.error) {
+            const msg = String(fetcher.data.error);
+            void import("sonner").then(({ toast }) => toast.error(msg));
         }
     }, [fetcher.state, fetcher.data]);
 
