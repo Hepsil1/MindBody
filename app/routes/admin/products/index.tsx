@@ -3,41 +3,44 @@ import type { Route } from "./+types/index";
 import { prisma } from "../../../db.server";
 import { isAuthenticated } from "../../../utils/admin.server";
 import { invalidateAll } from "../../../utils/cache.server";
+import { actionOk, actionError, runAction } from "../../../utils/action-result.server";
 import { useState } from "react";
 
 export async function action({ request }: Route.ActionArgs) {
     if (!(await isAuthenticated(request))) {
         return redirect("/admin/login");
     }
-    // Clear cache so storefront shows updated product list immediately
-    invalidateAll();
     const formData = await request.formData();
     const intent = formData.get("intent");
 
-    if (intent === "delete_all") {
-        try {
-            // Delete order items referencing products first, then products
-            await prisma.orderItem.deleteMany({});
-            await prisma.product.deleteMany({});
-            return { success: true };
-        } catch (e) {
-            console.error("Failed to delete all products:", e);
-            return { error: "Failed to delete products" };
-        }
-    }
+    // NOTE: the former `delete_all` intent ran `orderItem.deleteMany({})` — an
+    // empty filter that wiped EVERY order line-item in the system, not just the
+    // ones belonging to deleted products. It has been removed. Deletion now
+    // never destroys order history (see delete_product below).
 
     if (intent === "delete_product") {
-        const id = formData.get("id");
-        try {
-            // Delete order items referencing this product first, then the product
-            await prisma.orderItem.deleteMany({ where: { productId: String(id) } });
-            await prisma.product.delete({ where: { id: String(id) } });
-            return { success: true };
-        } catch (e) {
-            console.error("Failed to delete product:", e);
-            return { error: "Failed to delete product" };
-        }
+        const id = String(formData.get("id") || "");
+        if (!id) return actionError("Не вказано товар");
+        return runAction("products.delete", async () => {
+            // A product that was ever ordered is archived (hidden from the
+            // storefront, which filters on status === "active") instead of
+            // deleted, so OrderItem history stays intact. Only products with no
+            // order history are hard-deleted.
+            const orderCount = await prisma.orderItem.count({ where: { productId: id } });
+            if (orderCount > 0) {
+                await prisma.product.update({ where: { id }, data: { status: "archived" } });
+                invalidateAll();
+                return actionOk(undefined, {
+                    type: "info",
+                    message: "Товар має історію замовлень — заархівовано замість видалення",
+                });
+            }
+            await prisma.product.delete({ where: { id } });
+            invalidateAll();
+            return actionOk(undefined, { type: "success", message: "Товар видалено" });
+        });
     }
+
     return null;
 }
 
@@ -107,35 +110,6 @@ export default function AdminProducts() {
                         <p>Каталог товарів</p>
                     </div>
                     <div style={{ display: "flex", gap: "12px" }}>
-                        <Form
-                            method="post"
-                            onSubmit={(e) => {
-                                if (
-                                    !confirm(
-                                        "Ви впевнені, що хочете видалити ВСІ товари? Цю дію неможливо відмінити.",
-                                    )
-                                ) {
-                                    e.preventDefault();
-                                }
-                            }}
-                        >
-                            <button
-                                name="intent"
-                                value="delete_all"
-                                style={{
-                                    background: "rgba(239, 68, 68, 0.1)",
-                                    color: "#ef4444",
-                                    padding: "12px 24px",
-                                    borderRadius: "8px",
-                                    fontWeight: "600",
-                                    border: "1px solid rgba(239, 68, 68, 0.2)",
-                                    fontSize: "14px",
-                                    cursor: "pointer",
-                                }}
-                            >
-                                Видалити все
-                            </button>
-                        </Form>
                         <Link
                             to="/admin/products/new"
                             style={{
@@ -448,7 +422,7 @@ export default function AdminProducts() {
                                                     onSubmit={(e) => {
                                                         if (
                                                             !confirm(
-                                                                "Ви впевнені, що хочете видалити цей товар?",
+                                                                "Видалити товар? Якщо у нього є історія замовлень — його буде заархівовано (приховано з магазину), а не видалено.",
                                                             )
                                                         ) {
                                                             e.preventDefault();
