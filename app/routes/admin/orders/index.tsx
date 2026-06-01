@@ -1,261 +1,368 @@
-import { Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useFetcher, useNavigation } from "react-router";
+import type { Route } from "./+types/index";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../../db.server";
+import { requireAdmin } from "../../../utils/admin-guard.server";
+import { actionOk, actionError, runAction } from "../../../utils/action-result.server";
+import { buildListQuery, paginate, type ListSpec } from "../../../utils/admin-list.server";
+import {
+    AdminToolbar,
+    SearchInput,
+    FilterSelect,
+    SortableTh,
+    AdminPagination,
+    EmptyState,
+} from "../../../components/admin/list";
+import { useActionToast } from "../../../components/admin/useActionToast";
 
-export async function loader() {
-    const orders = await prisma.order.findMany({
-        include: { customer: true },
-        orderBy: { createdAt: "desc" },
-    });
+const ORDER_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"];
+const ORDER_STATUS_LABELS: Record<string, string> = {
+    pending: "Очікує",
+    processing: "Обробляється",
+    shipped: "Відправлено",
+    delivered: "Доставлено",
+    cancelled: "Скасовано",
+};
+const ORDER_STATUS_COLORS: Record<string, string> = {
+    pending: "#f59e0b",
+    processing: "#3b82f6",
+    shipped: "#8b5cf6",
+    delivered: "#10b981",
+    cancelled: "#ef4444",
+};
+const PAYMENT_STATUSES = ["pending", "paid", "refunded"];
+const PAYMENT_LABELS: Record<string, string> = {
+    pending: "Очікує оплати",
+    paid: "Оплачено",
+    refunded: "Повернуто",
+};
+const PAYMENT_COLORS: Record<string, string> = {
+    pending: "#f59e0b",
+    paid: "#10b981",
+    refunded: "#ef4444",
+};
 
-    return {
-        orders: orders.map((order) => ({
-            id: order.id,
-            orderNumber: String(order.orderNumber),
-            customer: order.customer
-                ? `${order.customer.firstName} ${order.customer.lastName}`
-                : "Unknown",
-            email: order.customer?.email || "No Email",
-            date: new Date(order.createdAt).toLocaleDateString("uk-UA"),
-            total: Number(order.total),
-            paymentStatus: order.paymentStatus,
-            orderStatus: order.status,
-        })),
-    };
+const ORDER_LIST: ListSpec = {
+    sortable: { createdAt: "createdAt", total: "total", orderNumber: "orderNumber" },
+    defaultSort: { field: "createdAt", dir: "desc" },
+    filters: [
+        { param: "status", allowed: ORDER_STATUSES },
+        { param: "paymentStatus", allowed: PAYMENT_STATUSES },
+    ],
+    perPageDefault: 20,
+};
+
+export async function action({ request }: Route.ActionArgs) {
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
+
+    const formData = await request.formData();
+    const intent = formData.get("intent");
+    const id = String(formData.get("id") || "");
+    if (!id) return actionError("Не вказано замовлення");
+
+    if (intent === "set_status") {
+        const status = String(formData.get("status") || "");
+        if (!ORDER_STATUSES.includes(status)) return actionError("Невірний статус");
+        return runAction("orders.setStatus", async () => {
+            await prisma.order.update({ where: { id }, data: { status } });
+            return actionOk(undefined, {
+                type: "success",
+                message: `Статус: ${ORDER_STATUS_LABELS[status]}`,
+            });
+        });
+    }
+
+    if (intent === "set_payment") {
+        const paymentStatus = String(formData.get("paymentStatus") || "");
+        if (!PAYMENT_STATUSES.includes(paymentStatus)) return actionError("Невірний статус оплати");
+        return runAction("orders.setPayment", async () => {
+            await prisma.order.update({ where: { id }, data: { paymentStatus } });
+            return actionOk(undefined, {
+                type: "success",
+                message: `Оплата: ${PAYMENT_LABELS[paymentStatus]}`,
+            });
+        });
+    }
+
+    return null;
 }
 
+export async function loader({ request }: Route.LoaderArgs) {
+    const { where, orderBy, skip, take, state } = buildListQuery<Prisma.OrderWhereInput>(
+        request,
+        ORDER_LIST,
+    );
+
+    // Order search spans a numeric order number and the customer relation, so it
+    // can't use buildListQuery's simple top-level searchFields.
+    const q = state.q;
+    const finalWhere: Prisma.OrderWhereInput = q
+        ? {
+              AND: [
+                  where,
+                  {
+                      OR: [
+                          ...(/^\d+$/.test(q) ? [{ orderNumber: parseInt(q, 10) }] : []),
+                          {
+                              customer: {
+                                  firstName: { contains: q, mode: "insensitive" as const },
+                              },
+                          },
+                          { customer: { lastName: { contains: q, mode: "insensitive" as const } } },
+                          { customer: { email: { contains: q, mode: "insensitive" as const } } },
+                      ],
+                  },
+              ],
+          }
+        : where;
+
+    const [rows, total] = await prisma.$transaction([
+        prisma.order.findMany({
+            where: finalWhere,
+            include: { customer: true },
+            orderBy,
+            skip,
+            take,
+        }),
+        prisma.order.count({ where: finalWhere }),
+    ]);
+
+    const orders = rows.map((order) => ({
+        id: order.id,
+        orderNumber: String(order.orderNumber),
+        customer: order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : "—",
+        email: order.customer?.email || "—",
+        date: new Date(order.createdAt).toLocaleDateString("uk-UA"),
+        total: Number(order.total),
+        paymentStatus: order.paymentStatus,
+        orderStatus: order.status,
+    }));
+
+    return { orders, page: paginate(total, state.page, state.perPage), state };
+}
+
+const pillSelectStyle = (color: string): React.CSSProperties => ({
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "100px",
+    padding: "5px 10px",
+    fontSize: "13px",
+    fontWeight: 600,
+    color,
+    cursor: "pointer",
+});
+
 export default function AdminOrdersList() {
-    const { orders } = useLoaderData<typeof loader>();
+    const { orders, page, state } = useLoaderData<typeof loader>();
+    const navigation = useNavigation();
+    const mutate = useFetcher<typeof action>();
+    useActionToast(mutate.data);
+
+    const isListLoading =
+        navigation.state === "loading" && navigation.location?.pathname === "/admin/orders";
 
     return (
-        <div className="admin-wrapper">
-            <style>{`
-                :root {
-                    --ad-bg: #0f1115;
-                    --ad-bg-card: #181b21;
-                    --ad-border: rgba(255, 255, 255, 0.08);
-                    --ad-text-main: #f1f5f9;
-                    --ad-text-muted: #94a3b8;
-                    --ad-primary: #5eead4;
-                    --ad-badge-bg: rgba(94, 234, 212, 0.1);
-                    --ad-badge-text: #5eead4;
-                }
-                
-                .admin-page-header { margin-bottom: 32px; }
-                .admin-page-header h1 { font-size: 24px; font-weight: 500; margin: 0 0 8px 0; color: var(--ad-text-main); }
-                .admin-page-header p { color: var(--ad-text-muted); margin: 0; font-size: 14px; }
-
-                .admin-table-container {
-                    background: var(--ad-bg-card);
-                    border: 1px solid var(--ad-border);
-                    border-radius: 12px;
-                    overflow: hidden;
-                }
-
-                .admin-table { width: 100%; border-collapse: collapse; }
-                .admin-table th {
-                    text-align: left;
-                    padding: 16px 24px;
-                    color: var(--ad-text-muted);
-                    font-size: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    font-weight: 600;
-                    border-bottom: 1px solid var(--ad-border);
-                    background: rgba(255,255,255,0.02);
-                }
-                .admin-table td {
-                    padding: 16px 24px;
-                    color: var(--ad-text-main);
-                    border-bottom: 1px solid var(--ad-border);
-                    font-size: 14px;
-                }
-                .admin-table tr:last-child td { border-bottom: none; }
-                .admin-table tr:hover td { background: rgba(255,255,255,0.02); }
-
-                .status-badge {
-                    display: inline-block;
-                    padding: 4px 10px;
-                    border-radius: 100px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    text-transform: capitalize;
-                }
-                .status-pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-                .status-processing { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-                .status-shipped { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
-                .status-delivered { background: rgba(16, 185, 129, 0.15); color: #10b981; }
-                .status-cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
-
-                .btn-view {
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 6px 16px;
-                    border-radius: 6px;
-                    background: transparent;
-                    border: 1px solid var(--ad-border);
-                    color: var(--ad-text-main);
-                    font-size: 13px;
-                    text-decoration: none;
-                    transition: all 0.2s;
-                }
-                .btn-view:hover {
-                    border-color: var(--ad-primary);
-                    color: var(--ad-primary);
-                    background: rgba(94, 234, 212, 0.05);
-                }
-            `}</style>
-
-            {/* Page Header */}
+        <>
             <div className="admin-page-header">
-                <div>
-                    <h1>Замовлення</h1>
-                    <p>Керуйте та відстежуйте замовлення клієнтів</p>
-                </div>
+                <h1>Замовлення</h1>
+                <p>Керуйте та відстежуйте замовлення клієнтів</p>
             </div>
 
-            {/* Orders Table or Empty State */}
+            <AdminToolbar>
+                <SearchInput defaultValue={state.q} placeholder="Пошук за №, ім'ям, email…" />
+                <FilterSelect
+                    name="status"
+                    value={state.filters.status ?? ""}
+                    allLabel="Всі статуси"
+                    options={ORDER_STATUSES.map((s) => ({
+                        value: s,
+                        label: ORDER_STATUS_LABELS[s],
+                    }))}
+                />
+                <FilterSelect
+                    name="paymentStatus"
+                    value={state.filters.paymentStatus ?? ""}
+                    allLabel="Будь-яка оплата"
+                    options={PAYMENT_STATUSES.map((s) => ({ value: s, label: PAYMENT_LABELS[s] }))}
+                />
+            </AdminToolbar>
+
             {orders.length === 0 ? (
-                <div
-                    style={{
-                        padding: "80px 20px",
-                        textAlign: "center",
-                        background: "var(--ad-bg-card)",
-                        borderRadius: "12px",
-                        border: "1px solid var(--ad-border)",
-                    }}
-                >
-                    <div style={{ opacity: 0.5, marginBottom: "20px" }}>
+                <EmptyState
+                    icon={
                         <svg
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="1.5"
-                            width="60"
-                            height="60"
+                            width="48"
+                            height="48"
                         >
                             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                             <line x1="3" y1="6" x2="21" y2="6" />
                             <path d="M16 10a4 4 0 01-8 0" />
                         </svg>
-                    </div>
-                    <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: 500 }}>
-                        Замовлень поки немає
-                    </h3>
-                    <p style={{ margin: 0, color: "var(--ad-text-muted)" }}>
-                        Тут з'являться замовлення, коли клієнти зроблять перші покупки
-                    </p>
-                </div>
+                    }
+                    title={
+                        state.q || Object.keys(state.filters).length > 0
+                            ? "Нічого не знайдено"
+                            : "Замовлень поки немає"
+                    }
+                    description={
+                        state.q || Object.keys(state.filters).length > 0
+                            ? "Спробуйте змінити пошук або фільтри."
+                            : "Тут з'являться замовлення після перших покупок."
+                    }
+                    action={
+                        state.q || Object.keys(state.filters).length > 0 ? (
+                            <Link
+                                to="/admin/orders"
+                                style={{ color: "var(--accent-primary)", textDecoration: "none" }}
+                            >
+                                Скинути фільтри
+                            </Link>
+                        ) : undefined
+                    }
+                />
             ) : (
-                <div className="admin-table-container">
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Замовлення</th>
-                                <th>Клієнт</th>
-                                <th>Дата</th>
-                                <th>Сума</th>
-                                <th>Статус</th>
-                                <th>Оплата</th>
-                                <th style={{ width: "100px", textAlign: "right" }}>Дії</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orders.map((order) => (
-                                <tr key={order.id}>
-                                    <td>
-                                        <div
-                                            style={{
-                                                fontWeight: 600,
-                                                color: "var(--ad-text-main)",
-                                            }}
-                                        >
+                <div className="admin-card" style={{ padding: 0 }}>
+                    <div
+                        className="admin-table-container"
+                        style={{
+                            border: "none",
+                            borderRadius: 0,
+                            opacity: isListLoading ? 0.55 : 1,
+                            transition: "opacity 0.15s",
+                            pointerEvents: isListLoading ? "none" : "auto",
+                        }}
+                    >
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <SortableTh
+                                        field="orderNumber"
+                                        label="Замовлення"
+                                        state={state}
+                                    />
+                                    <th>Клієнт</th>
+                                    <SortableTh field="createdAt" label="Дата" state={state} />
+                                    <SortableTh field="total" label="Сума" state={state} />
+                                    <th>Статус</th>
+                                    <th>Оплата</th>
+                                    <th style={{ textAlign: "right" }}>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {orders.map((order) => (
+                                    <tr key={order.id}>
+                                        <td style={{ fontWeight: 600, color: "var(--text-main)" }}>
                                             #{order.orderNumber}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div style={{ fontWeight: 500 }}>{order.customer}</div>
-                                        <div
-                                            style={{
-                                                fontSize: "12px",
-                                                color: "var(--ad-text-muted)",
-                                            }}
-                                        >
-                                            {order.email}
-                                        </div>
-                                    </td>
-                                    <td>{order.date}</td>
-                                    <td style={{ fontWeight: 600 }}>
-                                        {order.total.toLocaleString()} ₴
-                                    </td>
-                                    <td>
-                                        <span
-                                            className={`status-badge status-${order.orderStatus}`}
-                                        >
-                                            {order.orderStatus === "pending" && "Очікує"}
-                                            {order.orderStatus === "processing" && "Обробляється"}
-                                            {order.orderStatus === "shipped" && "Відправлено"}
-                                            {order.orderStatus === "delivered" && "Доставлено"}
-                                            {order.orderStatus === "cancelled" && "Скасовано"}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div
-                                            style={{
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                gap: "4px",
-                                            }}
-                                        >
-                                            <span
+                                        </td>
+                                        <td>
+                                            <div
                                                 style={{
-                                                    fontSize: "13px",
                                                     fontWeight: 500,
-                                                    color: "#e2e8f0",
+                                                    color: "var(--text-main)",
                                                 }}
                                             >
-                                                Накладений платіж
-                                            </span>
-                                            <span
+                                                {order.customer}
+                                            </div>
+                                            <div
                                                 style={{
                                                     fontSize: "12px",
-                                                    color:
-                                                        order.paymentStatus === "paid"
-                                                            ? "#10b981"
-                                                            : order.paymentStatus === "refunded"
-                                                              ? "#ef4444"
-                                                              : "#f59e0b",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    gap: "5px",
+                                                    color: "var(--text-muted)",
                                                 }}
                                             >
-                                                <span
-                                                    style={{
-                                                        width: 5,
-                                                        height: 5,
-                                                        borderRadius: "50%",
-                                                        background: "currentColor",
-                                                    }}
-                                                ></span>
-                                                {order.paymentStatus === "pending" &&
-                                                    "Очікує оплати"}
-                                                {order.paymentStatus === "paid" && "Оплачено"}
-                                                {order.paymentStatus === "refunded" && "Повернуто"}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td style={{ textAlign: "right" }}>
-                                        <Link to={`/admin/orders/${order.id}`} className="btn-view">
-                                            Деталі
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                                {order.email}
+                                            </div>
+                                        </td>
+                                        <td>{order.date}</td>
+                                        <td style={{ fontWeight: 600, color: "var(--text-main)" }}>
+                                            {order.total.toLocaleString()} ₴
+                                        </td>
+                                        <td>
+                                            <select
+                                                key={order.orderStatus}
+                                                defaultValue={order.orderStatus}
+                                                aria-label={`Статус замовлення #${order.orderNumber}`}
+                                                onChange={(e) =>
+                                                    mutate.submit(
+                                                        {
+                                                            intent: "set_status",
+                                                            id: order.id,
+                                                            status: e.target.value,
+                                                        },
+                                                        { method: "post" },
+                                                    )
+                                                }
+                                                style={pillSelectStyle(
+                                                    ORDER_STATUS_COLORS[order.orderStatus] ||
+                                                        "var(--text-secondary)",
+                                                )}
+                                            >
+                                                {ORDER_STATUSES.map((s) => (
+                                                    <option
+                                                        key={s}
+                                                        value={s}
+                                                        style={{ color: "#000" }}
+                                                    >
+                                                        {ORDER_STATUS_LABELS[s]}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select
+                                                key={order.paymentStatus}
+                                                defaultValue={order.paymentStatus}
+                                                aria-label={`Оплата замовлення #${order.orderNumber}`}
+                                                onChange={(e) =>
+                                                    mutate.submit(
+                                                        {
+                                                            intent: "set_payment",
+                                                            id: order.id,
+                                                            paymentStatus: e.target.value,
+                                                        },
+                                                        { method: "post" },
+                                                    )
+                                                }
+                                                style={pillSelectStyle(
+                                                    PAYMENT_COLORS[order.paymentStatus] ||
+                                                        "var(--text-secondary)",
+                                                )}
+                                            >
+                                                {PAYMENT_STATUSES.map((s) => (
+                                                    <option
+                                                        key={s}
+                                                        value={s}
+                                                        style={{ color: "#000" }}
+                                                    >
+                                                        {PAYMENT_LABELS[s]}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        <td style={{ textAlign: "right" }}>
+                                            <Link
+                                                to={`/admin/orders/${order.id}`}
+                                                style={{
+                                                    color: "var(--accent-primary)",
+                                                    textDecoration: "none",
+                                                    fontSize: "14px",
+                                                }}
+                                            >
+                                                Деталі
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <AdminPagination page={page} />
                 </div>
             )}
-        </div>
+        </>
     );
 }
