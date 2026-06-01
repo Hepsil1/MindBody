@@ -41,7 +41,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     }
 }
 
-import { uploadFile } from "../../utils/upload.server";
+import { uploadFileChecked } from "../../utils/upload.server";
 import { isAuthenticated } from "../../utils/admin.server";
 import { invalidateAll, invalidateCache } from "../../utils/cache.server";
 import { redirect } from "react-router";
@@ -52,7 +52,18 @@ export async function action({ request }: Route.ActionArgs) {
     }
     // Clear home page cache on any admin change (slides, categories, filters)
     invalidateAll();
-    const saveFile = uploadFile;
+    // Resolve an uploaded image field: keep `current` when no file was chosen,
+    // use the new path on success, and ABORT the save (throw → caught below,
+    // returns { error }) when a chosen file fails to process. Previously a failed
+    // upload was silently swallowed and the record saved with a stale/empty image.
+    const resolveImage = async (
+        file: FormDataEntryValue | null,
+        current: string,
+    ): Promise<string> => {
+        const outcome = await uploadFileChecked(file);
+        if (outcome.status === "error") throw new Error(outcome.reason);
+        return outcome.status === "ok" ? outcome.path : current;
+    };
     try {
         const formData = await request.formData();
 
@@ -64,10 +75,7 @@ export async function action({ request }: Route.ActionArgs) {
             let heroImage = formData.get("currentHeroImage") as string;
             const file = formData.get("heroImageFile");
 
-            const uploadedPath = await saveFile(file);
-            if (uploadedPath) {
-                heroImage = uploadedPath;
-            }
+            heroImage = await resolveImage(file, heroImage);
 
             // Upsert logic for shop page
             await prisma.shopPage.upsert({
@@ -102,13 +110,9 @@ export async function action({ request }: Route.ActionArgs) {
             const image2File = formData.get("image2_file");
             const image3File = formData.get("image3_file");
 
-            const u1 = await saveFile(image1File);
-            const u2 = await saveFile(image2File);
-            const u3 = await saveFile(image3File);
-
-            if (u1) image1 = u1;
-            if (u2) image2 = u2;
-            if (u3) image3 = u3;
+            image1 = await resolveImage(image1File, image1);
+            image2 = await resolveImage(image2File, image2);
+            image3 = await resolveImage(image3File, image3);
 
             if (intent === "create") {
                 const maxOrderResult =
@@ -167,8 +171,7 @@ export async function action({ request }: Route.ActionArgs) {
             let image = (formData.get("image_url") as string) || "";
             const imageFile = formData.get("image_file");
 
-            const uploaded = await saveFile(imageFile);
-            if (uploaded) image = uploaded;
+            image = await resolveImage(imageFile, image);
 
             await prisma.$executeRawUnsafe(
                 `UPDATE "Category" SET title = $1, subtitle = $2, link = $3, "buttonText" = $4, image = $5, "imagePos" = $6, "moodType" = $7, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $8`,
@@ -223,13 +226,9 @@ export async function action({ request }: Route.ActionArgs) {
             const image2File = formData.get("image2_file");
             const image3File = formData.get("image3_file");
 
-            const u1 = await saveFile(image1File);
-            const u2 = await saveFile(image2File);
-            const u3 = await saveFile(image3File);
-
-            if (u1) image1 = u1;
-            if (u2) image2 = u2;
-            if (u3) image3 = u3;
+            image1 = await resolveImage(image1File, image1);
+            image2 = await resolveImage(image2File, image2);
+            image3 = await resolveImage(image3File, image3);
 
             const maxOrder = await prisma.slide.aggregate({ _max: { order: true } });
             const newOrder = (maxOrder._max?.order || 0) + 1;
@@ -262,13 +261,9 @@ export async function action({ request }: Route.ActionArgs) {
             const image2File = formData.get("image2_file");
             const image3File = formData.get("image3_file");
 
-            const u1 = await saveFile(image1File);
-            const u2 = await saveFile(image2File);
-            const u3 = await saveFile(image3File);
-
-            if (u1) image1 = u1;
-            if (u2) image2 = u2;
-            if (u3) image3 = u3;
+            image1 = await resolveImage(image1File, image1);
+            image2 = await resolveImage(image2File, image2);
+            image3 = await resolveImage(image3File, image3);
 
             // Use Raw SQL for update
             await prisma.$executeRaw`

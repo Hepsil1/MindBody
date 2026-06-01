@@ -63,6 +63,25 @@ export async function uploadFile(file: FormDataEntryValue | null): Promise<strin
     }
 }
 
+export type UploadOutcome =
+    | { status: "empty" }
+    | { status: "ok"; path: string }
+    | { status: "error"; reason: string };
+
+/**
+ * Like uploadFile, but distinguishes "no file was provided" (status:"empty" —
+ * keep the existing value) from "a file WAS provided but failed to process"
+ * (status:"error" — abort the save). uploadFile returns null for BOTH cases,
+ * which let callers silently persist a record with a missing image.
+ */
+export async function uploadFileChecked(file: FormDataEntryValue | null): Promise<UploadOutcome> {
+    if (!file || (file instanceof File && file.size === 0)) return { status: "empty" };
+    const path = await uploadFile(file);
+    return path
+        ? { status: "ok", path }
+        : { status: "error", reason: "Не вдалося обробити зображення" };
+}
+
 /**
  * Check if a string is a base64 data URL.
  * Used to filter out accidentally stored base64 images from DB queries.
