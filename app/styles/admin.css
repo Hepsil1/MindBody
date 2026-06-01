@@ -527,3 +527,27 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
 }
+
+/* =====================================================
+   LIST PRIMITIVES — loading skeleton shimmer
+   ===================================================== */
+.admin-skeleton {
+    border-radius: 6px;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.09) 37%,
+        rgba(255, 255, 255, 0.04) 63%
+    );
+    background-size: 400% 100%;
+    animation: admin-shimmer 1.4s ease infinite;
+}
+
+@keyframes admin-shimmer {
+    0% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0 50%;
+    }
+}
