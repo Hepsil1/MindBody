@@ -3,6 +3,7 @@ import { useState } from "react";
 import adminCss from "../../styles/admin.css?url";
 import appCss from "../../app.css?url";
 import { isAuthenticated, adminSession } from "../../utils/admin.server";
+import { Toaster } from "sonner";
 import type { Route } from "./+types/_layout";
 
 export function links() {
@@ -315,6 +316,7 @@ export default function AdminLayout() {
             <main className="admin-main">
                 <Outlet />
             </main>
+            <Toaster richColors theme="dark" position="top-right" />
         </div>
     );
 }
