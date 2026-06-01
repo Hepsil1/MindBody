@@ -1,45 +1,95 @@
-import { useLoaderData, Link } from "react-router";
+import { useLoaderData, Link, useSearchParams, useNavigation } from "react-router";
 import type { Route } from "./+types/index";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../../db.server";
+import { buildListQuery, paginate, type ListSpec } from "../../../utils/admin-list.server";
+import {
+    AdminToolbar,
+    SearchInput,
+    SortableTh,
+    AdminPagination,
+    EmptyState,
+} from "../../../components/admin/list";
+
+const CUSTOMER_LIST: ListSpec = {
+    searchFields: ["firstName", "lastName", "email"],
+    sortable: { createdAt: "createdAt", firstName: "firstName", email: "email" },
+    defaultSort: { field: "createdAt", dir: "desc" },
+    perPageDefault: 20,
+};
 
 export async function loader({ request }: Route.LoaderArgs) {
-    const customers = await prisma.customer.findMany({
-        include: {
-            orders: {
-                select: { total: true },
-            },
-        },
-        orderBy: { createdAt: "desc" },
-    });
+    const { where, orderBy, skip, take, state } = buildListQuery<Prisma.CustomerWhereInput>(
+        request,
+        CUSTOMER_LIST,
+    );
 
-    const stats = {
-        total: customers.length,
-        newThisMonth: customers.filter((c) => {
-            const now = new Date();
-            const created = new Date(c.createdAt);
-            return (
-                created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear()
-            );
-        }).length,
-        withOrders: customers.filter((c) => c.orders.length > 0).length,
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [rows, total, statTotal, statNew, statWithOrders] = await prisma.$transaction([
+        prisma.customer.findMany({
+            where,
+            orderBy,
+            skip,
+            take,
+            include: { orders: { select: { total: true } } },
+        }),
+        prisma.customer.count({ where }),
+        prisma.customer.count(),
+        prisma.customer.count({ where: { createdAt: { gte: startOfMonth } } }),
+        prisma.customer.count({ where: { orders: { some: {} } } }),
+    ]);
+
+    const customers = rows.map((c) => ({
+        id: c.id,
+        firstName: c.firstName,
+        lastName: c.lastName,
+        email: c.email,
+        orderCount: c.orders.length,
+        totalSpent: c.orders.reduce((s, o) => s + Number(o.total), 0),
+    }));
+
+    return {
+        customers,
+        page: paginate(total, state.page, state.perPage),
+        state,
+        stats: { total: statTotal, newThisMonth: statNew, withOrders: statWithOrders },
     };
-
-    return { customers, stats };
 }
 
+const getInitials = (firstName: string, lastName: string) =>
+    `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+
 export default function AdminCustomers() {
-    const { customers, stats } = useLoaderData<typeof loader>();
+    const { customers, page, state, stats } = useLoaderData<typeof loader>();
+    const [sp] = useSearchParams();
+    const navigation = useNavigation();
 
-    const getInitials = (firstName: string, lastName: string) => {
-        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-    };
+    const isListLoading =
+        navigation.state === "loading" && navigation.location?.pathname === "/admin/customers";
+    const exportHref = `/admin/customers/export${sp.toString() ? `?${sp.toString()}` : ""}`;
+    const hasSearch = Boolean(state.q);
 
-    // `total` arrives as a Prisma Decimal on the server; after useLoaderData
-    // SSR-serialization it may be a string or number. Number() handles all
-    // three because Prisma.Decimal exposes toString/valueOf.
-    const getTotalSpent = (orders: { total: unknown }[]) => {
-        return orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
-    };
+    const csvButton = (
+        <a
+            href={exportHref}
+            style={{
+                background: "var(--accent-primary)",
+                color: "#0f172a",
+                padding: "10px 20px",
+                borderRadius: "8px",
+                fontWeight: 600,
+                cursor: "pointer",
+                fontSize: "14px",
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+            }}
+        >
+            Експорт CSV
+        </a>
+    );
 
     return (
         <>
@@ -48,7 +98,6 @@ export default function AdminCustomers() {
                 <p>Керування базою покупців</p>
             </div>
 
-            {/* Stats Cards */}
             <div className="admin-stats">
                 <div className="admin-stat">
                     <div className="admin-stat__label">Всього клієнтів</div>
@@ -66,71 +115,13 @@ export default function AdminCustomers() {
                 </div>
             </div>
 
-            {/* Main Content Card */}
-            <div className="admin-card" style={{ padding: 0, overflow: "hidden" }}>
-                {/* Toolbar */}
-                <div
-                    style={{
-                        padding: "20px 32px",
-                        borderBottom: "1px solid var(--border-subtle)",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                    }}
-                >
-                    <div style={{ position: "relative", width: "300px" }}>
-                        <svg
-                            style={{
-                                position: "absolute",
-                                left: "12px",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                width: "18px",
-                                height: "18px",
-                                color: "var(--text-muted)",
-                            }}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                        >
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <input
-                            type="text"
-                            placeholder="Пошук клієнтів..."
-                            style={{
-                                width: "100%",
-                                background: "rgba(255,255,255,0.05)",
-                                border: "1px solid var(--border-subtle)",
-                                borderRadius: "8px",
-                                padding: "10px 10px 10px 40px",
-                                color: "var(--text-main)",
-                                fontSize: "14px",
-                                outline: "none",
-                            }}
-                        />
-                    </div>
-                    <button
-                        style={{
-                            background: "var(--accent-primary)",
-                            color: "#0f172a",
-                            border: "none",
-                            padding: "10px 20px",
-                            borderRadius: "8px",
-                            fontWeight: "600",
-                            cursor: "pointer",
-                            fontSize: "14px",
-                        }}
-                    >
-                        Експорт CSV
-                    </button>
-                </div>
+            <AdminToolbar right={csvButton}>
+                <SearchInput defaultValue={state.q} placeholder="Пошук за ім'ям або email…" />
+            </AdminToolbar>
 
-                {/* Table or Empty State */}
-                {customers.length === 0 ? (
-                    <div style={{ padding: "64px 32px", textAlign: "center" }}>
+            {customers.length === 0 ? (
+                <EmptyState
+                    icon={
                         <svg
                             viewBox="0 0 24 24"
                             fill="none"
@@ -138,33 +129,44 @@ export default function AdminCustomers() {
                             strokeWidth="1.5"
                             width="48"
                             height="48"
-                            style={{ color: "var(--text-muted)", margin: "0 auto 16px" }}
                         >
                             <circle cx="12" cy="8" r="4" />
                             <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
                         </svg>
-                        <div
-                            style={{
-                                color: "var(--text-main)",
-                                fontWeight: "600",
-                                marginBottom: "8px",
-                            }}
-                        >
-                            Клієнтів немає
-                        </div>
-                        <div style={{ color: "var(--text-muted)", fontSize: "14px" }}>
-                            Клієнти з'являться після першого замовлення
-                        </div>
-                    </div>
-                ) : (
+                    }
+                    title={hasSearch ? "Нічого не знайдено" : "Клієнтів немає"}
+                    description={
+                        hasSearch
+                            ? "Спробуйте інший запит."
+                            : "Клієнти з'являться після першого замовлення."
+                    }
+                    action={
+                        hasSearch ? (
+                            <Link
+                                to="/admin/customers"
+                                style={{ color: "var(--accent-primary)", textDecoration: "none" }}
+                            >
+                                Скинути пошук
+                            </Link>
+                        ) : undefined
+                    }
+                />
+            ) : (
+                <div className="admin-card" style={{ padding: 0, overflow: "hidden" }}>
                     <div
                         className="admin-table-container"
-                        style={{ border: "none", borderRadius: 0 }}
+                        style={{
+                            border: "none",
+                            borderRadius: 0,
+                            opacity: isListLoading ? 0.55 : 1,
+                            transition: "opacity 0.15s",
+                            pointerEvents: isListLoading ? "none" : "auto",
+                        }}
                     >
                         <table className="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Клієнт</th>
+                                    <SortableTh field="firstName" label="Клієнт" state={state} />
                                     <th>Замов.</th>
                                     <th>Витрачено</th>
                                     <th></th>
@@ -172,13 +174,7 @@ export default function AdminCustomers() {
                             </thead>
                             <tbody>
                                 {customers.map((customer) => (
-                                    <tr
-                                        key={customer.id}
-                                        style={{ cursor: "pointer" }}
-                                        onClick={() =>
-                                            (window.location.href = `/admin/customers/${customer.id}`)
-                                        }
-                                    >
+                                    <tr key={customer.id}>
                                         <td>
                                             <div
                                                 style={{
@@ -198,9 +194,10 @@ export default function AdminCustomers() {
                                                         alignItems: "center",
                                                         justifyContent: "center",
                                                         color: "var(--accent-primary)",
-                                                        fontWeight: "600",
+                                                        fontWeight: 600,
                                                         fontSize: "14px",
                                                         border: "1px solid var(--border-subtle)",
+                                                        flexShrink: 0,
                                                     }}
                                                 >
                                                     {getInitials(
@@ -212,7 +209,7 @@ export default function AdminCustomers() {
                                                     <div
                                                         style={{
                                                             color: "var(--text-main)",
-                                                            fontWeight: "500",
+                                                            fontWeight: 500,
                                                         }}
                                                     >
                                                         {customer.firstName} {customer.lastName}
@@ -228,24 +225,18 @@ export default function AdminCustomers() {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{customer.orders.length}</td>
-                                        <td
-                                            style={{ fontWeight: "500", color: "var(--text-main)" }}
-                                        >
-                                            ₴{getTotalSpent(customer.orders).toLocaleString()}
+                                        <td>{customer.orderCount}</td>
+                                        <td style={{ fontWeight: 500, color: "var(--text-main)" }}>
+                                            ₴{customer.totalSpent.toLocaleString()}
                                         </td>
                                         <td style={{ textAlign: "right" }}>
                                             <Link
                                                 to={`/admin/customers/${customer.id}`}
                                                 style={{
-                                                    background: "none",
-                                                    border: "none",
                                                     color: "var(--accent-primary)",
-                                                    cursor: "pointer",
                                                     fontSize: "13px",
                                                     textDecoration: "none",
                                                 }}
-                                                onClick={(e) => e.stopPropagation()}
                                             >
                                                 Детальніше →
                                             </Link>
@@ -255,8 +246,9 @@ export default function AdminCustomers() {
                             </tbody>
                         </table>
                     </div>
-                )}
-            </div>
+                    <AdminPagination page={page} />
+                </div>
+            )}
         </>
     );
 }
