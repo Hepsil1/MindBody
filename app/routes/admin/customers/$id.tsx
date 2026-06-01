@@ -44,29 +44,24 @@ export async function action({ request, params }: ActionArgs) {
 
     if (intent === "delete") {
         try {
-            // First, get all order IDs for this customer
-            const orders = await prisma.order.findMany({
-                where: { customerId: params.id },
-                select: { id: true },
-            });
-
-            const orderIds = orders.map((o) => o.id);
-
-            // Delete all order items first
-            if (orderIds.length > 0) {
-                await prisma.orderItem.deleteMany({
-                    where: { orderId: { in: orderIds } },
+            // Atomic cascade: order items → orders → customer, wrapped in one
+            // transaction so a mid-sequence failure can't leave orphaned rows
+            // (previously three independent awaits).
+            //
+            // TODO(product): a hard delete also erases the customer's order
+            // history. Prefer anonymizing (null the PII, keep the orders) over
+            // deletion — revisit when right-to-erasure is scoped.
+            await prisma.$transaction(async (tx) => {
+                const orders = await tx.order.findMany({
+                    where: { customerId: params.id },
+                    select: { id: true },
                 });
-            }
-
-            // Then delete all orders
-            await prisma.order.deleteMany({
-                where: { customerId: params.id },
-            });
-
-            // Finally delete the customer
-            await prisma.customer.delete({
-                where: { id: params.id },
+                const orderIds = orders.map((o) => o.id);
+                if (orderIds.length > 0) {
+                    await tx.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
+                }
+                await tx.order.deleteMany({ where: { customerId: params.id } });
+                await tx.customer.delete({ where: { id: params.id } });
             });
 
             return redirect("/admin/customers");
