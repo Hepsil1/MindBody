@@ -9,6 +9,17 @@ export default defineConfig({
     // migrate it to `import.meta.env.VITE_X` instead — that's the vite-native way.
     plugins: [reactRouter(), tsconfigPaths()],
 
+    // Keep a single instance of these libs. sonner in particular broke when Vite
+    // discovered it mid-session and re-optimized: <Toaster> and toast() ended up
+    // in two different optimized chunks (two stores), so toasts never rendered.
+    // Pre-bundling it at startup + dedupe guarantees one instance.
+    resolve: {
+        dedupe: ["sonner", "react", "react-dom"],
+    },
+    optimizeDeps: {
+        include: ["sonner"],
+    },
+
     // Performance: enable CSS minification
     css: {
         devSourcemap: true,
