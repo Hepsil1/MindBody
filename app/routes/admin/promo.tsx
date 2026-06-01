@@ -1,288 +1,191 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { useLoaderData, useSubmit, useNavigate, redirect } from "react-router";
-import { Prisma } from "@prisma/client";
+import { useLoaderData, useFetcher } from "react-router";
+import type { Route } from "./+types/promo";
+import type { Prisma } from "@prisma/client";
+import { useEffect, useState } from "react";
 import { prisma } from "../../db.server";
-import { isAuthenticated } from "../../utils/admin.server";
-import { useState } from "react";
+import { requireAdmin } from "../../utils/admin-guard.server";
+import { actionOk, actionError, runAction } from "../../utils/action-result.server";
+import { buildListQuery, paginate, type ListSpec } from "../../utils/admin-list.server";
+import {
+    AdminToolbar,
+    SearchInput,
+    FilterSelect,
+    SortableTh,
+    AdminPagination,
+    EmptyState,
+} from "../../components/admin/list";
+import { ConfirmDialog } from "../../components/admin/ConfirmDialog";
+import { useActionToast } from "../../components/admin/useActionToast";
 
-export async function loader() {
-    const promos = await prisma.promoCode.findMany({
-        orderBy: { createdAt: "desc" },
-    });
-    return { promos };
+const PROMO_LIST: ListSpec = {
+    searchFields: ["code"],
+    sortable: { createdAt: "createdAt", code: "code", usedCount: "usedCount" },
+    defaultSort: { field: "createdAt", dir: "desc" },
+    filters: [{ param: "active", field: "isActive", kind: "boolean", allowed: ["true", "false"] }],
+    perPageDefault: 20,
+};
+
+export async function loader({ request }: Route.LoaderArgs) {
+    const { where, orderBy, skip, take, state } = buildListQuery<Prisma.PromoCodeWhereInput>(
+        request,
+        PROMO_LIST,
+    );
+    const [promos, total] = await prisma.$transaction([
+        prisma.promoCode.findMany({ where, orderBy, skip, take }),
+        prisma.promoCode.count({ where }),
+    ]);
+    return { promos, page: paginate(total, state.page, state.perPage), state };
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-    if (!(await isAuthenticated(request))) {
-        return redirect("/admin/login");
-    }
-    try {
-        const formData = await request.formData();
-        const intent = formData.get("intent");
+export async function action({ request }: Route.ActionArgs) {
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
 
-        if (intent === "create") {
-            const code = (formData.get("code") as string)?.trim().toUpperCase();
-            const discountType = (formData.get("discountType") as string) || "percent";
-            const discountValue = parseFloat(formData.get("discountValue") as string) || 0;
-            const minOrder = parseFloat(formData.get("minOrder") as string) || 0;
-            const maxUses = formData.get("maxUses")
-                ? parseInt(formData.get("maxUses") as string)
-                : null;
-            const expiresAt = (formData.get("expiresAt") as string) || null;
-            const id =
-                Math.random().toString(36).substring(2, 15) +
-                Math.random().toString(36).substring(2, 15);
+    const formData = await request.formData();
+    const intent = formData.get("intent");
 
-            if (!code || discountValue <= 0) {
-                return { error: "Заповніть обов'язкові поля" };
-            }
-
-            try {
-                await prisma.promoCode.create({
-                    data: {
-                        id,
-                        code,
-                        discountType,
-                        discountValue,
-                        minOrder,
-                        maxUses,
-                        usedCount: 0,
-                        isActive: true,
-                        expiresAt: expiresAt ? new Date(expiresAt) : null,
-                    },
-                });
-            } catch (e) {
-                // P2002 = unique constraint violation
-                if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-                    return { error: "Промокод з таким кодом вже існує" };
-                }
-                return { error: "Помилка створення" };
-            }
-        }
-
-        if (intent === "toggle") {
-            const id = formData.get("id") as string;
-            const currentActive = formData.get("isActive") === "true";
-            await prisma.promoCode.update({
-                where: { id },
-                data: { isActive: !currentActive },
+    if (intent === "create") {
+        const code = (formData.get("code") as string)?.trim().toUpperCase();
+        const discountType = (formData.get("discountType") as string) || "percent";
+        const discountValue = parseFloat(formData.get("discountValue") as string) || 0;
+        const minOrder = parseFloat(formData.get("minOrder") as string) || 0;
+        const maxUses = formData.get("maxUses")
+            ? parseInt(formData.get("maxUses") as string)
+            : null;
+        const expiresAt = (formData.get("expiresAt") as string) || null;
+        if (!code || discountValue <= 0)
+            return actionError("Заповніть код і значення знижки", {
+                fieldErrors: { code: !code ? "Обов'язкове" : "" },
             });
-        }
-
-        if (intent === "delete") {
-            const id = formData.get("id") as string;
-            await prisma.promoCode.delete({ where: { id } });
-        }
-
-        return null;
-    } catch (e) {
-        console.error("Promo action error:", e);
-        const message = e instanceof Error ? e.message : "Сталася серверна помилка";
-        return { error: message };
+        return runAction("promo.create", async () => {
+            await prisma.promoCode.create({
+                data: {
+                    code,
+                    discountType,
+                    discountValue,
+                    minOrder,
+                    maxUses,
+                    usedCount: 0,
+                    isActive: true,
+                    expiresAt: expiresAt ? new Date(expiresAt) : null,
+                },
+            });
+            return actionOk(undefined, { type: "success", message: `Промокод ${code} створено` });
+        });
     }
+
+    if (intent === "toggle") {
+        const id = formData.get("id") as string;
+        const currentActive = formData.get("isActive") === "true";
+        return runAction("promo.toggle", async () => {
+            await prisma.promoCode.update({ where: { id }, data: { isActive: !currentActive } });
+            return actionOk(undefined, {
+                type: "success",
+                message: !currentActive ? "Промокод увімкнено" : "Промокод вимкнено",
+            });
+        });
+    }
+
+    if (intent === "delete") {
+        const id = formData.get("id") as string;
+        return runAction("promo.delete", async () => {
+            await prisma.promoCode.delete({ where: { id } });
+            return actionOk(undefined, { type: "success", message: "Промокод видалено" });
+        });
+    }
+
+    return null;
 }
 
 export default function AdminPromo() {
-    const { promos } = useLoaderData<typeof loader>();
-    const submit = useSubmit();
+    const { promos, page, state } = useLoaderData<typeof loader>();
+    const createFetcher = useFetcher<typeof action>();
+    const mutate = useFetcher<typeof action>();
+    useActionToast(createFetcher.data);
+    useActionToast(mutate.data);
+
     const [showForm, setShowForm] = useState(false);
-    const [formError, setFormError] = useState("");
+    const [confirmPromo, setConfirmPromo] = useState<{ id: string; code: string } | null>(null);
 
-    const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        fd.append("intent", "create");
-        submit(fd, { method: "post" });
-        setShowForm(false);
-    };
+    // Close the create form once a create succeeds (errors keep it open).
+    useEffect(() => {
+        if (
+            createFetcher.state === "idle" &&
+            createFetcher.data &&
+            "ok" in createFetcher.data &&
+            createFetcher.data.ok
+        )
+            setShowForm(false);
+    }, [createFetcher.state, createFetcher.data]);
 
-    const handleToggle = (id: string, isActive: boolean) => {
-        const fd = new FormData();
-        fd.append("intent", "toggle");
-        fd.append("id", id);
-        fd.append("isActive", String(isActive));
-        submit(fd, { method: "post" });
-    };
-
-    const handleDelete = (id: string) => {
-        if (!confirm("Видалити промокод?")) return;
-        const fd = new FormData();
-        fd.append("intent", "delete");
-        fd.append("id", id);
-        submit(fd, { method: "post" });
-    };
+    const createError =
+        createFetcher.data && "ok" in createFetcher.data && !createFetcher.data.ok
+            ? createFetcher.data.error
+            : null;
 
     return (
-        <div style={{ maxWidth: "1200px", margin: "0 auto", color: "#e2e8f0" }}>
+        <>
             <style>{`
-                .promo-card {
-                    background: #1e293b;
-                    border: 1px solid #334155;
-                    border-radius: 12px;
-                    padding: 24px;
-                    margin-bottom: 20px;
-                }
-                .promo-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 24px;
-                }
-                .promo-header h1 {
-                    font-size: 28px;
-                    font-weight: 700;
-                    color: #f8fafc;
-                    margin: 0;
-                }
-                .btn-create {
-                    background: linear-gradient(135deg, #5eead4, #2dd4bf);
-                    color: #0f172a;
-                    border: none;
-                    padding: 12px 24px;
-                    border-radius: 10px;
-                    font-weight: 600;
-                    font-size: 14px;
-                    cursor: pointer;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                }
-                .btn-create:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 12px rgba(94, 234, 212, 0.3);
-                }
-                .promo-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-                .promo-table th {
-                    text-align: left;
-                    padding: 12px 16px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    color: #94a3b8;
-                    border-bottom: 1px solid #334155;
-                }
-                .promo-table td {
-                    padding: 16px;
-                    border-bottom: 1px solid rgba(255,255,255,0.04);
-                    font-size: 14px;
-                }
-                .promo-code {
-                    font-family: 'JetBrains Mono', monospace;
-                    font-weight: 700;
-                    font-size: 16px;
-                    color: #5eead4;
-                    background: rgba(94, 234, 212, 0.1);
-                    padding: 4px 12px;
-                    border-radius: 6px;
-                }
-                .badge-active {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 4px 12px;
-                    border-radius: 100px;
-                    font-size: 12px;
-                    font-weight: 600;
-                }
-                .badge-active.on { background: rgba(16,185,129,0.15); color: #10b981; }
-                .badge-active.off { background: rgba(239,68,68,0.15); color: #ef4444; }
-                .btn-sm {
-                    padding: 6px 14px;
-                    border-radius: 6px;
-                    font-size: 12px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    border: 1px solid #334155;
-                    background: transparent;
-                    color: #e2e8f0;
-                    transition: all 0.2s;
-                }
-                .btn-sm:hover { border-color: #5eead4; color: #5eead4; }
-                .btn-sm.danger:hover { border-color: #ef4444; color: #ef4444; }
-                .create-form {
-                    background: #1e293b;
-                    border: 1px solid #5eead4;
-                    border-radius: 12px;
-                    padding: 32px;
-                    margin-bottom: 24px;
-                }
-                .create-form h3 {
-                    font-size: 18px;
-                    margin: 0 0 24px 0;
-                    color: #f8fafc;
-                }
-                .form-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 16px;
-                }
-                .form-group label {
-                    display: block;
-                    font-size: 12px;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    color: #94a3b8;
-                    margin-bottom: 6px;
-                }
-                .form-group input, .form-group select {
-                    width: 100%;
-                    padding: 10px 14px;
-                    background: #0f172a;
-                    border: 1px solid #334155;
-                    border-radius: 8px;
-                    color: #e2e8f0;
-                    font-size: 14px;
-                    box-sizing: border-box;
-                }
-                .form-group input:focus, .form-group select:focus {
-                    outline: none;
-                    border-color: #5eead4;
-                }
-                .form-actions {
-                    display: flex;
-                    gap: 12px;
-                    margin-top: 20px;
-                }
-                .btn-submit {
-                    background: linear-gradient(135deg, #5eead4, #2dd4bf);
-                    color: #0f172a;
-                    border: none;
-                    padding: 12px 32px;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    font-size: 14px;
-                    cursor: pointer;
-                }
-                .btn-cancel {
-                    background: transparent;
-                    border: 1px solid #334155;
-                    color: #94a3b8;
-                    padding: 12px 24px;
-                    border-radius: 8px;
-                    font-size: 14px;
-                    cursor: pointer;
-                }
-                .stat-value {
-                    font-size: 13px;
-                    color: #94a3b8;
-                }
+                .promo-code { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 15px; color: #5eead4; background: rgba(94,234,212,0.1); padding: 4px 12px; border-radius: 6px; }
+                .promo-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+                .promo-badge.on { background: rgba(16,185,129,0.15); color: #10b981; }
+                .promo-badge.off { background: rgba(239,68,68,0.15); color: #ef4444; }
+                .promo-badge.warn { background: rgba(245,158,11,0.15); color: #f59e0b; }
+                .promo-btn-sm { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: #e2e8f0; transition: all 0.2s; }
+                .promo-btn-sm:hover { border-color: #5eead4; color: #5eead4; }
+                .promo-btn-sm.danger:hover { border-color: #ef4444; color: #ef4444; }
+                .promo-form { background: var(--bg-card); border: 1px solid rgba(94,234,212,0.4); border-radius: 16px; padding: 28px; margin-bottom: 24px; }
+                .promo-form h3 { font-size: 18px; margin: 0 0 20px; color: var(--text-main); }
+                .promo-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; }
+                .promo-form label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px; }
+                .promo-form input, .promo-form select { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-main); font-size: 14px; box-sizing: border-box; }
+                .promo-form input:focus, .promo-form select:focus { outline: none; border-color: #5eead4; }
             `}</style>
 
-            <div className="promo-header">
-                <h1>🏷️ Промокоди</h1>
-                <button className="btn-create" onClick={() => setShowForm(!showForm)}>
-                    {showForm ? "✕ Закрити" : "+ Створити промокод"}
-                </button>
+            <div className="admin-page-header">
+                <h1>Промокоди</h1>
+                <p>Знижки та акційні коди</p>
             </div>
 
+            <AdminToolbar
+                right={
+                    <button
+                        type="button"
+                        onClick={() => setShowForm((v) => !v)}
+                        style={{
+                            background: showForm ? "transparent" : "var(--accent-primary)",
+                            color: showForm ? "var(--text-secondary)" : "#0f172a",
+                            border: showForm ? "1px solid rgba(255,255,255,0.12)" : "none",
+                            padding: "10px 20px",
+                            borderRadius: "8px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            fontSize: "14px",
+                            whiteSpace: "nowrap",
+                        }}
+                    >
+                        {showForm ? "Закрити" : "+ Створити промокод"}
+                    </button>
+                }
+            >
+                <SearchInput defaultValue={state.q} placeholder="Пошук за кодом…" />
+                <FilterSelect
+                    name="active"
+                    value={state.filters.active ?? ""}
+                    allLabel="Всі"
+                    options={[
+                        { value: "true", label: "Активні" },
+                        { value: "false", label: "Вимкнені" },
+                    ]}
+                />
+            </AdminToolbar>
+
             {showForm && (
-                <form className="create-form" onSubmit={handleCreate}>
+                <createFetcher.Form method="post" className="promo-form">
                     <h3>Новий промокод</h3>
-                    <div className="form-grid">
-                        <div className="form-group">
+                    <input type="hidden" name="intent" value="create" />
+                    <div className="promo-form-grid">
+                        <div>
                             <label>Код *</label>
                             <input
                                 name="code"
@@ -291,15 +194,15 @@ export default function AdminPromo() {
                                 style={{ textTransform: "uppercase" }}
                             />
                         </div>
-                        <div className="form-group">
+                        <div>
                             <label>Тип знижки</label>
                             <select name="discountType">
                                 <option value="percent">Відсотки (%)</option>
                                 <option value="fixed">Фіксована сума (₴)</option>
                             </select>
                         </div>
-                        <div className="form-group">
-                            <label>Значення знижки *</label>
+                        <div>
+                            <label>Значення *</label>
                             <input
                                 name="discountValue"
                                 type="number"
@@ -309,18 +212,17 @@ export default function AdminPromo() {
                                 required
                             />
                         </div>
-                        <div className="form-group">
+                        <div>
                             <label>Мін. замовлення (₴)</label>
                             <input
                                 name="minOrder"
                                 type="number"
                                 step="1"
                                 min="0"
-                                placeholder="0"
                                 defaultValue="0"
                             />
                         </div>
-                        <div className="form-group">
+                        <div>
                             <label>Макс. використань</label>
                             <input
                                 name="maxUses"
@@ -329,131 +231,199 @@ export default function AdminPromo() {
                                 placeholder="Без обмежень"
                             />
                         </div>
-                        <div className="form-group">
+                        <div>
                             <label>Дійсний до</label>
                             <input name="expiresAt" type="date" />
                         </div>
                     </div>
-                    <div className="form-actions">
-                        <button type="submit" className="btn-submit">
-                            Створити
-                        </button>
+                    {createError && (
+                        <div style={{ color: "#fca5a5", fontSize: "13px", marginTop: "12px" }}>
+                            {createError}
+                        </div>
+                    )}
+                    <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
                         <button
-                            type="button"
-                            className="btn-cancel"
-                            onClick={() => setShowForm(false)}
+                            type="submit"
+                            disabled={createFetcher.state !== "idle"}
+                            style={{
+                                background: "var(--accent-primary)",
+                                color: "#0f172a",
+                                border: "none",
+                                padding: "11px 28px",
+                                borderRadius: "8px",
+                                fontWeight: 600,
+                                fontSize: "14px",
+                                cursor: "pointer",
+                            }}
                         >
-                            Скасувати
+                            {createFetcher.state !== "idle" ? "Створення…" : "Створити"}
                         </button>
                     </div>
-                </form>
+                </createFetcher.Form>
             )}
 
-            <div className="promo-card">
-                {promos.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
-                        <div style={{ fontSize: "48px", marginBottom: "16px" }}>🏷️</div>
-                        <p style={{ fontSize: "16px", marginBottom: "8px" }}>Промокодів ще немає</p>
-                        <p style={{ fontSize: "13px" }}>
-                            Створіть перший промокод для своїх клієнтів
-                        </p>
-                    </div>
-                ) : (
-                    <table className="promo-table">
-                        <thead>
-                            <tr>
-                                <th>Код</th>
-                                <th>Знижка</th>
-                                <th>Мін. замовлення</th>
-                                <th>Використань</th>
-                                <th>Статус</th>
-                                <th>Термін дії</th>
-                                <th>Дії</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {promos.map((p) => {
-                                const isExpired = p.expiresAt && new Date(p.expiresAt) < new Date();
-                                const isExhausted = p.maxUses && p.usedCount >= p.maxUses;
-                                const isEffectivelyActive =
-                                    p.isActive && !isExpired && !isExhausted;
-
-                                return (
-                                    <tr key={p.id}>
-                                        <td>
-                                            <span className="promo-code">{p.code}</span>
-                                        </td>
-                                        <td>
-                                            <strong style={{ color: "#f8fafc" }}>
+            {promos.length === 0 ? (
+                <EmptyState
+                    title={
+                        state.q || Object.keys(state.filters).length > 0
+                            ? "Нічого не знайдено"
+                            : "Промокодів ще немає"
+                    }
+                    description={
+                        state.q || Object.keys(state.filters).length > 0
+                            ? "Спробуйте змінити пошук або фільтр."
+                            : "Створіть перший промокод для своїх клієнтів."
+                    }
+                />
+            ) : (
+                <div className="admin-card" style={{ padding: 0 }}>
+                    <div
+                        className="admin-table-container"
+                        style={{ border: "none", borderRadius: 0 }}
+                    >
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <SortableTh field="code" label="Код" state={state} />
+                                    <th>Знижка</th>
+                                    <th>Мін.</th>
+                                    <SortableTh
+                                        field="usedCount"
+                                        label="Використань"
+                                        state={state}
+                                    />
+                                    <th>Статус</th>
+                                    <th>Термін</th>
+                                    <th style={{ textAlign: "right" }}>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {promos.map((p) => {
+                                    const isExpired =
+                                        p.expiresAt && new Date(p.expiresAt) < new Date();
+                                    const isExhausted =
+                                        p.maxUses !== null && p.usedCount >= p.maxUses;
+                                    const cls =
+                                        isExpired || isExhausted
+                                            ? "warn"
+                                            : p.isActive
+                                              ? "on"
+                                              : "off";
+                                    return (
+                                        <tr key={p.id}>
+                                            <td>
+                                                <span className="promo-code">{p.code}</span>
+                                            </td>
+                                            <td
+                                                style={{
+                                                    color: "var(--text-main)",
+                                                    fontWeight: 600,
+                                                }}
+                                            >
                                                 {p.discountType === "percent"
                                                     ? `${p.discountValue}%`
                                                     : `${p.discountValue} ₴`}
-                                            </strong>
-                                        </td>
-                                        <td>
-                                            <span className="stat-value">
-                                                {p.minOrder > 0 ? `від ${p.minOrder} ₴` : "—"}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className="stat-value">
+                                            </td>
+                                            <td style={{ color: "var(--text-muted)" }}>
+                                                {p.minOrder > 0 ? `${p.minOrder} ₴` : "—"}
+                                            </td>
+                                            <td style={{ color: "var(--text-muted)" }}>
                                                 {p.usedCount}
                                                 {p.maxUses ? ` / ${p.maxUses}` : ""}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span
-                                                className={`badge-active ${isEffectivelyActive ? "on" : "off"}`}
-                                            >
-                                                <span
-                                                    style={{
-                                                        width: 6,
-                                                        height: 6,
-                                                        borderRadius: "50%",
-                                                        background: "currentColor",
-                                                    }}
-                                                ></span>
-                                                {isExpired
-                                                    ? "Протермін."
-                                                    : isExhausted
-                                                      ? "Вичерпано"
-                                                      : p.isActive
-                                                        ? "Активний"
-                                                        : "Неактивний"}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className="stat-value">
+                                            </td>
+                                            <td>
+                                                <span className={`promo-badge ${cls}`}>
+                                                    <span
+                                                        style={{
+                                                            width: 6,
+                                                            height: 6,
+                                                            borderRadius: "50%",
+                                                            background: "currentColor",
+                                                        }}
+                                                    />
+                                                    {isExpired
+                                                        ? "Протермін."
+                                                        : isExhausted
+                                                          ? "Вичерпано"
+                                                          : p.isActive
+                                                            ? "Активний"
+                                                            : "Вимкнений"}
+                                                </span>
+                                            </td>
+                                            <td style={{ color: "var(--text-muted)" }}>
                                                 {p.expiresAt
                                                     ? new Date(p.expiresAt).toLocaleDateString(
                                                           "uk-UA",
                                                       )
                                                     : "∞"}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div style={{ display: "flex", gap: "8px" }}>
-                                                <button
-                                                    className="btn-sm"
-                                                    onClick={() => handleToggle(p.id, p.isActive)}
+                                            </td>
+                                            <td style={{ textAlign: "right" }}>
+                                                <div
+                                                    style={{
+                                                        display: "flex",
+                                                        gap: "8px",
+                                                        justifyContent: "flex-end",
+                                                    }}
                                                 >
-                                                    {p.isActive ? "⏸ Вимкнути" : "▶ Увімкнути"}
-                                                </button>
-                                                <button
-                                                    className="btn-sm danger"
-                                                    onClick={() => handleDelete(p.id)}
-                                                >
-                                                    🗑
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                )}
-            </div>
-        </div>
+                                                    <button
+                                                        type="button"
+                                                        className="promo-btn-sm"
+                                                        onClick={() =>
+                                                            mutate.submit(
+                                                                {
+                                                                    intent: "toggle",
+                                                                    id: p.id,
+                                                                    isActive: String(p.isActive),
+                                                                },
+                                                                { method: "post" },
+                                                            )
+                                                        }
+                                                    >
+                                                        {p.isActive ? "Вимкнути" : "Увімкнути"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="promo-btn-sm danger"
+                                                        onClick={() =>
+                                                            setConfirmPromo({
+                                                                id: p.id,
+                                                                code: p.code,
+                                                            })
+                                                        }
+                                                    >
+                                                        🗑
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                    <AdminPagination page={page} />
+                </div>
+            )}
+
+            <ConfirmDialog
+                open={confirmPromo !== null}
+                title="Видалити промокод?"
+                body={
+                    <>
+                        Промокод <strong>{confirmPromo?.code}</strong> буде видалено назавжди.
+                    </>
+                }
+                busy={mutate.state !== "idle"}
+                onConfirm={() => {
+                    if (confirmPromo)
+                        mutate.submit(
+                            { intent: "delete", id: confirmPromo.id },
+                            { method: "post" },
+                        );
+                    setConfirmPromo(null);
+                }}
+                onCancel={() => setConfirmPromo(null)}
+            />
+        </>
     );
 }
