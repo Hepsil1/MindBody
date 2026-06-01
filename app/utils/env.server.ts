@@ -31,7 +31,10 @@ const EnvSchema = z.object({
     // NOTE: min lowered 8 → 4 at the operator's explicit request so a short
     // admin password (e.g. "Admin") is accepted. This intentionally weakens
     // the previous guard — a longer random password is strongly preferred.
-    ADMIN_PASSWORD: z.string().min(4, "ADMIN_PASSWORD must be at least 4 chars"),
+    // Either ADMIN_PASSWORD_HASH (preferred, bcrypt) or the legacy plaintext
+    // ADMIN_PASSWORD must be set — enforced in the cross-field check below.
+    ADMIN_PASSWORD: z.string().min(4, "ADMIN_PASSWORD must be at least 4 chars").optional(),
+    ADMIN_PASSWORD_HASH: z.string().optional(),
     // Optional admin username; the login form gates on username + password.
     ADMIN_USERNAME: z.string().min(1).optional(),
     NOVA_POSHTA_API_KEY: z.string().min(1, "NOVA_POSHTA_API_KEY is required for checkout"),
@@ -92,6 +95,12 @@ function parseEnv(): Env {
     if (!googleAllSet && !googleAllEmpty) {
         throw new Error(
             "[env] GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI must all be set or all empty",
+        );
+    }
+
+    if (!e.ADMIN_PASSWORD && !e.ADMIN_PASSWORD_HASH) {
+        throw new Error(
+            "[env] Set ADMIN_PASSWORD (plaintext) or ADMIN_PASSWORD_HASH (bcrypt) for admin login",
         );
     }
 

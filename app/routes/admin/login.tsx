@@ -1,5 +1,10 @@
 import { Form, useActionData, redirect, useNavigation } from "react-router";
-import { adminSession, ADMIN_PASSWORD, ADMIN_USERNAME } from "../../utils/admin.server";
+import {
+    adminSession,
+    ADMIN_USERNAME,
+    verifyAdminPassword,
+    newSessionToken,
+} from "../../utils/admin.server";
 import type { ActionFunctionArgs } from "react-router";
 
 // In-memory brute-force protection (resets on cold start, but protects within instance lifetime)
@@ -29,12 +34,12 @@ export async function action({ request }: ActionFunctionArgs) {
     const username = formData.get("username");
     const password = formData.get("password");
 
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    if (username === ADMIN_USERNAME && (await verifyAdminPassword(String(password ?? "")))) {
         // Success — clear attempts
         loginAttempts.delete(ip);
         return redirect("/admin", {
             headers: {
-                "Set-Cookie": await adminSession.serialize("authenticated"),
+                "Set-Cookie": await adminSession.serialize(newSessionToken()),
             },
         });
     }
