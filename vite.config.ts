@@ -9,12 +9,13 @@ export default defineConfig({
     // migrate it to `import.meta.env.VITE_X` instead — that's the vite-native way.
     plugins: [reactRouter(), tsconfigPaths()],
 
-    // Keep a single instance of these libs. sonner in particular broke when Vite
-    // discovered it mid-session and re-optimized: <Toaster> and toast() ended up
-    // in two different optimized chunks (two stores), so toasts never rendered.
-    // Pre-bundling it at startup + dedupe guarantees one instance.
+    // Keep a single sonner instance so the mounted <Toaster> and toast() calls
+    // share one store — otherwise toasts silently never render. Pre-bundle it so
+    // Vite doesn't re-optimize it into a second instance mid-session. (Do NOT add
+    // react/react-dom here: deduping them broke the slides editor, which pulls in
+    // storefront components, with a "null dispatcher" dual-React error.)
     resolve: {
-        dedupe: ["sonner", "react", "react-dom"],
+        dedupe: ["sonner"],
     },
     optimizeDeps: {
         include: ["sonner"],
