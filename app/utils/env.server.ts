@@ -28,7 +28,12 @@ const EnvSchema = z.object({
         .string()
         .url("SITE_URL must be a valid URL")
         .refine((v) => !v.endsWith("/"), "SITE_URL must not have a trailing slash"),
-    ADMIN_PASSWORD: z.string().min(8, "ADMIN_PASSWORD must be at least 8 chars"),
+    // NOTE: min lowered 8 → 4 at the operator's explicit request so a short
+    // admin password (e.g. "Admin") is accepted. This intentionally weakens
+    // the previous guard — a longer random password is strongly preferred.
+    ADMIN_PASSWORD: z.string().min(4, "ADMIN_PASSWORD must be at least 4 chars"),
+    // Optional admin username; the login form gates on username + password.
+    ADMIN_USERNAME: z.string().min(1).optional(),
     NOVA_POSHTA_API_KEY: z.string().min(1, "NOVA_POSHTA_API_KEY is required for checkout"),
 
     // ─── Optional ─────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { Form, useActionData, redirect, useNavigation } from "react-router";
-import { adminSession, ADMIN_PASSWORD } from "../../utils/admin.server";
+import { adminSession, ADMIN_PASSWORD, ADMIN_USERNAME } from "../../utils/admin.server";
 import type { ActionFunctionArgs } from "react-router";
 
 // In-memory brute-force protection (resets on cold start, but protects within instance lifetime)
@@ -26,9 +26,10 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     const formData = await request.formData();
+    const username = formData.get("username");
     const password = formData.get("password");
 
-    if (password === ADMIN_PASSWORD) {
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
         // Success — clear attempts
         loginAttempts.delete(ip);
         return redirect("/admin", {
@@ -49,7 +50,7 @@ export async function action({ request }: ActionFunctionArgs) {
         return { error: "Забагато спроб. Спробуйте через 15 хв." };
     }
 
-    return { error: `Невірний пароль (залишилось спроб: ${remaining})` };
+    return { error: `Невірний логін або пароль (залишилось спроб: ${remaining})` };
 }
 
 export default function AdminLogin() {
@@ -231,6 +232,70 @@ export default function AdminLogin() {
                                 textTransform: "uppercase",
                             }}
                         >
+                            Логін
+                        </label>
+                        <div style={{ position: "relative" }}>
+                            <input
+                                type="text"
+                                name="username"
+                                placeholder="Admin"
+                                autoFocus
+                                autoComplete="username"
+                                style={{
+                                    width: "100%",
+                                    padding: "16px 20px",
+                                    paddingLeft: "48px",
+                                    background: "rgba(15, 23, 42, 0.6)",
+                                    border: "1px solid rgba(148, 163, 184, 0.2)",
+                                    borderRadius: "14px",
+                                    color: "#fff",
+                                    fontSize: "16px",
+                                    outline: "none",
+                                    transition: "all 0.2s ease",
+                                    boxSizing: "border-box",
+                                }}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = "#3daba3";
+                                    e.target.style.boxShadow = "0 0 0 3px rgba(61, 171, 163, 0.15)";
+                                }}
+                                onBlur={(e) => {
+                                    e.target.style.borderColor = "rgba(148, 163, 184, 0.2)";
+                                    e.target.style.boxShadow = "none";
+                                }}
+                            />
+                            <svg
+                                style={{
+                                    position: "absolute",
+                                    left: "16px",
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    width: "20px",
+                                    height: "20px",
+                                    color: "#64748b",
+                                }}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
+                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            style={{
+                                display: "block",
+                                marginBottom: "10px",
+                                fontSize: "13px",
+                                color: "#94a3b8",
+                                fontWeight: 500,
+                                letterSpacing: "0.05em",
+                                textTransform: "uppercase",
+                            }}
+                        >
                             Пароль доступу
                         </label>
                         <div style={{ position: "relative" }}>
@@ -238,7 +303,6 @@ export default function AdminLogin() {
                                 type="password"
                                 name="password"
                                 placeholder="••••••••••"
-                                autoFocus
                                 autoComplete="current-password"
                                 style={{
                                     width: "100%",

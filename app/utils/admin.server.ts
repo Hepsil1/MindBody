@@ -12,6 +12,10 @@ export const adminSession = createCookie("admin_session", {
 });
 
 export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
+// Optional username gate. Auth was password-only historically; the login
+// form now also asks for a username so the admin has a login + password
+// pair. Defaults to "Admin" when ADMIN_USERNAME is unset.
+export const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "Admin";
 
 export async function isAuthenticated(request: Request) {
     try {
