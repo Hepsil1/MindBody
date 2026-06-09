@@ -111,9 +111,11 @@ export async function loader({ request }: Route.LoaderArgs) {
     // Context labels for the "filtered by order/product" banner.
     let orderNumber: number | null = null;
     if (orderId) {
-        const o = await prisma.$queryRaw<{ orderNumber: number }[]>`
-            SELECT "orderNumber" FROM "Order" WHERE id = ${orderId} LIMIT 1`;
-        orderNumber = o[0] ? Number(o[0].orderNumber) : null;
+        const o = await prisma.order.findUnique({
+            where: { id: orderId },
+            select: { orderNumber: true },
+        });
+        orderNumber = o ? Number(o.orderNumber) : null;
     }
     let productName: string | null = null;
     if (productId) {

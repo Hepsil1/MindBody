@@ -40,27 +40,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         throw new Response("Order not found", { status: 404 });
     }
 
-    // New columns/tables aren't in the (un-regenerated) Prisma client → raw SQL.
-    const meta = await prisma.$queryRaw<
-        { emailStatus: string | null; appliedPromoCode: string | null; discountAmount: unknown }[]
-    >`SELECT "emailStatus", "appliedPromoCode", "discountAmount" FROM "Order" WHERE id = ${params.id}`;
-    const historyRows = await prisma.$queryRaw<
-        {
-            field: string;
-            fromValue: string | null;
-            toValue: string;
-            actor: string;
-            note: string | null;
-            createdAt: Date;
-        }[]
-    >`SELECT field, "fromValue", "toValue", actor, note, "createdAt"
-      FROM "OrderStatusHistory" WHERE "orderId" = ${params.id} ORDER BY "createdAt" ASC`;
+    const historyRows = await prisma.orderStatusHistory.findMany({
+        where: { orderId: params.id },
+        orderBy: { createdAt: "asc" },
+        select: {
+            field: true,
+            fromValue: true,
+            toValue: true,
+            actor: true,
+            note: true,
+            createdAt: true,
+        },
+    });
 
     return {
         order,
-        emailStatus: meta[0]?.emailStatus ?? null,
-        appliedPromoCode: meta[0]?.appliedPromoCode ?? null,
-        discountAmount: meta[0] ? Number(meta[0].discountAmount) || 0 : 0,
+        emailStatus: order.emailStatus ?? null,
+        appliedPromoCode: order.appliedPromoCode ?? null,
+        discountAmount: order.discountAmount ? Number(order.discountAmount) : 0,
         history: historyRows.map((h) => ({
             field: h.field,
             fromValue: h.fromValue,

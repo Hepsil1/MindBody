@@ -9,9 +9,6 @@ import { invalidateCache } from "../../../utils/cache.server";
 import { ConfirmDialog } from "../../../components/admin/ConfirmDialog";
 import { useActionToast } from "../../../components/admin/useActionToast";
 
-// `moodType` lives on a column the un-regenerated Prisma client doesn't know
-// (added without `prisma generate`, same as the P0 columns), so every Category
-// read/write here goes through raw SQL — matching admin/slides.tsx + home.tsx.
 const ALLOWED_MOODS = ["yoga", "sport", "dance", "casual", "kids"];
 const MOOD_OPTIONS: { value: string; label: string }[] = [
     { value: "", label: "— Без теми —" },
@@ -35,10 +32,21 @@ interface CategoryRow {
 }
 
 export async function loader() {
-    const rows = await prisma.$queryRaw<CategoryRow[]>`
-        SELECT id, title, subtitle, image, "imagePos", link, "buttonText", "moodType", "order"
-        FROM "Category" ORDER BY "order" ASC, "createdAt" ASC`;
-    return { categories: rows.map((c) => ({ ...c, order: Number(c.order) })) };
+    const categories = await prisma.category.findMany({
+        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+        select: {
+            id: true,
+            title: true,
+            subtitle: true,
+            image: true,
+            imagePos: true,
+            link: true,
+            buttonText: true,
+            moodType: true,
+            order: true,
+        },
+    });
+    return { categories };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -52,8 +60,10 @@ export async function action({ request }: Route.ActionArgs) {
         const id = String(formData.get("id") || "");
         const direction = String(formData.get("direction") || "");
         return runAction("categories.reorder", async () => {
-            const rows = await prisma.$queryRaw<{ id: string }[]>`
-                SELECT id FROM "Category" ORDER BY "order" ASC, "createdAt" ASC`;
+            const rows = await prisma.category.findMany({
+                select: { id: true },
+                orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+            });
             const ids = rows.map((r) => r.id);
             const idx = ids.indexOf(id);
             const swapIdx = direction === "up" ? idx - 1 : idx + 1;
@@ -63,9 +73,8 @@ export async function action({ request }: Route.ActionArgs) {
             // Normalize order to 0..n-1 with the swap applied (robust even if the
             // existing order values are duplicated / all zero from the seed).
             await prisma.$transaction(
-                ids.map(
-                    (cid, i) =>
-                        prisma.$executeRaw`UPDATE "Category" SET "order" = ${i}, "updatedAt" = CURRENT_TIMESTAMP WHERE id = ${cid}`,
+                ids.map((cid, i) =>
+                    prisma.category.update({ where: { id: cid }, data: { order: i } }),
                 ),
             );
             invalidateCache("home:categories");
@@ -77,7 +86,7 @@ export async function action({ request }: Route.ActionArgs) {
         const id = String(formData.get("id") || "");
         if (!id) return actionError("Не вказано категорію");
         return runAction("categories.delete", async () => {
-            await prisma.$executeRaw`DELETE FROM "Category" WHERE id = ${id}`;
+            await prisma.category.delete({ where: { id } });
             invalidateCache("home:categories");
             return actionOk(undefined, { type: "success", message: "Категорію видалено" });
         });
@@ -105,15 +114,20 @@ export async function action({ request }: Route.ActionArgs) {
         if (intent === "create") {
             if (!image) return actionError("Завантажте зображення категорії");
             return runAction("categories.create", async () => {
-                const maxRow = await prisma.$queryRaw<{ max: number | null }[]>`
-                    SELECT MAX("order") AS max FROM "Category"`;
-                const nextOrder = (Number(maxRow[0]?.max) || 0) + 1;
-                await prisma.$executeRaw`
-                    INSERT INTO "Category"
-                        (id, title, subtitle, image, "imagePos", link, "buttonText", "moodType", "order", "createdAt", "updatedAt")
-                    VALUES
-                        (gen_random_uuid(), ${title}, ${subtitle}, ${image}, ${imagePos}, ${link},
-                         ${buttonText}, ${moodType}, ${nextOrder}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
+                const agg = await prisma.category.aggregate({ _max: { order: true } });
+                const nextOrder = (agg._max.order ?? 0) + 1;
+                await prisma.category.create({
+                    data: {
+                        title,
+                        subtitle,
+                        image,
+                        imagePos,
+                        link,
+                        buttonText,
+                        moodType,
+                        order: nextOrder,
+                    },
+                });
                 invalidateCache("home:categories");
                 return actionOk(undefined, {
                     type: "success",
@@ -126,12 +140,10 @@ export async function action({ request }: Route.ActionArgs) {
         if (!id) return actionError("Не вказано категорію");
         if (!image) return actionError("Зображення обов'язкове");
         return runAction("categories.update", async () => {
-            await prisma.$executeRaw`
-                UPDATE "Category"
-                SET title = ${title}, subtitle = ${subtitle}, image = ${image}, "imagePos" = ${imagePos},
-                    link = ${link}, "buttonText" = ${buttonText}, "moodType" = ${moodType},
-                    "updatedAt" = CURRENT_TIMESTAMP
-                WHERE id = ${id}`;
+            await prisma.category.update({
+                where: { id },
+                data: { title, subtitle, image, imagePos, link, buttonText, moodType },
+            });
             invalidateCache("home:categories");
             return actionOk(undefined, { type: "success", message: "Категорію оновлено" });
         });

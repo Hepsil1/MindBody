@@ -116,11 +116,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
         if (!isNew && params.id) {
             const p = await prisma.product.findUnique({ where: { id: params.id } });
             if (p) {
-                // fabric/sleeve live on columns the un-regenerated Prisma
-                // client doesn't know yet — read them raw (moodType pattern).
-                const extra = await prisma.$queryRaw<
-                    Array<{ fabric: string | null; sleeve: string | null }>
-                >`SELECT "fabric", "sleeve" FROM "Product" WHERE id = ${params.id}`;
                 const inventoryList = parseJsonAdmin<InventoryEntry[]>(p.inventory, []);
                 // Convert list back to map
                 const inventoryMap: Record<string, number> = {};
@@ -144,8 +139,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
                     description: p.description ?? "",
                     sku: p.sku ?? "",
                     category: p.category ?? "",
-                    fabric: extra[0]?.fabric ?? "",
-                    sleeve: extra[0]?.sleeve ?? "",
+                    fabric: p.fabric ?? "",
+                    sleeve: p.sleeve ?? "",
                     shopPageSlug: p.shopPageSlug ?? "",
                     status,
                     price: String(p.price),
@@ -196,7 +191,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
         if (intent === "save_product") {
             const isNew = params.id === "new" || !params.id;
-            const id = isNew ? generateUUID() : params.id;
+            const id = isNew ? generateUUID() : (params.id as string);
 
             // --- Parse raw fields ---
             const name = ((formData.get("name") as string) || "").trim();
@@ -333,33 +328,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const slug = await ensureUniqueSlug(name, id as string);
 
             try {
-                // Upsert Product (PostgreSQL syntax) using CURRENT_TIMESTAMP.
-                // slug uses COALESCE so an existing product keeps its slug while
-                // a new/legacy-null one gets the generated value.
-                await prisma.$executeRawUnsafe(
-                    `
-                    INSERT INTO "Product" (id, name, description, price, "comparePrice", sku, status, stock, category, "shopPageSlug", images, colors, sizes, inventory, fabric, sleeve, slug, "createdAt", "updatedAt")
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    ON CONFLICT(id) DO UPDATE SET
-                        name=EXCLUDED.name,
-                        description=EXCLUDED.description,
-                        price=EXCLUDED.price,
-                        "comparePrice"=EXCLUDED."comparePrice",
-                        sku=EXCLUDED.sku,
-                        status=EXCLUDED.status,
-                        stock=EXCLUDED.stock,
-                        category=EXCLUDED.category,
-                        "shopPageSlug"=EXCLUDED."shopPageSlug",
-                        images=EXCLUDED.images,
-                        colors=EXCLUDED.colors,
-                        sizes=EXCLUDED.sizes,
-                        inventory=EXCLUDED.inventory,
-                        fabric=EXCLUDED.fabric,
-                        sleeve=EXCLUDED.sleeve,
-                        slug=COALESCE("Product".slug, EXCLUDED.slug),
-                        "updatedAt"=CURRENT_TIMESTAMP
-                `,
-                    id,
+                // slug is assigned once and preserved across later edits (stable
+                // SEO URL); a legacy/null slug gets the freshly generated value.
+                const existing = await prisma.product.findUnique({
+                    where: { id },
+                    select: { slug: true },
+                });
+                const fields = {
                     name,
                     description,
                     price,
@@ -375,8 +350,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
                     inventory,
                     fabric,
                     sleeve,
-                    slug,
-                );
+                };
+                await prisma.product.upsert({
+                    where: { id },
+                    create: { id, ...fields, slug },
+                    update: { ...fields, slug: existing?.slug ?? slug },
+                });
 
                 return { success: true };
             } catch (e) {
@@ -457,12 +436,11 @@ async function ensureUniqueSlug(name: string, id: string): Promise<string> {
     const base = slugify(name) || "tovar";
     let candidate = base;
     for (let n = 2; n < 200; n++) {
-        const rows = (await prisma.$queryRawUnsafe(
-            `SELECT id FROM "Product" WHERE slug = $1 AND id <> $2 LIMIT 1`,
-            candidate,
-            id,
-        )) as Array<{ id: string }>;
-        if (!Array.isArray(rows) || rows.length === 0) return candidate;
+        const clash = await prisma.product.findFirst({
+            where: { slug: candidate, id: { not: id } },
+            select: { id: true },
+        });
+        if (!clash) return candidate;
         candidate = `${base}-${n}`;
     }
     return `${base}-${id.slice(0, 8)}`;

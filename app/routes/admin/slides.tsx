@@ -20,21 +20,16 @@ export function links() {
 export async function loader({ request }: Route.LoaderArgs) {
     try {
         // Run all queries in parallel for speed
-        const [allSlidesRaw, categoriesResult, shopPages, filterConfigResult] = await Promise.all([
-            prisma.$queryRaw`SELECT id, name, type, link, image1, image2, image3, "image1Pos", "image2Pos", "image3Pos", page, "order", "isActive" FROM "Slide" ORDER BY "order" ASC` as Promise<
-                any[]
-            >,
-            prisma.$queryRawUnsafe(
-                `SELECT id, title, subtitle, image, "imagePos", link, "buttonText", "moodType", "order" FROM "Category" ORDER BY "order" ASC`,
-            ) as Promise<any[]>,
+        const [allSlides, categories, shopPages, filterConfigs] = await Promise.all([
+            prisma.slide.findMany({ orderBy: { order: "asc" } }),
+            prisma.category.findMany({ orderBy: { order: "asc" } }),
             prisma.shopPage.findMany(),
-            prisma.$queryRawUnsafe(`SELECT * FROM "FilterConfig"`) as Promise<any[]>,
+            prisma.filterConfig.findMany(),
         ]);
 
-        const slides = allSlidesRaw.filter((s: any) => !s.page || s.page === "home");
-        const aboutSlides = allSlidesRaw.filter((s: any) => s.page === "about");
-        const categories = categoriesResult || [];
-        const filterConfigs = filterConfigResult || [];
+        // Slide.page is NOT NULL (default 'home'), so a simple equality split works.
+        const slides = allSlides.filter((s) => s.page === "home");
+        const aboutSlides = allSlides.filter((s) => s.page === "about");
 
         return { slides, categories, shopPages, filterConfigs, aboutSlides };
     } catch (error) {
@@ -119,30 +114,25 @@ export async function action({ request }: Route.ActionArgs) {
             image2 = await resolveImage(image2File, image2);
             image3 = await resolveImage(image3File, image3);
 
+            const slideData = {
+                name,
+                type,
+                link: link || null,
+                image1,
+                image1Pos,
+                image2: type === "single" ? null : image2 || null,
+                image2Pos: type === "single" ? "center center" : image2Pos,
+                image3: type === "single" ? null : image3 || null,
+                image3Pos: type === "single" ? "center center" : image3Pos,
+            };
             if (intent === "create") {
-                const maxOrderResult =
-                    (await prisma.$queryRaw`SELECT MAX("order") as "maxOrder" FROM "Slide"`) as any[];
-                const newOrder = (maxOrderResult[0]?.maxOrder || 0) + 1;
-                const newId =
-                    Math.random().toString(36).substring(2, 15) +
-                    Math.random().toString(36).substring(2, 15);
-
-                // Create HOME slide (explicit page='home')
-                await prisma.$executeRaw`
-                INSERT INTO "Slide" (id, name, type, page, link, image1, "image1Pos", image2, "image2Pos", image3, "image3Pos", "order", "isActive", "createdAt", "updatedAt")
-                VALUES (${newId}, ${name}, ${type}, 'home', ${link || null}, ${image1}, ${image1Pos}, ${type === "single" ? null : image2 || null}, ${type === "single" ? "center center" : image2Pos}, ${type === "single" ? null : image3 || null}, ${type === "single" ? "center center" : image3Pos}, ${newOrder}, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            `;
+                const maxOrder = await prisma.slide.aggregate({ _max: { order: true } });
+                const newOrder = (maxOrder._max.order ?? 0) + 1;
+                await prisma.slide.create({
+                    data: { ...slideData, page: "home", order: newOrder, isActive: true },
+                });
             } else {
-                // Update HOME slide
-                await prisma.$executeRaw`
-                UPDATE "Slide" 
-                SET name=${name}, type=${type}, link=${link || null},
-                    image1=${image1}, "image1Pos"=${image1Pos},
-                    image2=${type === "single" ? null : image2 || null}, "image2Pos"=${type === "single" ? "center center" : image2Pos},
-                    image3=${type === "single" ? null : image3 || null}, "image3Pos"=${type === "single" ? "center center" : image3Pos},
-                    "updatedAt"=CURRENT_TIMESTAMP
-                WHERE id=${id}
-            `;
+                await prisma.slide.update({ where: { id }, data: slideData });
             }
             return { success: true };
         }
@@ -150,7 +140,7 @@ export async function action({ request }: Route.ActionArgs) {
         if (intent === "delete") {
             const id = formData.get("id") as string;
             try {
-                await prisma.$executeRaw`DELETE FROM "Slide" WHERE id=${id}`;
+                await prisma.slide.delete({ where: { id } });
                 return { success: true };
             } catch (error) {
                 console.error("Failed to delete slide:", error);
@@ -178,17 +168,10 @@ export async function action({ request }: Route.ActionArgs) {
 
             image = await resolveImage(imageFile, image);
 
-            await prisma.$executeRawUnsafe(
-                `UPDATE "Category" SET title = $1, subtitle = $2, link = $3, "buttonText" = $4, image = $5, "imagePos" = $6, "moodType" = $7, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $8`,
-                title,
-                subtitle,
-                link,
-                buttonText,
-                image,
-                imagePos,
-                moodType,
-                id,
-            );
+            await prisma.category.update({
+                where: { id },
+                data: { title, subtitle, link, buttonText, image, imagePos, moodType },
+            });
 
             // Bust the home loader cache so the new mood shows up on
             // the next page render instead of waiting 60 s.
@@ -201,13 +184,11 @@ export async function action({ request }: Route.ActionArgs) {
             const config = formData.get("config") as string;
             const pageSlug = (formData.get("pageSlug") as string) || "global";
             try {
-                // PostgreSQL UPSERT - always reliable
-                await prisma.$executeRawUnsafe(
-                    `INSERT INTO "FilterConfig" (id, config, "updatedAt") VALUES ($1, $2, CURRENT_TIMESTAMP)
-                 ON CONFLICT(id) DO UPDATE SET config = $2, "updatedAt" = CURRENT_TIMESTAMP`,
-                    pageSlug,
-                    config,
-                );
+                await prisma.filterConfig.upsert({
+                    where: { id: pageSlug },
+                    update: { config },
+                    create: { id: pageSlug, config },
+                });
             } catch (e) {
                 console.error("FilterConfig update failed:", e);
                 // Don't report success on a failed write — the product editor's
@@ -240,16 +221,23 @@ export async function action({ request }: Route.ActionArgs) {
             image3 = await resolveImage(image3File, image3);
 
             const maxOrder = await prisma.slide.aggregate({ _max: { order: true } });
-            const newOrder = (maxOrder._max?.order || 0) + 1;
-            const id =
-                Math.random().toString(36).substring(2, 15) +
-                Math.random().toString(36).substring(2, 15);
+            const newOrder = (maxOrder._max.order ?? 0) + 1;
 
-            // Use Raw SQL to bypass client validation for 'page'
-            await prisma.$executeRaw`
-            INSERT INTO "Slide" (id, name, type, page, image1, "image1Pos", image2, "image2Pos", image3, "image3Pos", "order", "isActive", "createdAt", "updatedAt")
-            VALUES (${id}, ${name}, ${type}, 'about', ${image1}, ${image1Pos}, ${image2 || null}, ${image2Pos}, ${image3 || null}, ${image3Pos}, ${newOrder}, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        `;
+            await prisma.slide.create({
+                data: {
+                    name,
+                    type,
+                    page: "about",
+                    image1,
+                    image1Pos,
+                    image2: image2 || null,
+                    image2Pos,
+                    image3: image3 || null,
+                    image3Pos,
+                    order: newOrder,
+                    isActive: true,
+                },
+            });
             return { success: true };
         }
 
@@ -274,29 +262,32 @@ export async function action({ request }: Route.ActionArgs) {
             image2 = await resolveImage(image2File, image2);
             image3 = await resolveImage(image3File, image3);
 
-            // Use Raw SQL for update
-            await prisma.$executeRaw`
-            UPDATE "Slide" 
-            SET name=${name}, type=${type}, 
-                image1=${image1}, "image1Pos"=${image1Pos},
-                image2=${image2 || null}, "image2Pos"=${image2Pos},
-                image3=${image3 || null}, "image3Pos"=${image3Pos},
-                "updatedAt"=CURRENT_TIMESTAMP
-            WHERE id=${id}
-        `;
+            await prisma.slide.update({
+                where: { id },
+                data: {
+                    name,
+                    type,
+                    image1,
+                    image1Pos,
+                    image2: image2 || null,
+                    image2Pos,
+                    image3: image3 || null,
+                    image3Pos,
+                },
+            });
             return { success: true };
         }
 
         if (intent === "delete_about_slide") {
             const id = formData.get("id") as string;
-            await prisma.$executeRaw`DELETE FROM "Slide" WHERE id=${id}`;
+            await prisma.slide.delete({ where: { id } });
             return { success: true };
         }
 
         return { error: "Unknown intent" };
-    } catch (e: any) {
+    } catch (e) {
         console.error("Action error:", e);
-        return { error: e.message || "Сталася серверна помилка" };
+        return { error: e instanceof Error ? e.message : "Сталася серверна помилка" };
     }
 }
 
@@ -2448,8 +2439,7 @@ export default function AdminVisualEditor() {
                                     fontWeight: 600,
                                 }}
                             >
-                                Фон сторінки:{" "}
-                                {shopPageLabel(editingShopPageSlug).title}
+                                Фон сторінки: {shopPageLabel(editingShopPageSlug).title}
                             </h3>
                             <button
                                 onClick={closeShopEditor}
@@ -2568,7 +2558,9 @@ export default function AdminVisualEditor() {
                                                         lineHeight: 1.1,
                                                     }}
                                                 >
-                                                    {shopPageLabel(editingShopPageSlug).title.toUpperCase()}
+                                                    {shopPageLabel(
+                                                        editingShopPageSlug,
+                                                    ).title.toUpperCase()}
                                                 </div>
                                                 <div
                                                     style={{
