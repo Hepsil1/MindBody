@@ -12,7 +12,11 @@ import { prisma } from "../../../db.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
 import { uploadFile } from "../../../utils/upload.server";
 import { parseAndMergeFilterConfig } from "../../../utils/filters";
-import { ALLOWED_CATEGORY_SLUGS, isValidSubcategory, slugToLabel } from "../../../utils/categoryMap";
+import {
+    ALLOWED_CATEGORY_SLUGS,
+    isValidSubcategory,
+    slugToLabel,
+} from "../../../utils/categoryMap";
 import {
     fabricsFor,
     sleevesFor,
@@ -262,11 +266,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const fabricRaw = (formData.get("fabric") as string) || "";
             const sleeveRaw = (formData.get("sleeve") as string) || "";
             const fabric =
-                shopPageSlug && category && (fabricsFor(shopPageSlug, category) as string[]).includes(fabricRaw)
+                shopPageSlug &&
+                category &&
+                (fabricsFor(shopPageSlug, category) as string[]).includes(fabricRaw)
                     ? fabricRaw
                     : null;
             const sleeve =
-                shopPageSlug && category && (sleevesFor(shopPageSlug, category) as string[]).includes(sleeveRaw)
+                shopPageSlug &&
+                category &&
+                (sleevesFor(shopPageSlug, category) as string[]).includes(sleeveRaw)
                     ? sleeveRaw
                     : null;
 
@@ -288,7 +296,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const variantStock = cleanInventory.reduce((n, v) => n + (Number(v.stock) || 0), 0);
             // Stock derives from variants when they exist (single source of
             // truth); otherwise the manual field (variant-less simple products).
-            const stock = hasVariants ? variantStock : parseInt(formData.get("stock") as string) || 0;
+            const stock = hasVariants
+                ? variantStock
+                : parseInt(formData.get("stock") as string) || 0;
 
             // Re-serialize the cleaned arrays so the DB matches what we validated.
             const images = JSON.stringify(cleanImages);
@@ -552,15 +562,11 @@ export default function AdminProductEdit() {
         if (fetcher.state !== "idle") return; // one upload in flight at a time
         // Client-side pre-checks mirror the server limits for instant feedback.
         if (!file.type.startsWith("image/")) {
-            void import("sonner").then(({ toast }) =>
-                toast.error("Підтримуються лише зображення"),
-            );
+            void import("sonner").then(({ toast }) => toast.error("Підтримуються лише зображення"));
             return;
         }
         if (file.size > 10 * 1024 * 1024) {
-            void import("sonner").then(({ toast }) =>
-                toast.error("Файл завеликий (макс. 10 МБ)"),
-            );
+            void import("sonner").then(({ toast }) => toast.error("Файл завеликий (макс. 10 МБ)"));
             return;
         }
         const fd = new FormData();
@@ -634,9 +640,7 @@ export default function AdminProductEdit() {
         setFormData((prev) => {
             const current = prev[field];
             const removing = current.includes(item);
-            const newArray = removing
-                ? current.filter((i) => i !== item)
-                : [...current, item];
+            const newArray = removing ? current.filter((i) => i !== item) : [...current, item];
             // Prune any inventory variants that reference the removed value so a
             // deselected color/size can't leave an orphan row (which the PDP
             // would otherwise resurrect as a buyable option).
@@ -660,9 +664,7 @@ export default function AdminProductEdit() {
     useEffect(() => {
         if (!hasVariants) return;
         const total = Object.values(formData.inventory).reduce((a, b) => a + b, 0);
-        setFormData((p) =>
-            String(total) === p.stock ? p : { ...p, stock: String(total) },
-        );
+        setFormData((p) => (String(total) === p.stock ? p : { ...p, stock: String(total) }));
     }, [formData.inventory, hasVariants]);
 
     const globalApplyStock = (qty: number) => {
@@ -966,15 +968,27 @@ export default function AdminProductEdit() {
                                 ? "Створіть ідеальний товар для вашого магазину"
                                 : `SKU: ${formData.sku || "---"}`}
                         </p>
+                        {!isNew && product?.id && (
+                            <Link
+                                to={`/admin/inventory?productId=${product.id}`}
+                                style={{
+                                    display: "inline-block",
+                                    marginTop: "8px",
+                                    fontSize: "13px",
+                                    color: "var(--ad-primary)",
+                                    textDecoration: "none",
+                                }}
+                            >
+                                Історія складу →
+                            </Link>
+                        )}
                     </div>
                     <div style={{ textAlign: "right" }}>
                         <button
                             className="btn-save"
                             onClick={handleSave}
                             disabled={fetcher.state !== "idle" || !canSave}
-                            title={
-                                !canSave ? `Заповніть: ${missingFields.join(", ")}` : undefined
-                            }
+                            title={!canSave ? `Заповніть: ${missingFields.join(", ")}` : undefined}
                         >
                             {fetcher.state !== "idle" ? "Збереження..." : "Зберегти зміни"}
                         </button>
@@ -1089,10 +1103,7 @@ export default function AdminProductEdit() {
                                 return (
                                     <div className="ad-field-grid">
                                         {fabrics.length > 0 && (
-                                            <div
-                                                className="form-group"
-                                                style={{ marginBottom: 0 }}
-                                            >
+                                            <div className="form-group" style={{ marginBottom: 0 }}>
                                                 <label className="form-label">Тканина</label>
                                                 <select
                                                     className="form-select"
@@ -1114,10 +1125,7 @@ export default function AdminProductEdit() {
                                             </div>
                                         )}
                                         {sleeves.length > 0 && (
-                                            <div
-                                                className="form-group"
-                                                style={{ marginBottom: 0 }}
-                                            >
+                                            <div className="form-group" style={{ marginBottom: 0 }}>
                                                 <label className="form-label">Рукав</label>
                                                 <select
                                                     className="form-select"

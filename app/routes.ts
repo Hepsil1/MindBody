@@ -57,6 +57,7 @@ export default [
         route("admin/customers", "routes/admin/customers/index.tsx"),
         route("admin/customers/:id", "routes/admin/customers/$id.tsx"),
         route("admin/categories", "routes/admin/categories/index.tsx"),
+        route("admin/inventory", "routes/admin/inventory.tsx"),
         route("admin/shop-pages", "routes/admin/shop-pages.tsx"),
         route("admin/promo", "routes/admin/promo.tsx"),
         route("admin/reviews", "routes/admin/reviews.tsx"),

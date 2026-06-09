@@ -161,6 +161,23 @@ const navItems = [
         ),
         label: "Категорії",
     },
+    {
+        to: "/admin/inventory",
+        icon: (
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                width="20"
+                height="20"
+            >
+                <path d="M3 7l9-4 9 4v10l-9 4-9-4V7z" />
+                <path d="M3 7l9 4 9-4M12 11v10" />
+            </svg>
+        ),
+        label: "Склад",
+    },
     { to: "/admin/customers", icon: <Icons.Customers />, label: "Клієнти" },
     {
         to: "/admin/promo",

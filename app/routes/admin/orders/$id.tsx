@@ -579,9 +579,23 @@ export default function AdminOrderDetails() {
                                 fontWeight: "600",
                                 margin: "0 0 20px 0",
                                 color: "#f8fafc",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
                             }}
                         >
-                            📦 Товари ({order.items.length})
+                            <span>📦 Товари ({order.items.length})</span>
+                            <Link
+                                to={`/admin/inventory?orderId=${order.id}`}
+                                style={{
+                                    fontSize: "13px",
+                                    fontWeight: 500,
+                                    color: "#5eead4",
+                                    textDecoration: "none",
+                                }}
+                            >
+                                Рухи складу →
+                            </Link>
                         </h3>
                         <div>
                             {order.items.map((item) => {
