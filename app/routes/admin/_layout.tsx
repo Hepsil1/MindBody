@@ -286,6 +286,7 @@ export default function AdminLayout() {
                     <Link
                         to="/admin/logout"
                         title="Вийти"
+                        aria-label="Вийти з адмін-панелі"
                         style={{
                             background: "none",
                             border: "none",

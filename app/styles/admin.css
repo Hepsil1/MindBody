@@ -757,6 +757,21 @@ body {
     }
 }
 
+/* Keyboard focus rings across the whole admin (B2). :focus-visible only fires on
+   keyboard navigation, so mouse users get no extra outlines. A few inputs still
+   set inline outline:none (which wins), but every other control gains a clear,
+   on-brand ring — important since several places had stripped focus entirely. */
+.admin-layout a:focus-visible,
+.admin-layout button:focus-visible,
+.admin-layout input:focus-visible,
+.admin-layout select:focus-visible,
+.admin-layout textarea:focus-visible,
+.admin-layout [tabindex]:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
 /* Active dot show on active class */
 .admin-nav__item--active .active-dot {
     opacity: 1 !important;
