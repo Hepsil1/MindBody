@@ -77,7 +77,6 @@ export default function MegaMenu({ shop, featured, onNavigate }: MegaMenuProps) 
 
     return (
         <div ref={megaRef} className={`mega-menu${wide ? " mega-menu--wide" : ""}`}>
-
             <div className="mega-menu__inner">
                 <div className="mega-menu__cols">
                     {/* Category root */}

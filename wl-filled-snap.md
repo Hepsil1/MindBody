@@ -1,366 +1,366 @@
 - generic [active] [ref=e1] [box=0,0,390,4283]:
-  - link "Перейти до контенту" [box=16,-844,192,46]:
-    - /url: "#main-content"
-  - banner [ref=e4] [box=0,0,390,64]:
-    - generic [ref=e5] [box=0,0,390,64]:
-      - button "Меню" [ref=e6] [cursor=pointer] [box=8,10,44,44]
-      - link "MIND BODY" [ref=e10] [cursor=pointer] [box=132,22,127,20]:
-        - /url: /
-        - img "MIND BODY" [ref=e11] [box=132,22,127,20]
-      - text: КАТЕГОРІЇ АКАУНТ
-      - generic [ref=e12] [box=292,10,90,44]:
-        - button "Пошук" [ref=e13] [cursor=pointer] [box=292,10,44,44]:
-          - img [ref=e14] [box=304,22,20,20]
-        - button "Кошик" [ref=e17] [cursor=pointer] [box=338,10,44,44]:
-          - img [ref=e18] [box=350,22,20,20]
-  - dialog [ref=e21] [box=390,0,390,844]:
-    - generic [ref=e22] [box=390,0,390,85]:
-      - heading [level=3] [ref=e23] [box=414,34,59,16]: Кошик
-      - button [ref=e24] [cursor=pointer] [box=712,20,44,44]:
-        - img [ref=e25] [box=724,32,20,20]
-    - generic [ref=e28] [box=390,85,390,759]:
-      - img [ref=e29] [box=561,388,48,48]
-      - paragraph [ref=e32] [box=529,452,111,24]: Кошик порожній
-      - button [ref=e33] [cursor=pointer] [box=473,500,224,42]: Продовжити покупки
-  - generic [ref=e35] [box=0,0,390,2682]:
-    - generic [ref=e36] [box=0,0,390,296]:
-      - img "Background" [ref=e38] [box=0,0,390,296]
-      - generic [box=0,0,390,296]:
-        - generic [box=0,36,390,225]: MIND BODY
-      - generic [ref=e41] [box=20,48,350,224]:
-        - navigation [ref=e42] [box=20,68,350,14]:
-          - link "Головна" [ref=e43] [cursor=pointer] [box=217,68,62,14]:
-            - /url: /
-          - generic [ref=e44] [box=291,68,6,14]: /
-          - generic [ref=e45] [box=309,68,61,14]: Магазин
-        - generic [ref=e47] [box=20,122,153,130]:
-          - heading "YOGA колекція" [level=1] [ref=e48] [box=20,122,153,86]:
-            - generic [ref=e49] [box=20,122,153,53]: YOGA
-            - generic [ref=e50] [box=23,192,106,17]: колекція
-          - generic [ref=e53] [box=65,238,81,14]: mind body
-    - generic [ref=e54] [box=0,296,390,69]:
-      - button "Відкрити фільтри" [ref=e55] [cursor=pointer] [box=20,308,127,44]:
-        - img [ref=e56] [box=38,321,18,18]
-        - text: ФІЛЬТРИ
-      - generic [ref=e57] [box=309,321,61,19]: 14 товарів
-    - main [ref=e61] [box=20,365,310,2116]:
-      - generic [ref=e63] [box=20,445,310,186]:
-        - generic [ref=e64] [box=20,445,310,18]: "СОРТУВАТИ ЗА:"
-        - generic [ref=e65] [box=20,473,310,110]:
-          - button "За релевантністю✕" [ref=e66] [cursor=pointer] [box=20,473,165,32]
-          - 'button "Ціна: за зростанням" [ref=e67] [cursor=pointer] [box=20,513,172,31]'
-          - 'button "Ціна: за зменшенням" [ref=e68] [cursor=pointer] [box=20,552,178,31]'
-          - button "Новинки" [ref=e69] [cursor=pointer] [box=206,552,98,31]
-        - generic [ref=e70] [box=20,593,310,18]: 12 з 14 ТОВАРІВ
-      - generic [ref=e71] [box=20,672,310,1654]:
-        - article [ref=e73] [box=20,672,117,369]:
-          - generic [ref=e74] [box=21,673,115,154]:
-            - link "Лонгслів CALM" [box=22,674,0,0]:
-              - /url: /product/38b651f2-e1ac-4d58-b7f1-ff10598db201
-              - img "Лонгслів CALM" [ref=e75] [cursor=pointer] [box=22,674,113,280]
-            - generic [box=36,688,57,28]: NEW
-            - button "Додати в обране" [ref=e76] [cursor=pointer] [box=77,696,44,44]:
-              - img [ref=e77] [box=89,708,20,20]
-          - generic [ref=e79] [box=21,827,115,213]:
-            - heading "Лонгслів CALM" [level=3] [ref=e80] [box=41,851,75,70]:
-              - link "Лонгслів CALM" [ref=e81] [cursor=pointer] [box=51,852,56,40]:
-                - /url: /product/38b651f2-e1ac-4d58-b7f1-ff10598db201
-            - generic [ref=e83] [box=58,933,42,22]: 1,190 ₴
-            - generic [ref=e84] [box=62,973,34,14]:
-              - generic "beige" [ref=e85] [cursor=pointer] [box=62,973,14,14]
-              - generic "black" [ref=e86] [cursor=pointer] [box=82,973,14,14]
-        - article [ref=e88] [box=177,672,117,369]:
-          - generic [ref=e89] [box=178,673,115,153]:
-            - link "Шорти FLEX" [box=179,674,0,0]:
-              - /url: /product/203a389c-96cb-425d-b646-2a8273c41fd7
-              - img "Шорти FLEX" [ref=e90] [cursor=pointer] [box=179,674,113,280]
-            - generic [box=193,688,57,28]: NEW
-            - button "Додати в обране" [ref=e91] [cursor=pointer] [box=234,696,44,44]:
-              - img [ref=e92] [box=246,708,20,20]
-          - generic [ref=e94] [box=178,826,115,214]:
-            - heading "Шорти FLEX" [level=3] [ref=e95] [box=198,850,75,70]:
-              - link "Шорти FLEX" [ref=e96] [cursor=pointer] [box=213,851,45,40]:
-                - /url: /product/203a389c-96cb-425d-b646-2a8273c41fd7
-            - generic [ref=e98] [box=217,932,37,22]: 790 ₴
-            - generic [ref=e99] [box=219,972,34,14]:
-              - generic "black" [ref=e100] [cursor=pointer] [box=219,972,14,14]
-              - generic "marsala" [ref=e101] [cursor=pointer] [box=239,972,14,14]
-        - article [ref=e103] [box=334,672,119,369]:
-          - generic [ref=e104] [box=335,673,117,156]:
-            - link "Комбінезон SOLAR" [box=336,674,0,0]:
-              - /url: /product/74258da1-a417-492d-9184-7790b79a007e
-              - img "Комбінезон SOLAR" [ref=e105] [cursor=pointer] [box=336,674,115,280]
-            - generic [box=350,688,56,28]: "-11%"
-            - button "Додати в обране" [ref=e106] [cursor=pointer] [box=393,696,44,44]:
-              - img [ref=e107] [box=405,708,20,20]
-          - generic [ref=e109] [box=335,829,117,211]:
-            - heading "Комбінезон SOLAR" [level=3] [ref=e110] [box=355,853,77,70]:
-              - link "Комбінезон SOLAR" [ref=e111] [cursor=pointer] [box=357,854,73,40]:
-                - /url: /product/74258da1-a417-492d-9184-7790b79a007e
-            - generic [ref=e112] [box=355,935,77,45]:
-              - generic [ref=e113] [box=355,935,37,45]: 2,390 ₴
-              - generic "Попередня ціна 2,690 гривень" [ref=e114] [box=402,938,30,38]: 2,690 ₴
-            - generic [ref=e115] [box=377,998,34,14]:
-              - generic "black" [ref=e116] [cursor=pointer] [box=377,998,14,14]
-              - generic "navy" [ref=e117] [cursor=pointer] [box=397,998,14,14]
-        - article [ref=e119] [box=20,1101,117,369]:
-          - generic [ref=e120] [box=21,1102,115,154]:
-            - link "Топ MIRA" [box=22,1103,0,0]:
-              - /url: /product/41fcb08d-a73a-485d-a8fb-894e1da66fe7
-              - img "Топ MIRA" [ref=e121] [cursor=pointer] [box=22,1103,113,280]
-            - generic [box=36,1117,57,28]: NEW
-            - button "Додати в обране" [ref=e122] [cursor=pointer] [box=77,1125,44,44]:
-              - img [ref=e123] [box=89,1137,20,20]
-          - generic [ref=e125] [box=21,1256,115,213]:
-            - heading "Топ MIRA" [level=3] [ref=e126] [box=45,1280,67,70]:
-              - link "Топ MIRA" [ref=e127] [cursor=pointer] [box=45,1281,67,18]:
-                - /url: /product/41fcb08d-a73a-485d-a8fb-894e1da66fe7
-            - generic [ref=e129] [box=60,1362,38,22]: 890 ₴
-            - generic [ref=e130] [box=52,1402,54,14]:
-              - generic "black" [ref=e131] [cursor=pointer] [box=52,1402,14,14]
-              - generic "beige" [ref=e132] [cursor=pointer] [box=72,1402,14,14]
-              - generic "marsala" [ref=e133] [cursor=pointer] [box=92,1402,14,14]
-        - article [ref=e135] [box=177,1101,117,369]:
-          - generic [ref=e136] [box=178,1102,115,153]:
-            - link "Лосини PRO" [box=179,1103,0,0]:
-              - /url: /product/fd7558f2-071e-42ac-a76b-f4f411f458c2
-              - img "Лосини PRO" [ref=e137] [cursor=pointer] [box=179,1103,113,280]
-            - generic [box=193,1117,58,28]: "-17%"
-            - button "Додати в обране" [ref=e138] [cursor=pointer] [box=234,1125,44,44]:
-              - img [ref=e139] [box=246,1137,20,20]
-          - generic [ref=e141] [box=178,1255,115,214]:
-            - heading "Лосини PRO" [level=3] [ref=e142] [box=198,1279,75,70]:
-              - link "Лосини PRO" [ref=e143] [cursor=pointer] [box=212,1280,49,40]:
-                - /url: /product/fd7558f2-071e-42ac-a76b-f4f411f458c2
-            - generic [ref=e144] [box=198,1361,75,45]:
-              - generic [ref=e145] [box=198,1361,35,45]: 1,490 ₴
-              - generic "Попередня ціна 1,790 гривень" [ref=e146] [box=243,1364,30,38]: 1,790 ₴
-            - generic [ref=e147] [box=209,1424,54,14]:
-              - generic "black" [ref=e148] [cursor=pointer] [box=209,1424,14,14]
-              - generic "navy" [ref=e149] [cursor=pointer] [box=229,1424,14,14]
-              - generic "marsala" [ref=e150] [cursor=pointer] [box=249,1424,14,14]
-        - article [ref=e152] [box=334,1101,119,369]:
-          - generic [ref=e153] [box=335,1102,117,156]:
-            - link "Футболка Yoga" [box=336,1103,0,0]:
-              - /url: /product/2ffc13ee-f20a-49e4-90b3-da81a7729037
-              - img "Футболка Yoga" [ref=e154] [cursor=pointer] [box=336,1103,115,280]
-            - generic [box=350,1117,62,28]: "-43%"
-            - button "Додати в обране" [ref=e155] [cursor=pointer] [box=393,1125,44,44]:
-              - img [ref=e156] [box=405,1137,20,20]
-          - generic [ref=e158] [box=335,1258,117,211]:
-            - heading "Футболка Yoga" [level=3] [ref=e159] [box=355,1282,77,70]:
-              - link "Футболка Yoga" [ref=e160] [cursor=pointer] [box=364,1283,60,40]:
-                - /url: /product/2ffc13ee-f20a-49e4-90b3-da81a7729037
-            - generic [ref=e161] [box=355,1364,77,45]:
-              - generic [ref=e162] [box=355,1364,33,45]: 800 ₴
-              - generic "Попередня ціна 1,404 гривень" [ref=e163] [box=398,1367,34,38]: 1,404 ₴
-            - generic [ref=e164] [box=377,1427,34,14]:
-              - generic "black" [ref=e165] [cursor=pointer] [box=377,1427,14,14]
-              - generic "white" [ref=e166] [cursor=pointer] [box=397,1427,14,14]
-        - article [ref=e168] [box=20,1530,117,369]:
-          - generic [ref=e169] [box=21,1531,115,154]:
-            - link "Лонгслів Yoga Sport" [box=22,1532,0,0]:
-              - /url: /product/46247dd3-85ee-4910-b19f-6e3422cad201
-              - img "Лонгслів Yoga Sport" [ref=e170] [cursor=pointer] [box=22,1532,113,280]
-            - button "Додати в обране" [ref=e171] [cursor=pointer] [box=77,1554,44,44]:
-              - img [ref=e172] [box=89,1566,20,20]
-          - generic [ref=e174] [box=21,1685,115,213]:
-            - heading "Лонгслів Yoga Sport" [level=3] [ref=e175] [box=41,1709,75,70]:
-              - link "Лонгслів Yoga Sport" [ref=e176] [cursor=pointer] [box=46,1710,66,40]:
-                - /url: /product/46247dd3-85ee-4910-b19f-6e3422cad201
-            - generic [ref=e178] [box=56,1791,46,22]: 1,300 ₴
-            - generic [ref=e179] [box=62,1832,34,14]:
-              - generic "black" [ref=e180] [cursor=pointer] [box=62,1832,14,14]
-              - generic "white" [ref=e181] [cursor=pointer] [box=82,1832,14,14]
-        - article [ref=e183] [box=177,1530,117,369]:
-          - generic [ref=e184] [box=178,1531,115,153]:
-            - link "Шорти Yoga Cotton" [box=179,1532,0,0]:
-              - /url: /product/dd7d7a5f-c596-4544-ac35-c996b4c39cab
-              - img "Шорти Yoga Cotton" [ref=e185] [cursor=pointer] [box=179,1532,113,280]
-            - button "Додати в обране" [ref=e186] [cursor=pointer] [box=234,1554,44,44]:
-              - img [ref=e187] [box=246,1566,20,20]
-          - generic [ref=e189] [box=178,1684,115,214]:
-            - heading "Шорти Yoga Cotton" [level=3] [ref=e190] [box=198,1708,75,70]:
-              - link "Шорти Yoga Cotton" [ref=e191] [cursor=pointer] [box=213,1709,45,62]:
-                - /url: /product/dd7d7a5f-c596-4544-ac35-c996b4c39cab
-            - generic [ref=e193] [box=213,1790,46,22]: 1,200 ₴
-            - generic [ref=e194] [box=219,1830,34,14]:
-              - generic "black" [ref=e195] [cursor=pointer] [box=219,1830,14,14]
-              - generic "white" [ref=e196] [cursor=pointer] [box=239,1830,14,14]
-        - article [ref=e198] [box=334,1530,119,369]:
-          - generic [ref=e199] [box=335,1531,117,156]:
-            - link "Топ Yoga Sport" [box=336,1532,0,0]:
-              - /url: /product/23d7e883-ced4-4b4e-b623-598c9c37c2d3
-              - img "Топ Yoga Sport" [ref=e200] [cursor=pointer] [box=336,1532,115,280]
-            - generic [box=350,1546,63,28]: "-44%"
-            - button "Додати в обране" [ref=e201] [cursor=pointer] [box=393,1554,44,44]:
-              - img [ref=e202] [box=405,1566,20,20]
-          - generic [ref=e204] [box=335,1688,117,211]:
-            - heading "Топ Yoga Sport" [level=3] [ref=e205] [box=355,1712,77,70]:
-              - link "Топ Yoga Sport" [ref=e206] [cursor=pointer] [box=366,1713,56,40]:
-                - /url: /product/23d7e883-ced4-4b4e-b623-598c9c37c2d3
-            - generic [ref=e207] [box=355,1794,77,45]:
-              - generic [ref=e208] [box=355,1794,33,45]: 900 ₴
-              - generic "Попередня ціна 1,599 гривень" [ref=e209] [box=399,1797,34,38]: 1,599 ₴
-            - generic [ref=e210] [box=377,1856,34,14]:
-              - generic "black" [ref=e211] [cursor=pointer] [box=377,1856,14,14]
-              - generic "white" [ref=e212] [cursor=pointer] [box=397,1856,14,14]
-        - article [ref=e214] [box=20,1959,117,367]:
-          - generic [ref=e215] [box=21,1960,115,154]:
-            - link "VELO Yoga Sport" [box=22,1961,0,0]:
-              - /url: /product/914fbb73-e070-414b-a686-1e0fbed383cb
-              - img "VELO Yoga Sport" [ref=e216] [cursor=pointer] [box=22,1961,113,280]
-            - generic [box=36,1975,62,28]: "-25%"
-            - button "Додати в обране" [ref=e217] [cursor=pointer] [box=77,1983,44,44]:
-              - img [ref=e218] [box=89,1995,20,20]
-          - generic [ref=e220] [box=21,2114,115,211]:
-            - heading "VELO Yoga Sport" [level=3] [ref=e221] [box=41,2138,75,70]:
-              - link "VELO Yoga Sport" [ref=e222] [cursor=pointer] [box=44,2139,70,40]:
-                - /url: /product/914fbb73-e070-414b-a686-1e0fbed383cb
-            - generic [ref=e223] [box=41,2220,75,45]:
-              - generic [ref=e224] [box=41,2220,35,45]: 1,400 ₴
-              - generic "Попередня ціна 1,877 гривень" [ref=e225] [box=86,2223,30,38]: 1,877 ₴
-            - generic [ref=e226] [box=62,2283,34,14]:
-              - generic "black" [ref=e227] [cursor=pointer] [box=62,2283,14,14]
-              - generic "white" [ref=e228] [cursor=pointer] [box=82,2283,14,14]
-        - article [ref=e230] [box=177,1959,117,367]:
-          - generic [ref=e231] [box=178,1960,115,153]:
-            - link "Лосини Yoga Cotton" [box=179,1961,0,0]:
-              - /url: /product/f7725d08-2fe9-482d-ab38-89d5cf5e138f
-              - img "Лосини Yoga Cotton" [ref=e232] [cursor=pointer] [box=179,1961,113,280]
-            - button "Додати в обране" [ref=e233] [cursor=pointer] [box=234,1983,44,44]:
-              - img [ref=e234] [box=246,1995,20,20]
-          - generic [ref=e236] [box=178,2113,115,212]:
-            - heading "Лосини Yoga Cotton" [level=3] [ref=e237] [box=198,2137,75,70]:
-              - link "Лосини Yoga Cotton" [ref=e238] [cursor=pointer] [box=212,2138,49,62]:
-                - /url: /product/f7725d08-2fe9-482d-ab38-89d5cf5e138f
-            - generic [ref=e240] [box=212,2219,47,22]: 1,600 ₴
-            - generic [ref=e241] [box=219,2260,34,14]:
-              - generic "black" [ref=e242] [cursor=pointer] [box=219,2260,14,14]
-              - generic "white" [ref=e243] [cursor=pointer] [box=239,2260,14,14]
-        - article [ref=e245] [box=334,1959,119,367]:
-          - generic [ref=e246] [box=335,1960,117,156]:
-            - link "Лосини Yoga Sport" [box=336,1961,0,0]:
-              - /url: /product/f7820e86-1489-4159-bb28-0af5b8027831
-              - img "Лосини Yoga Sport" [ref=e247] [cursor=pointer] [box=336,1961,115,280]
-            - button "Додати в обране" [ref=e248] [cursor=pointer] [box=393,1983,44,44]:
-              - img [ref=e249] [box=405,1995,20,20]
-          - generic [ref=e251] [box=335,2117,117,208]:
-            - heading "Лосини Yoga Sport" [level=3] [ref=e252] [box=355,2141,77,70]:
-              - link "Лосини Yoga Sport" [ref=e253] [cursor=pointer] [box=361,2142,66,40]:
-                - /url: /product/f7820e86-1489-4159-bb28-0af5b8027831
-            - generic [ref=e255] [box=370,2223,47,22]: 1,500 ₴
-            - generic [ref=e256] [box=377,2263,34,14]:
-              - generic "black" [ref=e257] [cursor=pointer] [box=377,2263,14,14]
-              - generic "white" [ref=e258] [cursor=pointer] [box=397,2263,14,14]
-      - generic [ref=e259] [box=20,2374,310,108]:
-        - button "Показати ще (2)" [ref=e260] [cursor=pointer] [box=57,2406,236,46]
-        - generic [ref=e261] [box=153,2464,44,18]: 12 / 14
-  - contentinfo [ref=e262] [box=0,2682,390,1602]:
-    - generic [ref=e264] [box=40,2764,310,1283]:
-      - generic [ref=e265] [box=40,2764,176,991]:
-        - img "MIND BODY" [ref=e267] [box=30,2754,95,95]
-        - generic [ref=e268] [box=40,2869,176,887]:
-          - generic [ref=e269] [box=40,2869,134,245]:
-            - heading "Допомога" [level=3] [ref=e270] [box=40,2869,134,15]
-            - list [ref=e271] [box=40,2900,134,214]:
-              - listitem [ref=e272] [box=40,2900,134,26]:
-                - link "Контакти" [ref=e273] [cursor=pointer] [box=40,2906,59,17]:
-                  - /url: /contacts
-              - listitem [ref=e274] [box=40,2938,134,26]:
-                - link "Таблиця розмірів" [ref=e275] [cursor=pointer] [box=40,2944,114,17]:
-                  - /url: /size-guide
-              - listitem [ref=e276] [box=40,2975,134,26]:
-                - link "Доставка та оплата" [ref=e277] [cursor=pointer] [box=40,2981,130,17]:
-                  - /url: /delivery
-              - listitem [ref=e278] [box=40,3013,134,26]:
-                - link "Повернення" [ref=e279] [cursor=pointer] [box=40,3019,80,17]:
-                  - /url: /return-policy
-              - listitem [ref=e280] [box=40,3050,134,26]:
-                - link "Догляд за виробами" [ref=e281] [cursor=pointer] [box=40,3056,134,17]:
-                  - /url: /care-guide
-              - listitem [ref=e282] [box=40,3088,134,26]:
-                - link "Часті запитання" [ref=e283] [cursor=pointer] [box=40,3094,107,17]:
-                  - /url: /faq
-          - generic [ref=e284] [box=40,3134,75,245]:
-            - heading "Каталог" [level=3] [ref=e285] [box=40,3134,75,15]
-            - list [ref=e286] [box=40,3165,75,214]:
-              - listitem [ref=e287] [box=40,3165,75,26]:
-                - link "Yoga" [ref=e288] [cursor=pointer] [box=40,3171,32,17]:
-                  - /url: /shop/yoga
-              - listitem [ref=e289] [box=40,3203,75,26]:
-                - link "Sport" [ref=e290] [cursor=pointer] [box=40,3209,34,17]:
-                  - /url: /shop/sport
-              - listitem [ref=e291] [box=40,3240,75,26]:
-                - link "Dance" [ref=e292] [cursor=pointer] [box=40,3246,41,17]:
-                  - /url: /shop/dance
-              - listitem [ref=e293] [box=40,3278,75,26]:
-                - link "Casual" [ref=e294] [cursor=pointer] [box=40,3284,44,17]:
-                  - /url: /shop/casual
-              - listitem [ref=e295] [box=40,3315,75,26]:
-                - link "Kids" [ref=e296] [cursor=pointer] [box=40,3321,28,17]:
-                  - /url: /shop/kids
-              - listitem [ref=e297] [box=40,3353,75,26]:
-                - link "YogaTools" [ref=e298] [cursor=pointer] [box=40,3359,65,17]:
-                  - /url: /shop/yogatools
-          - generic [ref=e299] [box=40,3398,176,132]:
-            - heading "Про компанію" [level=3] [ref=e300] [box=40,3398,176,15]
-            - list [ref=e301] [box=40,3430,176,101]:
-              - listitem [ref=e302] [box=40,3430,176,26]:
-                - link "Про нас" [ref=e303] [cursor=pointer] [box=40,3436,53,17]:
-                  - /url: /about
-              - listitem [ref=e304] [box=40,3467,176,26]:
-                - link "Політика конфіденційності" [ref=e305] [cursor=pointer] [box=40,3473,176,17]:
-                  - /url: /privacy
-              - listitem [ref=e306] [box=40,3505,176,26]:
-                - link "Умови користування" [ref=e307] [cursor=pointer] [box=40,3511,135,17]:
-                  - /url: /terms
-          - generic [ref=e308] [box=40,3551,153,205]:
-            - heading "Зв'язатись" [level=3] [ref=e309] [box=40,3551,153,15]
-            - list [ref=e310] [box=40,3582,153,173]:
-              - listitem [ref=e311] [box=40,3582,153,23]:
-                - link "+38 (096) 665-08-55" [ref=e312] [cursor=pointer] [box=40,3582,153,23]:
-                  - /url: tel:+380966650855
-                  - img [ref=e313] [box=40,3584,16,16]
-                  - text: +38 (096) 665-08-55
-              - listitem [ref=e315] [box=40,3617,153,26]:
-                - link "Viber" [ref=e316] [cursor=pointer] [box=40,3623,33,17]:
-                  - /url: viber://chat?number=%2B380509656737
-              - listitem [ref=e317] [box=40,3654,153,26]:
-                - link "WhatsApp" [ref=e318] [cursor=pointer] [box=40,3660,65,17]:
-                  - /url: https://wa.me/380973542848
-              - listitem [ref=e319] [box=40,3692,153,26]:
-                - link "Telegram" [ref=e320] [cursor=pointer] [box=40,3698,59,17]:
-                  - /url: https://t.me/Juliamindbody
-              - listitem [ref=e321] [box=40,3730,153,26]:
-                - link "Instagram" [ref=e322] [cursor=pointer] [box=40,3736,64,17]:
-                  - /url: https://instagram.com/mindbody.sportwear
-      - generic [ref=e324] [box=40,3815,310,232]:
-        - generic [ref=e325] [box=66,3841,258,48]:
-          - generic [ref=e326] [box=66,3841,159,41]:
-            - heading "Давай поговоримо" [level=4] [ref=e327] [box=66,3841,159,15]
-            - text: маєш запитання — напиши
-          - link "Instagram" [ref=e328] [cursor=pointer] [box=276,3841,48,48]:
-            - /url: https://instagram.com/mindbody.sportwear
-            - img [ref=e330] [box=287,3846,26,26]
-        - generic [ref=e332] [box=66,3919,258,102]:
-          - generic [ref=e333] [box=65,3918,1,1]: Ваш номер телефону або email
-          - textbox "Ваш номер телефону або email" [ref=e334] [box=66,3919,258,41]
-          - button "НАДIСЛАТИ" [ref=e335] [cursor=pointer] [box=66,3980,258,41]
-    - generic [ref=e338] [box=40,4118,310,135]:
-      - generic [ref=e339] [cursor=pointer] [box=70,4118,250,18]:
-        - img [ref=e340] [box=70,4120,20,14]
-        - generic [ref=e343] [box=100,4118,123,18]: УКРАЇНА (УКРАЇНСЬКА)
-        - generic [ref=e344] [box=233,4118,11,18]: ▼
-      - img "MIND BODY" [ref=e346] [box=132,4166,127,20]
-      - generic [ref=e347] [box=70,4216,250,18]: Всі права захищені © MIND BODY, 2026
-  - generic [ref=e349] [box=338,634,40,136]:
-    - link "Telegram" [ref=e350] [cursor=pointer] [box=338,634,40,40]:
-      - /url: https://t.me/+380509656737
-      - img [ref=e351] [box=349,645,19,19]
-    - link "Viber" [ref=e353] [cursor=pointer] [box=338,682,40,40]:
-      - /url: viber://chat?number=%2B380509656737
-      - img [ref=e354] [box=349,693,19,19]
-    - link "WhatsApp" [ref=e356] [cursor=pointer] [box=338,730,40,40]:
-      - /url: https://wa.me/380973542848
-      - img [ref=e357] [box=349,741,19,19]
+    - link "Перейти до контенту" [box=16,-844,192,46]:
+        - /url: "#main-content"
+    - banner [ref=e4] [box=0,0,390,64]:
+        - generic [ref=e5] [box=0,0,390,64]:
+            - button "Меню" [ref=e6] [cursor=pointer] [box=8,10,44,44]
+            - link "MIND BODY" [ref=e10] [cursor=pointer] [box=132,22,127,20]:
+                - /url: /
+                - img "MIND BODY" [ref=e11] [box=132,22,127,20]
+            - text: КАТЕГОРІЇ АКАУНТ
+            - generic [ref=e12] [box=292,10,90,44]:
+                - button "Пошук" [ref=e13] [cursor=pointer] [box=292,10,44,44]:
+                    - img [ref=e14] [box=304,22,20,20]
+                - button "Кошик" [ref=e17] [cursor=pointer] [box=338,10,44,44]:
+                    - img [ref=e18] [box=350,22,20,20]
+    - dialog [ref=e21] [box=390,0,390,844]:
+        - generic [ref=e22] [box=390,0,390,85]:
+            - heading [level=3] [ref=e23] [box=414,34,59,16]: Кошик
+            - button [ref=e24] [cursor=pointer] [box=712,20,44,44]:
+                - img [ref=e25] [box=724,32,20,20]
+        - generic [ref=e28] [box=390,85,390,759]:
+            - img [ref=e29] [box=561,388,48,48]
+            - paragraph [ref=e32] [box=529,452,111,24]: Кошик порожній
+            - button [ref=e33] [cursor=pointer] [box=473,500,224,42]: Продовжити покупки
+    - generic [ref=e35] [box=0,0,390,2682]:
+        - generic [ref=e36] [box=0,0,390,296]:
+            - img "Background" [ref=e38] [box=0,0,390,296]
+            - generic [box=0,0,390,296]:
+                - generic [box=0,36,390,225]: MIND BODY
+            - generic [ref=e41] [box=20,48,350,224]:
+                - navigation [ref=e42] [box=20,68,350,14]:
+                    - link "Головна" [ref=e43] [cursor=pointer] [box=217,68,62,14]:
+                        - /url: /
+                    - generic [ref=e44] [box=291,68,6,14]: /
+                    - generic [ref=e45] [box=309,68,61,14]: Магазин
+                - generic [ref=e47] [box=20,122,153,130]:
+                    - heading "YOGA колекція" [level=1] [ref=e48] [box=20,122,153,86]:
+                        - generic [ref=e49] [box=20,122,153,53]: YOGA
+                        - generic [ref=e50] [box=23,192,106,17]: колекція
+                    - generic [ref=e53] [box=65,238,81,14]: mind body
+        - generic [ref=e54] [box=0,296,390,69]:
+            - button "Відкрити фільтри" [ref=e55] [cursor=pointer] [box=20,308,127,44]:
+                - img [ref=e56] [box=38,321,18,18]
+                - text: ФІЛЬТРИ
+            - generic [ref=e57] [box=309,321,61,19]: 14 товарів
+        - main [ref=e61] [box=20,365,310,2116]:
+            - generic [ref=e63] [box=20,445,310,186]:
+                - generic [ref=e64] [box=20,445,310,18]: "СОРТУВАТИ ЗА:"
+                - generic [ref=e65] [box=20,473,310,110]:
+                    - button "За релевантністю✕" [ref=e66] [cursor=pointer] [box=20,473,165,32]
+                    - 'button "Ціна: за зростанням" [ref=e67] [cursor=pointer] [box=20,513,172,31]'
+                    - 'button "Ціна: за зменшенням" [ref=e68] [cursor=pointer] [box=20,552,178,31]'
+                    - button "Новинки" [ref=e69] [cursor=pointer] [box=206,552,98,31]
+                - generic [ref=e70] [box=20,593,310,18]: 12 з 14 ТОВАРІВ
+            - generic [ref=e71] [box=20,672,310,1654]:
+                - article [ref=e73] [box=20,672,117,369]:
+                    - generic [ref=e74] [box=21,673,115,154]:
+                        - link "Лонгслів CALM" [box=22,674,0,0]:
+                            - /url: /product/38b651f2-e1ac-4d58-b7f1-ff10598db201
+                            - img "Лонгслів CALM" [ref=e75] [cursor=pointer] [box=22,674,113,280]
+                        - generic [box=36,688,57,28]: NEW
+                        - button "Додати в обране" [ref=e76] [cursor=pointer] [box=77,696,44,44]:
+                            - img [ref=e77] [box=89,708,20,20]
+                    - generic [ref=e79] [box=21,827,115,213]:
+                        - heading "Лонгслів CALM" [level=3] [ref=e80] [box=41,851,75,70]:
+                            - link "Лонгслів CALM" [ref=e81] [cursor=pointer] [box=51,852,56,40]:
+                                - /url: /product/38b651f2-e1ac-4d58-b7f1-ff10598db201
+                        - generic [ref=e83] [box=58,933,42,22]: 1,190 ₴
+                        - generic [ref=e84] [box=62,973,34,14]:
+                            - generic "beige" [ref=e85] [cursor=pointer] [box=62,973,14,14]
+                            - generic "black" [ref=e86] [cursor=pointer] [box=82,973,14,14]
+                - article [ref=e88] [box=177,672,117,369]:
+                    - generic [ref=e89] [box=178,673,115,153]:
+                        - link "Шорти FLEX" [box=179,674,0,0]:
+                            - /url: /product/203a389c-96cb-425d-b646-2a8273c41fd7
+                            - img "Шорти FLEX" [ref=e90] [cursor=pointer] [box=179,674,113,280]
+                        - generic [box=193,688,57,28]: NEW
+                        - button "Додати в обране" [ref=e91] [cursor=pointer] [box=234,696,44,44]:
+                            - img [ref=e92] [box=246,708,20,20]
+                    - generic [ref=e94] [box=178,826,115,214]:
+                        - heading "Шорти FLEX" [level=3] [ref=e95] [box=198,850,75,70]:
+                            - link "Шорти FLEX" [ref=e96] [cursor=pointer] [box=213,851,45,40]:
+                                - /url: /product/203a389c-96cb-425d-b646-2a8273c41fd7
+                        - generic [ref=e98] [box=217,932,37,22]: 790 ₴
+                        - generic [ref=e99] [box=219,972,34,14]:
+                            - generic "black" [ref=e100] [cursor=pointer] [box=219,972,14,14]
+                            - generic "marsala" [ref=e101] [cursor=pointer] [box=239,972,14,14]
+                - article [ref=e103] [box=334,672,119,369]:
+                    - generic [ref=e104] [box=335,673,117,156]:
+                        - link "Комбінезон SOLAR" [box=336,674,0,0]:
+                            - /url: /product/74258da1-a417-492d-9184-7790b79a007e
+                            - img "Комбінезон SOLAR" [ref=e105] [cursor=pointer] [box=336,674,115,280]
+                        - generic [box=350,688,56,28]: "-11%"
+                        - button "Додати в обране" [ref=e106] [cursor=pointer] [box=393,696,44,44]:
+                            - img [ref=e107] [box=405,708,20,20]
+                    - generic [ref=e109] [box=335,829,117,211]:
+                        - heading "Комбінезон SOLAR" [level=3] [ref=e110] [box=355,853,77,70]:
+                            - link "Комбінезон SOLAR" [ref=e111] [cursor=pointer] [box=357,854,73,40]:
+                                - /url: /product/74258da1-a417-492d-9184-7790b79a007e
+                        - generic [ref=e112] [box=355,935,77,45]:
+                            - generic [ref=e113] [box=355,935,37,45]: 2,390 ₴
+                            - generic "Попередня ціна 2,690 гривень" [ref=e114] [box=402,938,30,38]: 2,690 ₴
+                        - generic [ref=e115] [box=377,998,34,14]:
+                            - generic "black" [ref=e116] [cursor=pointer] [box=377,998,14,14]
+                            - generic "navy" [ref=e117] [cursor=pointer] [box=397,998,14,14]
+                - article [ref=e119] [box=20,1101,117,369]:
+                    - generic [ref=e120] [box=21,1102,115,154]:
+                        - link "Топ MIRA" [box=22,1103,0,0]:
+                            - /url: /product/41fcb08d-a73a-485d-a8fb-894e1da66fe7
+                            - img "Топ MIRA" [ref=e121] [cursor=pointer] [box=22,1103,113,280]
+                        - generic [box=36,1117,57,28]: NEW
+                        - button "Додати в обране" [ref=e122] [cursor=pointer] [box=77,1125,44,44]:
+                            - img [ref=e123] [box=89,1137,20,20]
+                    - generic [ref=e125] [box=21,1256,115,213]:
+                        - heading "Топ MIRA" [level=3] [ref=e126] [box=45,1280,67,70]:
+                            - link "Топ MIRA" [ref=e127] [cursor=pointer] [box=45,1281,67,18]:
+                                - /url: /product/41fcb08d-a73a-485d-a8fb-894e1da66fe7
+                        - generic [ref=e129] [box=60,1362,38,22]: 890 ₴
+                        - generic [ref=e130] [box=52,1402,54,14]:
+                            - generic "black" [ref=e131] [cursor=pointer] [box=52,1402,14,14]
+                            - generic "beige" [ref=e132] [cursor=pointer] [box=72,1402,14,14]
+                            - generic "marsala" [ref=e133] [cursor=pointer] [box=92,1402,14,14]
+                - article [ref=e135] [box=177,1101,117,369]:
+                    - generic [ref=e136] [box=178,1102,115,153]:
+                        - link "Лосини PRO" [box=179,1103,0,0]:
+                            - /url: /product/fd7558f2-071e-42ac-a76b-f4f411f458c2
+                            - img "Лосини PRO" [ref=e137] [cursor=pointer] [box=179,1103,113,280]
+                        - generic [box=193,1117,58,28]: "-17%"
+                        - button "Додати в обране" [ref=e138] [cursor=pointer] [box=234,1125,44,44]:
+                            - img [ref=e139] [box=246,1137,20,20]
+                    - generic [ref=e141] [box=178,1255,115,214]:
+                        - heading "Лосини PRO" [level=3] [ref=e142] [box=198,1279,75,70]:
+                            - link "Лосини PRO" [ref=e143] [cursor=pointer] [box=212,1280,49,40]:
+                                - /url: /product/fd7558f2-071e-42ac-a76b-f4f411f458c2
+                        - generic [ref=e144] [box=198,1361,75,45]:
+                            - generic [ref=e145] [box=198,1361,35,45]: 1,490 ₴
+                            - generic "Попередня ціна 1,790 гривень" [ref=e146] [box=243,1364,30,38]: 1,790 ₴
+                        - generic [ref=e147] [box=209,1424,54,14]:
+                            - generic "black" [ref=e148] [cursor=pointer] [box=209,1424,14,14]
+                            - generic "navy" [ref=e149] [cursor=pointer] [box=229,1424,14,14]
+                            - generic "marsala" [ref=e150] [cursor=pointer] [box=249,1424,14,14]
+                - article [ref=e152] [box=334,1101,119,369]:
+                    - generic [ref=e153] [box=335,1102,117,156]:
+                        - link "Футболка Yoga" [box=336,1103,0,0]:
+                            - /url: /product/2ffc13ee-f20a-49e4-90b3-da81a7729037
+                            - img "Футболка Yoga" [ref=e154] [cursor=pointer] [box=336,1103,115,280]
+                        - generic [box=350,1117,62,28]: "-43%"
+                        - button "Додати в обране" [ref=e155] [cursor=pointer] [box=393,1125,44,44]:
+                            - img [ref=e156] [box=405,1137,20,20]
+                    - generic [ref=e158] [box=335,1258,117,211]:
+                        - heading "Футболка Yoga" [level=3] [ref=e159] [box=355,1282,77,70]:
+                            - link "Футболка Yoga" [ref=e160] [cursor=pointer] [box=364,1283,60,40]:
+                                - /url: /product/2ffc13ee-f20a-49e4-90b3-da81a7729037
+                        - generic [ref=e161] [box=355,1364,77,45]:
+                            - generic [ref=e162] [box=355,1364,33,45]: 800 ₴
+                            - generic "Попередня ціна 1,404 гривень" [ref=e163] [box=398,1367,34,38]: 1,404 ₴
+                        - generic [ref=e164] [box=377,1427,34,14]:
+                            - generic "black" [ref=e165] [cursor=pointer] [box=377,1427,14,14]
+                            - generic "white" [ref=e166] [cursor=pointer] [box=397,1427,14,14]
+                - article [ref=e168] [box=20,1530,117,369]:
+                    - generic [ref=e169] [box=21,1531,115,154]:
+                        - link "Лонгслів Yoga Sport" [box=22,1532,0,0]:
+                            - /url: /product/46247dd3-85ee-4910-b19f-6e3422cad201
+                            - img "Лонгслів Yoga Sport" [ref=e170] [cursor=pointer] [box=22,1532,113,280]
+                        - button "Додати в обране" [ref=e171] [cursor=pointer] [box=77,1554,44,44]:
+                            - img [ref=e172] [box=89,1566,20,20]
+                    - generic [ref=e174] [box=21,1685,115,213]:
+                        - heading "Лонгслів Yoga Sport" [level=3] [ref=e175] [box=41,1709,75,70]:
+                            - link "Лонгслів Yoga Sport" [ref=e176] [cursor=pointer] [box=46,1710,66,40]:
+                                - /url: /product/46247dd3-85ee-4910-b19f-6e3422cad201
+                        - generic [ref=e178] [box=56,1791,46,22]: 1,300 ₴
+                        - generic [ref=e179] [box=62,1832,34,14]:
+                            - generic "black" [ref=e180] [cursor=pointer] [box=62,1832,14,14]
+                            - generic "white" [ref=e181] [cursor=pointer] [box=82,1832,14,14]
+                - article [ref=e183] [box=177,1530,117,369]:
+                    - generic [ref=e184] [box=178,1531,115,153]:
+                        - link "Шорти Yoga Cotton" [box=179,1532,0,0]:
+                            - /url: /product/dd7d7a5f-c596-4544-ac35-c996b4c39cab
+                            - img "Шорти Yoga Cotton" [ref=e185] [cursor=pointer] [box=179,1532,113,280]
+                        - button "Додати в обране" [ref=e186] [cursor=pointer] [box=234,1554,44,44]:
+                            - img [ref=e187] [box=246,1566,20,20]
+                    - generic [ref=e189] [box=178,1684,115,214]:
+                        - heading "Шорти Yoga Cotton" [level=3] [ref=e190] [box=198,1708,75,70]:
+                            - link "Шорти Yoga Cotton" [ref=e191] [cursor=pointer] [box=213,1709,45,62]:
+                                - /url: /product/dd7d7a5f-c596-4544-ac35-c996b4c39cab
+                        - generic [ref=e193] [box=213,1790,46,22]: 1,200 ₴
+                        - generic [ref=e194] [box=219,1830,34,14]:
+                            - generic "black" [ref=e195] [cursor=pointer] [box=219,1830,14,14]
+                            - generic "white" [ref=e196] [cursor=pointer] [box=239,1830,14,14]
+                - article [ref=e198] [box=334,1530,119,369]:
+                    - generic [ref=e199] [box=335,1531,117,156]:
+                        - link "Топ Yoga Sport" [box=336,1532,0,0]:
+                            - /url: /product/23d7e883-ced4-4b4e-b623-598c9c37c2d3
+                            - img "Топ Yoga Sport" [ref=e200] [cursor=pointer] [box=336,1532,115,280]
+                        - generic [box=350,1546,63,28]: "-44%"
+                        - button "Додати в обране" [ref=e201] [cursor=pointer] [box=393,1554,44,44]:
+                            - img [ref=e202] [box=405,1566,20,20]
+                    - generic [ref=e204] [box=335,1688,117,211]:
+                        - heading "Топ Yoga Sport" [level=3] [ref=e205] [box=355,1712,77,70]:
+                            - link "Топ Yoga Sport" [ref=e206] [cursor=pointer] [box=366,1713,56,40]:
+                                - /url: /product/23d7e883-ced4-4b4e-b623-598c9c37c2d3
+                        - generic [ref=e207] [box=355,1794,77,45]:
+                            - generic [ref=e208] [box=355,1794,33,45]: 900 ₴
+                            - generic "Попередня ціна 1,599 гривень" [ref=e209] [box=399,1797,34,38]: 1,599 ₴
+                        - generic [ref=e210] [box=377,1856,34,14]:
+                            - generic "black" [ref=e211] [cursor=pointer] [box=377,1856,14,14]
+                            - generic "white" [ref=e212] [cursor=pointer] [box=397,1856,14,14]
+                - article [ref=e214] [box=20,1959,117,367]:
+                    - generic [ref=e215] [box=21,1960,115,154]:
+                        - link "VELO Yoga Sport" [box=22,1961,0,0]:
+                            - /url: /product/914fbb73-e070-414b-a686-1e0fbed383cb
+                            - img "VELO Yoga Sport" [ref=e216] [cursor=pointer] [box=22,1961,113,280]
+                        - generic [box=36,1975,62,28]: "-25%"
+                        - button "Додати в обране" [ref=e217] [cursor=pointer] [box=77,1983,44,44]:
+                            - img [ref=e218] [box=89,1995,20,20]
+                    - generic [ref=e220] [box=21,2114,115,211]:
+                        - heading "VELO Yoga Sport" [level=3] [ref=e221] [box=41,2138,75,70]:
+                            - link "VELO Yoga Sport" [ref=e222] [cursor=pointer] [box=44,2139,70,40]:
+                                - /url: /product/914fbb73-e070-414b-a686-1e0fbed383cb
+                        - generic [ref=e223] [box=41,2220,75,45]:
+                            - generic [ref=e224] [box=41,2220,35,45]: 1,400 ₴
+                            - generic "Попередня ціна 1,877 гривень" [ref=e225] [box=86,2223,30,38]: 1,877 ₴
+                        - generic [ref=e226] [box=62,2283,34,14]:
+                            - generic "black" [ref=e227] [cursor=pointer] [box=62,2283,14,14]
+                            - generic "white" [ref=e228] [cursor=pointer] [box=82,2283,14,14]
+                - article [ref=e230] [box=177,1959,117,367]:
+                    - generic [ref=e231] [box=178,1960,115,153]:
+                        - link "Лосини Yoga Cotton" [box=179,1961,0,0]:
+                            - /url: /product/f7725d08-2fe9-482d-ab38-89d5cf5e138f
+                            - img "Лосини Yoga Cotton" [ref=e232] [cursor=pointer] [box=179,1961,113,280]
+                        - button "Додати в обране" [ref=e233] [cursor=pointer] [box=234,1983,44,44]:
+                            - img [ref=e234] [box=246,1995,20,20]
+                    - generic [ref=e236] [box=178,2113,115,212]:
+                        - heading "Лосини Yoga Cotton" [level=3] [ref=e237] [box=198,2137,75,70]:
+                            - link "Лосини Yoga Cotton" [ref=e238] [cursor=pointer] [box=212,2138,49,62]:
+                                - /url: /product/f7725d08-2fe9-482d-ab38-89d5cf5e138f
+                        - generic [ref=e240] [box=212,2219,47,22]: 1,600 ₴
+                        - generic [ref=e241] [box=219,2260,34,14]:
+                            - generic "black" [ref=e242] [cursor=pointer] [box=219,2260,14,14]
+                            - generic "white" [ref=e243] [cursor=pointer] [box=239,2260,14,14]
+                - article [ref=e245] [box=334,1959,119,367]:
+                    - generic [ref=e246] [box=335,1960,117,156]:
+                        - link "Лосини Yoga Sport" [box=336,1961,0,0]:
+                            - /url: /product/f7820e86-1489-4159-bb28-0af5b8027831
+                            - img "Лосини Yoga Sport" [ref=e247] [cursor=pointer] [box=336,1961,115,280]
+                        - button "Додати в обране" [ref=e248] [cursor=pointer] [box=393,1983,44,44]:
+                            - img [ref=e249] [box=405,1995,20,20]
+                    - generic [ref=e251] [box=335,2117,117,208]:
+                        - heading "Лосини Yoga Sport" [level=3] [ref=e252] [box=355,2141,77,70]:
+                            - link "Лосини Yoga Sport" [ref=e253] [cursor=pointer] [box=361,2142,66,40]:
+                                - /url: /product/f7820e86-1489-4159-bb28-0af5b8027831
+                        - generic [ref=e255] [box=370,2223,47,22]: 1,500 ₴
+                        - generic [ref=e256] [box=377,2263,34,14]:
+                            - generic "black" [ref=e257] [cursor=pointer] [box=377,2263,14,14]
+                            - generic "white" [ref=e258] [cursor=pointer] [box=397,2263,14,14]
+            - generic [ref=e259] [box=20,2374,310,108]:
+                - button "Показати ще (2)" [ref=e260] [cursor=pointer] [box=57,2406,236,46]
+                - generic [ref=e261] [box=153,2464,44,18]: 12 / 14
+    - contentinfo [ref=e262] [box=0,2682,390,1602]:
+        - generic [ref=e264] [box=40,2764,310,1283]:
+            - generic [ref=e265] [box=40,2764,176,991]:
+                - img "MIND BODY" [ref=e267] [box=30,2754,95,95]
+                - generic [ref=e268] [box=40,2869,176,887]:
+                    - generic [ref=e269] [box=40,2869,134,245]:
+                        - heading "Допомога" [level=3] [ref=e270] [box=40,2869,134,15]
+                        - list [ref=e271] [box=40,2900,134,214]:
+                            - listitem [ref=e272] [box=40,2900,134,26]:
+                                - link "Контакти" [ref=e273] [cursor=pointer] [box=40,2906,59,17]:
+                                    - /url: /contacts
+                            - listitem [ref=e274] [box=40,2938,134,26]:
+                                - link "Таблиця розмірів" [ref=e275] [cursor=pointer] [box=40,2944,114,17]:
+                                    - /url: /size-guide
+                            - listitem [ref=e276] [box=40,2975,134,26]:
+                                - link "Доставка та оплата" [ref=e277] [cursor=pointer] [box=40,2981,130,17]:
+                                    - /url: /delivery
+                            - listitem [ref=e278] [box=40,3013,134,26]:
+                                - link "Повернення" [ref=e279] [cursor=pointer] [box=40,3019,80,17]:
+                                    - /url: /return-policy
+                            - listitem [ref=e280] [box=40,3050,134,26]:
+                                - link "Догляд за виробами" [ref=e281] [cursor=pointer] [box=40,3056,134,17]:
+                                    - /url: /care-guide
+                            - listitem [ref=e282] [box=40,3088,134,26]:
+                                - link "Часті запитання" [ref=e283] [cursor=pointer] [box=40,3094,107,17]:
+                                    - /url: /faq
+                    - generic [ref=e284] [box=40,3134,75,245]:
+                        - heading "Каталог" [level=3] [ref=e285] [box=40,3134,75,15]
+                        - list [ref=e286] [box=40,3165,75,214]:
+                            - listitem [ref=e287] [box=40,3165,75,26]:
+                                - link "Yoga" [ref=e288] [cursor=pointer] [box=40,3171,32,17]:
+                                    - /url: /shop/yoga
+                            - listitem [ref=e289] [box=40,3203,75,26]:
+                                - link "Sport" [ref=e290] [cursor=pointer] [box=40,3209,34,17]:
+                                    - /url: /shop/sport
+                            - listitem [ref=e291] [box=40,3240,75,26]:
+                                - link "Dance" [ref=e292] [cursor=pointer] [box=40,3246,41,17]:
+                                    - /url: /shop/dance
+                            - listitem [ref=e293] [box=40,3278,75,26]:
+                                - link "Casual" [ref=e294] [cursor=pointer] [box=40,3284,44,17]:
+                                    - /url: /shop/casual
+                            - listitem [ref=e295] [box=40,3315,75,26]:
+                                - link "Kids" [ref=e296] [cursor=pointer] [box=40,3321,28,17]:
+                                    - /url: /shop/kids
+                            - listitem [ref=e297] [box=40,3353,75,26]:
+                                - link "YogaTools" [ref=e298] [cursor=pointer] [box=40,3359,65,17]:
+                                    - /url: /shop/yogatools
+                    - generic [ref=e299] [box=40,3398,176,132]:
+                        - heading "Про компанію" [level=3] [ref=e300] [box=40,3398,176,15]
+                        - list [ref=e301] [box=40,3430,176,101]:
+                            - listitem [ref=e302] [box=40,3430,176,26]:
+                                - link "Про нас" [ref=e303] [cursor=pointer] [box=40,3436,53,17]:
+                                    - /url: /about
+                            - listitem [ref=e304] [box=40,3467,176,26]:
+                                - link "Політика конфіденційності" [ref=e305] [cursor=pointer] [box=40,3473,176,17]:
+                                    - /url: /privacy
+                            - listitem [ref=e306] [box=40,3505,176,26]:
+                                - link "Умови користування" [ref=e307] [cursor=pointer] [box=40,3511,135,17]:
+                                    - /url: /terms
+                    - generic [ref=e308] [box=40,3551,153,205]:
+                        - heading "Зв'язатись" [level=3] [ref=e309] [box=40,3551,153,15]
+                        - list [ref=e310] [box=40,3582,153,173]:
+                            - listitem [ref=e311] [box=40,3582,153,23]:
+                                - link "+38 (096) 665-08-55" [ref=e312] [cursor=pointer] [box=40,3582,153,23]:
+                                    - /url: tel:+380966650855
+                                    - img [ref=e313] [box=40,3584,16,16]
+                                    - text: +38 (096) 665-08-55
+                            - listitem [ref=e315] [box=40,3617,153,26]:
+                                - link "Viber" [ref=e316] [cursor=pointer] [box=40,3623,33,17]:
+                                    - /url: viber://chat?number=%2B380509656737
+                            - listitem [ref=e317] [box=40,3654,153,26]:
+                                - link "WhatsApp" [ref=e318] [cursor=pointer] [box=40,3660,65,17]:
+                                    - /url: https://wa.me/380973542848
+                            - listitem [ref=e319] [box=40,3692,153,26]:
+                                - link "Telegram" [ref=e320] [cursor=pointer] [box=40,3698,59,17]:
+                                    - /url: https://t.me/Juliamindbody
+                            - listitem [ref=e321] [box=40,3730,153,26]:
+                                - link "Instagram" [ref=e322] [cursor=pointer] [box=40,3736,64,17]:
+                                    - /url: https://instagram.com/mindbody.sportwear
+            - generic [ref=e324] [box=40,3815,310,232]:
+                - generic [ref=e325] [box=66,3841,258,48]:
+                    - generic [ref=e326] [box=66,3841,159,41]:
+                        - heading "Давай поговоримо" [level=4] [ref=e327] [box=66,3841,159,15]
+                        - text: маєш запитання — напиши
+                    - link "Instagram" [ref=e328] [cursor=pointer] [box=276,3841,48,48]:
+                        - /url: https://instagram.com/mindbody.sportwear
+                        - img [ref=e330] [box=287,3846,26,26]
+                - generic [ref=e332] [box=66,3919,258,102]:
+                    - generic [ref=e333] [box=65,3918,1,1]: Ваш номер телефону або email
+                    - textbox "Ваш номер телефону або email" [ref=e334] [box=66,3919,258,41]
+                    - button "НАДIСЛАТИ" [ref=e335] [cursor=pointer] [box=66,3980,258,41]
+        - generic [ref=e338] [box=40,4118,310,135]:
+            - generic [ref=e339] [cursor=pointer] [box=70,4118,250,18]:
+                - img [ref=e340] [box=70,4120,20,14]
+                - generic [ref=e343] [box=100,4118,123,18]: УКРАЇНА (УКРАЇНСЬКА)
+                - generic [ref=e344] [box=233,4118,11,18]: ▼
+            - img "MIND BODY" [ref=e346] [box=132,4166,127,20]
+            - generic [ref=e347] [box=70,4216,250,18]: Всі права захищені © MIND BODY, 2026
+    - generic [ref=e349] [box=338,634,40,136]:
+        - link "Telegram" [ref=e350] [cursor=pointer] [box=338,634,40,40]:
+            - /url: https://t.me/+380509656737
+            - img [ref=e351] [box=349,645,19,19]
+        - link "Viber" [ref=e353] [cursor=pointer] [box=338,682,40,40]:
+            - /url: viber://chat?number=%2B380509656737
+            - img [ref=e354] [box=349,693,19,19]
+        - link "WhatsApp" [ref=e356] [cursor=pointer] [box=338,730,40,40]:
+            - /url: https://wa.me/380973542848
+            - img [ref=e357] [box=349,741,19,19]

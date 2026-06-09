@@ -1,10 +1,4 @@
-import {
-    Form,
-    useLoaderData,
-    useActionData,
-    useNavigation,
-    useSubmit,
-} from "react-router";
+import { Form, useLoaderData, useActionData, useNavigation, useSubmit } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { prisma } from "../../db.server";
 import { requireAdmin } from "../../utils/admin-guard.server";

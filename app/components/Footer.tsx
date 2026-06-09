@@ -135,9 +135,7 @@ export default function Footer() {
                                 {/* Sprint 1 D1.2 #45 TRUST-006 — explicit support
                                     hours sets response expectation. Baymard:
                                     reduces "когда мне ответят?" anxiety. */}
-                                <p className="footer-puma__hours">
-                                    Пн–Пт · 9:00–18:00
-                                </p>
+                                <p className="footer-puma__hours">Пн–Пт · 9:00–18:00</p>
                                 <ul
                                     className="footer-puma__social-icons"
                                     aria-label="Месенджери та соцмережі"
@@ -403,7 +401,8 @@ export default function Footer() {
                     </address>
 
                     <div className="footer-puma__copyright-text">
-                        © MIND BODY, <span suppressHydrationWarning>{new Date().getFullYear()}</span>
+                        © MIND BODY,{" "}
+                        <span suppressHydrationWarning>{new Date().getFullYear()}</span>
                     </div>
                 </div>
             </div>

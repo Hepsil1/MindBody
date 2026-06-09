@@ -1,245 +1,245 @@
 - generic [active] [ref=e1]:
-  - link "Перейти до контенту":
-    - /url: "#main-content"
-  - banner [ref=e4]:
-    - generic [ref=e5]:
-      - button "Меню" [ref=e6] [cursor=pointer]
-      - link "MIND BODY" [ref=e10] [cursor=pointer]:
-        - /url: /
-        - img "MIND BODY" [ref=e12]
-      - text: КАТЕГОРІЇ АКАУНТ → → → →
-      - generic [ref=e13]:
-        - button "Пошук" [ref=e14] [cursor=pointer]:
-          - img [ref=e15]
-        - 'button "Кошик: 3 товари" [ref=e216] [cursor=pointer]':
-          - img [ref=e19]
-          - generic [ref=e217]: "3"
-  - dialog [ref=e22]:
-    - generic [ref=e23]:
-      - heading [level=3] [ref=e24]:
-        - text: Кошик
-        - generic [ref=e218]: "3"
-      - button [ref=e25] [cursor=pointer]:
-        - img [ref=e26]
-    - generic [ref=e219]:
-      - generic [ref=e220]:
-        - img [ref=e222]
-        - generic [ref=e223]:
-          - heading [level=4] [ref=e224]: Лонгслів CALM
-          - generic [ref=e225]:
-            - generic [ref=e226]: "Розмір: M"
-            - generic [ref=e227]: "Колір: beige"
-          - generic [ref=e228]:
-            - generic [ref=e229]:
-              - button [ref=e230] [cursor=pointer]: −
-              - generic [ref=e231]: "1"
-              - button [ref=e232] [cursor=pointer]: +
-            - generic [ref=e233]: 1,290 ₴
-        - button [ref=e234] [cursor=pointer]:
-          - img [ref=e235]
-      - generic [ref=e238]:
-        - img [ref=e240]
-        - generic [ref=e241]:
-          - heading [level=4] [ref=e242]: Лосини PRO
-          - generic [ref=e243]:
-            - generic [ref=e244]: "Розмір: M"
-            - generic [ref=e245]: "Колір: black"
-          - generic [ref=e246]:
-            - generic [ref=e247]:
-              - button [ref=e248] [cursor=pointer]: −
-              - generic [ref=e249]: "2"
-              - button [ref=e250] [cursor=pointer]: +
-            - generic [ref=e251]: 2,980 ₴
-        - button [ref=e252] [cursor=pointer]:
-          - img [ref=e253]
-    - generic [ref=e256]:
-      - generic [ref=e257]: 🎉 Безкоштовна доставка!
-      - generic [ref=e258]:
-        - generic [ref=e259]: "Разом:"
-        - generic [ref=e260]: 4,270 ₴
-      - link [ref=e261] [cursor=pointer]:
-        - /url: /checkout
-        - text: Оформити замовлення
-      - button [ref=e262] [cursor=pointer]: Продовжити покупки
-  - main [ref=e36]:
-    - generic [ref=e38]:
-      - navigation [ref=e39]:
-        - link "Головна" [ref=e40] [cursor=pointer]:
-          - /url: /
-        - generic [ref=e41]: /
-        - generic [ref=e42]: Розмірна сітка
-      - heading "Розмірна сітка" [level=1] [ref=e43]
-      - paragraph [ref=e44]: Як обрати правильний розмір
-    - generic [ref=e46]:
-      - generic [ref=e47]:
-        - heading "Жіночі розміри" [level=2] [ref=e48]
-        - generic [ref=e49]:
-          - table [ref=e50]:
-            - rowgroup [ref=e51]:
-              - row "Розмір XS S M L XL" [ref=e52]:
-                - columnheader "Розмір" [ref=e53]
-                - columnheader "XS" [ref=e54]
-                - columnheader "S" [ref=e55]
-                - columnheader "M" [ref=e56]
-                - columnheader "L" [ref=e57]
-                - columnheader "XL" [ref=e58]
-            - rowgroup [ref=e59]:
-              - row "Обхват грудей (см) 80-84 84-88 88-92 92-96 96-100" [ref=e60]:
-                - cell "Обхват грудей (см)" [ref=e61]
-                - cell "80-84" [ref=e62]
-                - cell "84-88" [ref=e63]
-                - cell "88-92" [ref=e64]
-                - cell "92-96" [ref=e65]
-                - cell "96-100" [ref=e66]
-              - row "Обхват талії (см) 60-64 64-68 68-72 72-76 76-80" [ref=e67]:
-                - cell "Обхват талії (см)" [ref=e68]
-                - cell "60-64" [ref=e69]
-                - cell "64-68" [ref=e70]
-                - cell "68-72" [ref=e71]
-                - cell "72-76" [ref=e72]
-                - cell "76-80" [ref=e73]
-              - row "Обхват стегон (см) 88-92 92-96 96-100 100-104 104-108" [ref=e74]:
-                - cell "Обхват стегон (см)" [ref=e75]
-                - cell "88-92" [ref=e76]
-                - cell "92-96" [ref=e77]
-                - cell "96-100" [ref=e78]
-                - cell "100-104" [ref=e79]
-                - cell "104-108" [ref=e80]
-          - text: → свайп
-      - generic [ref=e81]:
-        - heading "Дитячі розміри" [level=2] [ref=e82]
-        - generic [ref=e83]:
-          - table [ref=e84]:
-            - rowgroup [ref=e85]:
-              - row "Розмір 104 110 116 122 128 134" [ref=e86]:
-                - columnheader "Розмір" [ref=e87]
-                - columnheader "104" [ref=e88]
-                - columnheader "110" [ref=e89]
-                - columnheader "116" [ref=e90]
-                - columnheader "122" [ref=e91]
-                - columnheader "128" [ref=e92]
-                - columnheader "134" [ref=e93]
-            - rowgroup [ref=e94]:
-              - row "Вік (років) 3-4 4-5 5-6 6-7 7-8 8-9" [ref=e95]:
-                - cell "Вік (років)" [ref=e96]
-                - cell "3-4" [ref=e97]
-                - cell "4-5" [ref=e98]
-                - cell "5-6" [ref=e99]
-                - cell "6-7" [ref=e100]
-                - cell "7-8" [ref=e101]
-                - cell "8-9" [ref=e102]
-              - row "Зріст (см) 99-104 105-110 111-116 117-122 123-128 129-134" [ref=e103]:
-                - cell "Зріст (см)" [ref=e104]
-                - cell "99-104" [ref=e105]
-                - cell "105-110" [ref=e106]
-                - cell "111-116" [ref=e107]
-                - cell "117-122" [ref=e108]
-                - cell "123-128" [ref=e109]
-                - cell "129-134" [ref=e110]
-          - text: → свайп
-      - generic [ref=e111]:
-        - heading "Як правильно зняти мірки" [level=3] [ref=e112]
-        - generic [ref=e113]:
-          - generic [ref=e114]:
-            - heading "Обхват грудей" [level=4] [ref=e115]
-            - paragraph [ref=e116]: Виміряйте стрічкою по найширшій частині грудей, тримаючи її горизонтально.
-          - generic [ref=e117]:
-            - heading "Обхват талії" [level=4] [ref=e118]
-            - paragraph [ref=e119]: Виміряйте по найвужчій частині талії, зазвичай трохи вище пупка.
-          - generic [ref=e120]:
-            - heading "Обхват стегон" [level=4] [ref=e121]
-            - paragraph [ref=e122]: Виміряйте по найширшій частині стегон і сідниць.
-      - generic [ref=e123]:
-        - paragraph [ref=e124]: Потрібна допомога з вибором розміру?
-        - link "Зв'язатися з нами" [ref=e125] [cursor=pointer]:
-          - /url: /contacts
-  - contentinfo [ref=e126]:
-    - generic [ref=e128]:
-      - generic [ref=e129]:
-        - img "MIND BODY" [ref=e132]
-        - generic [ref=e133]:
-          - generic [ref=e134]:
-            - heading "Допомога" [level=3] [ref=e135]
-            - list [ref=e136]:
-              - listitem [ref=e137]:
-                - link "Контакти" [ref=e138] [cursor=pointer]:
-                  - /url: /contacts
-              - listitem [ref=e139]:
-                - link "Таблиця розмірів" [ref=e140] [cursor=pointer]:
-                  - /url: /size-guide
-              - listitem [ref=e141]:
-                - link "Доставка та оплата" [ref=e142] [cursor=pointer]:
-                  - /url: /delivery
-              - listitem [ref=e143]:
-                - link "Повернення" [ref=e144] [cursor=pointer]:
-                  - /url: /return-policy
-              - listitem [ref=e145]:
-                - link "Часті запитання" [ref=e146] [cursor=pointer]:
-                  - /url: /faq
-          - generic [ref=e147]:
-            - heading "Про компанію" [level=3] [ref=e148]
-            - list [ref=e149]:
-              - listitem [ref=e150]:
-                - link "Про нас" [ref=e151] [cursor=pointer]:
-                  - /url: /about
-              - listitem [ref=e152]:
-                - link "Умови користування" [ref=e153] [cursor=pointer]:
-                  - /url: /terms
-              - listitem [ref=e154]:
-                - link "Політика конфіденційності" [ref=e155] [cursor=pointer]:
-                  - /url: /privacy
-          - generic [ref=e156]:
-            - heading "Зв'язатись" [level=3] [ref=e157]
-            - 'link "Подзвонити: +38 (096) 665-08-55" [ref=e158] [cursor=pointer]':
-              - /url: tel:+380966650855
-              - img [ref=e159]
-              - text: +38 (096) 665-08-55
-            - list "Месенджери та соцмережі" [ref=e161]:
-              - listitem [ref=e162]:
-                - link "Instagram MindBody" [ref=e163] [cursor=pointer]:
-                  - /url: https://instagram.com/mindbody.sportwear
-                  - img [ref=e164]
-              - listitem [ref=e166]:
-                - link "Telegram MindBody" [ref=e167] [cursor=pointer]:
-                  - /url: https://t.me/Juliamindbody
-                  - img [ref=e168]
-              - listitem [ref=e170]:
-                - link "Viber MindBody" [ref=e171] [cursor=pointer]:
-                  - /url: viber://chat?number=%2B380509656737
-                  - img [ref=e172]
-              - listitem [ref=e174]:
-                - link "WhatsApp MindBody" [ref=e175] [cursor=pointer]:
-                  - /url: https://wa.me/380973542848
-                  - img [ref=e176]
-      - generic [ref=e179]:
-        - generic [ref=e180]:
-          - generic [ref=e181]:
-            - heading "Давай поговоримо" [level=4] [ref=e182]
-            - generic [ref=e183]: маєш запитання — напиши
-          - link "Instagram" [ref=e184] [cursor=pointer]:
-            - /url: https://instagram.com/mindbody.sportwear
-            - img [ref=e186]
-        - generic [ref=e188]:
-          - generic [ref=e189]: Ваш номер телефону або email
-          - textbox "Ваш номер телефону або email" [ref=e190]
-          - button "НАДIСЛАТИ" [ref=e191] [cursor=pointer]
-    - generic [ref=e194]:
-      - img "MIND BODY" [ref=e197]
-      - generic [ref=e198]:
-        - text: Зроблено в Україні
-        - generic [ref=e199]: ·
-        - text: Доставка Новою Поштою
-      - generic [ref=e200]: © MIND BODY, 2026
-  - generic [ref=e201]:
-    - button "Згорнути контакти" [ref=e202] [cursor=pointer]:
-      - img [ref=e203]
-    - generic [ref=e206]:
-      - link "Telegram" [ref=e207] [cursor=pointer]:
-        - /url: https://t.me/+380509656737
-        - img [ref=e208]
-      - link "Viber" [ref=e210] [cursor=pointer]:
-        - /url: viber://chat?number=%2B380509656737
-        - img [ref=e211]
-      - link "WhatsApp" [ref=e213] [cursor=pointer]:
-        - /url: https://wa.me/380973542848
-        - img [ref=e214]
+    - link "Перейти до контенту":
+        - /url: "#main-content"
+    - banner [ref=e4]:
+        - generic [ref=e5]:
+            - button "Меню" [ref=e6] [cursor=pointer]
+            - link "MIND BODY" [ref=e10] [cursor=pointer]:
+                - /url: /
+                - img "MIND BODY" [ref=e12]
+            - text: КАТЕГОРІЇ АКАУНТ → → → →
+            - generic [ref=e13]:
+                - button "Пошук" [ref=e14] [cursor=pointer]:
+                    - img [ref=e15]
+                - 'button "Кошик: 3 товари" [ref=e216] [cursor=pointer]':
+                    - img [ref=e19]
+                    - generic [ref=e217]: "3"
+    - dialog [ref=e22]:
+        - generic [ref=e23]:
+            - heading [level=3] [ref=e24]:
+                - text: Кошик
+                - generic [ref=e218]: "3"
+            - button [ref=e25] [cursor=pointer]:
+                - img [ref=e26]
+        - generic [ref=e219]:
+            - generic [ref=e220]:
+                - img [ref=e222]
+                - generic [ref=e223]:
+                    - heading [level=4] [ref=e224]: Лонгслів CALM
+                    - generic [ref=e225]:
+                        - generic [ref=e226]: "Розмір: M"
+                        - generic [ref=e227]: "Колір: beige"
+                    - generic [ref=e228]:
+                        - generic [ref=e229]:
+                            - button [ref=e230] [cursor=pointer]: −
+                            - generic [ref=e231]: "1"
+                            - button [ref=e232] [cursor=pointer]: +
+                        - generic [ref=e233]: 1,290 ₴
+                - button [ref=e234] [cursor=pointer]:
+                    - img [ref=e235]
+            - generic [ref=e238]:
+                - img [ref=e240]
+                - generic [ref=e241]:
+                    - heading [level=4] [ref=e242]: Лосини PRO
+                    - generic [ref=e243]:
+                        - generic [ref=e244]: "Розмір: M"
+                        - generic [ref=e245]: "Колір: black"
+                    - generic [ref=e246]:
+                        - generic [ref=e247]:
+                            - button [ref=e248] [cursor=pointer]: −
+                            - generic [ref=e249]: "2"
+                            - button [ref=e250] [cursor=pointer]: +
+                        - generic [ref=e251]: 2,980 ₴
+                - button [ref=e252] [cursor=pointer]:
+                    - img [ref=e253]
+        - generic [ref=e256]:
+            - generic [ref=e257]: 🎉 Безкоштовна доставка!
+            - generic [ref=e258]:
+                - generic [ref=e259]: "Разом:"
+                - generic [ref=e260]: 4,270 ₴
+            - link [ref=e261] [cursor=pointer]:
+                - /url: /checkout
+                - text: Оформити замовлення
+            - button [ref=e262] [cursor=pointer]: Продовжити покупки
+    - main [ref=e36]:
+        - generic [ref=e38]:
+            - navigation [ref=e39]:
+                - link "Головна" [ref=e40] [cursor=pointer]:
+                    - /url: /
+                - generic [ref=e41]: /
+                - generic [ref=e42]: Розмірна сітка
+            - heading "Розмірна сітка" [level=1] [ref=e43]
+            - paragraph [ref=e44]: Як обрати правильний розмір
+        - generic [ref=e46]:
+            - generic [ref=e47]:
+                - heading "Жіночі розміри" [level=2] [ref=e48]
+                - generic [ref=e49]:
+                    - table [ref=e50]:
+                        - rowgroup [ref=e51]:
+                            - row "Розмір XS S M L XL" [ref=e52]:
+                                - columnheader "Розмір" [ref=e53]
+                                - columnheader "XS" [ref=e54]
+                                - columnheader "S" [ref=e55]
+                                - columnheader "M" [ref=e56]
+                                - columnheader "L" [ref=e57]
+                                - columnheader "XL" [ref=e58]
+                        - rowgroup [ref=e59]:
+                            - row "Обхват грудей (см) 80-84 84-88 88-92 92-96 96-100" [ref=e60]:
+                                - cell "Обхват грудей (см)" [ref=e61]
+                                - cell "80-84" [ref=e62]
+                                - cell "84-88" [ref=e63]
+                                - cell "88-92" [ref=e64]
+                                - cell "92-96" [ref=e65]
+                                - cell "96-100" [ref=e66]
+                            - row "Обхват талії (см) 60-64 64-68 68-72 72-76 76-80" [ref=e67]:
+                                - cell "Обхват талії (см)" [ref=e68]
+                                - cell "60-64" [ref=e69]
+                                - cell "64-68" [ref=e70]
+                                - cell "68-72" [ref=e71]
+                                - cell "72-76" [ref=e72]
+                                - cell "76-80" [ref=e73]
+                            - row "Обхват стегон (см) 88-92 92-96 96-100 100-104 104-108" [ref=e74]:
+                                - cell "Обхват стегон (см)" [ref=e75]
+                                - cell "88-92" [ref=e76]
+                                - cell "92-96" [ref=e77]
+                                - cell "96-100" [ref=e78]
+                                - cell "100-104" [ref=e79]
+                                - cell "104-108" [ref=e80]
+                    - text: → свайп
+            - generic [ref=e81]:
+                - heading "Дитячі розміри" [level=2] [ref=e82]
+                - generic [ref=e83]:
+                    - table [ref=e84]:
+                        - rowgroup [ref=e85]:
+                            - row "Розмір 104 110 116 122 128 134" [ref=e86]:
+                                - columnheader "Розмір" [ref=e87]
+                                - columnheader "104" [ref=e88]
+                                - columnheader "110" [ref=e89]
+                                - columnheader "116" [ref=e90]
+                                - columnheader "122" [ref=e91]
+                                - columnheader "128" [ref=e92]
+                                - columnheader "134" [ref=e93]
+                        - rowgroup [ref=e94]:
+                            - row "Вік (років) 3-4 4-5 5-6 6-7 7-8 8-9" [ref=e95]:
+                                - cell "Вік (років)" [ref=e96]
+                                - cell "3-4" [ref=e97]
+                                - cell "4-5" [ref=e98]
+                                - cell "5-6" [ref=e99]
+                                - cell "6-7" [ref=e100]
+                                - cell "7-8" [ref=e101]
+                                - cell "8-9" [ref=e102]
+                            - row "Зріст (см) 99-104 105-110 111-116 117-122 123-128 129-134" [ref=e103]:
+                                - cell "Зріст (см)" [ref=e104]
+                                - cell "99-104" [ref=e105]
+                                - cell "105-110" [ref=e106]
+                                - cell "111-116" [ref=e107]
+                                - cell "117-122" [ref=e108]
+                                - cell "123-128" [ref=e109]
+                                - cell "129-134" [ref=e110]
+                    - text: → свайп
+            - generic [ref=e111]:
+                - heading "Як правильно зняти мірки" [level=3] [ref=e112]
+                - generic [ref=e113]:
+                    - generic [ref=e114]:
+                        - heading "Обхват грудей" [level=4] [ref=e115]
+                        - paragraph [ref=e116]: Виміряйте стрічкою по найширшій частині грудей, тримаючи її горизонтально.
+                    - generic [ref=e117]:
+                        - heading "Обхват талії" [level=4] [ref=e118]
+                        - paragraph [ref=e119]: Виміряйте по найвужчій частині талії, зазвичай трохи вище пупка.
+                    - generic [ref=e120]:
+                        - heading "Обхват стегон" [level=4] [ref=e121]
+                        - paragraph [ref=e122]: Виміряйте по найширшій частині стегон і сідниць.
+            - generic [ref=e123]:
+                - paragraph [ref=e124]: Потрібна допомога з вибором розміру?
+                - link "Зв'язатися з нами" [ref=e125] [cursor=pointer]:
+                    - /url: /contacts
+    - contentinfo [ref=e126]:
+        - generic [ref=e128]:
+            - generic [ref=e129]:
+                - img "MIND BODY" [ref=e132]
+                - generic [ref=e133]:
+                    - generic [ref=e134]:
+                        - heading "Допомога" [level=3] [ref=e135]
+                        - list [ref=e136]:
+                            - listitem [ref=e137]:
+                                - link "Контакти" [ref=e138] [cursor=pointer]:
+                                    - /url: /contacts
+                            - listitem [ref=e139]:
+                                - link "Таблиця розмірів" [ref=e140] [cursor=pointer]:
+                                    - /url: /size-guide
+                            - listitem [ref=e141]:
+                                - link "Доставка та оплата" [ref=e142] [cursor=pointer]:
+                                    - /url: /delivery
+                            - listitem [ref=e143]:
+                                - link "Повернення" [ref=e144] [cursor=pointer]:
+                                    - /url: /return-policy
+                            - listitem [ref=e145]:
+                                - link "Часті запитання" [ref=e146] [cursor=pointer]:
+                                    - /url: /faq
+                    - generic [ref=e147]:
+                        - heading "Про компанію" [level=3] [ref=e148]
+                        - list [ref=e149]:
+                            - listitem [ref=e150]:
+                                - link "Про нас" [ref=e151] [cursor=pointer]:
+                                    - /url: /about
+                            - listitem [ref=e152]:
+                                - link "Умови користування" [ref=e153] [cursor=pointer]:
+                                    - /url: /terms
+                            - listitem [ref=e154]:
+                                - link "Політика конфіденційності" [ref=e155] [cursor=pointer]:
+                                    - /url: /privacy
+                    - generic [ref=e156]:
+                        - heading "Зв'язатись" [level=3] [ref=e157]
+                        - 'link "Подзвонити: +38 (096) 665-08-55" [ref=e158] [cursor=pointer]':
+                            - /url: tel:+380966650855
+                            - img [ref=e159]
+                            - text: +38 (096) 665-08-55
+                        - list "Месенджери та соцмережі" [ref=e161]:
+                            - listitem [ref=e162]:
+                                - link "Instagram MindBody" [ref=e163] [cursor=pointer]:
+                                    - /url: https://instagram.com/mindbody.sportwear
+                                    - img [ref=e164]
+                            - listitem [ref=e166]:
+                                - link "Telegram MindBody" [ref=e167] [cursor=pointer]:
+                                    - /url: https://t.me/Juliamindbody
+                                    - img [ref=e168]
+                            - listitem [ref=e170]:
+                                - link "Viber MindBody" [ref=e171] [cursor=pointer]:
+                                    - /url: viber://chat?number=%2B380509656737
+                                    - img [ref=e172]
+                            - listitem [ref=e174]:
+                                - link "WhatsApp MindBody" [ref=e175] [cursor=pointer]:
+                                    - /url: https://wa.me/380973542848
+                                    - img [ref=e176]
+            - generic [ref=e179]:
+                - generic [ref=e180]:
+                    - generic [ref=e181]:
+                        - heading "Давай поговоримо" [level=4] [ref=e182]
+                        - generic [ref=e183]: маєш запитання — напиши
+                    - link "Instagram" [ref=e184] [cursor=pointer]:
+                        - /url: https://instagram.com/mindbody.sportwear
+                        - img [ref=e186]
+                - generic [ref=e188]:
+                    - generic [ref=e189]: Ваш номер телефону або email
+                    - textbox "Ваш номер телефону або email" [ref=e190]
+                    - button "НАДIСЛАТИ" [ref=e191] [cursor=pointer]
+        - generic [ref=e194]:
+            - img "MIND BODY" [ref=e197]
+            - generic [ref=e198]:
+                - text: Зроблено в Україні
+                - generic [ref=e199]: ·
+                - text: Доставка Новою Поштою
+            - generic [ref=e200]: © MIND BODY, 2026
+    - generic [ref=e201]:
+        - button "Згорнути контакти" [ref=e202] [cursor=pointer]:
+            - img [ref=e203]
+        - generic [ref=e206]:
+            - link "Telegram" [ref=e207] [cursor=pointer]:
+                - /url: https://t.me/+380509656737
+                - img [ref=e208]
+            - link "Viber" [ref=e210] [cursor=pointer]:
+                - /url: viber://chat?number=%2B380509656737
+                - img [ref=e211]
+            - link "WhatsApp" [ref=e213] [cursor=pointer]:
+                - /url: https://wa.me/380973542848
+                - img [ref=e214]

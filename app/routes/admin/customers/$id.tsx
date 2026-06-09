@@ -102,10 +102,7 @@ export async function action({ request, params }: ActionArgs) {
         } catch (error) {
             // email is @unique — a duplicate throws P2002. Surface it instead of
             // a raw 500 that discards the operator's edits.
-            if (
-                error instanceof Prisma.PrismaClientKnownRequestError &&
-                error.code === "P2002"
-            ) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
                 return { error: "Email вже використовується іншим клієнтом" };
             }
             console.error("Customer update error:", error);

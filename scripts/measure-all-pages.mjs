@@ -50,9 +50,7 @@ for (const p of PAGES) {
     }
     // exclude logo-like masters from the "leak" count
     const productMasters = masters.filter(
-        (m) =>
-            !/logo|brand-sun|mind_body|sun\.png/i.test(m.url) &&
-            m.size > 30 * 1024, // ignore tiny imgs <30KB
+        (m) => !/logo|brand-sun|mind_body|sun\.png/i.test(m.url) && m.size > 30 * 1024, // ignore tiny imgs <30KB
     );
     const mTotal = masters.reduce((s, m) => s + m.size, 0);
     const vTotal = variants.reduce((s, v) => s + v.size, 0);

@@ -960,7 +960,6 @@
         grid-template-columns: 1fr;
         gap: 40px;
     }
-
 }
 
 /* Atom M — PDP mobile swipe gallery (only renders <=768px because the

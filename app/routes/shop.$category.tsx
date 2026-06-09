@@ -195,12 +195,8 @@ export default function ShopCategory() {
     const [selectedColors, setSelectedColors] = useState<string[]>(getListParam("colors"));
     // Deeper taxonomy facets — single-select, sourced from the URL like the
     // others. Mega-menu deep links land here pre-filtered (?fabric=&sleeve=).
-    const [selectedFabric, setSelectedFabric] = useState<string | null>(
-        searchParams.get("fabric"),
-    );
-    const [selectedSleeve, setSelectedSleeve] = useState<string | null>(
-        searchParams.get("sleeve"),
-    );
+    const [selectedFabric, setSelectedFabric] = useState<string | null>(searchParams.get("fabric"));
+    const [selectedSleeve, setSelectedSleeve] = useState<string | null>(searchParams.get("sleeve"));
     const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(
         searchParams.get("priceRange"),
     );
@@ -514,9 +510,8 @@ export default function ShopCategory() {
         const withCounts = options
             .map((o) => ({
                 o,
-                count: products.filter(
-                    (p) => (sectionKey === "fabric" ? p.fabric : p.sleeve) === o,
-                ).length,
+                count: products.filter((p) => (sectionKey === "fabric" ? p.fabric : p.sleeve) === o)
+                    .length,
             }))
             .filter((x) => x.count > 0);
         if (withCounts.length === 0) return null;

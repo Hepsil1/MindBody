@@ -70,8 +70,7 @@ export default function BrandStories({ videos }: BrandStoriesProps) {
     const heldRef = useRef(false);
 
     // Whether the active video should actually be running right now.
-    const shouldPlay =
-        mounted && isMobile && isInView && playing && !isHolding && count > 0;
+    const shouldPlay = mounted && isMobile && isInView && playing && !isHolding && count > 0;
 
     /* ---- mount + media queries ---- */
     useEffect(() => {
@@ -313,19 +312,14 @@ export default function BrandStories({ videos }: BrandStoriesProps) {
             </div>
 
             <div className="brand-stories__card">
-                <div
-                    className="brand-stories__stage"
-                    onContextMenu={(e) => e.preventDefault()}
-                >
+                <div className="brand-stories__stage" onContextMenu={(e) => e.preventDefault()}>
                     {Array.from({ length: count }).map((_, i) => (
                         <video
                             key={i}
                             ref={(el) => {
                                 videoRefs.current[i] = el;
                             }}
-                            className={`brand-stories__video${
-                                i === index ? " is-active" : ""
-                            }`}
+                            className={`brand-stories__video${i === index ? " is-active" : ""}`}
                             src={videos[i]}
                             muted
                             playsInline
@@ -379,8 +373,22 @@ export default function BrandStories({ videos }: BrandStoriesProps) {
                     >
                         {playing ? (
                             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-                                <rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" />
-                                <rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" />
+                                <rect
+                                    x="6"
+                                    y="5"
+                                    width="4"
+                                    height="14"
+                                    rx="1"
+                                    fill="currentColor"
+                                />
+                                <rect
+                                    x="14"
+                                    y="5"
+                                    width="4"
+                                    height="14"
+                                    rx="1"
+                                    fill="currentColor"
+                                />
                             </svg>
                         ) : (
                             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">

@@ -4,6 +4,7 @@
 // 3. Only home top-of-page checked, never scrolled to IG mock
 // 4. Other pages (/shop, /pdp, /checkout, /cart, etc.) never re-measured
 
+/* global document, window -- used inside Playwright page.evaluate() (browser context) */
 import { chromium, webkit, devices } from "@playwright/test";
 import { promises as fs } from "fs";
 import path from "path";
@@ -20,7 +21,9 @@ await fs.mkdir(OUT, { recursive: true });
     await page.screenshot({ path: path.join(OUT, "desktop-home-top.png") });
 
     // Try to hover the Yoga nav link to open mega-menu
-    const yogaLink = page.locator('a:has-text("Yoga"), a:has-text("YOGA"), [href*="/shop/yoga"]').first();
+    const yogaLink = page
+        .locator('a:has-text("Yoga"), a:has-text("YOGA"), [href*="/shop/yoga"]')
+        .first();
     if (await yogaLink.isVisible({ timeout: 2000 }).catch(() => false)) {
         await yogaLink.hover();
         await page.waitForTimeout(800);

@@ -26,20 +26,12 @@ const masterTotal = masters.reduce((s, m) => s + m.size, 0);
 const variantTotal = variants.reduce((s, v) => s + v.size, 0);
 
 console.log("\n=== MASTER images loaded ===");
-masters.forEach((m) =>
-    console.log(`  ${m.status}  ${(m.size / 1024).toFixed(1)} KB  ${m.url}`),
-);
-console.log(
-    `  Subtotal: ${masters.length} files, ${(masterTotal / 1024).toFixed(1)} KB`,
-);
+masters.forEach((m) => console.log(`  ${m.status}  ${(m.size / 1024).toFixed(1)} KB  ${m.url}`));
+console.log(`  Subtotal: ${masters.length} files, ${(masterTotal / 1024).toFixed(1)} KB`);
 
 console.log("\n=== VARIANT images loaded ===");
-variants.forEach((v) =>
-    console.log(`  ${v.status}  ${(v.size / 1024).toFixed(1)} KB  ${v.url}`),
-);
-console.log(
-    `  Subtotal: ${variants.length} files, ${(variantTotal / 1024).toFixed(1)} KB`,
-);
+variants.forEach((v) => console.log(`  ${v.status}  ${(v.size / 1024).toFixed(1)} KB  ${v.url}`));
+console.log(`  Subtotal: ${variants.length} files, ${(variantTotal / 1024).toFixed(1)} KB`);
 
 console.log(
     `\n=== TOTAL: ${((masterTotal + variantTotal) / 1024).toFixed(1)} KB across ${masters.length + variants.length} files ===`,
