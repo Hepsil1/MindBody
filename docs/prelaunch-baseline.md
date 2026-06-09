@@ -43,3 +43,30 @@ sleeve` and `Category.moodType` were applied out-of-band (db push) with no
   no more hand-written psql migrations).
 - Backups taken before the operation: `backups/mindbody_db_*.sql.gz` (nightly +
   one pre-op) and `backups/prelaunch_full.sql` (raw).
+
+## Verification (2026-06-09, post-deploy)
+
+Deploy = `scripts/deploy.ps1` (image variants → react-router build → `pm2 restart
+mindbody` → smoke). Build clean, PM2 online, entry chunk 200.
+
+- **migrate deploy proof**: a fresh `mindbody_test` brought up purely with
+  `prisma migrate deploy` (0_init) — "All migrations have been successfully
+  applied." (The thing that was broken before now works.)
+- **Prod public smoke**: `/`, `/shop/*`, `/p/<slug>`, `/checkout`, `/wishlist`,
+  `/faq`, `/about`, `/admin` → 200; `/product/<id>` → 301 → `/p/<slug>`; cards
+  link only to `/p/<slug>`; canonical + JSON-LD correct; sitemap lists `/p/<slug>`;
+  headers OK (HTML no-cache, assets immutable, HSTS, X-Frame-Options).
+  (`/cart` 404 is expected — cart is a `CartDrawer` overlay, not a route.)
+- **Prod admin walkthrough** (`scripts/_prelaunch_admin_walk.mjs`, read-only):
+  10/10 admin pages render with a real session (products/orders/categories/
+  inventory/slides/shop-pages/reviews/promo/customers).
+- **Functional lifecycle** (against fresh `mindbody_test` + dev server, current
+  committed code, schema verified identical to prod): p0 24/24, product-quality
+  4/4, categories 7/7, inventory 10/10 — order atomicity, stock decrement +
+  InventoryMovement, idempotency, oversell protection, cancel→restore, paid-delete
+  guard, status state-machine + history, publish-quality gate, image→webp.
+
+Note: the slug-URL harness shows 2 "failures" that are false negatives — it picks
+a product via `findFirst` that lands on shop page 2 (the listing paginates via
+`slice(0, displayCount)`), so the rendered HTML / top search results don't include
+that exact product. The feature itself is verified working manually.
