@@ -1690,8 +1690,8 @@ button.product-card__swatch:focus-visible {
    — e.g. jumpsuit with its sleeve list — is much taller than its siblings). */
 .mega-menu__cols {
     flex: 1;
-    column-width: 142px;
-    column-gap: 30px;
+    column-width: 150px;
+    column-gap: 34px;
 }
 
 .mega-menu__group {
@@ -1699,22 +1699,22 @@ button.product-card__swatch:focus-visible {
     -webkit-column-break-inside: avoid;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    margin: 0 0 16px;
+    gap: 3px;
+    margin: 0 0 22px;
 }
 
 .mega-menu__group-head {
     font-family: var(--font-display);
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 600;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #1a1a1a;
+    color: #22302f;
     text-decoration: none;
-    padding-bottom: 7px;
-    margin-bottom: 4px;
-    border-bottom: 1px solid #eee;
-    transition: color 0.2s;
+    padding-bottom: 9px;
+    margin-bottom: 9px;
+    border-bottom: 1px solid #e8e0d4;
+    transition: color 0.2s ease;
 }
 
 .mega-menu__group-head:hover {
@@ -1723,6 +1723,8 @@ button.product-card__swatch:focus-visible {
 
 .mega-menu__group-head--all {
     color: var(--color-primary, #2a5a5a);
+    font-weight: 700;
+    border-bottom-color: rgba(42, 90, 90, 0.22);
 }
 
 .mega-menu__fabric {
@@ -1734,12 +1736,14 @@ button.product-card__swatch:focus-visible {
 .mega-menu__sublink {
     display: block;
     font-size: 13px;
-    color: #555;
+    color: #5a5249;
     text-decoration: none;
-    padding: 3px 0;
+    padding: 4px 0;
     letter-spacing: 0.01em;
     white-space: nowrap;
-    transition: all 0.2s;
+    transition:
+        color 0.2s ease,
+        padding-left 0.2s ease;
 }
 
 .mega-menu__sublink:hover {
@@ -1748,20 +1752,21 @@ button.product-card__swatch:focus-visible {
 }
 
 .mega-menu__sublink--fabric {
-    color: #2a2a2a;
+    color: #283635;
     font-weight: 600;
-    font-size: 12px;
-    margin-top: 5px;
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+    margin-top: 9px;
 }
 
 .mega-menu__sublink--sleeve {
-    padding-left: 12px;
-    color: #888;
-    font-size: 12px;
+    padding-left: 13px;
+    color: #948d83;
+    font-size: 12.5px;
 }
 
 .mega-menu__sublink--sleeve:hover {
-    padding-left: 16px;
+    padding-left: 17px;
 }
 
 .mega-menu__col {
@@ -1810,14 +1815,14 @@ button.product-card__swatch:focus-visible {
     width: 240px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
 }
 
 .mega-menu__featured-img {
     position: relative;
     width: 100%;
     aspect-ratio: 4/5;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
 }
 
@@ -1836,29 +1841,30 @@ button.product-card__swatch:focus-visible {
     position: absolute;
     top: 12px;
     right: 12px;
-    background: #000;
-    color: #fff;
+    background: var(--color-primary-dark, #1e4444);
+    color: #fbfaf8;
     font-size: 10px;
     font-weight: 600;
-    padding: 4px 10px;
+    padding: 5px 11px;
     border-radius: 100px;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
 }
 
 .mega-menu__featured-content h5 {
     font-family: var(--font-display);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
-    margin: 0 0 4px 0;
-    color: #111;
+    letter-spacing: 0.01em;
+    margin: 0 0 5px 0;
+    color: #22302f;
 }
 
 .mega-menu__featured-link {
     font-size: 12px;
-    color: #666;
+    color: #6b6258;
     text-decoration: none;
     letter-spacing: 0.05em;
-    transition: color 0.2s;
+    transition: color 0.2s ease;
 }
 
 .mega-menu__featured-link:hover {

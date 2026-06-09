@@ -44,7 +44,9 @@ export const TAXONOMY: ShopTaxonomy = {
         tshirts: { label: "Футболки, майки" },
     },
     sport: {
-        jumpsuit: { label: "Комбінезони", fabrics: ["sport"], sleeves: FULL_SLEEVES },
+        // Sport jumpsuits are all "sport" fabric, so the menu lists the sleeve
+        // cuts directly (no redundant fabric line) — matches the brand sheet + KIDS.
+        jumpsuit: { label: "Комбінезони", sleeves: FULL_SLEEVES },
         leggings: { label: "Легінси" },
         velo: { label: "VELO" },
         tops: { label: "Топи" },
