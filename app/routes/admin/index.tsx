@@ -1,195 +1,293 @@
-import { Link } from "react-router";
-import { useLoaderData } from "react-router";
-import type { Route } from "./+types/index";
+import { Link, useLoaderData } from "react-router";
 import { prisma } from "../../db.server";
+import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, type OrderStatus } from "../../utils/statuses";
 
-export async function loader({ request }: Route.LoaderArgs) {
-    const [productsCount, customersCount, revenue] = await Promise.all([
+const LOW_STOCK_THRESHOLD = 5;
+
+export async function loader() {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+        productsCount,
+        customersCount,
+        ordersToday,
+        orders7d,
+        pendingOrders,
+        revenue7d,
+        unapprovedReviews,
+        lowStock,
+        recentOrders,
+    ] = await Promise.all([
         prisma.product.count(),
         prisma.customer.count(),
-        prisma.order.aggregate({ _sum: { total: true } }),
+        prisma.order.count({ where: { createdAt: { gte: startOfToday } } }),
+        prisma.order.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+        prisma.order.count({ where: { status: "pending" } }),
+        prisma.order.aggregate({
+            _sum: { total: true },
+            where: { createdAt: { gte: sevenDaysAgo }, status: { not: "cancelled" } },
+        }),
+        prisma.review.count({ where: { isApproved: false } }),
+        prisma.product.findMany({
+            where: { status: "active", stock: { lte: LOW_STOCK_THRESHOLD } },
+            orderBy: { stock: "asc" },
+            take: 6,
+            select: { id: true, name: true, stock: true },
+        }),
+        prisma.order.findMany({
+            orderBy: { createdAt: "desc" },
+            take: 6,
+            select: {
+                id: true,
+                orderNumber: true,
+                total: true,
+                status: true,
+                createdAt: true,
+                customer: { select: { firstName: true, lastName: true } },
+            },
+        }),
     ]);
 
     return {
         productsCount,
         customersCount,
-        revenue: Number(revenue._sum.total || 0),
+        ordersToday,
+        orders7d,
+        pendingOrders,
+        revenue7d: Number(revenue7d._sum.total || 0),
+        unapprovedReviews,
+        lowStock,
+        recentOrders: recentOrders.map((o) => ({
+            id: o.id,
+            orderNumber: o.orderNumber,
+            total: Number(o.total),
+            status: o.status,
+            createdAt: o.createdAt.toISOString(),
+            customer: `${o.customer.firstName} ${o.customer.lastName}`.trim(),
+        })),
     };
 }
 
-export default function AdminDashboard() {
-    const { productsCount, customersCount, revenue } = useLoaderData<typeof loader>();
+const uah = (n: number) =>
+    new Intl.NumberFormat("uk-UA", {
+        style: "currency",
+        currency: "UAH",
+        minimumFractionDigits: 0,
+    }).format(n);
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("uk-UA", {
-            style: "currency",
-            currency: "UAH",
-            minimumFractionDigits: 0,
-        }).format(amount);
-    };
+const shortDate = (iso: string) =>
+    new Intl.DateTimeFormat("uk-UA", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(iso));
+
+function StatusPill({ status }: { status: string }) {
+    const color = ORDER_STATUS_COLORS[status as OrderStatus] ?? "var(--text-muted)";
+    const label = ORDER_STATUS_LABELS[status as OrderStatus] ?? status;
+    return (
+        <span
+            style={{
+                display: "inline-block",
+                padding: "2px 10px",
+                borderRadius: "100px",
+                fontSize: "12px",
+                fontWeight: 600,
+                color,
+                background: `color-mix(in srgb, ${color} 14%, transparent)`,
+                whiteSpace: "nowrap",
+            }}
+        >
+            {label}
+        </span>
+    );
+}
+
+export default function AdminDashboard() {
+    const d = useLoaderData<typeof loader>();
 
     const stats = [
-        { label: "Дохід", value: formatCurrency(revenue), accent: true },
-        { label: "Товарів", value: productsCount.toString() },
-        { label: "Клієнтів", value: customersCount.toString() },
+        { label: "Дохід (7 днів)", value: uah(d.revenue7d), accent: true },
+        { label: "Замовлень сьогодні", value: String(d.ordersToday) },
+        { label: "Замовлень (7 днів)", value: String(d.orders7d) },
+        { label: "Товарів", value: String(d.productsCount) },
+        { label: "Клієнтів", value: String(d.customersCount) },
+    ];
+
+    // Cards that only matter when the count is non-zero — they highlight when
+    // there's something for the operator to act on, and stay calm otherwise.
+    const attention = [
+        {
+            label: "Очікують обробки",
+            count: d.pendingOrders,
+            to: "/admin/orders?status=pending",
+            tone: "#f59e0b",
+        },
+        {
+            label: "Відгуки на модерації",
+            count: d.unapprovedReviews,
+            to: "/admin/reviews?approved=false",
+            tone: "#3b82f6",
+        },
+        {
+            label: `Закінчується товар (≤${LOW_STOCK_THRESHOLD})`,
+            count: d.lowStock.length,
+            to: "/admin/products?lowStock=true",
+            tone: "#ef4444",
+        },
     ];
 
     return (
         <>
             <div className="admin-page-header">
                 <h1>Dashboard</h1>
-                <p>Огляд магазину</p>
+                <p>Огляд магазину за тиждень</p>
             </div>
 
-            {/* Stats */}
             <div className="admin-stats">
-                {stats.map((stat, i) => (
-                    <div className="admin-stat" key={i}>
-                        <div className="admin-stat__label">{stat.label}</div>
+                {stats.map((s) => (
+                    <div className="admin-stat" key={s.label}>
+                        <div className="admin-stat__label">{s.label}</div>
                         <div
-                            className={`admin-stat__value ${stat.accent ? "admin-stat__value--accent" : ""}`}
+                            className={`admin-stat__value ${s.accent ? "admin-stat__value--accent" : ""}`}
                         >
-                            {stat.value}
+                            {s.value}
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* Quick Links */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }}>
-                <Link
-                    to="/admin/products"
-                    className="admin-card admin-card--hover"
-                    style={{ padding: "32px", textDecoration: "none" }}
-                >
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            gap: "16px",
-                        }}
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            width="48"
-                            height="48"
-                            style={{ color: "var(--text-muted)" }}
+            {/* Attention cards */}
+            <div className="dash-attention-grid">
+                {attention.map((a) => {
+                    const active = a.count > 0;
+                    return (
+                        <Link
+                            key={a.label}
+                            to={a.to}
+                            className="admin-card admin-card--hover"
+                            style={{
+                                padding: "20px 24px",
+                                textDecoration: "none",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: "16px",
+                                border: active
+                                    ? `1px solid color-mix(in srgb, ${a.tone} 45%, transparent)`
+                                    : "1px solid var(--border-subtle)",
+                                background: active
+                                    ? `color-mix(in srgb, ${a.tone} 9%, transparent)`
+                                    : undefined,
+                            }}
                         >
-                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
-                            <circle cx="7" cy="7" r="1.5" fill="currentColor" />
-                        </svg>
-                        <div style={{ textAlign: "center" }}>
-                            <div
+                            <span style={{ color: "var(--text-secondary)", fontSize: "14px" }}>
+                                {a.label}
+                            </span>
+                            <span
                                 style={{
-                                    color: "var(--text-main)",
-                                    fontWeight: "600",
-                                    marginBottom: "4px",
+                                    fontSize: "26px",
+                                    fontWeight: 700,
+                                    color: active ? a.tone : "var(--text-muted)",
                                 }}
                             >
-                                Товари
-                            </div>
-                            <div style={{ color: "var(--text-muted)", fontSize: "14px" }}>
-                                {productsCount > 0 ? `${productsCount} товарів` : "Товарів немає"}
-                            </div>
-                        </div>
-                    </div>
-                </Link>
+                                {a.count}
+                            </span>
+                        </Link>
+                    );
+                })}
+            </div>
 
-                <Link
-                    to="/admin/customers"
-                    className="admin-card admin-card--hover"
-                    style={{ padding: "32px", textDecoration: "none" }}
-                >
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            gap: "16px",
-                        }}
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            width="48"
-                            height="48"
-                            style={{ color: "var(--text-muted)" }}
-                        >
-                            <circle cx="12" cy="8" r="4" />
-                            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-                        </svg>
-                        <div style={{ textAlign: "center" }}>
-                            <div
-                                style={{
-                                    color: "var(--text-main)",
-                                    fontWeight: "600",
-                                    marginBottom: "4px",
-                                }}
-                            >
-                                Клієнти
-                            </div>
-                            <div style={{ color: "var(--text-muted)", fontSize: "14px" }}>
-                                {customersCount > 0
-                                    ? `${customersCount} клієнтів`
-                                    : "Клієнтів немає"}
-                            </div>
-                        </div>
+            {/* Recent orders + low stock */}
+            <div className="dash-two-col">
+                <div className="admin-card" style={{ padding: "20px 24px" }}>
+                    <div className="dash-section-head">
+                        <h3>Останні замовлення</h3>
+                        <Link to="/admin/orders" className="dash-section-link">
+                            Усі →
+                        </Link>
                     </div>
-                </Link>
+                    {d.recentOrders.length === 0 ? (
+                        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
+                            Замовлень ще немає.
+                        </p>
+                    ) : (
+                        <div className="dash-list">
+                            {d.recentOrders.map((o) => (
+                                <Link key={o.id} to={`/admin/orders/${o.id}`} className="dash-row">
+                                    <span style={{ color: "var(--text-main)", fontWeight: 600 }}>
+                                        #{o.orderNumber}
+                                    </span>
+                                    <span
+                                        style={{
+                                            color: "var(--text-muted)",
+                                            fontSize: "13px",
+                                            flex: 1,
+                                            minWidth: 0,
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            whiteSpace: "nowrap",
+                                        }}
+                                    >
+                                        {o.customer || "—"} · {shortDate(o.createdAt)}
+                                    </span>
+                                    <StatusPill status={o.status} />
+                                    <span style={{ color: "var(--text-main)", fontWeight: 600 }}>
+                                        {uah(o.total)}
+                                    </span>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
-                <Link
-                    to="/admin/slides"
-                    className="admin-card admin-card--hover"
-                    style={{
-                        padding: "32px",
-                        textDecoration: "none",
-                        border: "1px solid var(--accent-primary)",
-                        background: "rgba(94, 234, 212, 0.05)",
-                    }}
-                >
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            gap: "16px",
-                        }}
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            width="48"
-                            height="48"
-                            style={{ color: "var(--accent-primary)" }}
-                        >
-                            <rect x="3" y="3" width="18" height="18" rx="2" strokeDasharray="4 4" />
-                            <circle cx="12" cy="12" r="3" />
-                            <path d="M20 20L4 4" />
-                        </svg>
-                        <div style={{ textAlign: "center" }}>
-                            <div
-                                style={{
-                                    color: "var(--text-main)",
-                                    fontWeight: "600",
-                                    marginBottom: "4px",
-                                }}
-                            >
-                                Редактор сайту
-                            </div>
-                            <div style={{ color: "var(--text-muted)", fontSize: "14px" }}>
-                                Візуальне налаштування
-                            </div>
-                        </div>
+                <div className="admin-card" style={{ padding: "20px 24px" }}>
+                    <div className="dash-section-head">
+                        <h3>Закінчується на складі</h3>
+                        <Link to="/admin/products?lowStock=true" className="dash-section-link">
+                            Усі →
+                        </Link>
                     </div>
-                </Link>
+                    {d.lowStock.length === 0 ? (
+                        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
+                            Усе в наявності 👍
+                        </p>
+                    ) : (
+                        <div className="dash-list">
+                            {d.lowStock.map((p) => (
+                                <Link
+                                    key={p.id}
+                                    to={`/admin/products/${p.id}`}
+                                    className="dash-row"
+                                >
+                                    <span
+                                        style={{
+                                            color: "var(--text-main)",
+                                            flex: 1,
+                                            minWidth: 0,
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            whiteSpace: "nowrap",
+                                        }}
+                                    >
+                                        {p.name}
+                                    </span>
+                                    <span
+                                        style={{
+                                            fontWeight: 700,
+                                            color: p.stock === 0 ? "#ef4444" : "#f59e0b",
+                                        }}
+                                    >
+                                        {p.stock} шт
+                                    </span>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </>
     );

@@ -701,6 +701,62 @@ body {
     }
 }
 
+/* Dashboard (admin/index.tsx): attention cards + two-column recent/low-stock,
+   both collapse to a single column on phones. */
+.dash-attention-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.dash-two-col {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px;
+}
+.dash-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.dash-section-head h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--text-main);
+}
+.dash-section-link {
+    color: var(--accent-primary);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.dash-list {
+    display: flex;
+    flex-direction: column;
+}
+.dash-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 4px;
+    border-top: 1px solid var(--border-subtle);
+    text-decoration: none;
+    border-radius: 8px;
+}
+.dash-row:first-child {
+    border-top: none;
+}
+.dash-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+@media (max-width: 900px) {
+    .dash-attention-grid,
+    .dash-two-col {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Active dot show on active class */
 .admin-nav__item--active .active-dot {
     opacity: 1 !important;
