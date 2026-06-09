@@ -14,33 +14,19 @@ import {
     EmptyState,
 } from "../../../components/admin/list";
 import { useActionToast } from "../../../components/admin/useActionToast";
-
-const ORDER_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"];
-const ORDER_STATUS_LABELS: Record<string, string> = {
-    pending: "Очікує",
-    processing: "Обробляється",
-    shipped: "Відправлено",
-    delivered: "Доставлено",
-    cancelled: "Скасовано",
-};
-const ORDER_STATUS_COLORS: Record<string, string> = {
-    pending: "#f59e0b",
-    processing: "#3b82f6",
-    shipped: "#8b5cf6",
-    delivered: "#10b981",
-    cancelled: "#ef4444",
-};
-const PAYMENT_STATUSES = ["pending", "paid", "refunded"];
-const PAYMENT_LABELS: Record<string, string> = {
-    pending: "Очікує оплати",
-    paid: "Оплачено",
-    refunded: "Повернуто",
-};
-const PAYMENT_COLORS: Record<string, string> = {
-    pending: "#f59e0b",
-    paid: "#10b981",
-    refunded: "#ef4444",
-};
+import {
+    ORDER_STATUSES,
+    ORDER_STATUS_LABELS,
+    ORDER_STATUS_COLORS,
+    PAYMENT_STATUSES,
+    PAYMENT_LABELS,
+    PAYMENT_COLORS,
+    isOrderStatus,
+    isPaymentStatus,
+    canTransition,
+    allowedNext,
+} from "../../../utils/statuses";
+import { cancelOrder, writeOrderHistory } from "../../../services/order.server";
 
 const ORDER_LIST: ListSpec = {
     sortable: { createdAt: "createdAt", total: "total", orderNumber: "orderNumber" },
@@ -62,10 +48,40 @@ export async function action({ request }: Route.ActionArgs) {
     if (!id) return actionError("Не вказано замовлення");
 
     if (intent === "set_status") {
-        const status = String(formData.get("status") || "");
-        if (!ORDER_STATUSES.includes(status)) return actionError("Невірний статус");
+        const status = formData.get("status");
+        if (typeof status !== "string" || !isOrderStatus(status))
+            return actionError("Невірний статус");
         return runAction("orders.setStatus", async () => {
-            await prisma.order.update({ where: { id }, data: { status } });
+            const cur = await prisma.order.findUnique({ where: { id }, select: { status: true } });
+            if (!cur) return actionError("Замовлення не знайдено");
+            if (cur.status === status)
+                return actionOk(undefined, { type: "info", message: "Без змін" });
+            // Same lifecycle as the detail page (defence in depth).
+            if (!canTransition(cur.status, status)) {
+                const from =
+                    ORDER_STATUS_LABELS[cur.status as keyof typeof ORDER_STATUS_LABELS] ??
+                    cur.status;
+                return actionError(`Неможливий перехід: ${from} → ${ORDER_STATUS_LABELS[status]}`);
+            }
+            // Cancel goes through the shared path so stock is always returned.
+            if (status === "cancelled") {
+                await cancelOrder(id, cur.status, "Скасовано зі списку замовлень");
+                return actionOk(undefined, {
+                    type: "success",
+                    message: "Скасовано, залишок повернено",
+                });
+            }
+            await prisma.$transaction(async (tx) => {
+                await tx.order.update({ where: { id }, data: { status } });
+                await writeOrderHistory(
+                    tx,
+                    id,
+                    "status",
+                    cur.status,
+                    status,
+                    "Зміна статусу зі списку",
+                );
+            });
             return actionOk(undefined, {
                 type: "success",
                 message: `Статус: ${ORDER_STATUS_LABELS[status]}`,
@@ -74,10 +90,28 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     if (intent === "set_payment") {
-        const paymentStatus = String(formData.get("paymentStatus") || "");
-        if (!PAYMENT_STATUSES.includes(paymentStatus)) return actionError("Невірний статус оплати");
+        const paymentStatus = formData.get("paymentStatus");
+        if (typeof paymentStatus !== "string" || !isPaymentStatus(paymentStatus))
+            return actionError("Невірний статус оплати");
         return runAction("orders.setPayment", async () => {
-            await prisma.order.update({ where: { id }, data: { paymentStatus } });
+            const cur = await prisma.order.findUnique({
+                where: { id },
+                select: { paymentStatus: true },
+            });
+            if (!cur) return actionError("Замовлення не знайдено");
+            if (cur.paymentStatus === paymentStatus)
+                return actionOk(undefined, { type: "info", message: "Без змін" });
+            await prisma.$transaction(async (tx) => {
+                await tx.order.update({ where: { id }, data: { paymentStatus } });
+                await writeOrderHistory(
+                    tx,
+                    id,
+                    "paymentStatus",
+                    cur.paymentStatus,
+                    paymentStatus,
+                    "Зміна оплати зі списку",
+                );
+            });
             return actionOk(undefined, {
                 type: "success",
                 message: `Оплата: ${PAYMENT_LABELS[paymentStatus]}`,
@@ -297,11 +331,12 @@ export default function AdminOrdersList() {
                                                     )
                                                 }
                                                 style={pillSelectStyle(
-                                                    ORDER_STATUS_COLORS[order.orderStatus] ||
-                                                        "var(--text-secondary)",
+                                                    ORDER_STATUS_COLORS[
+                                                        order.orderStatus as keyof typeof ORDER_STATUS_COLORS
+                                                    ] || "var(--text-secondary)",
                                                 )}
                                             >
-                                                {ORDER_STATUSES.map((s) => (
+                                                {allowedNext(order.orderStatus).map((s) => (
                                                     <option
                                                         key={s}
                                                         value={s}
@@ -328,8 +363,9 @@ export default function AdminOrdersList() {
                                                     )
                                                 }
                                                 style={pillSelectStyle(
-                                                    PAYMENT_COLORS[order.paymentStatus] ||
-                                                        "var(--text-secondary)",
+                                                    PAYMENT_COLORS[
+                                                        order.paymentStatus as keyof typeof PAYMENT_COLORS
+                                                    ] || "var(--text-secondary)",
                                                 )}
                                             >
                                                 {PAYMENT_STATUSES.map((s) => (

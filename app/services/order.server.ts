@@ -17,6 +17,7 @@ import { randomBytes } from "node:crypto";
 import { prisma } from "../db.server";
 import {
     decrementForOrderTx,
+    restoreForCancelTx,
     InsufficientStockError,
     ProductUnavailableError,
 } from "./inventory.server";
@@ -357,4 +358,49 @@ export async function recordEmailStatus(orderId: string, status: "sent" | "faile
     } catch {
         // Non-critical: never let email bookkeeping break the request.
     }
+}
+
+/** Append an order status / payment transition to the audit trail (raw — new table). */
+export async function writeOrderHistory(
+    tx: Prisma.TransactionClient,
+    orderId: string,
+    field: "status" | "paymentStatus",
+    fromValue: string | null,
+    toValue: string,
+    note: string,
+): Promise<void> {
+    await tx.$executeRaw`
+        INSERT INTO "OrderStatusHistory"
+            (id, "orderId", field, "fromValue", "toValue", actor, note, "createdAt")
+        VALUES
+            (gen_random_uuid(), ${orderId}, ${field}, ${fromValue}, ${toValue}, 'admin',
+             ${note}, CURRENT_TIMESTAMP)`;
+}
+
+/**
+ * Cancel an order from the admin: restore every line's stock (+ an
+ * `order_cancelled` movement), set status=cancelled, and record history — all in
+ * one transaction. Shared by the order list and the order detail page so cancel
+ * always returns stock, wherever it's triggered.
+ */
+export async function cancelOrder(
+    orderId: string,
+    fromStatus: string,
+    note: string,
+): Promise<void> {
+    await prisma.$transaction(async (tx) => {
+        const items = await tx.orderItem.findMany({
+            where: { orderId },
+            select: { productId: true, quantity: true, size: true, color: true },
+        });
+        for (const it of items) {
+            await restoreForCancelTx(
+                tx,
+                { productId: it.productId, quantity: it.quantity, size: it.size, color: it.color },
+                { orderId, actor: "admin" },
+            );
+        }
+        await tx.order.update({ where: { id: orderId }, data: { status: "cancelled" } });
+        await writeOrderHistory(tx, orderId, "status", fromStatus, "cancelled", note);
+    });
 }

@@ -1,9 +1,20 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { redirect, useLoaderData, useActionData, useSubmit, useNavigate, Link } from "react-router";
-import { Prisma } from "@prisma/client";
 import { prisma } from "../../../db.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
 import { restoreForCancelTx } from "../../../services/inventory.server";
+import { cancelOrder, writeOrderHistory } from "../../../services/order.server";
+import {
+    ORDER_STATUS_LABELS,
+    ORDER_STATUS_COLORS,
+    PAYMENT_STATUSES,
+    PAYMENT_LABELS,
+    PAYMENT_COLORS,
+    isOrderStatus,
+    isPaymentStatus,
+    canTransition,
+    allowedNext,
+} from "../../../utils/statuses";
 import { useState } from "react";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -73,14 +84,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
         if (intent === "update_status") {
             const status = formData.get("status") as string;
-            // Whitelist — never write an arbitrary string the storefront/admin
-            // badge maps don't know about.
-            if (!Object.prototype.hasOwnProperty.call(statusLabels, status)) {
+            // Whitelist against the single source of truth.
+            if (!isOrderStatus(status)) {
                 return { error: "Невідомий статус замовлення" };
             }
             const cur = await prisma.order.findUnique({ where: { id }, select: { status: true } });
             if (!cur) return { error: "Замовлення не знайдено" };
             if (cur.status === status) return { success: true };
+            // Enforce the lifecycle: reject illegal jumps (e.g. delivered → pending).
+            if (!canTransition(cur.status, status)) {
+                const from =
+                    ORDER_STATUS_LABELS[cur.status as keyof typeof ORDER_STATUS_LABELS] ??
+                    cur.status;
+                return {
+                    error: `Неможливий перехід статусу: ${from} → ${ORDER_STATUS_LABELS[status]}`,
+                };
+            }
             // Moving to "cancelled" restores stock (same path as the Cancel button)
             // so selecting it from the dropdown can't silently lose inventory.
             if (status === "cancelled") {
@@ -89,14 +108,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
             }
             await prisma.$transaction(async (tx) => {
                 await tx.order.update({ where: { id }, data: { status } });
-                await writeHistory(tx, id, "status", cur.status, status, "Зміна статусу");
+                await writeOrderHistory(tx, id, "status", cur.status, status, "Зміна статусу");
             });
             return { success: true };
         }
 
         if (intent === "update_payment") {
             const paymentStatus = formData.get("paymentStatus") as string;
-            if (!Object.prototype.hasOwnProperty.call(paymentLabels, paymentStatus)) {
+            if (!isPaymentStatus(paymentStatus)) {
                 return { error: "Невідомий статус оплати" };
             }
             const cur = await prisma.order.findUnique({
@@ -107,7 +126,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
             if (cur.paymentStatus === paymentStatus) return { success: true };
             await prisma.$transaction(async (tx) => {
                 await tx.order.update({ where: { id }, data: { paymentStatus } });
-                await writeHistory(
+                await writeOrderHistory(
                     tx,
                     id,
                     "paymentStatus",
@@ -174,56 +193,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
 }
 
-/** Append a status/payment transition to the audit trail (raw — new table). */
-async function writeHistory(
-    tx: Prisma.TransactionClient,
-    orderId: string,
-    field: "status" | "paymentStatus",
-    fromValue: string | null,
-    toValue: string,
-    note: string,
-): Promise<void> {
-    await tx.$executeRaw`
-        INSERT INTO "OrderStatusHistory"
-            (id, "orderId", field, "fromValue", "toValue", actor, note, "createdAt")
-        VALUES
-            (gen_random_uuid(), ${orderId}, ${field}, ${fromValue}, ${toValue}, 'admin',
-             ${note}, CURRENT_TIMESTAMP)`;
-}
-
-/** Cancel an order: restore every line's stock (+movement) and record history. */
-async function cancelOrder(orderId: string, fromStatus: string, note: string): Promise<void> {
-    await prisma.$transaction(async (tx) => {
-        const items = await tx.orderItem.findMany({
-            where: { orderId },
-            select: { productId: true, quantity: true, size: true, color: true },
-        });
-        for (const it of items) {
-            await restoreForCancelTx(
-                tx,
-                { productId: it.productId, quantity: it.quantity, size: it.size, color: it.color },
-                { orderId, actor: "admin" },
-            );
-        }
-        await tx.order.update({ where: { id: orderId }, data: { status: "cancelled" } });
-        await writeHistory(tx, orderId, "status", fromStatus, "cancelled", note);
-    });
-}
-
-const statusLabels: Record<string, { text: string; color: string }> = {
-    pending: { text: "Очікує", color: "#f59e0b" },
-    processing: { text: "Обробляється", color: "#3b82f6" },
-    shipped: { text: "Відправлено", color: "#8b5cf6" },
-    delivered: { text: "Доставлено", color: "#10b981" },
-    cancelled: { text: "Скасовано", color: "#ef4444" },
-};
-
-const paymentLabels: Record<string, { text: string; color: string }> = {
-    pending: { text: "Очікує оплати", color: "#f59e0b" },
-    paid: { text: "Оплачено", color: "#10b981" },
-    refunded: { text: "Повернуто", color: "#ef4444" },
-};
-
 export default function AdminOrderDetails() {
     const { order, emailStatus, history } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>();
@@ -266,8 +235,16 @@ export default function AdminOrderDetails() {
     }, 0);
 
     const deliveryFee = 0; // Delivery is at carrier rates
-    const statusInfo = statusLabels[order.status] || statusLabels.pending;
-    const paymentInfo = paymentLabels[order.paymentStatus] || paymentLabels.pending;
+    const statusInfo = {
+        text: ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS] ?? order.status,
+        color: ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS] ?? "#6b7280",
+    };
+    const paymentInfo = {
+        text:
+            PAYMENT_LABELS[order.paymentStatus as keyof typeof PAYMENT_LABELS] ??
+            order.paymentStatus,
+        color: PAYMENT_COLORS[order.paymentStatus as keyof typeof PAYMENT_COLORS] ?? "#6b7280",
+    };
 
     return (
         <div
@@ -548,11 +525,13 @@ export default function AdminOrderDetails() {
                         onChange={handleStatusChange}
                         className="status-select"
                     >
-                        <option value="pending">🕐 Очікує</option>
-                        <option value="processing">⚙️ Обробляється</option>
-                        <option value="shipped">📦 Відправлено</option>
-                        <option value="delivered">✅ Доставлено</option>
-                        <option value="cancelled">❌ Скасовано</option>
+                        {/* Only the current status + its legal next states — the
+                            action also enforces this (defence in depth). */}
+                        {allowedNext(order.status).map((s) => (
+                            <option key={s} value={s}>
+                                {ORDER_STATUS_LABELS[s]}
+                            </option>
+                        ))}
                     </select>
                     {order.status !== "cancelled" && (
                         <button
@@ -777,9 +756,11 @@ export default function AdminOrderDetails() {
                                 className="status-select"
                                 style={{ width: "100%" }}
                             >
-                                <option value="pending">🕐 Очікує оплати</option>
-                                <option value="paid">✅ Оплачено</option>
-                                <option value="refunded">↩️ Повернуто</option>
+                                {PAYMENT_STATUSES.map((s) => (
+                                    <option key={s} value={s}>
+                                        {PAYMENT_LABELS[s]}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>

@@ -31,6 +31,41 @@ crash/retry storms.
 
 **Recommendation:** A once the client is regenerated; B if it must ship before that.
 
+### Use the readable slug as the canonical product URL (kill the UUID "code" in URLs)
+
+**Problem (reported):** product URLs on the site are `/product/<uuid>` — a long
+hex "code" — everywhere customers see them. Slugs already exist and transliterate
+Cyrillic→Latin correctly (`app/utils/slugify.ts`: "Лонгслів CALM" → `lonhsliv-calm`,
+auto-generated on save via `ensureUniqueSlug`), but the slug is used **only** as a
+301 entry point: `/p/<slug>` → 301 → `/product/<uuid>`. So the pretty URL never sticks.
+
+**Current state (code):**
+
+- Links use `/product/<id>`: `components/ProductCard.tsx` (×2), `product.$id.tsx`
+  related cards + `canonical`, `wishlist.tsx`, `components/Header.tsx`,
+  `shop.$category(.$subcategory).tsx` JSON-LD.
+- `p.$slug.tsx` redirects slug → `/product/<id>` (the wrong direction for pretty URLs).
+- `sitemap` already prefers `/p/<slug>`.
+
+**Recommended approach (Option A):**
+
+1. Serve the PDP at `/p/<slug>` (move/share the `product.$id.tsx` loader+component);
+   make `/product/<id>` a 301 → `/p/<slug>` (reverse of today) for back-compat with
+   existing UUID links/bookmarks.
+2. Set `canonical` + OG/JSON-LD `url` to `/p/<slug>`.
+3. Update link sources to `/p/<slug>` — requires threading `slug` into every product
+   **card** payload (shop/home/search/related/wishlist/header loaders).
+
+**Caveats / why it's its own increment (not bolted onto P0/state-machine):**
+
+- Wishlist & cart persist products in **localStorage by id** — slug must be added to
+  the stored shape or resolved on render, or links fall back to `/product/<id>` (the
+  301 covers it, but for an instant pretty URL the slug should be in the card data).
+- Touches many loaders + components → needs its own verification pass (Playwright:
+  card → pretty URL, old UUID link → 301, canonical correct, wishlist link works).
+
+Priority **P2** (SEO/UX, customer-visible, not revenue/data-blocking).
+
 ## Done
 
 ### Normalize empty email string to undefined before checkout validation — DONE (stage1)

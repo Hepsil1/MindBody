@@ -336,6 +336,43 @@ async function main() {
             Boolean(stillExists),
             `deleteStatus=${delRes.status}`,
         );
+
+        // ---- Scenario F: order status state-machine ----
+        console.log("F. Order status state-machine (legal vs illegal transitions)");
+        const fKey = `flow-${Date.now()}`;
+        await postOrder(
+            {
+                productId: active.id,
+                name: active.name,
+                price: 1000,
+                qty: 1,
+                size: "M",
+                color: "black",
+                total: 1000,
+            },
+            { idempotencyKey: fKey },
+        );
+        const fId = await orderIdByKey(fKey);
+        await adminPost(
+            `/admin/orders/${fId}`,
+            { intent: "update_status", status: "delivered" },
+            cookie,
+        );
+        let st = (await prisma.order.findUnique({ where: { id: fId }, select: { status: true } }))
+            ?.status;
+        ok("illegal jump pending->delivered rejected", st === "pending", `status=${st}`);
+        await adminPost(
+            `/admin/orders/${fId}`,
+            { intent: "update_status", status: "confirmed" },
+            cookie,
+        );
+        st = (await prisma.order.findUnique({ where: { id: fId }, select: { status: true } }))
+            ?.status;
+        ok("legal transition pending->confirmed applied", st === "confirmed", `status=${st}`);
+        const histN = (
+            await prisma.$queryRaw`SELECT count(*)::int AS n FROM "OrderStatusHistory" WHERE "orderId" = ${fId} AND "toValue" = 'confirmed'`
+        )[0].n;
+        ok("status-history row written for the transition", histN >= 1, `history=${histN}`);
     }
 
     // Cleanup fixtures + their orders/movements
