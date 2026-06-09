@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { buildFilterCategories } from "./categoryMap";
 
 export interface PriceRange {
@@ -75,4 +76,50 @@ export function parseAndMergeFilterConfig(
         sizes: parsedConfig.sizes || DEFAULT_FILTER_CONFIG.sizes,
         priceRanges: parsedConfig.priceRanges || DEFAULT_FILTER_CONFIG.priceRanges,
     };
+}
+
+// Write-time validation for the admin filter editor. The READ path
+// (parseAndMergeFilterConfig) is intentionally lenient (falls back to defaults on
+// bad data), which meant the editor could silently persist malformed JSON and the
+// operator would believe it saved. This is the strict gate used before upsert.
+const PriceRangeSchema = z
+    .object({
+        id: z.string().min(1),
+        label: z.string().min(1),
+        min: z.number().min(0),
+        max: z.number().min(0),
+    })
+    .refine((r) => r.min <= r.max, {
+        message: "мін. ціна не може бути більшою за макс.",
+    });
+
+const FilterConfigSchema = z.object({
+    categories: z.record(z.string(), z.string()),
+    colors: z.record(z.string(), z.string()),
+    sizes: z.array(z.string()),
+    priceRanges: z.array(PriceRangeSchema),
+});
+
+export type ValidatedFilterConfig =
+    | { ok: true; value: MergedFilterConfig }
+    | { ok: false; error: string };
+
+/** Parse + schema-validate a filter config JSON string before it is persisted. */
+export function validateFilterConfig(raw: string | null | undefined): ValidatedFilterConfig {
+    if (!raw || !raw.trim()) {
+        return { ok: false, error: "Порожній конфіг фільтрів." };
+    }
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(raw);
+    } catch {
+        return { ok: false, error: "Конфіг фільтрів — некоректний JSON." };
+    }
+    const result = FilterConfigSchema.safeParse(parsed);
+    if (!result.success) {
+        const first = result.error.issues[0];
+        const path = first?.path?.join(".") || "config";
+        return { ok: false, error: `Некоректний конфіг фільтрів (${path}: ${first?.message}).` };
+    }
+    return { ok: true, value: result.data as MergedFilterConfig };
 }

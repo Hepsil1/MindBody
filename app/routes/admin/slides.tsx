@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useLoaderData, useFetcher, Link, useSearchParams } from "react-router";
 import HeroSlider, { type SlideData } from "../../components/HeroSlider";
 import CategoryCard from "../../components/CategoryCard";
-import { parseAndMergeFilterConfig } from "../../utils/filters";
+import { parseAndMergeFilterConfig, validateFilterConfig } from "../../utils/filters";
 import { TrashIcon, ChevronDown, CloseIcon } from "../../components/admin/AdminIcons";
 import { ImageCropSelector } from "../../components/admin/ImageCropSelector";
 import { FilterEditorModal } from "../../components/admin/FilterEditorModal";
@@ -18,6 +18,10 @@ export function links() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+    // Defense-in-depth: the _layout loader already redirects unauthenticated
+    // requests, but guard here too (consistency with orders/$id, customers/$id).
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     try {
         // Run all queries in parallel for speed
         const [allSlides, categories, shopPages, filterConfigs] = await Promise.all([
@@ -114,6 +118,10 @@ export async function action({ request }: Route.ActionArgs) {
             image2 = await resolveImage(image2File, image2);
             image3 = await resolveImage(image3File, image3);
 
+            if (type === "triptych" && (!image2 || !image3)) {
+                return { error: "Триптих потребує 3 зображення (додайте фото 2 і 3)." };
+            }
+
             const slideData = {
                 name,
                 type,
@@ -183,6 +191,17 @@ export async function action({ request }: Route.ActionArgs) {
         if (intent === "update_filters") {
             const config = formData.get("config") as string;
             const pageSlug = (formData.get("pageSlug") as string) || "global";
+            // Only "global" or a real shop slug may hold a filter config — never a
+            // phantom row (the storefront merges per-slug configs).
+            if (pageSlug !== "global" && !SHOP_SLUGS.includes(pageSlug)) {
+                return { error: `Невідома сторінка "${pageSlug}".` };
+            }
+            // Reject malformed/invalid JSON before it silently rots in the DB
+            // (the read path falls back to defaults, hiding the corruption).
+            const valid = validateFilterConfig(config);
+            if (!valid.ok) {
+                return { error: valid.error };
+            }
             try {
                 await prisma.filterConfig.upsert({
                     where: { id: pageSlug },
@@ -219,6 +238,10 @@ export async function action({ request }: Route.ActionArgs) {
             image1 = await resolveImage(image1File, image1);
             image2 = await resolveImage(image2File, image2);
             image3 = await resolveImage(image3File, image3);
+
+            if (type === "triptych" && (!image2 || !image3)) {
+                return { error: "Триптих потребує 3 зображення." };
+            }
 
             const maxOrder = await prisma.slide.aggregate({ _max: { order: true } });
             const newOrder = (maxOrder._max.order ?? 0) + 1;
@@ -261,6 +284,10 @@ export async function action({ request }: Route.ActionArgs) {
             image1 = await resolveImage(image1File, image1);
             image2 = await resolveImage(image2File, image2);
             image3 = await resolveImage(image3File, image3);
+
+            if (type === "triptych" && (!image2 || !image3)) {
+                return { error: "Триптих потребує 3 зображення." };
+            }
 
             await prisma.slide.update({
                 where: { id },
