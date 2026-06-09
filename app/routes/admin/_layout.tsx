@@ -403,9 +403,9 @@ export default function AdminLayout() {
 }
 
 // Catch loader/render errors from any admin child route here (the dashboard
-// aggregates and the list loaders all hit raw $queryRawUnsafe against prod, so
-// a throw is realistic). Without this they bubble to the root boundary and the
-// whole admin chrome vanishes; here the operator gets a clear message + a way back.
+// aggregates and the list loaders all hit the DB, so a throw is realistic).
+// Without this they bubble to the root boundary and the whole admin chrome
+// vanishes; here the operator gets a clear message + a way back.
 export function ErrorBoundary() {
     const error = useRouteError();
     const is404 = isRouteErrorResponse(error) && error.status === 404;
