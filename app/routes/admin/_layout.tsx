@@ -1,11 +1,4 @@
-import {
-    NavLink,
-    Outlet,
-    Link,
-    redirect,
-    isRouteErrorResponse,
-    useRouteError,
-} from "react-router";
+import { NavLink, Outlet, Link, redirect, isRouteErrorResponse, useRouteError } from "react-router";
 import { useState, useEffect } from "react";
 import adminCss from "../../styles/admin.css?url";
 import appCss from "../../app.css?url";
@@ -149,6 +142,25 @@ const navItems = [
     },
     // { to: "/admin/slides", icon: <Icons.Slides />, label: "Слайди" }, // Removed as requested
     { to: "/admin/products", icon: <Icons.Products />, label: "Товари" },
+    {
+        to: "/admin/categories",
+        icon: (
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                width="20"
+                height="20"
+            >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+        ),
+        label: "Категорії",
+    },
     { to: "/admin/customers", icon: <Icons.Customers />, label: "Клієнти" },
     {
         to: "/admin/promo",
@@ -229,7 +241,11 @@ export default function AdminLayout() {
             </div>
             {/* Scrim to dismiss the drawer by tapping outside it. */}
             {menuOpen && (
-                <div className="admin-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+                <div
+                    className="admin-scrim"
+                    onClick={() => setMenuOpen(false)}
+                    aria-hidden="true"
+                />
             )}
 
             {/* Sidebar */}
