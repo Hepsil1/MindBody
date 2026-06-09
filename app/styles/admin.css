@@ -645,6 +645,62 @@ body {
     }
 }
 
+/* Admin → "Категорії головної" list. The row is image + meta + an action
+   cluster (↑ ↓ Edit Delete). On phones the cluster reflows onto its own
+   full-width line under the meta instead of overflowing the card, and the
+   buttons grow to comfortable ≥44px tap targets. */
+.cat-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+.cat-admin-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.cat-admin-body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.cat-admin-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+}
+.cat-admin-act-btn,
+.cat-admin-move {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+@media (max-width: 640px) {
+    .cat-admin-header {
+        flex-wrap: wrap;
+    }
+    .cat-admin-header > button {
+        width: 100%;
+    }
+    /* Push the whole action cluster to a new full-width row. */
+    .cat-admin-actions {
+        flex-basis: 100%;
+        gap: 8px;
+    }
+    .cat-admin-act-btn {
+        flex: 1 1 auto;
+        min-height: 44px;
+    }
+    .cat-admin-move {
+        flex: 0 0 44px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
 /* Active dot show on active class */
 .admin-nav__item--active .active-dot {
     opacity: 1 !important;

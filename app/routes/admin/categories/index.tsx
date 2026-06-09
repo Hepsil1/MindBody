@@ -1,6 +1,6 @@
 import { useLoaderData, useFetcher } from "react-router";
 import type { Route } from "./+types/index";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { prisma } from "../../../db.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
 import { actionOk, actionError, runAction } from "../../../utils/action-result.server";
@@ -255,10 +255,21 @@ export default function AdminCategories() {
     const [editId, setEditId] = useState<string | null>(null);
     const [confirmDel, setConfirmDel] = useState<{ id: string; title: string } | null>(null);
     const busy = fetcher.state !== "idle";
+    // Only the create/edit forms ask to auto-close on success — a reorder or
+    // delete must NOT collapse an edit form the operator has open elsewhere.
+    const closeFormsOnSuccess = useRef(false);
 
-    // Close forms once a mutation succeeds.
+    // Canonical React Router "close on successful submit" effect: when the
+    // create/edit fetcher settles with { ok: true }, dismiss the open form.
     useEffect(() => {
-        if (fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
+        if (
+            closeFormsOnSuccess.current &&
+            fetcher.state === "idle" &&
+            fetcher.data &&
+            "ok" in fetcher.data &&
+            fetcher.data.ok
+        ) {
+            closeFormsOnSuccess.current = false;
             setShowCreate(false);
             setEditId(null);
         }
@@ -269,10 +280,7 @@ export default function AdminCategories() {
 
     return (
         <>
-            <div
-                className="admin-page-header"
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-            >
+            <div className="admin-page-header cat-admin-header">
                 <div>
                     <h1>Категорії головної</h1>
                     <p>Картки колекцій на головній сторінці</p>
@@ -298,6 +306,9 @@ export default function AdminCategories() {
                     encType="multipart/form-data"
                     className="admin-card"
                     style={{ padding: "24px", marginBottom: "24px" }}
+                    onSubmit={() => {
+                        closeFormsOnSuccess.current = true;
+                    }}
                 >
                     <input type="hidden" name="intent" value="create" />
                     <h3 style={{ margin: "0 0 16px", color: "var(--text-main)" }}>
@@ -327,7 +338,7 @@ export default function AdminCategories() {
                 <div style={{ display: "grid", gap: "16px" }}>
                     {categories.map((c, i) => (
                         <div key={c.id} className="admin-card" style={{ padding: "16px 20px" }}>
-                            <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+                            <div className="cat-admin-row">
                                 <img
                                     src={c.image || "/brand-sun.png"}
                                     alt=""
@@ -341,7 +352,7 @@ export default function AdminCategories() {
                                         background: "rgba(255,255,255,0.05)",
                                     }}
                                 />
-                                <div style={{ flex: 1, minWidth: 0 }}>
+                                <div className="cat-admin-body">
                                     <div style={{ color: "var(--text-main)", fontWeight: 600 }}>
                                         {c.title}
                                         {c.moodType && (
@@ -364,10 +375,12 @@ export default function AdminCategories() {
                                         {c.link}
                                     </div>
                                 </div>
-                                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                                <div className="cat-admin-actions">
                                     <button
                                         type="button"
+                                        className="cat-admin-move"
                                         title="Вгору"
+                                        aria-label={`Перемістити «${c.title}» вгору`}
                                         disabled={i === 0 || busy}
                                         onClick={() => reorder(c.id, "up")}
                                         style={btn("rgba(255,255,255,0.06)", "var(--text-main)")}
@@ -376,7 +389,9 @@ export default function AdminCategories() {
                                     </button>
                                     <button
                                         type="button"
+                                        className="cat-admin-move"
                                         title="Вниз"
+                                        aria-label={`Перемістити «${c.title}» вниз`}
                                         disabled={i === categories.length - 1 || busy}
                                         onClick={() => reorder(c.id, "down")}
                                         style={btn("rgba(255,255,255,0.06)", "var(--text-main)")}
@@ -385,6 +400,7 @@ export default function AdminCategories() {
                                     </button>
                                     <button
                                         type="button"
+                                        className="cat-admin-act-btn"
                                         onClick={() => {
                                             setEditId(editId === c.id ? null : c.id);
                                             setShowCreate(false);
@@ -395,6 +411,7 @@ export default function AdminCategories() {
                                     </button>
                                     <button
                                         type="button"
+                                        className="cat-admin-act-btn"
                                         onClick={() => setConfirmDel({ id: c.id, title: c.title })}
                                         style={btn("rgba(239,68,68,0.12)", "#ef4444")}
                                     >
@@ -411,6 +428,9 @@ export default function AdminCategories() {
                                         marginTop: "16px",
                                         paddingTop: "16px",
                                         borderTop: "1px solid var(--border-subtle)",
+                                    }}
+                                    onSubmit={() => {
+                                        closeFormsOnSuccess.current = true;
                                     }}
                                 >
                                     <input type="hidden" name="intent" value="update" />
