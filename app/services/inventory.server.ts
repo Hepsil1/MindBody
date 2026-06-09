@@ -6,10 +6,9 @@
 //   2. re-validates product status + availability under the lock,
 //   3. writes an append-only InventoryMovement row (who/when/why/before/after).
 //
-// The new InventoryMovement table is written via raw SQL on purpose: PM2 holds
-// the Prisma query-engine DLL in prod, so `prisma generate` can't run and the
-// generated client has no `inventoryMovement` model. Raw SQL is the established
-// project workaround (same as Product.fabric/sleeve).
+// The only raw SQL here is the `SELECT … FOR UPDATE` row-lock in lockProduct —
+// Prisma has no row-locking API, and the lock is what closes the oversell race.
+// Everything else (incl. the InventoryMovement write) uses the typed client.
 
 import type { Prisma } from "@prisma/client";
 import type { InventoryVariant } from "../types/product";
@@ -92,12 +91,18 @@ async function writeMovement(
         ctx: MovementCtx;
     },
 ): Promise<void> {
-    await tx.$executeRaw`
-        INSERT INTO "InventoryMovement"
-            (id, "productId", "variantKey", delta, before, after, reason, actor, "orderId", "createdAt")
-        VALUES
-            (gen_random_uuid(), ${m.productId}, ${m.variantKey}, ${m.delta}, ${m.before},
-             ${m.after}, ${m.reason}, ${m.ctx.actor}, ${m.ctx.orderId}, CURRENT_TIMESTAMP)`;
+    await tx.inventoryMovement.create({
+        data: {
+            productId: m.productId,
+            variantKey: m.variantKey,
+            delta: m.delta,
+            before: m.before,
+            after: m.after,
+            reason: m.reason,
+            actor: m.ctx.actor,
+            orderId: m.ctx.orderId,
+        },
+    });
 }
 
 function parseInventory(raw: string | null): InventoryVariant[] {

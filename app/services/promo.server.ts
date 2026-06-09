@@ -66,5 +66,8 @@ export async function incrementPromoUsageTx(
     tx: Prisma.TransactionClient,
     code: string,
 ): Promise<void> {
-    await tx.$executeRaw`UPDATE "PromoCode" SET "usedCount" = "usedCount" + 1 WHERE code = ${code.trim().toUpperCase()}`;
+    await tx.promoCode.update({
+        where: { code: code.trim().toUpperCase() },
+        data: { usedCount: { increment: 1 } },
+    });
 }

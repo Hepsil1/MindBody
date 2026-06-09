@@ -9,8 +9,9 @@
 // The server never trusts the client for price, total, product status, or
 // stock — all are recomputed/locked here.
 //
-// New Order columns + new tables are written via raw SQL because the Prisma
-// client can't be regenerated while PM2 holds the engine DLL (project gotcha).
+// All Order columns and audit tables go through the typed Prisma client. The
+// only raw SQL left in the order/stock path is the FOR UPDATE row-lock in
+// inventory.server.ts (Prisma has no row-locking API).
 
 import { Prisma } from "@prisma/client";
 import { randomBytes } from "node:crypto";
@@ -98,11 +99,11 @@ interface ExistingOrder {
 }
 
 async function findOrderByKey(key: string): Promise<ExistingOrder | null> {
-    const rows = await prisma.$queryRaw<
-        { id: string; orderNumber: number; total: Prisma.Decimal }[]
-    >`SELECT id, "orderNumber", total FROM "Order" WHERE "idempotencyKey" = ${key} LIMIT 1`;
-    if (!rows.length) return null;
-    const r = rows[0];
+    const r = await prisma.order.findUnique({
+        where: { idempotencyKey: key },
+        select: { id: true, orderNumber: true, total: true },
+    });
+    if (!r) return null;
     return { id: r.id, orderNumber: Number(r.orderNumber), finalTotal: Number(r.total) };
 }
 
@@ -119,7 +120,8 @@ function isOrderNumberConflict(e: unknown): boolean {
 
 function isIdempotencyConflict(e: unknown): boolean {
     if (!(e instanceof Prisma.PrismaClientKnownRequestError)) return false;
-    // Raw $executeRaw unique violation → P2010 + PG 23505; typed → P2002.
+    // Typed create → P2002 on the idempotencyKey unique index. (P2010 kept for
+    // safety in case a raw path elsewhere surfaces the same PG 23505.)
     const s = metaString(e);
     if (e.code === "P2002" || e.code === "P2010")
         return s.includes("idempotencyKey") || s.includes("Order_idempotencyKey_key");
@@ -219,15 +221,16 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
             const result = await prisma.$transaction(async (tx) => {
                 // Re-check inside the tx (near-concurrent first request).
                 if (idempotencyKey) {
-                    const dup = await tx.$queryRaw<
-                        { id: string; orderNumber: number; total: Prisma.Decimal }[]
-                    >`SELECT id, "orderNumber", total FROM "Order" WHERE "idempotencyKey" = ${idempotencyKey} LIMIT 1`;
-                    if (dup.length) {
+                    const dup = await tx.order.findUnique({
+                        where: { idempotencyKey },
+                        select: { id: true, orderNumber: true, total: true },
+                    });
+                    if (dup) {
                         return {
                             deduped: true as const,
-                            id: dup[0].id,
-                            orderNumber: Number(dup[0].orderNumber),
-                            finalTotal: Number(dup[0].total),
+                            id: dup.id,
+                            orderNumber: Number(dup.orderNumber),
+                            finalTotal: Number(dup.total),
                         };
                     }
                 }
@@ -243,6 +246,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                     },
                 });
 
+                // idempotencyKey is @unique → a truly concurrent duplicate fails
+                // at INSERT here (P2002) and is caught + deduped below.
                 const created = await tx.order.create({
                     data: {
                         orderNumber,
@@ -250,6 +255,9 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                         status: "pending",
                         paymentStatus: "pending",
                         total: finalTotal,
+                        idempotencyKey,
+                        appliedPromoCode,
+                        discountAmount,
                         items: {
                             create: validItems.map((i) => ({
                                 productId: i.id,
@@ -263,15 +271,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                     select: { id: true },
                 });
 
-                // New columns (raw). The idempotencyKey unique index makes a truly
-                // concurrent duplicate fail here → caught and deduped below.
-                await tx.$executeRaw`
-                    UPDATE "Order"
-                    SET "idempotencyKey" = ${idempotencyKey},
-                        "appliedPromoCode" = ${appliedPromoCode},
-                        "discountAmount" = ${discountAmount}
-                    WHERE id = ${created.id}`;
-
                 // Stock decrement + movement, under FOR UPDATE — throws on oversell.
                 for (const i of validItems) {
                     await decrementForOrderTx(tx, i, { orderId: created.id, actor: "customer" });
@@ -279,12 +278,16 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
                 if (appliedPromoCode) await incrementPromoUsageTx(tx, appliedPromoCode);
 
-                await tx.$executeRaw`
-                    INSERT INTO "OrderStatusHistory"
-                        (id, "orderId", field, "fromValue", "toValue", actor, note, "createdAt")
-                    VALUES
-                        (gen_random_uuid(), ${created.id}, 'status', NULL, 'pending', 'system',
-                         'Замовлення створено', CURRENT_TIMESTAMP)`;
+                await tx.orderStatusHistory.create({
+                    data: {
+                        orderId: created.id,
+                        field: "status",
+                        fromValue: null,
+                        toValue: "pending",
+                        actor: "system",
+                        note: "Замовлення створено",
+                    },
+                });
 
                 return {
                     deduped: false as const,
@@ -351,16 +354,16 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     };
 }
 
-/** Mark the confirmation-email outcome on an order (best-effort, raw column). */
+/** Mark the confirmation-email outcome on an order (best-effort). */
 export async function recordEmailStatus(orderId: string, status: "sent" | "failed"): Promise<void> {
     try {
-        await prisma.$executeRaw`UPDATE "Order" SET "emailStatus" = ${status} WHERE id = ${orderId}`;
+        await prisma.order.update({ where: { id: orderId }, data: { emailStatus: status } });
     } catch {
         // Non-critical: never let email bookkeeping break the request.
     }
 }
 
-/** Append an order status / payment transition to the audit trail (raw — new table). */
+/** Append an order status / payment transition to the audit trail. */
 export async function writeOrderHistory(
     tx: Prisma.TransactionClient,
     orderId: string,
@@ -369,12 +372,9 @@ export async function writeOrderHistory(
     toValue: string,
     note: string,
 ): Promise<void> {
-    await tx.$executeRaw`
-        INSERT INTO "OrderStatusHistory"
-            (id, "orderId", field, "fromValue", "toValue", actor, note, "createdAt")
-        VALUES
-            (gen_random_uuid(), ${orderId}, ${field}, ${fromValue}, ${toValue}, 'admin',
-             ${note}, CURRENT_TIMESTAMP)`;
+    await tx.orderStatusHistory.create({
+        data: { orderId, field, fromValue, toValue, actor: "admin", note },
+    });
 }
 
 /**
