@@ -10,6 +10,7 @@ const SITE_URL = "https://saleid.icu";
 // Shape of one row returned by the raw SELECT below.
 interface SearchProductRow {
     id: string;
+    slug: string | null;
     name: string;
     price: number | string;
     comparePrice: number | string | null;
@@ -55,7 +56,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     try {
         const term = `%${q.replace(/[%_]/g, "")}%`;
         const products = await prisma.$queryRaw<SearchProductRow[]>`
-            SELECT id, name, price, "comparePrice", category, images, "shopPageSlug", inventory, status, "createdAt"
+            SELECT id, slug, name, price, "comparePrice", category, images, "shopPageSlug", inventory, status, "createdAt"
             FROM "Product"
             WHERE status = 'active'
             AND (
@@ -94,6 +95,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
             return {
                 id: p.id,
+                slug: p.slug ?? undefined,
                 name: p.name,
                 category: p.category ?? undefined,
                 price: isSale ? comparePrice : price,

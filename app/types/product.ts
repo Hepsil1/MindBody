@@ -31,6 +31,7 @@ export interface ReviewData {
  */
 export interface RelatedProductCard {
     id: string;
+    slug: string | null;
     name: string;
     price: number;
     image: string;

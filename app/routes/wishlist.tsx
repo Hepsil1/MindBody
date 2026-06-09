@@ -4,12 +4,15 @@ import { StorageUtils, type WishlistItem } from "../utils/storage";
 import { useToast } from "../components/Toast";
 import { pluralizeUA } from "../utils/plural";
 import { slugToLabel } from "../utils/categoryMap";
+import { useProductSlugs, productHref } from "../utils/useProductSlugs";
 import "../styles/wishlist.css";
 
 export default function Wishlist() {
     const { showToast } = useToast();
     const [items, setItems] = useState<WishlistItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    // Build /p/<slug> links from the live DB slug (wishlist stores only the id).
+    const slugs = useProductSlugs(items.map((i) => String(i.id)));
 
     useEffect(() => {
         const updateItems = () => {
@@ -206,7 +209,12 @@ export default function Wishlist() {
                                     {items.map((item) => (
                                         <div key={item.id} className="wishlist-card">
                                             <div className="wishlist-card__image">
-                                                <Link to={`/product/${item.id}`}>
+                                                <Link
+                                                    to={productHref(
+                                                        item.id,
+                                                        slugs[String(item.id)],
+                                                    )}
+                                                >
                                                     <img src={item.image} alt={item.name} />
                                                 </Link>
                                                 <button
@@ -252,7 +260,10 @@ export default function Wishlist() {
                                                     </span>
                                                 )}
                                                 <Link
-                                                    to={`/product/${item.id}`}
+                                                    to={productHref(
+                                                        item.id,
+                                                        slugs[String(item.id)],
+                                                    )}
                                                     className="wishlist-card__name"
                                                 >
                                                     {item.name}
@@ -292,8 +303,13 @@ export default function Wishlist() {
                                             </span>
                                             <span className="wishlist-action-btn__subtitle">
                                                 {items.length}{" "}
-                                                {pluralizeUA(items.length, "товар", "товари", "товарів")} •{" "}
-                                                {totalValue.toLocaleString()} ₴
+                                                {pluralizeUA(
+                                                    items.length,
+                                                    "товар",
+                                                    "товари",
+                                                    "товарів",
+                                                )}{" "}
+                                                • {totalValue.toLocaleString()} ₴
                                             </span>
                                         </div>
                                     </button>

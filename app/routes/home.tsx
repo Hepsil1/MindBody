@@ -45,6 +45,7 @@ interface HomeCategoryCard {
 // New-products card on the home page.
 interface HomeProductCard {
     id: string;
+    slug?: string | null;
     name: string;
     // Matches ProductCard's `string | undefined` API (null is not accepted).
     category: string | undefined;
@@ -218,6 +219,7 @@ export async function loader({ request }: Route.LoaderArgs) {
                     take: 12,
                     select: {
                         id: true,
+                        slug: true,
                         name: true,
                         price: true,
                         comparePrice: true,
@@ -249,6 +251,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
             return {
                 id: p.id,
+                slug: p.slug ?? undefined,
                 name: p.name,
                 category: p.category ?? p.shopPageSlug ?? undefined,
                 price: isSale ? comparePrice : price, // comparePrice is the "original" price
@@ -840,7 +843,8 @@ export default function Home() {
                         <div className="new-arrivals-header__text">
                             <span className="new-arrivals-badge">
                                 <span className="new-arrivals-badge__dot" />
-                                Новинки <span suppressHydrationWarning>{new Date().getFullYear()}</span>
+                                Новинки{" "}
+                                <span suppressHydrationWarning>{new Date().getFullYear()}</span>
                             </span>
                             <h2 className="section__title">Нові надходження</h2>
                             <p className="section__subtitle">Сезонні новинки з усіх колекцій</p>
@@ -1308,7 +1312,10 @@ export default function Home() {
                                                    on the home route. suppressHydrationWarning is the
                                                    documented fix for intentionally dynamic timestamp
                                                    text: keep the live value, silence the expected diff. */}
-                                                <div className="ig-ui-time" suppressHydrationWarning>
+                                                <div
+                                                    className="ig-ui-time"
+                                                    suppressHydrationWarning
+                                                >
                                                     {new Date().toLocaleTimeString("uk-UA", {
                                                         hour: "2-digit",
                                                         minute: "2-digit",

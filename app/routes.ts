@@ -27,6 +27,7 @@ export default [
     route("api/orders/list", "routes/api.orders.list.tsx"),
     route("api/telegram/send", "routes/api.telegram.send.tsx"),
     route("api/search", "routes/api.search.tsx"),
+    route("api/products/slugs", "routes/api.products.slugs.tsx"),
     route("api/reviews", "routes/api.reviews.tsx"),
     route("api/contact", "routes/api.contact.tsx"),
     route("api/auth/login", "routes/api.auth.login.tsx"),

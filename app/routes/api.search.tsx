@@ -13,6 +13,7 @@ export async function loader({ request }: { request: Request }) {
         const products = await prisma.$queryRaw<
             Array<{
                 id: string;
+                slug: string | null;
                 name: string;
                 price: number | string;
                 comparePrice: number | string | null;
@@ -21,7 +22,7 @@ export async function loader({ request }: { request: Request }) {
                 shopPageSlug: string | null;
             }>
         >`
-            SELECT id, name, price, "comparePrice", category, images, "shopPageSlug"
+            SELECT id, slug, name, price, "comparePrice", category, images, "shopPageSlug"
             FROM "Product"
             WHERE status = 'active'
             AND (
@@ -44,6 +45,7 @@ export async function loader({ request }: { request: Request }) {
 
             return {
                 id: p.id,
+                slug: p.slug,
                 name: p.name,
                 price: Number(p.price),
                 comparePrice: p.comparePrice ? Number(p.comparePrice) : null,

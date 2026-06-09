@@ -9,6 +9,7 @@ import { formatPrice } from "../utils/format";
 
 export interface Product {
     id: string;
+    slug?: string | null;
     name: string;
     category?: string;
     price: number;
@@ -79,6 +80,9 @@ export default function ProductCard({
         discount_percent,
         is_stock = true,
     } = product;
+    // Canonical public URL is /p/<slug>; fall back to /product/<id> (which 301s
+    // to the slug) when a card's data doesn't carry a slug yet.
+    const href = product.slug ? `/p/${product.slug}` : `/product/${id}`;
 
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
     const displayColors = colors?.length ? colors : [];
@@ -146,7 +150,7 @@ export default function ProductCard({
                    When the <img> finishes loading it covers the blur. */
                 style={getLqipStyle(image)}
             >
-                <Link to={`/product/${id}`} prefetch="intent" className="product-card__image-link">
+                <Link to={href} prefetch="intent" className="product-card__image-link">
                     <picture>
                         {/* Batch 40 atom 6: AVIF first — browser picks if
                             supported (96%+ modern), falls back to WebP. */}
@@ -233,7 +237,7 @@ export default function ProductCard({
 
             <div className="product-card__details">
                 <h3 className="product-card__title">
-                    <Link to={`/product/${id}`} prefetch="intent">
+                    <Link to={href} prefetch="intent">
                         {name}
                     </Link>
                 </h3>

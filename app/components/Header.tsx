@@ -10,6 +10,7 @@ import MegaMenu, { type MegaFeatured } from "./MegaMenu";
 
 interface SearchResult {
     id: string;
+    slug?: string | null;
     name: string;
     price: number;
     comparePrice?: number | null;
@@ -30,12 +31,20 @@ const NAV: Array<{ shop: string; label: string; featured: MegaFeatured }> = [
     {
         shop: "sport",
         label: "SPORT",
-        featured: { image: "/generalpics/333_131123.webp", badge: "SPORT", title: "Sport Колекція" },
+        featured: {
+            image: "/generalpics/333_131123.webp",
+            badge: "SPORT",
+            title: "Sport Колекція",
+        },
     },
     {
         shop: "dance",
         label: "DANCE",
-        featured: { image: "/generalpics/374_131123.webp", badge: "DANCE", title: "Dance Колекція" },
+        featured: {
+            image: "/generalpics/374_131123.webp",
+            badge: "DANCE",
+            title: "Dance Колекція",
+        },
     },
     {
         shop: "casual",
@@ -522,7 +531,11 @@ export function Header() {
                                         {searchResults.map((item) => (
                                             <Link
                                                 key={item.id}
-                                                to={`/product/${item.id}`}
+                                                to={
+                                                    item.slug
+                                                        ? `/p/${item.slug}`
+                                                        : `/product/${item.id}`
+                                                }
                                                 className="search-result-item"
                                                 onClick={closeSearch}
                                             >

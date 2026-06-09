@@ -66,6 +66,19 @@ auto-generated on save via `ensureUniqueSlug`), but the slug is used **only** as
 
 Priority **P2** (SEO/UX, customer-visible, not revenue/data-blocking).
 
+**DONE (stage2)** — implemented per Option A. PDP now lives at `/p/<slug>`;
+`/product/<id>` 301-redirects active products to their slug URL (404 for
+draft/archived/missing/no-slug); canonical + JSON-LD use `/p/<slug>`; all catalog
+cards (shop/subcategory/search/home/related), the wishlist (via `/api/products/slugs`
+
+- `useProductSlugs`, still storing id), and the header search dropdown link to
+  `/p/<slug>`. Verified by `scripts/slug-url-e2e.mjs` (11/11) + Playwright.
+
+> **PROD DEPLOY (required):** run `node -r dotenv/config scripts/backfill-slugs.mjs`
+> against prod so every existing product gets a slug — otherwise active products
+> with a null slug 404 on `/product/<id>` and their cards fall back to a 404 link.
+> New products get a slug automatically on save.
+
 ## Done
 
 ### Normalize empty email string to undefined before checkout validation — DONE (stage1)

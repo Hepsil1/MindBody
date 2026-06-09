@@ -13,6 +13,7 @@ const SHOP_CACHE_TTL = 60_000;
  */
 export interface ShopProductCard {
     id: string;
+    slug?: string | null;
     name: string;
     description: string | null;
     price: number;
@@ -53,6 +54,7 @@ export interface LoadShopOptions {
 /** Raw row shape from the $queryRawUnsafe product read (incl. fabric/sleeve). */
 interface RawProductRow {
     id: string;
+    slug: string | null;
     name: string;
     description: string | null;
     price: string | number;
@@ -95,9 +97,7 @@ export async function loadShopData(
     // surface immediately; the 60s TTL is only a backstop. Serves both
     // /shop/:category and /shop/:category/:subcategory.
     const cacheKey = `shop:${categorySlug}:${opts.subcategoryFilter ?? "all"}`;
-    return cachedFetch(cacheKey, SHOP_CACHE_TTL, () =>
-        loadShopDataUncached(categorySlug, opts),
-    );
+    return cachedFetch(cacheKey, SHOP_CACHE_TTL, () => loadShopDataUncached(categorySlug, opts));
 }
 
 async function loadShopDataUncached(
@@ -130,7 +130,7 @@ async function loadShopDataUncached(
         }),
         prisma
             .$queryRawUnsafe<RawProductRow[]>(
-                `SELECT id, name, description, price, "comparePrice", category, fabric, sleeve, images, colors, sizes, "shopPageSlug", status, "createdAt"
+                `SELECT id, slug, name, description, price, "comparePrice", category, fabric, sleeve, images, colors, sizes, "shopPageSlug", status, "createdAt"
                  FROM "Product" WHERE ${productWhere} ORDER BY "createdAt" DESC`,
                 ...productParams,
             )
@@ -159,6 +159,7 @@ async function loadShopDataUncached(
 
         return {
             id: p.id,
+            slug: p.slug ?? undefined,
             name: p.name,
             description: p.description,
             price: isSale ? comparePrice : price,
