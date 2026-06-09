@@ -24,20 +24,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
         // Use case-insensitive email matching
         const emailLower = email.toLowerCase().trim();
 
-        // First find customer by email (case-insensitive). Prisma has no
-        // built-in case-insensitive findUnique, so we typed-raw a single row.
-        const customers = await prisma.$queryRaw<
-            Array<{ id: string; email: string }>
-        >`SELECT id, email FROM "Customer" WHERE LOWER(email) = ${emailLower} LIMIT 1`;
+        // Find customer by email, case-insensitively.
+        const customer = await prisma.customer.findFirst({
+            where: { email: { equals: emailLower, mode: "insensitive" } },
+            select: { id: true, email: true },
+        });
 
-        if (customers.length === 0) {
+        if (!customer) {
             console.log(`No customer found for email: ${emailLower}`);
             return new Response(JSON.stringify([]), {
                 headers: { "Content-Type": "application/json" },
             });
         }
 
-        const customer = customers[0];
         console.log(`Found customer: ${customer.id}, email: ${customer.email}`);
 
         // Now get orders for this customer

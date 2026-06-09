@@ -7,21 +7,6 @@ import { pluralizeUA } from "../utils/plural";
 
 const SITE_URL = "https://saleid.icu";
 
-// Shape of one row returned by the raw SELECT below.
-interface SearchProductRow {
-    id: string;
-    slug: string | null;
-    name: string;
-    price: number | string;
-    comparePrice: number | string | null;
-    category: string | null;
-    images: string | null;
-    shopPageSlug: string | null;
-    inventory: string | null;
-    status: string;
-    createdAt: Date;
-}
-
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const q = data?.q || "";
     const count = data?.products?.length || 0;
@@ -54,19 +39,32 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     try {
-        const term = `%${q.replace(/[%_]/g, "")}%`;
-        const products = await prisma.$queryRaw<SearchProductRow[]>`
-            SELECT id, slug, name, price, "comparePrice", category, images, "shopPageSlug", inventory, status, "createdAt"
-            FROM "Product"
-            WHERE status = 'active'
-            AND (
-                name ILIKE ${term}
-                OR description ILIKE ${term}
-                OR category ILIKE ${term}
-            )
-            ORDER BY "createdAt" DESC
-            LIMIT 60
-        `;
+        const term = q.replace(/[%_]/g, "");
+        const products = await prisma.product.findMany({
+            where: {
+                status: "active",
+                OR: [
+                    { name: { contains: term, mode: "insensitive" } },
+                    { description: { contains: term, mode: "insensitive" } },
+                    { category: { contains: term, mode: "insensitive" } },
+                ],
+            },
+            orderBy: { createdAt: "desc" },
+            take: 60,
+            select: {
+                id: true,
+                slug: true,
+                name: true,
+                price: true,
+                comparePrice: true,
+                category: true,
+                images: true,
+                shopPageSlug: true,
+                inventory: true,
+                status: true,
+                createdAt: true,
+            },
+        });
 
         const NOW = Date.now();
         const NEW_THRESHOLD = 14 * 24 * 60 * 60 * 1000;

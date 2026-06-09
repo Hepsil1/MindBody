@@ -9,30 +9,29 @@ export async function loader({ request }: { request: Request }) {
     }
 
     try {
-        const searchTerm = `%${query.trim()}%`;
-        const products = await prisma.$queryRaw<
-            Array<{
-                id: string;
-                slug: string | null;
-                name: string;
-                price: number | string;
-                comparePrice: number | string | null;
-                category: string | null;
-                images: string | null;
-                shopPageSlug: string | null;
-            }>
-        >`
-            SELECT id, slug, name, price, "comparePrice", category, images, "shopPageSlug"
-            FROM "Product"
-            WHERE status = 'active'
-            AND (
-                name ILIKE ${searchTerm}
-                OR description ILIKE ${searchTerm}
-                OR category ILIKE ${searchTerm}
-            )
-            ORDER BY name ASC
-            LIMIT 8
-        `;
+        const term = query.trim().replace(/[%_]/g, "");
+        const products = await prisma.product.findMany({
+            where: {
+                status: "active",
+                OR: [
+                    { name: { contains: term, mode: "insensitive" } },
+                    { description: { contains: term, mode: "insensitive" } },
+                    { category: { contains: term, mode: "insensitive" } },
+                ],
+            },
+            orderBy: { name: "asc" },
+            take: 8,
+            select: {
+                id: true,
+                slug: true,
+                name: true,
+                price: true,
+                comparePrice: true,
+                category: true,
+                images: true,
+                shopPageSlug: true,
+            },
+        });
 
         const results = products.map((p) => {
             let image = "/pics1cloths/IMG_6201.JPG";

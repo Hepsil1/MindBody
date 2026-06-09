@@ -168,49 +168,39 @@ export async function loader({ request }: Route.LoaderArgs) {
 
         // All 3 queries run in parallel with 60s in-memory cache
         const [slides, categoriesFromDb, rawProducts] = await Promise.all([
-            // Keep raw SQL here because legacy rows may still have a NULL page
-            // column even though the Prisma schema marks it non-nullable.
-            // The generic ensures the result is still typed.
-            cachedFetch(
-                "home:slides",
-                CACHE_TTL,
-                () =>
-                    prisma.$queryRaw<
-                        Array<{
-                            id: string;
-                            name: string;
-                            type: string;
-                            link: string | null;
-                            image1: string;
-                            image2: string | null;
-                            image3: string | null;
-                            image1Pos: string;
-                            image2Pos: string;
-                            image3Pos: string;
-                        }>
-                    >`SELECT id, name, type, link, image1, image2, image3, "image1Pos", "image2Pos", "image3Pos" FROM "Slide" WHERE page IS NULL OR page = 'home' ORDER BY "order" ASC`,
+            // Slide.page is NOT NULL (default 'home'), so a typed read is safe.
+            cachedFetch("home:slides", CACHE_TTL, () =>
+                prisma.slide.findMany({
+                    where: { page: "home" },
+                    orderBy: { order: "asc" },
+                    select: {
+                        id: true,
+                        name: true,
+                        type: true,
+                        link: true,
+                        image1: true,
+                        image2: true,
+                        image3: true,
+                        image1Pos: true,
+                        image2Pos: true,
+                        image3Pos: true,
+                    },
+                }),
             ),
-            cachedFetch(
-                "home:categories",
-                CACHE_TTL,
-                () =>
-                    /* Batch 41: switched to raw SQL so we can read the new
-                   `moodType` column without forcing a `prisma generate`
-                   on a Windows host where PM2 has the query engine DLL
-                   locked.  Type-wise we cast through HomeCategoryCard
-                   below — runtime shape matches. */
-                    prisma.$queryRaw<
-                        Array<{
-                            id: string;
-                            title: string;
-                            subtitle: string | null;
-                            image: string;
-                            imagePos: string;
-                            link: string;
-                            buttonText: string;
-                            moodType: string | null;
-                        }>
-                    >`SELECT id, title, subtitle, image, "imagePos", link, "buttonText", "moodType" FROM "Category" ORDER BY "order" ASC`,
+            cachedFetch("home:categories", CACHE_TTL, () =>
+                prisma.category.findMany({
+                    orderBy: { order: "asc" },
+                    select: {
+                        id: true,
+                        title: true,
+                        subtitle: true,
+                        image: true,
+                        imagePos: true,
+                        link: true,
+                        buttonText: true,
+                        moodType: true,
+                    },
+                }),
             ),
             cachedFetch("home:products", CACHE_TTL, () =>
                 prisma.product.findMany({

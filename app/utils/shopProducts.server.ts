@@ -51,25 +51,6 @@ export interface LoadShopOptions {
     subcategoryFilter?: string;
 }
 
-/** Raw row shape from the $queryRawUnsafe product read (incl. fabric/sleeve). */
-interface RawProductRow {
-    id: string;
-    slug: string | null;
-    name: string;
-    description: string | null;
-    price: string | number;
-    comparePrice: string | number | null;
-    category: string | null;
-    fabric: string | null;
-    sleeve: string | null;
-    images: string | null;
-    colors: string | null;
-    sizes: string | null;
-    shopPageSlug: string | null;
-    status: string;
-    createdAt: Date | string;
-}
-
 function parseJson<T>(str: string | null | undefined, fallback: T): T {
     if (!str) return fallback;
     try {
@@ -104,16 +85,6 @@ async function loadShopDataUncached(
     categorySlug: string,
     opts: LoadShopOptions = {},
 ): Promise<ShopData> {
-    // fabric/sleeve aren't on the un-regenerated Prisma client, so read
-    // products via raw SQL (moodType pattern). Conditional subcategory WHERE
-    // mirrors the previous typed query; both params are bound, not interpolated.
-    const productWhere = opts.subcategoryFilter
-        ? `"shopPageSlug" = $1 AND status = 'active' AND category = $2`
-        : `"shopPageSlug" = $1 AND status = 'active'`;
-    const productParams = opts.subcategoryFilter
-        ? [categorySlug, opts.subcategoryFilter]
-        : [categorySlug];
-
     const [configs, shopPageResult, rawProducts] = await Promise.all([
         prisma.filterConfig
             .findMany({
@@ -128,16 +99,36 @@ async function loadShopDataUncached(
             console.error("ShopPage fetch failed", e);
             return null;
         }),
-        prisma
-            .$queryRawUnsafe<RawProductRow[]>(
-                `SELECT id, slug, name, description, price, "comparePrice", category, fabric, sleeve, images, colors, sizes, "shopPageSlug", status, "createdAt"
-                 FROM "Product" WHERE ${productWhere} ORDER BY "createdAt" DESC`,
-                ...productParams,
-            )
+        prisma.product
+            .findMany({
+                where: {
+                    shopPageSlug: categorySlug,
+                    status: "active",
+                    ...(opts.subcategoryFilter ? { category: opts.subcategoryFilter } : {}),
+                },
+                orderBy: { createdAt: "desc" },
+                select: {
+                    id: true,
+                    slug: true,
+                    name: true,
+                    description: true,
+                    price: true,
+                    comparePrice: true,
+                    category: true,
+                    fabric: true,
+                    sleeve: true,
+                    images: true,
+                    colors: true,
+                    sizes: true,
+                    shopPageSlug: true,
+                    status: true,
+                    createdAt: true,
+                },
+            })
             .catch((e: unknown) => {
                 const msg = e instanceof Error ? e.message : String(e);
                 console.warn("Product fetch failed:", msg);
-                return [] as RawProductRow[];
+                return [];
             }),
     ]);
 

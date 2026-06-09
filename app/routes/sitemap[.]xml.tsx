@@ -17,13 +17,14 @@ import { isValidSubcategory } from "../utils/categoryMap";
 export async function loader() {
     const baseUrl = process.env.SITE_URL || "https://saleid.icu";
 
-    const products = await prisma.$queryRaw<
-        Array<{ id: string; slug: string | null; updatedAt: Date | null }>
-    >`SELECT id, slug, "updatedAt" FROM "Product" WHERE status = 'active'`;
+    const products = await prisma.product.findMany({
+        where: { status: "active" },
+        select: { id: true, slug: true, updatedAt: true },
+    });
 
-    const shopPages = await prisma.$queryRaw<
-        Array<{ slug: string; updatedAt: Date | null }>
-    >`SELECT slug, "updatedAt" FROM "ShopPage"`;
+    const shopPages = await prisma.shopPage.findMany({
+        select: { slug: true, updatedAt: true },
+    });
 
     // Distinct (shopPage, subcategory) pairs that have at least one active
     // product, with the most-recent product updatedAt as the pair's
@@ -32,14 +33,22 @@ export async function loader() {
     // Using MAX(updatedAt) avoids the SEO-anti-pattern of stamping
     // "today" on every subcategory URL — Google then re-crawls daily even
     // when nothing has actually changed.
-    const subcategoryPairs = await prisma.$queryRaw<
-        { shopPageSlug: string; category: string; maxUpdatedAt: Date | null }[]
-    >`SELECT "shopPageSlug", category, MAX("updatedAt") AS "maxUpdatedAt"
-      FROM "Product"
-      WHERE status = 'active'
-        AND category IS NOT NULL
-        AND "shopPageSlug" IS NOT NULL
-      GROUP BY "shopPageSlug", category`;
+    const subRows = await prisma.product.groupBy({
+        by: ["shopPageSlug", "category"],
+        where: { status: "active", category: { not: null }, shopPageSlug: { not: null } },
+        _max: { updatedAt: true },
+    });
+    const subcategoryPairs = subRows.flatMap((g) =>
+        g.shopPageSlug && g.category
+            ? [
+                  {
+                      shopPageSlug: g.shopPageSlug,
+                      category: g.category,
+                      maxUpdatedAt: g._max.updatedAt,
+                  },
+              ]
+            : [],
+    );
 
     const staticPages = [
         { url: "/", priority: "1.0", changefreq: "daily" },
