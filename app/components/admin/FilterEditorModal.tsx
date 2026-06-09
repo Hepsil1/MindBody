@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { FetcherWithComponents } from "react-router";
 import type { ShopPage, FilterConfig } from "@prisma/client";
 import { parseAndMergeFilterConfig } from "../../utils/filters";
@@ -43,14 +43,31 @@ export function FilterEditorModal({
         }
     }, [selectedPage, filterConfigs]);
 
+    const closeOnSuccess = useRef(false);
+    const saving = fetcher.state !== "idle";
+    const [submitError, setSubmitError] = useState<string | null>(null);
+
+    // Close ONLY after the server confirms success. The previous code called
+    // onClose() immediately on submit ("for simplicity we close now"), so a
+    // rejected save (e.g. a price range with min>max) closed the modal and the
+    // operator never connected the error to their edit. Now: stay open while
+    // saving; on success close; on failure keep open and show the reason inline.
+    useEffect(() => {
+        if (fetcher.state !== "idle" || !closeOnSuccess.current) return;
+        closeOnSuccess.current = false;
+        const res = fetcher.data as { success?: boolean; error?: string } | undefined;
+        if (res?.success) onClose();
+        else setSubmitError(res?.error ?? "Не вдалося зберегти зміни.");
+    }, [fetcher.state, fetcher.data, onClose]);
+
     const handleSave = () => {
+        setSubmitError(null);
         const formData = new FormData();
         formData.append("intent", "update_filters");
         formData.append("pageSlug", selectedPage);
         formData.append("config", JSON.stringify(data));
+        closeOnSuccess.current = true;
         fetcher.submit(formData, { method: "post" });
-        // Don't close immediately so they see it saved, but for simplicity we close now:
-        onClose();
     };
 
     // Category Logic
@@ -846,39 +863,57 @@ export function FilterEditorModal({
                         background: "#161b22",
                         borderTop: "1px solid rgba(255,255,255,0.08)",
                         display: "flex",
-                        justifyContent: "flex-end",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                         gap: "16px",
                     }}
                 >
-                    <button
-                        onClick={onClose}
+                    <span
+                        role="alert"
                         style={{
-                            padding: "12px 24px",
-                            borderRadius: "12px",
-                            background: "transparent",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            color: "#94a3b8",
-                            cursor: "pointer",
-                            fontWeight: 600,
+                            flex: 1,
+                            minHeight: "18px",
+                            color: "#fca5a5",
+                            fontSize: "13px",
+                            fontWeight: 500,
                         }}
                     >
-                        Скасувати
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        style={{
-                            padding: "12px 32px",
-                            borderRadius: "12px",
-                            background: "var(--accent-primary)",
-                            color: "#000",
-                            border: "none",
-                            cursor: "pointer",
-                            fontWeight: 700,
-                            boxShadow: "0 10px 20px rgba(94, 234, 212, 0.2)",
-                        }}
-                    >
-                        Зберегти зміни
-                    </button>
+                        {submitError ?? ""}
+                    </span>
+                    <div style={{ display: "flex", gap: "16px" }}>
+                        <button
+                            onClick={onClose}
+                            disabled={saving}
+                            style={{
+                                padding: "12px 24px",
+                                borderRadius: "12px",
+                                background: "transparent",
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                color: "#94a3b8",
+                                cursor: saving ? "default" : "pointer",
+                                fontWeight: 600,
+                            }}
+                        >
+                            Скасувати
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            style={{
+                                padding: "12px 32px",
+                                borderRadius: "12px",
+                                background: "var(--accent-primary)",
+                                color: "#000",
+                                border: "none",
+                                cursor: saving ? "default" : "pointer",
+                                fontWeight: 700,
+                                opacity: saving ? 0.7 : 1,
+                                boxShadow: "0 10px 20px rgba(94, 234, 212, 0.2)",
+                            }}
+                        >
+                            {saving ? "Збереження…" : "Зберегти зміни"}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
