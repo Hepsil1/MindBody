@@ -34,8 +34,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     // Reflect real stock in the rich-result offer (the UI already shows
     // "Немає в наявності" for all-zero-stock products); a hardcoded InStock
     // here is a Merchant mismatch that can suppress the result.
-    const inStock =
-        !product.inventory?.length || product.inventory.some((v) => (v.stock ?? 0) > 0);
+    const inStock = !product.inventory?.length || product.inventory.some((v) => (v.stock ?? 0) > 0);
     const canonicalUrl = `${siteUrl}/product/${product.id}`;
     return [
         { title: `${product.name} | MIND BODY` },
@@ -207,7 +206,11 @@ export async function loader({ params }: LoaderFunctionArgs) {
             prisma.filterConfig.findUnique({ where: { id: "global" } }),
         ]);
 
-        if (p) {
+        // Status gate: only "active" products are publicly viewable. A draft or
+        // archived product (or a missing one) falls through to the 404 below —
+        // matching /p/:slug, the catalog, search and the order API. The check is
+        // here (not a `throw` inside the try) because the catch re-throws as 500.
+        if (p && p.status === "active") {
             const images = parseJson<string[]>(p.images, []);
             if (images.length === 0) images.push("/brand-sun.png");
 
@@ -932,7 +935,11 @@ export default function ProductDetail() {
                                         {/* Sprint 1 D2.3 — #19/#14 PDP a11y: aria-label spells out
                                             sold-out so SR users hear "Розмір M, немає в наявності"
                                             instead of just the dimmed pill being skipped. */}
-                                        <div className="size-options" role="radiogroup" aria-label="Розмір">
+                                        <div
+                                            className="size-options"
+                                            role="radiogroup"
+                                            aria-label="Розмір"
+                                        >
                                             {product.sizes.map((size: string) => {
                                                 const available = isSizeAvailable(size);
                                                 return (
@@ -953,13 +960,18 @@ export default function ProductDetail() {
                                                             // for this size, switch to one that is —
                                                             // otherwise a buyable item wrongly reads
                                                             // "Немає в наявності".
-                                                            const inStockColors = product.colors.filter(
-                                                                (c) => getVariantStock(size, c) > 0,
-                                                            );
+                                                            const inStockColors =
+                                                                product.colors.filter(
+                                                                    (c) =>
+                                                                        getVariantStock(size, c) >
+                                                                        0,
+                                                                );
                                                             if (
                                                                 selectedColor &&
                                                                 inStockColors.length > 0 &&
-                                                                !inStockColors.includes(selectedColor)
+                                                                !inStockColors.includes(
+                                                                    selectedColor,
+                                                                )
                                                             ) {
                                                                 setSelectedColor(inStockColors[0]);
                                                             }
@@ -1183,9 +1195,8 @@ export default function ProductDetail() {
                                             Швидке замовлення
                                         </h3>
                                         <p className="quick-buy-modal__product">
-                                            {product.name} &mdash;{" "}
-                                            {formatPrice(product.price)}{" "}
-                                            ₴{selectedSize ? ` · ${selectedSize}` : ""}
+                                            {product.name} &mdash; {formatPrice(product.price)} ₴
+                                            {selectedSize ? ` · ${selectedSize}` : ""}
                                             {selectedColor ? ` · ${selectedColor}` : ""}
                                         </p>
                                         <input
@@ -1349,9 +1360,7 @@ export default function ProductDetail() {
 
             {/* Mobile Sticky CTA */}
             <div className="mobile-sticky-cta">
-                <div className="mobile-sticky-cta__price">
-                    {formatPrice(product.price)} ₴
-                </div>
+                <div className="mobile-sticky-cta__price">{formatPrice(product.price)} ₴</div>
                 <button
                     type="button"
                     className="mobile-sticky-cta__btn"

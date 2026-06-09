@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { StorageUtils, type CartItem } from "../utils/storage";
 import { AuthUtils } from "../utils/auth";
 import { useToast } from "../components/Toast";
@@ -52,6 +52,9 @@ export default function Checkout() {
     const { showToast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderNumber, setOrderNumber] = useState("");
+    // Stable idempotency key for the current checkout attempt. Reused across
+    // retries/double-submits (so the server dedupes), reset after a successful order.
+    const idempotencyKeyRef = useRef<string | null>(null);
 
     const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
         name: "",
@@ -222,7 +225,8 @@ export default function Checkout() {
 
         const newErrors: Partial<Record<keyof CustomerInfo, string>> = {};
         if (!customerInfo.name.trim()) newErrors.name = "Введіть ваше ім'я";
-        if (!customerInfo.email.trim()) newErrors.email = "Введіть email для підтвердження замовлення";
+        if (!customerInfo.email.trim())
+            newErrors.email = "Введіть email для підтвердження замовлення";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerInfo.email.trim()))
             newErrors.email = "Введіть коректний email";
         if (!customerInfo.phone) newErrors.phone = "Введіть номер телефону";
@@ -259,6 +263,10 @@ export default function Checkout() {
 
         setIsSubmitting(true);
 
+        // Generate (once) a stable key for this checkout attempt so a network
+        // retry or accidental double-submit can't create a duplicate order.
+        if (!idempotencyKeyRef.current) idempotencyKeyRef.current = crypto.randomUUID();
+
         try {
             const response = await fetch("/api/orders/create", {
                 method: "POST",
@@ -279,6 +287,7 @@ export default function Checkout() {
                     deliveryMethod: customerInfo.delivery,
                     comment: customerInfo.comment,
                     promoCode: promoApplied?.code,
+                    idempotencyKey: idempotencyKeyRef.current,
                 }),
             });
 
@@ -286,6 +295,8 @@ export default function Checkout() {
 
             if (result.success) {
                 // Promo code usage is already incremented server-side in api.orders.create
+                // Order placed — drop the key so a brand-new checkout gets a fresh one.
+                idempotencyKeyRef.current = null;
                 setOrderNumber(result.orderId);
                 StorageUtils.clearCart();
                 // Reset promo state so back-navigation to /checkout doesn't
@@ -638,7 +649,9 @@ export default function Checkout() {
                                             inputMode="email"
                                             required
                                             aria-invalid={errors.email ? "true" : undefined}
-                                            aria-describedby={errors.email ? "email-error" : undefined}
+                                            aria-describedby={
+                                                errors.email ? "email-error" : undefined
+                                            }
                                         />
                                         {errors.email && (
                                             <span
@@ -1143,7 +1156,10 @@ export default function Checkout() {
                     <div className="cart-grid">
                         <div className="cart-items">
                             {items.map((item) => (
-                                <div key={`${item.id}-${item.size ?? ""}-${item.color ?? ""}`} className="cart-item">
+                                <div
+                                    key={`${item.id}-${item.size ?? ""}-${item.color ?? ""}`}
+                                    className="cart-item"
+                                >
                                     <div className="cart-item__image">
                                         <img
                                             src={productImageSrc(item.image)}

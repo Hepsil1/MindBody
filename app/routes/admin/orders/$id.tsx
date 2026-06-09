@@ -1,7 +1,9 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { redirect, useLoaderData, useSubmit, useNavigate, Link } from "react-router";
+import { redirect, useLoaderData, useActionData, useSubmit, useNavigate, Link } from "react-router";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../../db.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
+import { restoreForCancelTx } from "../../../services/inventory.server";
 import { useState } from "react";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -27,7 +29,36 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         throw new Response("Order not found", { status: 404 });
     }
 
-    return { order };
+    // New columns/tables aren't in the (un-regenerated) Prisma client → raw SQL.
+    const meta = await prisma.$queryRaw<
+        { emailStatus: string | null; appliedPromoCode: string | null; discountAmount: unknown }[]
+    >`SELECT "emailStatus", "appliedPromoCode", "discountAmount" FROM "Order" WHERE id = ${params.id}`;
+    const historyRows = await prisma.$queryRaw<
+        {
+            field: string;
+            fromValue: string | null;
+            toValue: string;
+            actor: string;
+            note: string | null;
+            createdAt: Date;
+        }[]
+    >`SELECT field, "fromValue", "toValue", actor, note, "createdAt"
+      FROM "OrderStatusHistory" WHERE "orderId" = ${params.id} ORDER BY "createdAt" ASC`;
+
+    return {
+        order,
+        emailStatus: meta[0]?.emailStatus ?? null,
+        appliedPromoCode: meta[0]?.appliedPromoCode ?? null,
+        discountAmount: meta[0] ? Number(meta[0].discountAmount) || 0 : 0,
+        history: historyRows.map((h) => ({
+            field: h.field,
+            fromValue: h.fromValue,
+            toValue: h.toValue,
+            actor: h.actor,
+            note: h.note,
+            createdAt: new Date(h.createdAt).toISOString(),
+        })),
+    };
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -35,6 +66,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     // gate was missing — these are state-changing mutations.
     const denied = await requireAdmin(request);
     if (denied) return denied;
+    const id = params.id as string;
     try {
         const formData = await request.formData();
         const intent = formData.get("intent");
@@ -46,10 +78,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
             if (!Object.prototype.hasOwnProperty.call(statusLabels, status)) {
                 return { error: "Невідомий статус замовлення" };
             }
-            await prisma.order.update({
-                where: { id: params.id },
-                data: { status },
+            const cur = await prisma.order.findUnique({ where: { id }, select: { status: true } });
+            if (!cur) return { error: "Замовлення не знайдено" };
+            if (cur.status === status) return { success: true };
+            // Moving to "cancelled" restores stock (same path as the Cancel button)
+            // so selecting it from the dropdown can't silently lose inventory.
+            if (status === "cancelled") {
+                await cancelOrder(id, cur.status, "Скасовано (зміна статусу)");
+                return { success: true };
+            }
+            await prisma.$transaction(async (tx) => {
+                await tx.order.update({ where: { id }, data: { status } });
+                await writeHistory(tx, id, "status", cur.status, status, "Зміна статусу");
             });
+            return { success: true };
         }
 
         if (intent === "update_payment") {
@@ -57,19 +99,70 @@ export async function action({ request, params }: ActionFunctionArgs) {
             if (!Object.prototype.hasOwnProperty.call(paymentLabels, paymentStatus)) {
                 return { error: "Невідомий статус оплати" };
             }
-            await prisma.order.update({
-                where: { id: params.id },
-                data: { paymentStatus },
+            const cur = await prisma.order.findUnique({
+                where: { id },
+                select: { paymentStatus: true },
             });
+            if (!cur) return { error: "Замовлення не знайдено" };
+            if (cur.paymentStatus === paymentStatus) return { success: true };
+            await prisma.$transaction(async (tx) => {
+                await tx.order.update({ where: { id }, data: { paymentStatus } });
+                await writeHistory(
+                    tx,
+                    id,
+                    "paymentStatus",
+                    cur.paymentStatus,
+                    paymentStatus,
+                    "Зміна статусу оплати",
+                );
+            });
+            return { success: true };
+        }
+
+        if (intent === "cancel") {
+            const cur = await prisma.order.findUnique({ where: { id }, select: { status: true } });
+            if (!cur) return { error: "Замовлення не знайдено" };
+            if (cur.status === "cancelled") return { success: true };
+            await cancelOrder(id, cur.status, "Скасовано адміністратором");
+            return { success: true };
         }
 
         if (intent === "delete") {
-            // Atomic: items + order go together so a mid-way failure can't
-            // leave an order with no line items.
-            await prisma.$transaction([
-                prisma.orderItem.deleteMany({ where: { orderId: params.id } }),
-                prisma.order.delete({ where: { id: params.id } }),
-            ]);
+            const ord = await prisma.order.findUnique({
+                where: { id },
+                select: { status: true, paymentStatus: true },
+            });
+            if (!ord) return { error: "Замовлення не знайдено" };
+            // Never hard-delete an order that represents money taken or goods
+            // shipped — it must be cancelled (auditable) instead.
+            if (ord.paymentStatus === "paid" || ord.status === "delivered") {
+                return {
+                    error: "Оплачене або доставлене замовлення не можна видалити. Спочатку скасуйте його.",
+                };
+            }
+            await prisma.$transaction(async (tx) => {
+                // Return stock unless it was already restored by a prior cancel.
+                if (ord.status !== "cancelled") {
+                    const items = await tx.orderItem.findMany({
+                        where: { orderId: id },
+                        select: { productId: true, quantity: true, size: true, color: true },
+                    });
+                    for (const it of items) {
+                        await restoreForCancelTx(
+                            tx,
+                            {
+                                productId: it.productId,
+                                quantity: it.quantity,
+                                size: it.size,
+                                color: it.color,
+                            },
+                            { orderId: id, actor: "admin" },
+                        );
+                    }
+                }
+                await tx.orderItem.deleteMany({ where: { orderId: id } });
+                await tx.order.delete({ where: { id } }); // OrderStatusHistory cascades
+            });
             return redirect("/admin/orders");
         }
 
@@ -79,6 +172,42 @@ export async function action({ request, params }: ActionFunctionArgs) {
         const message = e instanceof Error ? e.message : "Сталася серверна помилка";
         return { error: message };
     }
+}
+
+/** Append a status/payment transition to the audit trail (raw — new table). */
+async function writeHistory(
+    tx: Prisma.TransactionClient,
+    orderId: string,
+    field: "status" | "paymentStatus",
+    fromValue: string | null,
+    toValue: string,
+    note: string,
+): Promise<void> {
+    await tx.$executeRaw`
+        INSERT INTO "OrderStatusHistory"
+            (id, "orderId", field, "fromValue", "toValue", actor, note, "createdAt")
+        VALUES
+            (gen_random_uuid(), ${orderId}, ${field}, ${fromValue}, ${toValue}, 'admin',
+             ${note}, CURRENT_TIMESTAMP)`;
+}
+
+/** Cancel an order: restore every line's stock (+movement) and record history. */
+async function cancelOrder(orderId: string, fromStatus: string, note: string): Promise<void> {
+    await prisma.$transaction(async (tx) => {
+        const items = await tx.orderItem.findMany({
+            where: { orderId },
+            select: { productId: true, quantity: true, size: true, color: true },
+        });
+        for (const it of items) {
+            await restoreForCancelTx(
+                tx,
+                { productId: it.productId, quantity: it.quantity, size: it.size, color: it.color },
+                { orderId, actor: "admin" },
+            );
+        }
+        await tx.order.update({ where: { id: orderId }, data: { status: "cancelled" } });
+        await writeHistory(tx, orderId, "status", fromStatus, "cancelled", note);
+    });
 }
 
 const statusLabels: Record<string, { text: string; color: string }> = {
@@ -96,7 +225,9 @@ const paymentLabels: Record<string, { text: string; color: string }> = {
 };
 
 export default function AdminOrderDetails() {
-    const { order } = useLoaderData<typeof loader>();
+    const { order, emailStatus, history } = useLoaderData<typeof loader>();
+    const actionData = useActionData<typeof action>();
+    const actionError = actionData && "error" in actionData ? (actionData.error as string) : null;
     const submit = useSubmit();
     const navigate = useNavigate();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -112,6 +243,14 @@ export default function AdminOrderDetails() {
         const formData = new FormData();
         formData.append("intent", "update_payment");
         formData.append("paymentStatus", e.target.value);
+        submit(formData, { method: "post" });
+    };
+
+    const handleCancel = () => {
+        if (!window.confirm("Скасувати замовлення? Залишок товарів буде повернено на склад."))
+            return;
+        const formData = new FormData();
+        formData.append("intent", "cancel");
         submit(formData, { method: "post" });
     };
 
@@ -311,6 +450,37 @@ export default function AdminOrderDetails() {
                 Назад до замовлень
             </Link>
 
+            {actionError && (
+                <div
+                    style={{
+                        margin: "0 0 16px",
+                        padding: "12px 16px",
+                        background: "rgba(239,68,68,0.12)",
+                        border: "1px solid rgba(239,68,68,0.35)",
+                        borderRadius: "10px",
+                        color: "#fca5a5",
+                        fontSize: "14px",
+                    }}
+                >
+                    {actionError}
+                </div>
+            )}
+            {emailStatus === "failed" && (
+                <div
+                    style={{
+                        margin: "0 0 16px",
+                        padding: "12px 16px",
+                        background: "rgba(245,158,11,0.12)",
+                        border: "1px solid rgba(245,158,11,0.35)",
+                        borderRadius: "10px",
+                        color: "#fbbf24",
+                        fontSize: "14px",
+                    }}
+                >
+                    ⚠️ Лист-підтвердження клієнту не було надіслано (помилка відправки email).
+                </div>
+            )}
+
             {/* Header */}
             <div className="order-detail-header">
                 <div>
@@ -384,6 +554,23 @@ export default function AdminOrderDetails() {
                         <option value="delivered">✅ Доставлено</option>
                         <option value="cancelled">❌ Скасовано</option>
                     </select>
+                    {order.status !== "cancelled" && (
+                        <button
+                            onClick={handleCancel}
+                            style={{
+                                background: "rgba(245,158,11,0.12)",
+                                border: "1px solid rgba(245,158,11,0.4)",
+                                color: "#f59e0b",
+                                padding: "10px 20px",
+                                borderRadius: "8px",
+                                fontSize: "14px",
+                                fontWeight: 500,
+                                cursor: "pointer",
+                            }}
+                        >
+                            Скасувати
+                        </button>
+                    )}
                     <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
                         <svg
                             width="16"
@@ -620,6 +807,50 @@ export default function AdminOrderDetails() {
                     </div>
                 </div>
             </div>
+
+            {/* Order audit trail */}
+            {history.length > 0 && (
+                <div className="order-detail-card" style={{ marginTop: "20px" }}>
+                    <h3
+                        style={{
+                            fontSize: "16px",
+                            fontWeight: 600,
+                            margin: "0 0 16px",
+                            color: "#f8fafc",
+                        }}
+                    >
+                        🕓 Історія замовлення
+                    </h3>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {history.map((h, i) => (
+                            <div
+                                key={i}
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    gap: "12px",
+                                    fontSize: "13px",
+                                    color: "#94a3b8",
+                                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                                    paddingBottom: "8px",
+                                }}
+                            >
+                                <span>
+                                    <span style={{ color: "#e2e8f0" }}>
+                                        {h.field === "paymentStatus" ? "Оплата" : "Статус"}:
+                                    </span>{" "}
+                                    {h.fromValue ? `${h.fromValue} → ` : ""}
+                                    <strong style={{ color: "#5eead4" }}>{h.toValue}</strong>
+                                    {h.note ? ` · ${h.note}` : ""}
+                                </span>
+                                <span style={{ whiteSpace: "nowrap" }}>
+                                    {new Date(h.createdAt).toLocaleString("uk-UA")} · {h.actor}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Delete Confirmation Modal */}
             {showDeleteConfirm && (

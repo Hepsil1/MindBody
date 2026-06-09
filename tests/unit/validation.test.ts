@@ -174,6 +174,23 @@ describe("OrderCreateSchema", () => {
         });
         expect(parsed.customer.email).toBe("olena@example.com");
     });
+
+    it("accepts a guest with an empty email string (normalized, not rejected)", () => {
+        const res = OrderCreateSchema.safeParse({
+            ...validOrder,
+            customer: { ...validOrder.customer, email: "" },
+        });
+        expect(res.success).toBe(true);
+        expect(res.data?.customer.email).toBe("");
+    });
+
+    it("accepts an idempotencyKey", () => {
+        const parsed = OrderCreateSchema.parse({
+            ...validOrder,
+            idempotencyKey: "11111111-2222-3333-4444-555555555555",
+        });
+        expect(parsed.idempotencyKey).toBe("11111111-2222-3333-4444-555555555555");
+    });
 });
 
 describe("ContactSchema", () => {

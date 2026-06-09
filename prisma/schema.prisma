@@ -58,20 +58,64 @@ model Customer {
 }
 
 model Order {
-  id            String      @id @default(uuid())
-  orderNumber   Int         @unique
-  customerId    String
-  status        String      @default("pending")
-  paymentStatus String      @default("pending")
-  total         Decimal
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  customer      Customer    @relation(fields: [customerId], references: [id])
-  items         OrderItem[]
+  id               String               @id @default(uuid())
+  orderNumber      Int                  @unique
+  customerId       String
+  status           String               @default("pending")
+  paymentStatus    String               @default("pending")
+  total            Decimal
+  // Promo snapshot — so a placed order always reflects the discount it was
+  // created with, independent of later promo edits/deletes (audit + disputes).
+  appliedPromoCode String?
+  discountAmount   Decimal?             @default(0)
+  // Checkout idempotency: the client sends a stable key per checkout attempt;
+  // a retry with the same key returns the existing order instead of creating a
+  // duplicate. Nullable + @unique → many NULLs allowed (legacy/no-key orders).
+  idempotencyKey   String?              @unique
+  // Best-effort confirmation email outcome: "sent" | "failed" | null (not attempted).
+  emailStatus      String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  customer         Customer             @relation(fields: [customerId], references: [id])
+  items            OrderItem[]
+  statusHistory    OrderStatusHistory[]
 
   @@index([customerId])
   @@index([createdAt])
   @@index([status])
+}
+
+// Append-only audit of every stock change, so an inaccurate count can always be
+// traced to an order, a cancellation, or a manual adjustment (who/when/why).
+model InventoryMovement {
+  id         String   @id @default(uuid())
+  productId  String
+  variantKey String? // "size/color" of the affected variant; null = aggregate-only
+  delta      Int // signed change applied to stock
+  before     Int
+  after      Int
+  reason     String // order_created | order_cancelled | manual_adjustment | correction
+  actor      String   @default("system")
+  orderId    String?
+  createdAt  DateTime @default(now())
+
+  @@index([productId])
+  @@index([orderId])
+}
+
+// Audit trail of order status / payment-status transitions.
+model OrderStatusHistory {
+  id        String   @id @default(uuid())
+  orderId   String
+  field     String   @default("status") // "status" | "paymentStatus"
+  fromValue String?
+  toValue   String
+  actor     String   @default("admin")
+  note      String?
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
 }
 
 model OrderItem {

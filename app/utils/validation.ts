@@ -30,7 +30,13 @@ export const ReviewSchema = z.object({
 // Same Zod-4 whitespace-before-validation gotcha as RegisterSchema above.
 const OrderCustomerSchema = z.object({
     name: z.string().trim().min(2).max(100),
-    email: z.string().trim().toLowerCase().email().max(100).optional().default(""),
+    // An empty/whitespace email means "guest checkout, no email". Normalize it to
+    // undefined FIRST so the optional().default("") path applies — otherwise the
+    // client sending email:"" would hit .email() and fail "Invalid email address".
+    email: z.preprocess(
+        (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+        z.string().trim().toLowerCase().email().max(100).optional().default(""),
+    ),
     phone: z.string().trim().min(10).max(20),
     city: z.string().trim().min(1).max(100),
     warehouse: z.string().trim().min(1).max(200),
@@ -54,6 +60,10 @@ export const OrderCreateSchema = z.object({
     deliveryMethod: z.string().optional().default("novaposhta"),
     comment: z.string().max(500).optional().default(""),
     promoCode: z.string().max(50).optional().nullable(),
+    // Checkout idempotency: a stable client-generated key (UUID) per checkout
+    // attempt. A retry with the same key returns the existing order instead of
+    // creating a duplicate. Optional so older clients still work.
+    idempotencyKey: z.string().trim().min(8).max(100).optional().nullable(),
 });
 
 // ===== Contact API =====
