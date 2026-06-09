@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import type { FetcherWithComponents } from "react-router";
+import type { ShopPage, FilterConfig } from "@prisma/client";
 import { parseAndMergeFilterConfig } from "../../utils/filters";
 
 /**
@@ -7,24 +9,31 @@ import { parseAndMergeFilterConfig } from "../../utils/filters";
  * categories/colors/sizes/priceRanges editing UI for the global
  * filter config plus optional per-shop overrides.
  */
-// --- Filter Editor Modal Component ---
+interface FilterEditorModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    filterConfigs?: Pick<FilterConfig, "id" | "config">[];
+    shopPages?: Pick<ShopPage, "slug" | "title">[];
+    fetcher: FetcherWithComponents<unknown>;
+}
+
 export function FilterEditorModal({
     isOpen,
     onClose,
     filterConfigs = [],
     shopPages = [],
     fetcher,
-}: any) {
+}: FilterEditorModalProps) {
     const [selectedPage, setSelectedPage] = useState("global");
 
     const [data, setData] = useState(() => {
-        const globalRow = filterConfigs.find((c: any) => c.id === "global");
+        const globalRow = filterConfigs.find((c) => c.id === "global");
         return parseAndMergeFilterConfig(globalRow?.config);
     });
 
     useEffect(() => {
-        const configRow = filterConfigs.find((c: any) => c.id === selectedPage);
-        const globalRow = filterConfigs.find((c: any) => c.id === "global");
+        const configRow = filterConfigs.find((c) => c.id === selectedPage);
+        const globalRow = filterConfigs.find((c) => c.id === "global");
         const fallbackConfig = parseAndMergeFilterConfig(globalRow?.config);
 
         if (!configRow?.config) {
@@ -49,7 +58,7 @@ export function FilterEditorModal({
     const [newCatLabel, setNewCatLabel] = useState("");
     const addCategory = () => {
         if (!newCatKey || !newCatLabel) return;
-        setData((prev: any) => ({
+        setData((prev) => ({
             ...prev,
             categories: { ...prev.categories, [newCatKey]: newCatLabel },
         }));
@@ -59,7 +68,7 @@ export function FilterEditorModal({
     const removeCategory = (key: string) => {
         const newCats = { ...data.categories };
         delete newCats[key];
-        setData((prev: any) => ({ ...prev, categories: newCats }));
+        setData((prev) => ({ ...prev, categories: newCats }));
     };
 
     // Color Logic
@@ -67,7 +76,7 @@ export function FilterEditorModal({
     const [newColorLabel, setNewColorLabel] = useState("");
     const addColor = () => {
         if (!newColorKey || !newColorLabel) return;
-        setData((prev: any) => ({
+        setData((prev) => ({
             ...prev,
             colors: { ...prev.colors, [newColorKey]: newColorLabel },
         }));
@@ -77,14 +86,14 @@ export function FilterEditorModal({
     const removeColor = (key: string) => {
         const newColors = { ...data.colors };
         delete newColors[key];
-        setData((prev: any) => ({ ...prev, colors: newColors }));
+        setData((prev) => ({ ...prev, colors: newColors }));
     };
 
     // Size Logic
     const [newSize, setNewSize] = useState("");
     const addSize = () => {
         if (!newSize) return;
-        setData((prev: any) => ({
+        setData((prev) => ({
             ...prev,
             sizes: [...(prev.sizes || []), newSize],
         }));
@@ -94,27 +103,27 @@ export function FilterEditorModal({
     // Price Logic
     const addPriceRange = () => {
         const newRange = { id: `range-${Date.now()}`, label: "Новий діапазон", min: 0, max: 1000 };
-        setData((prev: any) => ({
+        setData((prev) => ({
             ...prev,
             priceRanges: [...prev.priceRanges, newRange],
         }));
     };
     const removePriceRange = (idx: number) => {
-        const newRanges = data.priceRanges.filter((_: any, i: number) => i !== idx);
-        setData((prev: any) => ({ ...prev, priceRanges: newRanges }));
+        const newRanges = data.priceRanges.filter((_, i: number) => i !== idx);
+        setData((prev) => ({ ...prev, priceRanges: newRanges }));
     };
 
     const updateLabel = (type: "categories" | "colors", key: string, val: string) => {
-        setData((prev: any) => ({
+        setData((prev) => ({
             ...prev,
             [type]: { ...prev[type], [key]: val },
         }));
     };
 
-    const updatePriceRange = (index: number, field: string, val: any) => {
+    const updatePriceRange = (index: number, field: string, val: string | number) => {
         const newRanges = [...data.priceRanges];
         newRanges[index] = { ...newRanges[index], [field]: val };
-        setData((prev: any) => ({ ...prev, priceRanges: newRanges }));
+        setData((prev) => ({ ...prev, priceRanges: newRanges }));
     };
 
     return (
@@ -201,7 +210,7 @@ export function FilterEditorModal({
                                 }}
                             >
                                 <option value="global">Всі сторінки (Global)</option>
-                                {(shopPages || []).map((p: any) => (
+                                {(shopPages || []).map((p) => (
                                     <option key={p.slug} value={p.slug}>
                                         {p.title ? `${p.title} (${p.slug})` : p.slug}
                                     </option>
@@ -262,7 +271,7 @@ export function FilterEditorModal({
                                 marginBottom: "20px",
                             }}
                         >
-                            {Object.entries(data.categories).map(([key, label]: any) => (
+                            {Object.entries(data.categories).map(([key, label]) => (
                                 <div
                                     key={key}
                                     style={{
@@ -398,7 +407,7 @@ export function FilterEditorModal({
                                 marginBottom: "20px",
                             }}
                         >
-                            {Object.entries(data.colors).map(([key, label]: any) => (
+                            {Object.entries(data.colors).map(([key, label]) => (
                                 <div
                                     key={key}
                                     style={{
@@ -569,7 +578,7 @@ export function FilterEditorModal({
                         </div>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                            {data.priceRanges.map((range: any, idx: number) => (
+                            {data.priceRanges.map((range, idx: number) => (
                                 <div
                                     key={range.id}
                                     style={{
@@ -752,7 +761,7 @@ export function FilterEditorModal({
                                         onChange={(e) => {
                                             const newSizes = [...data.sizes];
                                             newSizes[idx] = e.target.value;
-                                            setData((prev: any) => ({ ...prev, sizes: newSizes }));
+                                            setData((prev) => ({ ...prev, sizes: newSizes }));
                                         }}
                                         style={{
                                             flex: 1,
@@ -768,9 +777,9 @@ export function FilterEditorModal({
                                     <button
                                         onClick={() => {
                                             const newSizes = data.sizes.filter(
-                                                (_: any, i: number) => i !== idx,
+                                                (_, i: number) => i !== idx,
                                             );
-                                            setData((prev: any) => ({ ...prev, sizes: newSizes }));
+                                            setData((prev) => ({ ...prev, sizes: newSizes }));
                                         }}
                                         style={{
                                             background: "none",

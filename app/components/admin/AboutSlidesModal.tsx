@@ -1,6 +1,26 @@
 import { useState, useEffect } from "react";
+import type { FetcherWithComponents } from "react-router";
+import type { Slide } from "@prisma/client";
 import { CloseIcon, TrashIcon } from "./AdminIcons";
 import { ImageCropSelector } from "./ImageCropSelector";
+
+interface AboutSlideForm {
+    name: string;
+    type: string;
+    image1_url: string;
+    image1Pos: string;
+    image2_url: string;
+    image2Pos: string;
+    image3_url: string;
+    image3Pos: string;
+}
+
+interface AboutSlidesModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    slides: Slide[];
+    fetcher: FetcherWithComponents<unknown>;
+}
 
 /**
  * About Slides Modal — manages the slide rotation on the /about
@@ -11,17 +31,7 @@ import { ImageCropSelector } from "./ImageCropSelector";
 // --- About Slides Editor Modal Component ---
 
 // --- About Slides Editor Modal Component ---
-export function AboutSlidesModal({
-    isOpen,
-    onClose,
-    slides,
-    fetcher,
-}: {
-    isOpen: boolean;
-    onClose: () => void;
-    slides: any[];
-    fetcher: any;
-}) {
+export function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: AboutSlidesModalProps) {
     const defaultSlideData = {
         name: "New Slide",
         type: "triptych",
@@ -33,8 +43,8 @@ export function AboutSlidesModal({
         image3Pos: "center center",
     };
 
-    const [editingSlide, setEditingSlide] = useState<any>(null);
-    const [creationData, setCreationData] = useState<any>(defaultSlideData);
+    const [editingSlide, setEditingSlide] = useState<Slide | null>(null);
+    const [creationData, setCreationData] = useState<AboutSlideForm>(defaultSlideData);
 
     // File states for creation
     const [file1, setFile1] = useState<File | null>(null);
@@ -198,7 +208,7 @@ export function AboutSlidesModal({
                                 <p>Немає слайдів. Додайте перший!</p>
                             </div>
                         ) : (
-                            slides.map((slide: any) => (
+                            slides.map((slide) => (
                                 <div
                                     key={slide.id}
                                     style={{
@@ -225,7 +235,7 @@ export function AboutSlidesModal({
                                         {slide.type === "triptych" && (
                                             <>
                                                 <img
-                                                    src={slide.image2}
+                                                    src={slide.image2 ?? undefined}
                                                     alt="2"
                                                     style={{
                                                         width: "60px",
@@ -235,7 +245,7 @@ export function AboutSlidesModal({
                                                     }}
                                                 />
                                                 <img
-                                                    src={slide.image3}
+                                                    src={slide.image3 ?? undefined}
                                                     alt="3"
                                                     style={{
                                                         width: "60px",
