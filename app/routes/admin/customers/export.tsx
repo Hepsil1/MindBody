@@ -7,7 +7,14 @@ import { prisma } from "../../../db.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
 import { buildListQuery } from "../../../utils/admin-list.server";
 
-const csvCell = (v: string) => (/[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+const csvCell = (v: string) => {
+    // Neutralize spreadsheet formula injection: a cell starting with = + - @
+    // (or tab/CR) is executed as a formula by Excel/Sheets. Customer-controlled
+    // names/emails — and every UA phone (starts with "+") — hit this. Prefix
+    // such cells with an apostrophe so they're treated as text.
+    const s = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
 
 export async function loader({ request }: Route.LoaderArgs) {
     const denied = await requireAdmin(request);

@@ -37,3 +37,13 @@ playwright/.cache/
 # scaled width-variants are not.
 public/**/*-[0-9][0-9][0-9]w.webp
 public/**/*-[0-9][0-9][0-9][0-9]w.webp
+graphify-out/
+
+# Ad-hoc audit / walkthrough artifacts (prior agent screenshots & snapshots) — not source
+/*.png
+/*.jpeg
+/*.jpg
+/*.gif
+.playwright-mcp/
+/temp-app.css
+/UsersAdministratorAppDataLocalTemplive-app.css

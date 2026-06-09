@@ -1,10 +1,11 @@
 import { Link } from "react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { StorageUtils } from "../utils/storage";
 import { useToast } from "./Toast";
 import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
 import { getLqipStyle } from "../utils/lqip";
+import { formatPrice } from "../utils/format";
 
 export interface Product {
     id: string;
@@ -82,18 +83,32 @@ export default function ProductCard({
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
     const displayColors = colors?.length ? colors : [];
 
+    // Reflect wishlist membership (client-only — avoids an SSR mismatch since
+    // localStorage isn't available on the server). Subscribe so the heart stays
+    // in sync if the item is toggled elsewhere (e.g. the wishlist page).
+    const [wished, setWished] = useState(false);
+    useEffect(() => {
+        const sync = () => setWished(StorageUtils.isInWishlist(id));
+        sync();
+        return StorageUtils.subscribeToWishlist(sync);
+    }, [id]);
+
     const handleAddToWishlist = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        const added = StorageUtils.addToWishlist({
+        if (StorageUtils.isInWishlist(id)) {
+            StorageUtils.removeFromWishlist(id);
+            showToast("Прибрано з улюбленого", "info");
+            return;
+        }
+        StorageUtils.addToWishlist({
             id,
             name,
             price: sale_price || price,
             image,
             category: product.category || "",
         });
-        if (added) showToast("Додано до улюбленого ✦");
-        else showToast("Вже у списку улюбленого", "info");
+        showToast("Додано до улюбленого ✦");
     };
 
     const handleSwatchClick = (e: React.MouseEvent, color: string) => {
@@ -193,8 +208,9 @@ export default function ProductCard({
                 )}
 
                 <motion.button
-                    className="product-card__heart-btn"
-                    aria-label="Додати в обране"
+                    className={`product-card__heart-btn${wished ? " is-active" : ""}`}
+                    aria-label={wished ? "Прибрати з обраного" : "Додати в обране"}
+                    aria-pressed={wished}
                     onClick={handleAddToWishlist}
                     whileHover={{ scale: 1.08 }}
                     whileTap={{ scale: 0.94 }}
@@ -203,7 +219,7 @@ export default function ProductCard({
                         width="20"
                         height="20"
                         viewBox="0 0 24 24"
-                        fill="none"
+                        fill={wished ? "currentColor" : "none"}
                         stroke="currentColor"
                         strokeWidth="1.5"
                         strokeLinecap="round"
@@ -226,17 +242,17 @@ export default function ProductCard({
                     {is_sale && sale_price ? (
                         <>
                             <span className="product-card__price product-card__price--sale">
-                                {sale_price.toLocaleString()} ₴
+                                {formatPrice(sale_price)} ₴
                             </span>
                             <s
                                 className="product-card__price-old"
-                                aria-label={`Попередня ціна ${price.toLocaleString()} гривень`}
+                                aria-label={`Попередня ціна ${formatPrice(price)} гривень`}
                             >
-                                {price.toLocaleString()} ₴
+                                {formatPrice(price)} ₴
                             </s>
                         </>
                     ) : (
-                        <span className="product-card__price">{price.toLocaleString()} ₴</span>
+                        <span className="product-card__price">{formatPrice(price)} ₴</span>
                     )}
                 </div>
 

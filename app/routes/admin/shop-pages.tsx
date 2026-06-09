@@ -4,13 +4,13 @@ import {
     useActionData,
     useNavigation,
     useSubmit,
-    redirect,
 } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { prisma } from "../../db.server";
-import { isAuthenticated } from "../../utils/admin.server";
+import { requireAdmin } from "../../utils/admin-guard.server";
 import { uploadFile } from "../../utils/upload.server";
 import { invalidateAll } from "../../utils/cache.server";
+import { SHOP_SLUGS } from "../../utils/taxonomy";
 
 // --- Types ---
 type ShopPageSettings = {
@@ -43,27 +43,28 @@ export async function loader() {
     const pages = await prisma.shopPage.findMany();
     // Use fallback minimal data if DB is empty
     if (!pages || pages.length === 0) {
+        // Fallback when the ShopPage table is empty: one placeholder per REAL
+        // shop slug (taxonomy.ts), not the legacy women/kids — otherwise saving
+        // a hero here would create /shop/women, which no route or menu reads,
+        // and the product editor's shop dropdown would then orphan products.
+        const titles: Record<string, string> = {
+            yoga: "Yoga",
+            sport: "Sport",
+            dance: "Dance",
+            casual: "Casual",
+            kids: "Діти",
+            yogatools: "Yoga Tools",
+        };
         return {
-            pages: [
-                {
-                    id: "temp-women",
-                    slug: "women",
-                    title: "Жіноча",
-                    subtitle: "колекція",
-                    heroImage: "",
-                    heroImagePos: "50% 50% 1",
-                    prefixLabel: "For active life",
-                },
-                {
-                    id: "temp-kids",
-                    slug: "kids",
-                    title: "Діти",
-                    subtitle: "колекція",
-                    heroImage: "",
-                    heroImagePos: "50% 50% 1",
-                    prefixLabel: "For little stars",
-                },
-            ] as ShopPageSettings[],
+            pages: SHOP_SLUGS.map((slug) => ({
+                id: `temp-${slug}`,
+                slug,
+                title: titles[slug] ?? slug,
+                subtitle: "колекція",
+                heroImage: "",
+                heroImagePos: "50% 50% 1",
+                prefixLabel: null,
+            })) as ShopPageSettings[],
         };
     }
     return { pages: pages as ShopPageSettings[] };
@@ -71,9 +72,8 @@ export async function loader() {
 
 // --- Action ---
 export async function action({ request }: { request: Request }) {
-    if (!(await isAuthenticated(request))) {
-        return redirect("/admin/login");
-    }
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     // Clear cache so updated shop page data is shown immediately
     invalidateAll();
     try {

@@ -44,28 +44,7 @@ export async function loader({ request }: { request: Request }) {
     }
 }
 
-// POST /api/promo — increment use count
-export async function action({ request }: { request: Request }) {
-    if (request.method !== "POST") {
-        return Response.json({ error: "Method not allowed" }, { status: 405 });
-    }
-
-    try {
-        const raw = (await request.json()) as { code?: unknown };
-        const code = typeof raw.code === "string" ? raw.code.trim().toUpperCase() : "";
-
-        if (!code) {
-            return Response.json({ error: "Код не вказано" }, { status: 400 });
-        }
-
-        await prisma.promoCode.updateMany({
-            where: { code },
-            data: { usedCount: { increment: 1 } },
-        });
-
-        return Response.json({ success: true });
-    } catch (e) {
-        console.error("Promo use error:", e);
-        return Response.json({ error: "Помилка" }, { status: 500 });
-    }
-}
+// NOTE: the former public POST /api/promo (increment usedCount) was removed —
+// it was unauthenticated, unlinked to any order, and let anyone inflate a
+// code's usedCount to exhaust it (promo DoS) / corrupt analytics. Usage is
+// incremented server-side in api.orders.create.tsx, the single source of truth.

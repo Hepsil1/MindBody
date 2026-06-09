@@ -1,0 +1,1016 @@
+{
+  "navRect": {
+    "x": 0,
+    "y": 64,
+    "width": 375,
+    "height": 780,
+    "top": 64,
+    "right": 375,
+    "bottom": 844,
+    "left": 0
+  },
+  "navPadding": "10px 52px",
+  "navOverflowY": "auto",
+  "sH": 778,
+  "cH": 778,
+  "listClass": "header__nav-list",
+  "listPad": "0px / gap 24px",
+  "eyebrows": [
+    {
+      "tag": "H4",
+      "class": "mega-menu__heading",
+      "text": "Категорії",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "10px/600/3px",
+      "tt": "uppercase",
+      "color": "rgb(153, 153, 153)",
+      "margin": "0px 0px 8px",
+      "padding": "0px 0px 8px"
+    },
+    {
+      "tag": "H4",
+      "class": "mega-menu__heading",
+      "text": "Категорії",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "10px/600/3px",
+      "tt": "uppercase",
+      "color": "rgb(153, 153, 153)",
+      "margin": "0px 0px 8px",
+      "padding": "0px 0px 8px"
+    },
+    {
+      "tag": "H4",
+      "class": "mega-menu__heading",
+      "text": "Категорії",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "10px/600/3px",
+      "tt": "uppercase",
+      "color": "rgb(153, 153, 153)",
+      "margin": "0px 0px 8px",
+      "padding": "0px 0px 8px"
+    },
+    {
+      "tag": "H4",
+      "class": "mega-menu__heading",
+      "text": "Категорії",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "10px/600/3px",
+      "tt": "uppercase",
+      "color": "rgb(153, 153, 153)",
+      "margin": "0px 0px 8px",
+      "padding": "0px 0px 8px"
+    },
+    {
+      "tag": "H4",
+      "class": "mega-menu__heading",
+      "text": "Категорії",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "10px/600/3px",
+      "tt": "uppercase",
+      "color": "rgb(153, 153, 153)",
+      "margin": "0px 0px 8px",
+      "padding": "0px 0px 8px"
+    }
+  ],
+  "links": [
+    {
+      "text": "YOGA",
+      "href": "/shop/yoga",
+      "rect": {
+        "x": 53,
+        "y": 136.59375,
+        "width": 51.15625,
+        "height": 22.390625,
+        "top": 136.59375,
+        "right": 104.15625,
+        "bottom": 158.984375,
+        "left": 53
+      },
+      "font": "14px/500/3.08px",
+      "tt": "uppercase",
+      "color": "rgb(26, 26, 26)",
+      "padY": "0px/0px",
+      "h": "22.3906px"
+    },
+    {
+      "text": "Всі товари",
+      "href": "/shop/yoga",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Комбінезони",
+      "href": "/shop/yoga/jumpsuit",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Легінси",
+      "href": "/shop/yoga/leggings",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "VELO",
+      "href": "/shop/yoga/velo",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Топи",
+      "href": "/shop/yoga/tops",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Шорти",
+      "href": "/shop/yoga/shorts",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Лонгсліви",
+      "href": "/shop/yoga/longsleeve",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Футболки",
+      "href": "/shop/yoga/tshirts",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Переглянути →",
+      "href": "/shop/yoga",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "12px/400/0.6px",
+      "tt": "none",
+      "color": "rgb(102, 102, 102)",
+      "padY": "0px/0px",
+      "h": "auto"
+    },
+    {
+      "text": "SPORT",
+      "href": "/shop/sport",
+      "rect": {
+        "x": 53,
+        "y": 182.984375,
+        "width": 58.0625,
+        "height": 22.390625,
+        "top": 182.984375,
+        "right": 111.0625,
+        "bottom": 205.375,
+        "left": 53
+      },
+      "font": "14px/500/3.08px",
+      "tt": "uppercase",
+      "color": "rgb(26, 26, 26)",
+      "padY": "0px/0px",
+      "h": "22.3906px"
+    },
+    {
+      "text": "Всі товари",
+      "href": "/shop/sport",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Комбінезони",
+      "href": "/shop/sport/jumpsuit",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Легінси",
+      "href": "/shop/sport/leggings",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "VELO",
+      "href": "/shop/sport/velo",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Топи",
+      "href": "/shop/sport/tops",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Шорти",
+      "href": "/shop/sport/shorts",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Лонгсліви",
+      "href": "/shop/sport/longsleeve",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Комплекти",
+      "href": "/shop/sport/sets",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Переглянути →",
+      "href": "/shop/sport",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "12px/400/0.6px",
+      "tt": "none",
+      "color": "rgb(102, 102, 102)",
+      "padY": "0px/0px",
+      "h": "auto"
+    },
+    {
+      "text": "DANCE",
+      "href": "/shop/dance",
+      "rect": {
+        "x": 53,
+        "y": 229.375,
+        "width": 62.25,
+        "height": 22.390625,
+        "top": 229.375,
+        "right": 115.25,
+        "bottom": 251.765625,
+        "left": 53
+      },
+      "font": "14px/500/3.08px",
+      "tt": "uppercase",
+      "color": "rgb(26, 26, 26)",
+      "padY": "0px/0px",
+      "h": "22.3906px"
+    },
+    {
+      "text": "Всі товари",
+      "href": "/shop/dance",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Комбінезони",
+      "href": "/shop/dance/jumpsuit",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Моделі із сітки",
+      "href": "/shop/dance/net-models",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Комплекти пілон",
+      "href": "/shop/dance/pole-sets",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Переглянути →",
+      "href": "/shop/dance",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "12px/400/0.6px",
+      "tt": "none",
+      "color": "rgb(102, 102, 102)",
+      "padY": "0px/0px",
+      "h": "auto"
+    },
+    {
+      "text": "CASUAL",
+      "href": "/shop/casual",
+      "rect": {
+        "x": 53,
+        "y": 275.765625,
+        "width": 71.5625,
+        "height": 22.390625,
+        "top": 275.765625,
+        "right": 124.5625,
+        "bottom": 298.15625,
+        "left": 53
+      },
+      "font": "14px/500/3.08px",
+      "tt": "uppercase",
+      "color": "rgb(26, 26, 26)",
+      "padY": "0px/0px",
+      "h": "22.3906px"
+    },
+    {
+      "text": "Всі товари",
+      "href": "/shop/casual",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Костюми",
+      "href": "/shop/casual/suits",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Сорочки",
+      "href": "/shop/casual/shirts",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Футболки",
+      "href": "/shop/casual/tshirts",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Майки",
+      "href": "/shop/casual/singlets",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Шорти",
+      "href": "/shop/casual/shorts",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Термо",
+      "href": "/shop/casual/thermo",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Худі / Світшоти",
+      "href": "/shop/casual/hoodies",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Джоггери",
+      "href": "/shop/casual/joggers",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Переглянути →",
+      "href": "/shop/casual",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "12px/400/0.6px",
+      "tt": "none",
+      "color": "rgb(102, 102, 102)",
+      "padY": "0px/0px",
+      "h": "auto"
+    },
+    {
+      "text": "KIDS",
+      "href": "/shop/kids",
+      "rect": {
+        "x": 53,
+        "y": 322.15625,
+        "width": 42.875,
+        "height": 22.390625,
+        "top": 322.15625,
+        "right": 95.875,
+        "bottom": 344.546875,
+        "left": 53
+      },
+      "font": "14px/500/3.08px",
+      "tt": "uppercase",
+      "color": "rgb(26, 26, 26)",
+      "padY": "0px/0px",
+      "h": "22.3906px"
+    },
+    {
+      "text": "Всі товари",
+      "href": "/shop/kids",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Комбінезони",
+      "href": "/shop/kids/jumpsuit",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "14px/400/0.28px",
+      "tt": "none",
+      "color": "rgb(68, 68, 68)",
+      "padY": "5px/5px",
+      "h": "auto"
+    },
+    {
+      "text": "Переглянути →",
+      "href": "/shop/kids",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "font": "12px/400/0.6px",
+      "tt": "none",
+      "color": "rgb(102, 102, 102)",
+      "padY": "0px/0px",
+      "h": "auto"
+    },
+    {
+      "text": "YOGATOOLS",
+      "href": "/shop/yogatools",
+      "rect": {
+        "x": 53,
+        "y": 368.546875,
+        "width": 110.25,
+        "height": 22.390625,
+        "top": 368.546875,
+        "right": 163.25,
+        "bottom": 390.9375,
+        "left": 53
+      },
+      "font": "14px/500/3.08px",
+      "tt": "uppercase",
+      "color": "rgb(26, 26, 26)",
+      "padY": "0px/0px",
+      "h": "22.3906px"
+    },
+    {
+      "text": "Увійти",
+      "href": "/auth",
+      "rect": {
+        "x": 53,
+        "y": 487.53125,
+        "width": 269,
+        "height": 20.796875,
+        "top": 487.53125,
+        "right": 322,
+        "bottom": 508.328125,
+        "left": 53
+      },
+      "font": "13px/500/1.3px",
+      "tt": "uppercase",
+      "color": "rgb(85, 85, 85)",
+      "padY": "0px/0px",
+      "h": "20.7969px"
+    },
+    {
+      "text": "Обране",
+      "href": "/wishlist",
+      "rect": {
+        "x": 53,
+        "y": 526.328125,
+        "width": 269,
+        "height": 20.796875,
+        "top": 526.328125,
+        "right": 322,
+        "bottom": 547.125,
+        "left": 53
+      },
+      "font": "13px/500/1.3px",
+      "tt": "uppercase",
+      "color": "rgb(85, 85, 85)",
+      "padY": "0px/0px",
+      "h": "20.7969px"
+    },
+    {
+      "text": "Про бренд",
+      "href": "/about",
+      "rect": {
+        "x": 53,
+        "y": 565.125,
+        "width": 269,
+        "height": 20.796875,
+        "top": 565.125,
+        "right": 322,
+        "bottom": 585.921875,
+        "left": 53
+      },
+      "font": "13px/500/1.3px",
+      "tt": "uppercase",
+      "color": "rgb(85, 85, 85)",
+      "padY": "0px/0px",
+      "h": "20.7969px"
+    },
+    {
+      "text": "Контакти",
+      "href": "/about#contact-premium",
+      "rect": {
+        "x": 53,
+        "y": 603.921875,
+        "width": 269,
+        "height": 20.796875,
+        "top": 603.921875,
+        "right": 322,
+        "bottom": 624.71875,
+        "left": 53
+      },
+      "font": "13px/500/1.3px",
+      "tt": "uppercase",
+      "color": "rgb(85, 85, 85)",
+      "padY": "0px/0px",
+      "h": "20.7969px"
+    },
+    {
+      "text": "+380 67 123 45 67",
+      "href": "tel:+380671234567",
+      "rect": {
+        "x": 53,
+        "y": 642.71875,
+        "width": 269,
+        "height": 20.796875,
+        "top": 642.71875,
+        "right": 322,
+        "bottom": 663.515625,
+        "left": 53
+      },
+      "font": "13px/700/0.52px",
+      "tt": "uppercase",
+      "color": "rgb(42, 90, 90)",
+      "padY": "0px/0px",
+      "h": "20.7969px"
+    }
+  ],
+  "dividers": []
+}

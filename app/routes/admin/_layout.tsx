@@ -1,5 +1,12 @@
-import { NavLink, Outlet, Link, redirect } from "react-router";
-import { useState } from "react";
+import {
+    NavLink,
+    Outlet,
+    Link,
+    redirect,
+    isRouteErrorResponse,
+    useRouteError,
+} from "react-router";
+import { useState, useEffect } from "react";
 import adminCss from "../../styles/admin.css?url";
 import appCss from "../../app.css?url";
 import { isAuthenticated, adminSession } from "../../utils/admin.server";
@@ -182,11 +189,51 @@ const navItems = [
 
 export default function AdminLayout() {
     const [editMode, setEditMode] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+
+    // Close the mobile drawer on Escape.
+    useEffect(() => {
+        if (!menuOpen) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setMenuOpen(false);
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [menuOpen]);
 
     return (
         <div className="admin-layout">
+            {/* Mobile top bar (revealed only on phones via admin.css). */}
+            <div className="admin-topbar">
+                <button
+                    type="button"
+                    className="admin-burger"
+                    aria-label={menuOpen ? "Закрити меню" : "Відкрити меню"}
+                    aria-expanded={menuOpen}
+                    onClick={() => setMenuOpen((v) => !v)}
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        width="22"
+                        height="22"
+                    >
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+                <span className="admin-topbar__brand">MIND BODY</span>
+            </div>
+            {/* Scrim to dismiss the drawer by tapping outside it. */}
+            {menuOpen && (
+                <div className="admin-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+            )}
+
             {/* Sidebar */}
-            <aside className="admin-sidebar">
+            <aside className={`admin-sidebar${menuOpen ? " is-open" : ""}`}>
                 {/* Logo */}
                 <div
                     style={{
@@ -238,6 +285,7 @@ export default function AdminLayout() {
                             key={item.to}
                             to={item.to}
                             end={item.end}
+                            onClick={() => setMenuOpen(false)}
                             className={({ isActive }) =>
                                 `admin-nav__item ${isActive ? "admin-nav__item--active" : ""}`
                             }
@@ -317,6 +365,63 @@ export default function AdminLayout() {
                 <Outlet />
             </main>
             <Toaster richColors theme="dark" position="top-right" />
+        </div>
+    );
+}
+
+// Catch loader/render errors from any admin child route here (the dashboard
+// aggregates and the list loaders all hit raw $queryRawUnsafe against prod, so
+// a throw is realistic). Without this they bubble to the root boundary and the
+// whole admin chrome vanishes; here the operator gets a clear message + a way back.
+export function ErrorBoundary() {
+    const error = useRouteError();
+    const is404 = isRouteErrorResponse(error) && error.status === 404;
+    return (
+        <div
+            style={{
+                minHeight: "100vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "24px",
+                background: "var(--bg-page, #0f1115)",
+                color: "#e2e8f0",
+                fontFamily: "system-ui, sans-serif",
+            }}
+        >
+            <div
+                style={{
+                    maxWidth: "440px",
+                    textAlign: "center",
+                    background: "var(--bg-card, #161b22)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: "16px",
+                    padding: "40px 32px",
+                }}
+            >
+                <h1 style={{ fontSize: "22px", margin: "0 0 12px" }}>
+                    {is404 ? "Сторінку не знайдено" : "Щось пішло не так"}
+                </h1>
+                <p style={{ color: "#94a3b8", fontSize: "14px", margin: "0 0 24px" }}>
+                    {is404
+                        ? "Можливо, запис було видалено або посилання застаріле."
+                        : "Сталася помилка під час завантаження. Спробуйте ще раз або поверніться на головну."}
+                </p>
+                <Link
+                    to="/admin"
+                    style={{
+                        display: "inline-block",
+                        padding: "10px 20px",
+                        borderRadius: "10px",
+                        background: "var(--accent-primary, #5eead4)",
+                        color: "#06231f",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                    }}
+                >
+                    На головну адмінки
+                </Link>
+            </div>
         </div>
     );
 }

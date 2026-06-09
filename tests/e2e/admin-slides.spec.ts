@@ -14,11 +14,13 @@ import { test, expect } from "@playwright/test";
  * project .env, so ADMIN_PASSWORD matches the value below.
  */
 
-const ADMIN_PASSWORD = "mindbody_admin_pwd";
+const ADMIN_USERNAME = "Admin";
+const ADMIN_PASSWORD = "Admin";
 
 test.describe("admin visual editor", () => {
     test.beforeEach(async ({ page }) => {
         await page.goto("/admin/login");
+        await page.fill('input[name="username"]', ADMIN_USERNAME);
         await page.fill('input[name="password"]', ADMIN_PASSWORD);
         await page.click('button[type="submit"]');
         // A correct password redirects to /admin; a wrong one stays on

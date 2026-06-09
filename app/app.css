@@ -523,19 +523,31 @@ h3 {
 .product-card {
     position: relative;
     background: var(--color-bg-white);
-    border-radius: 4px;
+    /* Batch 53: the old 4px radius + 1px grey border + zero shadow read
+       as a default un-styled box ("недоработанные" — user). Premium
+       e-comm (Sézane / Cuyana) floats a softly-rounded white card off
+       the cream page with a gentle shadow, not a hard border frame.
+       14px radius, whisper border for definition, and a low resting
+       shadow that is visible even on mobile (where :hover never fires). */
+    border-radius: 14px;
     overflow: hidden;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-light);
     width: 100%;
     /* No max-width — let the grid container control width */
     display: flex;
     flex-direction: column;
-    transition: border-color 0.3s ease;
+    box-shadow: 0 2px 10px rgba(26, 26, 26, 0.05);
+    transition:
+        box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.3s ease;
 }
 
 @media (hover: hover) {
     .product-card:hover {
-        border-color: var(--color-border-mid);
+        border-color: var(--color-border);
+        /* Pairs with the framer-motion y:-4 lift — the card rises and
+           casts a deeper, softer shadow. */
+        box-shadow: 0 14px 30px rgba(26, 26, 26, 0.1);
     }
 }
 
@@ -812,8 +824,12 @@ h3 {
 .product-card__price {
     font-size: 14px;
     font-weight: 500;
-    color: var(--color-text-secondary);
-    letter-spacing: 0;
+    /* Batch 53: was --color-text-secondary (#555) which read washed-out
+       / unfinished. Crisp near-black price = "considered". The serif
+       title (15px/600 Cormorant) still leads the hierarchy over this
+       14px DM Sans price, so name-first is preserved. */
+    color: var(--color-text-primary);
+    letter-spacing: 0.01em;
     line-height: 1.2;
 }
 .product-card__price--sale {
@@ -1512,19 +1528,28 @@ button.product-card__swatch:focus-visible {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(255, 255, 255, 0.06);
-
-    padding: 10px 44px;
+    /* Pure transparent glass: NO colour tint, NO border/outline. Just a
+       whisper of neutral frost over a strong blur, so the slide reads
+       clearly THROUGH the pill. Legibility is carried entirely by the white
+       labels' halo (below) — that keeps the glass clean and colourless
+       instead of leaning on a coloured or opaque fill. Only a soft diffuse
+       shadow gives it depth (a shadow, not an outline). Reset to a crisp
+       solid in .is-scrolled and the mobile drawer further down. */
+    background: rgba(255, 255, 255, 0.04);
+    -webkit-backdrop-filter: blur(20px) saturate(125%) brightness(0.82);
+    backdrop-filter: blur(20px) saturate(125%) brightness(0.82);
+    padding: 12px 44px;
     border-radius: 100px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: none;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
     transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .header__nav:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-    padding: 10px 52px;
+    /* Barely lifts on hover — a hair more frost + a softer-deeper shadow.
+       Stays transparent and borderless. */
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16);
 }
 
 .header.is-scrolled .header__nav,
@@ -1532,6 +1557,11 @@ button.product-card__swatch:focus-visible {
     background: rgba(42, 90, 104, 0.05);
     border: 1px solid rgba(42, 90, 104, 0.1);
     padding: 8px 32px;
+    /* Drop the hero frosted-glass treatment once the header turns solid
+       white — the dark tint + blur + shadow only make sense over imagery. */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
 }
 
 .header__nav-list {
@@ -1544,18 +1574,31 @@ button.product-card__swatch:focus-visible {
 
 .header__nav-link {
     font-family: var(--font-display);
-    font-size: 10px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
     letter-spacing: 0.22em;
     text-transform: uppercase;
+    /* White labels on the brand-teal glass — crisp on any slide. Switched
+       to dark in the scrolled + mobile states (light surfaces). */
     color: var(--color-text-white);
     position: relative;
     text-decoration: none;
+    /* Dual dark halo — the ONLY thing making the white labels readable now
+       that the glass is clear and colourless. A wide soft glow plus a tight
+       close shadow give each glyph local contrast over any slide while the
+       pill itself stays fully see-through. Removed in scrolled + mobile. */
+    text-shadow:
+        0 1px 12px rgba(0, 0, 0, 0.5),
+        0 1px 3px rgba(0, 0, 0, 0.4);
     transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .header__nav-link:hover {
-    color: var(--color-primary-light);
+    /* Minimal hover: stay white, lift 1px, a touch more glow — no underline
+       or outline. The scrolled-state !important rule keeps it dark on the
+       white header. */
+    color: var(--color-text-white);
+    text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
     transform: translateY(-1px);
 }
 
@@ -1578,8 +1621,15 @@ button.product-card__swatch:focus-visible {
     position: absolute;
     top: 100%;
     left: 50%;
-    transform: translateX(-50%) translateY(8px);
-    min-width: 700px;
+    /* --mega-shift is set by MegaMenu.tsx to clamp the panel into the viewport
+       on edge nav items (0 when centred fits). */
+    transform: translateX(calc(-50% + var(--mega-shift, 0px))) translateY(8px);
+    /* Explicit width: a shrink-wrapped panel collapses the multi-column flow
+       below to ONE tall column. Shallow sections use this compact width; deep
+       ones (yoga/sport) opt into .mega-menu--wide to fit ~3 columns. Capped
+       at 92vw so the centred panel never exceeds the viewport. */
+    width: 560px;
+    max-width: 92vw;
     background: rgba(255, 255, 255, 0.98);
 
     border-radius: 20px;
@@ -1594,6 +1644,21 @@ button.product-card__swatch:focus-visible {
     z-index: 9999;
 }
 
+/* Deep sections (yoga/sport) — wide enough for ~3 columns of the column flow. */
+.mega-menu--wide {
+    width: min(860px, 92vw);
+}
+
+/* Mobile accordion scaffolding. On desktop the head is transparent to layout
+   (display:contents) so the nav pill is unchanged and the toggle is hidden;
+   both come alive only in the mobile drawer (see the @media block below). */
+.header__nav-head {
+    display: contents;
+}
+.header__nav-toggle {
+    display: none;
+}
+
 /* Hover Bridge: Prevents menu from closing when mouse crosses the gap */
 .mega-menu::before {
     content: "";
@@ -1605,16 +1670,97 @@ button.product-card__swatch:focus-visible {
     background: transparent;
 }
 
-.header__nav-item--mega:hover .mega-menu {
+.header__nav-item--mega:hover .mega-menu,
+.header__nav-item--mega:focus-within .mega-menu {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(calc(-50% + var(--mega-shift, 0px))) translateY(0);
 }
 
 .mega-menu__inner {
     display: flex;
-    gap: 40px;
+    gap: 36px;
+    align-items: flex-start;
+}
+
+/* Data-driven deep menu: subcategory groups flow into balanced columns
+   (multi-column avoids the ragged row-heights a grid gives when one group
+   — e.g. jumpsuit with its sleeve list — is much taller than its siblings). */
+.mega-menu__cols {
+    flex: 1;
+    column-width: 142px;
+    column-gap: 30px;
+}
+
+.mega-menu__group {
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0 0 16px;
+}
+
+.mega-menu__group-head {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    text-decoration: none;
+    padding-bottom: 7px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #eee;
+    transition: color 0.2s;
+}
+
+.mega-menu__group-head:hover {
+    color: var(--color-primary, #2a5a5a);
+}
+
+.mega-menu__group-head--all {
+    color: var(--color-primary, #2a5a5a);
+}
+
+.mega-menu__fabric {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.mega-menu__sublink {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    text-decoration: none;
+    padding: 3px 0;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.mega-menu__sublink:hover {
+    color: var(--color-primary, #2a5a5a);
+    padding-left: 5px;
+}
+
+.mega-menu__sublink--fabric {
+    color: #2a2a2a;
+    font-weight: 600;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.mega-menu__sublink--sleeve {
+    padding-left: 12px;
+    color: #888;
+    font-size: 12px;
+}
+
+.mega-menu__sublink--sleeve:hover {
+    padding-left: 16px;
 }
 
 .mega-menu__col {
@@ -1825,6 +1971,7 @@ button.product-card__swatch:focus-visible {
 .header.is-scrolled .header__nav-link,
 .header--static .header__nav-link {
     color: var(--color-text-primary) !important;
+    text-shadow: none;
 }
 
 /* Removed redundant block */
@@ -2866,6 +3013,12 @@ button.product-card__swatch:focus-visible {
         padding: var(--space-xl);
         border-radius: 0;
         transform: none;
+        /* Shed the desktop hero frosted-glass pill — the drawer is a solid
+           white panel with dark links. */
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        box-shadow: none;
+        border: none;
     }
 
     .header__nav--active .header__nav-list {
@@ -2876,6 +3029,7 @@ button.product-card__swatch:focus-visible {
     .header__nav--active .header__nav-link {
         color: var(--color-text-primary);
         font-size: 14px;
+        text-shadow: none;
     }
 
     .footer__grid {
@@ -4113,13 +4267,111 @@ button.product-card__swatch:focus-visible {
         padding: 120px 0 60px;
     }
 
+    /* Premium mobile cart row: keep image + details HORIZONTAL.
+       Was flex-direction:column with a full-width 220px LANDSCAPE
+       image that cropped portrait product shots to a thin band and
+       roughly doubled the card height.  A small portrait thumbnail on
+       the left mirrors the cart-drawer pattern and reads as finished. */
     .cart-item {
-        flex-direction: column;
+        gap: 14px;
+        padding: 16px;
+        border-radius: 16px;
+        align-items: flex-start;
     }
 
     .cart-item__image {
-        width: 100%;
-        height: 220px;
+        width: 88px;
+        height: 117px; /* 3:4 — matches the product image aspect ratio */
+        border-radius: 10px;
+    }
+
+    .cart-item__body {
+        min-width: 0; /* let long titles wrap instead of bulging the card */
+    }
+
+    .cart-item__top {
+        margin-bottom: 8px;
+        gap: 8px;
+    }
+
+    .cart-item__top h3 {
+        font-size: 16px;
+        line-height: 1.3;
+        min-width: 0;
+        overflow-wrap: break-word;
+    }
+
+    .cart-item__details {
+        gap: 12px;
+        font-size: 13px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+
+    /* The qty stepper is ~148px wide (44px a11y tap targets).  Let the
+       bottom row wrap so the price — kept right-aligned via margin-left
+       auto — drops to its own line on the narrowest phones rather than
+       colliding with the stepper. */
+    .cart-item__bottom {
+        margin-top: auto;
+        padding-top: 12px;
+        flex-wrap: wrap;
+        row-gap: 8px;
+        column-gap: 10px;
+    }
+
+    .cart-item__price {
+        margin-left: auto;
+        font-size: 20px;
+    }
+
+    /* Trust badges: fold 3 full-width stacked cards (~465px tall) into
+       ONE grouped card with 3 compact icon-left rows (~150px).  Less
+       repetitive, more premium, and gives back most of a screen.
+       Ancestor-scoped (.checkout-trust-premium ...) so these beat the
+       base .trust-card-premium rule, which sits later in this file. */
+    .checkout-trust-premium {
+        grid-template-columns: 1fr;
+        gap: 0;
+        margin-top: 16px;
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        overflow: hidden;
+    }
+
+    .checkout-trust-premium .trust-card-premium {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 14px;
+        text-align: left;
+        padding: 15px 18px;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+    }
+
+    .checkout-trust-premium .trust-card-premium:hover {
+        transform: none;
+        box-shadow: none;
+        border-color: transparent;
+    }
+
+    .checkout-trust-premium .trust-card-premium + .trust-card-premium {
+        border-top: 1px solid #f0ece8;
+    }
+
+    .checkout-trust-premium .trust-card-premium__icon {
+        flex-shrink: 0;
+    }
+
+    /* 35px padding is heavy on a 350px-wide phone — tighten. */
+    .cart-summary__card {
+        padding: 24px 20px;
+        border-radius: 20px;
     }
 }
 
@@ -4713,6 +4965,18 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     width: 100%;
 }
 
+/* Sprint 1 D1.2 — #45 TRUST-006 support hours micro-text (desktop base).
+   Mobile override lives near .footer-puma__phone-cta block. */
+.footer-puma__hours {
+    margin: 4px 0 16px 0;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    color: rgba(240, 236, 228, 0.45);
+    text-transform: uppercase;
+}
+
 /* RIGHT GROUP: Feedback Form */
 .footer-puma__right-group {
     display: flex;
@@ -4965,6 +5229,103 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     width: 250px;
     text-align: right;
     white-space: nowrap;
+}
+
+/* Sprint 1 D1.4 — #4 TRUST-001 trust signals row.
+   Payment badges + SSL note sit above the divider as a quiet
+   sentence of legitimacy. Monochrome icons inherit muted cream
+   tone so they read as supporting info, not vendor logos. */
+.footer-puma__trust-row {
+    width: 100%;
+    max-width: 1400px;
+    margin: 32px auto 0 auto;
+    padding: 0 40px 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.footer-puma__pay-icons {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.footer-puma__pay-icons li {
+    display: inline-flex;
+    align-items: center;
+}
+
+.footer-puma__pay-icons img {
+    height: 20px;
+    width: auto;
+    opacity: 0.55;
+    filter: brightness(0) invert(1);
+    /* monochrome white at 55% so they read as "ambient" */
+    transition: opacity 0.2s ease;
+}
+
+.footer-puma__pay-icons img:hover {
+    opacity: 0.85;
+}
+
+.footer-puma__pay-text {
+    font-family: var(--font-body);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(240, 236, 228, 0.5);
+}
+
+.footer-puma__ssl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: rgba(240, 236, 228, 0.5);
+    text-transform: uppercase;
+}
+
+.footer-puma__ssl-badge svg {
+    opacity: 0.7;
+}
+
+/* Sprint 1 D1.3 — #33 TRUST-004 legal entity line (placeholder).
+   Sits between "Зроблено в Україні" and copyright. Real ФОП data
+   replaces this when user provides. */
+.footer-puma__legal {
+    font-family: var(--font-body);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: rgba(240, 236, 228, 0.4);
+    font-style: normal; /* override <address> default italic */
+    text-align: center;
+    line-height: 1.5;
+}
+.footer-puma__legal a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+.footer-puma__legal a:hover,
+.footer-puma__legal a:focus-visible {
+    color: rgba(240, 236, 228, 0.7);
+    border-bottom-color: currentColor;
+}
+.footer-puma__legal a:focus-visible {
+    outline: 1px solid rgba(240, 236, 228, 0.5);
+    outline-offset: 3px;
+    border-radius: 2px;
 }
 
 /* RESPONSIVE */
@@ -10572,6 +10933,15 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     letter-spacing: 0.05em;
     color: var(--color-text-primary);
     transition: var(--transition-base);
+    /* Now a <button> for keyboard access; reset native chrome so the
+       visual stays identical to the old <div> while the whole row is
+       focusable/clickable and exposes aria-expanded to assistive tech. */
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
 }
 
 .accordion-trigger:hover {
@@ -10971,6 +11341,15 @@ body:has(.filter-drawer-overlay) .floating-contact {
 @media (max-width: 768px) {
     body:has(.product-page) .floating-contact {
         bottom: 84px;
+    }
+
+    /* Sprint 1 D4.1 — #12 NAV-001 supersedes the lift above: on PDP and
+       checkout (where mobile-sticky-cta lives), hide the entire widget.
+       Three messenger circles + a back-to-top FAB next to the primary
+       buy button creates affordance confusion and steals taps. Footer
+       still has the same messengers + tel: link for users who want them. */
+    .floating-contact--hide-mobile {
+        display: none !important;
     }
 }
 
@@ -14190,6 +14569,99 @@ body:has(.filter-drawer-overlay) .floating-contact {
         display: none;
     }
 
+    /* --- Mobile taxonomy accordion ------------------------------------ */
+    /* The mobile nav <li> is flex-row by default; stack head over the
+       expanded panel so the accordion reads top-to-bottom, full width. */
+    .header__nav--active .header__nav-item--mega {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    /* The category row becomes a flex header (name + expand chevron). */
+    .header__nav--active .header__nav-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .header__nav--active .header__nav-head .header__nav-link {
+        flex: 1;
+        width: auto;
+    }
+    /* Chevron is the expand affordance, so drop the per-row → arrow here. */
+    .header__nav--active .header__nav-item--mega .header__nav-link::after {
+        content: none;
+    }
+    .header__nav-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        background: transparent;
+        border: none;
+        color: var(--color-text-muted, #999);
+        cursor: pointer;
+        transition:
+            transform 0.25s ease,
+            color 0.2s ease;
+    }
+    .header__nav-item--mega.is-expanded .header__nav-toggle {
+        transform: rotate(180deg);
+        color: var(--color-primary);
+    }
+
+    /* Reveal the full subcategory → fabric → sleeve depth as a vertical list. */
+    .header__nav-item--mega.is-expanded .mega-menu {
+        display: block;
+        position: static;
+        transform: none;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        background: transparent;
+        box-shadow: none;
+        border: none;
+        padding: 0 0 14px 6px;
+        margin: 0;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+    .header__nav-item--mega.is-expanded .mega-menu__inner {
+        display: block;
+    }
+    .header__nav-item--mega.is-expanded .mega-menu__cols {
+        display: block;
+        columns: auto;
+        column-width: auto;
+    }
+    /* The featured-image card is desktop chrome — hide it in the accordion. */
+    .header__nav-item--mega.is-expanded .mega-menu__featured {
+        display: none;
+    }
+    .header__nav-item--mega.is-expanded .mega-menu__group {
+        margin: 0 0 10px;
+        break-inside: auto;
+    }
+    .header__nav-item--mega.is-expanded .mega-menu__group-head {
+        color: var(--color-text-primary);
+        font-size: 12px;
+        padding: 6px 0 4px;
+        border-bottom: 1px solid var(--color-border-light, #f0ece8);
+    }
+    .header__nav-item--mega.is-expanded .mega-menu__sublink {
+        color: var(--color-text-secondary, #555);
+        font-size: 13px;
+        padding: 5px 0;
+    }
+    .header__nav-item--mega.is-expanded .mega-menu__sublink--fabric {
+        color: var(--color-text-primary);
+        font-weight: 600;
+    }
+
     /* Secondary links section inside the slide-out menu. */
     .header__nav-extra {
         display: flex;
@@ -14330,9 +14802,11 @@ body:has(.filter-drawer-overlay) .floating-contact {
        modifier on product pages has its own @media in
        product-page.css and is untouched. */
     .shop-hero-luxe:not(.compact) {
-        padding: 40px 0 24px;
-        min-height: 220px;
-        max-height: 280px;
+        /* Clear the fixed header (~64px) so the breadcrumb + title don't
+           render behind it on phones. */
+        padding: calc(var(--header-height, 64px) + 24px) 0 24px;
+        min-height: 240px;
+        max-height: 300px;
     }
     /* Mobile: kill decorative watermark + signature line that crowd
        the YOGA title and add proper left padding so YOGA isn't glued
@@ -14402,9 +14876,13 @@ body:has(.filter-drawer-overlay) .floating-contact {
    covers «Додати до кошика». Desktop untouched.
    ============================================================ */
 @media (max-width: 768px) {
-    /* Hairline frame separates image from card surface. */
+    /* Batch 53: removed the image-wrapper hairline. It stacked on top of
+       the card's own border to make a heavy double-frame that read
+       "unfinished" on mobile. The rounded card (14px) + soft shadow now
+       frames the photo on its own; the photo's bottom edge meets the
+       white details area cleanly with no separator line needed. */
     .product-card__image-wrapper {
-        border: 1px solid var(--color-border);
+        border: none;
     }
     /* Long Ukrainian names clamp to 2 lines on narrow cards. */
     .product-card__title {
@@ -15579,6 +16057,19 @@ select {
         border-radius: 2px;
     }
 
+    /* Sprint 1 D1.2 — #45 TRUST-006 support hours micro-text. Sets
+       response expectation right under the phone CTA. Same muted
+       tone as phone text so it reads as supporting info. */
+    .footer-puma__hours {
+        margin: 0 0 12px 0 !important;
+        font-family: var(--font-body) !important;
+        font-size: 11px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.06em !important;
+        color: rgba(240, 236, 228, 0.5) !important;
+        text-transform: uppercase;
+    }
+
     /* HIDE the desktop vertical gradient divider that leaked into
        mobile via the global rule at app.css:4571
        (.footer-puma__nav-col:not(:last-child)::after).
@@ -15698,6 +16189,41 @@ select {
     }
     .footer-puma__made-in .footer-puma__dot {
         opacity: 0.45;
+    }
+    /* Sprint 1 D1.3 — #33 TRUST-004 mobile order: between made-in and copyright */
+    .footer-puma__legal {
+        order: 2;
+        font-size: 10px !important;
+        letter-spacing: 0.06em !important;
+        color: rgba(240, 236, 228, 0.35) !important;
+        text-align: center !important;
+        line-height: 1.5;
+        max-width: 280px;
+        margin: 4px auto 0 auto;
+    }
+
+    /* Sprint 1 D1.4 — #4 TRUST-001 mobile: stack icons + ssl badge vertically,
+       center, tighter gaps. Same monochrome treatment as desktop. */
+    .footer-puma__trust-row {
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 24px 16px 16px 16px !important;
+        margin-top: 24px !important;
+        gap: 14px !important;
+    }
+    .footer-puma__pay-icons {
+        gap: 14px !important;
+        justify-content: center !important;
+    }
+    .footer-puma__pay-icons img {
+        height: 18px !important;
+    }
+    .footer-puma__pay-text {
+        font-size: 10px !important;
+    }
+    .footer-puma__ssl-badge {
+        font-size: 10px !important;
     }
     .footer-puma__copyright-text {
         order: 2;

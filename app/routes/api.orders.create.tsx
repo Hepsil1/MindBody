@@ -174,11 +174,16 @@ export async function action({ request }: ActionFunctionArgs) {
                     { status: 400, headers: { "Content-Type": "application/json" } },
                 );
             }
-            const discount =
+            let discount =
                 p.discountType === "percent"
                     ? Math.round((calculatedSubtotal * p.discountValue) / 100)
-                    : Math.min(p.discountValue, calculatedSubtotal);
-            finalTotal = calculatedSubtotal - discount;
+                    : p.discountValue;
+            // Never discount more than the subtotal — clamps a bad/legacy >100%
+            // percent code or an oversized fixed amount so the total can't go
+            // negative (the anti-fraud check below can't catch it: client and
+            // server share this same formula).
+            discount = Math.max(0, Math.min(discount, calculatedSubtotal));
+            finalTotal = Math.max(0, calculatedSubtotal - discount);
         }
 
         // Check final total vs payload total (anti-fraud) to ensure cart totals mach server real totals

@@ -5,6 +5,7 @@ import { AuthUtils } from "../utils/auth";
 import { useToast } from "../components/Toast";
 import { formatPhoneUA, getPhoneDigits } from "../utils/phone";
 import { countLabel } from "../utils/plural";
+import { productImageSrc, IMAGE_FALLBACK } from "../utils/format";
 import {
     useNovaPoshtaAutocomplete,
     type NovaPoshtaCity,
@@ -221,6 +222,9 @@ export default function Checkout() {
 
         const newErrors: Partial<Record<keyof CustomerInfo, string>> = {};
         if (!customerInfo.name.trim()) newErrors.name = "Введіть ваше ім'я";
+        if (!customerInfo.email.trim()) newErrors.email = "Введіть email для підтвердження замовлення";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerInfo.email.trim()))
+            newErrors.email = "Введіть коректний email";
         if (!customerInfo.phone) newErrors.phone = "Введіть номер телефону";
         else if (getPhoneDigits(customerInfo.phone).length < 12)
             newErrors.phone = "Введіть коректний номер";
@@ -622,12 +626,7 @@ export default function Checkout() {
                                         )}
                                     </div>
                                     <div className="form-group">
-                                        <label htmlFor="email">
-                                            Email{" "}
-                                            <span style={{ color: "#999", fontWeight: 400 }}>
-                                                (необов'язково)
-                                            </span>
-                                        </label>
+                                        <label htmlFor="email">Email *</label>
                                         <input
                                             type="email"
                                             id="email"
@@ -637,7 +636,19 @@ export default function Checkout() {
                                             placeholder="olena@example.com"
                                             autoComplete="email"
                                             inputMode="email"
+                                            required
+                                            aria-invalid={errors.email ? "true" : undefined}
+                                            aria-describedby={errors.email ? "email-error" : undefined}
                                         />
+                                        {errors.email && (
+                                            <span
+                                                id="email-error"
+                                                className="field-error-text"
+                                                role="alert"
+                                            >
+                                                {errors.email}
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="form-group">
                                         <label htmlFor="phone">Телефон *</label>
@@ -1055,7 +1066,7 @@ export default function Checkout() {
                                     <div className="order-items">
                                         {items.map((item) => (
                                             <div
-                                                key={`${item.id}-${item.size}`}
+                                                key={`${item.id}-${item.size ?? ""}-${item.color ?? ""}`}
                                                 className="order-item"
                                             >
                                                 {/* width/height set so the browser reserves the
@@ -1063,7 +1074,10 @@ export default function Checkout() {
                                                     Square because our CSS uses object-fit: cover on
                                                     .order-item img. */}
                                                 <img
-                                                    src={item.image}
+                                                    src={productImageSrc(item.image)}
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = IMAGE_FALLBACK;
+                                                    }}
                                                     alt={item.name}
                                                     width="80"
                                                     height="80"
@@ -1129,9 +1143,15 @@ export default function Checkout() {
                     <div className="cart-grid">
                         <div className="cart-items">
                             {items.map((item) => (
-                                <div key={`${item.id}-${item.size}`} className="cart-item">
+                                <div key={`${item.id}-${item.size ?? ""}-${item.color ?? ""}`} className="cart-item">
                                     <div className="cart-item__image">
-                                        <img src={item.image} alt={item.name} />
+                                        <img
+                                            src={productImageSrc(item.image)}
+                                            onError={(e) => {
+                                                e.currentTarget.src = IMAGE_FALLBACK;
+                                            }}
+                                            alt={item.name}
+                                        />
                                     </div>
                                     <div className="cart-item__body">
                                         <div className="cart-item__top">

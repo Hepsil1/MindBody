@@ -1,8 +1,8 @@
-import { useLoaderData, useNavigate, Form, redirect } from "react-router";
+import { useLoaderData, useNavigate, useActionData, Form, redirect } from "react-router";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../db.server";
-import { isAuthenticated } from "../../../utils/admin.server";
-import { useState } from "react";
+import { requireAdmin } from "../../../utils/admin-guard.server";
+import { useState, useEffect } from "react";
 
 interface LoaderArgs {
     params: { id: string };
@@ -36,9 +36,10 @@ export async function loader({ params }: LoaderArgs) {
 }
 
 export async function action({ request, params }: ActionArgs) {
-    if (!(await isAuthenticated(request))) {
-        return redirect("/admin/login");
-    }
+    // requireAdmin adds the same-origin (CSRF) check — this action hard-deletes
+    // the customer and cascades their orders, so it must reject cross-origin POSTs.
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     const formData = await request.formData();
     const intent = formData.get("intent");
 
@@ -72,13 +73,19 @@ export async function action({ request, params }: ActionArgs) {
     }
 
     if (intent === "update") {
-        const firstName = formData.get("firstName") as string;
-        const lastName = formData.get("lastName") as string;
-        const email = formData.get("email") as string;
-        const phone = formData.get("phone") as string;
+        const firstName = ((formData.get("firstName") as string) || "").trim();
+        const lastName = ((formData.get("lastName") as string) || "").trim();
+        const email = ((formData.get("email") as string) || "").trim().toLowerCase();
+        const phone = ((formData.get("phone") as string) || "").trim();
         // NOTE: newPassword update isn't wired up yet — the form posts the
         // field but the action ignores it. When implementing, bcrypt-hash it
         // and add to updateData under `passwordHash`.
+
+        // Validate before writing — empty fields used to silently overwrite the
+        // record with "".
+        if (!firstName) return { error: "Вкажіть ім'я клієнта" };
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+            return { error: "Вкажіть коректний email" };
 
         const updateData: Prisma.CustomerUpdateInput = {
             firstName,
@@ -87,10 +94,23 @@ export async function action({ request, params }: ActionArgs) {
             phone: phone || null,
         };
 
-        await prisma.customer.update({
-            where: { id: params.id },
-            data: updateData,
-        });
+        try {
+            await prisma.customer.update({
+                where: { id: params.id },
+                data: updateData,
+            });
+        } catch (error) {
+            // email is @unique — a duplicate throws P2002. Surface it instead of
+            // a raw 500 that discards the operator's edits.
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === "P2002"
+            ) {
+                return { error: "Email вже використовується іншим клієнтом" };
+            }
+            console.error("Customer update error:", error);
+            return { error: "Не вдалося оновити дані клієнта" };
+        }
 
         return { success: true, message: "Дані оновлено!" };
     }
@@ -100,9 +120,24 @@ export async function action({ request, params }: ActionArgs) {
 
 export default function CustomerDetail() {
     const { customer } = useLoaderData<typeof loader>();
+    const actionData = useActionData<typeof action>();
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    // Surface the edit action's result (e.g. a duplicate-email rejection that
+    // would otherwise fail silently). sonner is imported lazily per the gotcha.
+    useEffect(() => {
+        if (!actionData) return;
+        if ("error" in actionData && actionData.error) {
+            const msg = actionData.error;
+            void import("sonner").then(({ toast }) => toast.error(msg));
+        } else if ("success" in actionData && actionData.success) {
+            const msg = "message" in actionData ? actionData.message : "Збережено";
+            void import("sonner").then(({ toast }) => toast.success(msg));
+            setIsEditing(false);
+        }
+    }, [actionData]);
 
     const totalSpent = customer.orders.reduce((sum, order) => sum + Number(order.total), 0);
 

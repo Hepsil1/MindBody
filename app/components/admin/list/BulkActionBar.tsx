@@ -14,6 +14,7 @@ export function BulkActionBar({ count, children, onClear }: BulkActionBarProps) 
         <AnimatePresence>
             {count > 0 && (
                 <motion.div
+                    className="bulk-action-bar"
                     initial={{ y: 80, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: 80, opacity: 0 }}

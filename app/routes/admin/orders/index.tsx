@@ -279,7 +279,7 @@ export default function AdminOrdersList() {
                                         </td>
                                         <td>{order.date}</td>
                                         <td style={{ fontWeight: 600, color: "var(--text-main)" }}>
-                                            {order.total.toLocaleString()} ₴
+                                            {order.total.toLocaleString("uk-UA")} ₴
                                         </td>
                                         <td>
                                             <select

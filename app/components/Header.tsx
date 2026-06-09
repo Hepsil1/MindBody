@@ -6,6 +6,7 @@ import { useDebounce } from "../hooks/useDebounce";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import { pluralizeUA } from "../utils/plural";
 import CartDrawer from "./CartDrawer";
+import MegaMenu, { type MegaFeatured } from "./MegaMenu";
 
 interface SearchResult {
     id: string;
@@ -17,8 +18,54 @@ interface SearchResult {
     shopPageSlug: string;
 }
 
+// Top-level nav → mega-menu config. The subcategory/fabric/sleeve depth comes
+// from TAXONOMY (app/utils/taxonomy.ts); only the per-section featured image
+// lives here.
+const NAV: Array<{ shop: string; label: string; featured: MegaFeatured }> = [
+    {
+        shop: "yoga",
+        label: "YOGA",
+        featured: { image: "/pics1cloths/IMG_6201.webp", badge: "YOGA", title: "Yoga Колекція" },
+    },
+    {
+        shop: "sport",
+        label: "SPORT",
+        featured: { image: "/generalpics/333_131123.webp", badge: "SPORT", title: "Sport Колекція" },
+    },
+    {
+        shop: "dance",
+        label: "DANCE",
+        featured: { image: "/generalpics/374_131123.webp", badge: "DANCE", title: "Dance Колекція" },
+    },
+    {
+        shop: "casual",
+        label: "CASUAL",
+        featured: {
+            image: "/generalpics/595_131123.webp",
+            badge: "CASUAL",
+            title: "Casual Колекція",
+        },
+    },
+    {
+        shop: "kids",
+        label: "KIDS",
+        featured: { image: "/pics2cloths/IMG_5222.webp", title: "Дитяча Колекція" },
+    },
+    {
+        shop: "yogatools",
+        label: "YOGATOOLS",
+        featured: {
+            image: "/generalpics/348_131123.webp",
+            badge: "YOGATOOLS",
+            title: "Yoga Інвентар",
+        },
+    },
+];
+
 export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    // Mobile-only: which category's subcategory accordion is expanded in the drawer.
+    const [expandedShop, setExpandedShop] = useState<string | null>(null);
     const [cartCount, setCartCount] = useState(0);
     const [wishlistCount, setWishlistCount] = useState(0);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -205,7 +252,9 @@ export function Header() {
                     <button
                         className={`header__burger ${isMenuOpen ? "header__burger--active" : ""}`}
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        aria-label="Меню"
+                        aria-label={isMenuOpen ? "Закрити меню" : "Відкрити меню"}
+                        aria-expanded={isMenuOpen}
+                        aria-controls="header-mobile-nav"
                     >
                         <span></span>
                         <span></span>
@@ -223,522 +272,63 @@ export function Header() {
                         </picture>
                     </Link>
 
-                    <nav className={`header__nav ${isMenuOpen ? "header__nav--active" : ""}`}>
+                    <nav
+                        id="header-mobile-nav"
+                        className={`header__nav ${isMenuOpen ? "header__nav--active" : ""}`}
+                    >
                         <ul className="header__nav-list">
-                            {/* YOGA */}
-                            <li className="header__nav-item header__nav-item--mega">
-                                <NavLink
-                                    to="/shop/yoga"
-                                    prefetch="intent"
-                                    className="header__nav-link"
-                                    onClick={() => setIsMenuOpen(false)}
+                            {/* Data-driven from TAXONOMY (app/utils/taxonomy.ts):
+                                each section renders the full subcategory →
+                                fabric → sleeve depth via <MegaMenu>. */}
+                            {NAV.map((item) => (
+                                <li
+                                    key={item.shop}
+                                    className={`header__nav-item header__nav-item--mega${
+                                        expandedShop === item.shop ? " is-expanded" : ""
+                                    }`}
                                 >
-                                    YOGA
-                                </NavLink>
-                                <div className="mega-menu">
-                                    <div className="mega-menu__inner">
-                                        <div className="mega-menu__col">
-                                            <h4 className="mega-menu__heading">Категорії</h4>
-                                            <Link
-                                                to="/shop/yoga"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
+                                    <div className="header__nav-head">
+                                        <NavLink
+                                            to={`/shop/${item.shop}`}
+                                            prefetch="intent"
+                                            className="header__nav-link"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            {item.label}
+                                        </NavLink>
+                                        {/* Mobile-only: expand this section's
+                                            subcategory → fabric → sleeve accordion. */}
+                                        <button
+                                            type="button"
+                                            className="header__nav-toggle"
+                                            aria-expanded={expandedShop === item.shop}
+                                            aria-label={`Підкатегорії ${item.label}`}
+                                            onClick={() =>
+                                                setExpandedShop((s) =>
+                                                    s === item.shop ? null : item.shop,
+                                                )
+                                            }
+                                        >
+                                            <svg
+                                                width="18"
+                                                height="18"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                aria-hidden="true"
                                             >
-                                                Всі товари
-                                            </Link>
-                                            <Link
-                                                to="/shop/yoga/jumpsuit"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Комбінезони
-                                            </Link>
-                                            <Link
-                                                to="/shop/yoga/leggings"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Легінси
-                                            </Link>
-                                            <Link
-                                                to="/shop/yoga/velo"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                VELO
-                                            </Link>
-                                            <Link
-                                                to="/shop/yoga/tops"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Топи
-                                            </Link>
-                                            <Link
-                                                to="/shop/yoga/shorts"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Шорти
-                                            </Link>
-                                            <Link
-                                                to="/shop/yoga/longsleeve"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Лонгсліви
-                                            </Link>
-                                            <Link
-                                                to="/shop/yoga/tshirts"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Футболки
-                                            </Link>
-                                        </div>
-                                        <div className="mega-menu__featured">
-                                            <div className="mega-menu__featured-img">
-                                                <picture>
-                                                    <source
-                                                        srcSet={buildWebpSrcset(
-                                                            "/pics1cloths/IMG_6201.webp",
-                                                        )}
-                                                        sizes="(max-width: 1024px) 50vw, 300px"
-                                                        type="image/webp"
-                                                    />
-                                                    <img
-                                                        src="/pics1cloths/IMG_6201.webp"
-                                                        alt="Yoga Collection"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                    />
-                                                </picture>
-                                                <div className="mega-menu__featured-badge">
-                                                    YOGA
-                                                </div>
-                                            </div>
-                                            <div className="mega-menu__featured-content">
-                                                <h5>Yoga Колекція</h5>
-                                                <Link
-                                                    to="/shop/yoga"
-                                                    className="mega-menu__featured-link"
-                                                    onClick={() => setIsMenuOpen(false)}
-                                                >
-                                                    Переглянути →
-                                                </Link>
-                                            </div>
-                                        </div>
+                                                <path d="M6 9l6 6 6-6" />
+                                            </svg>
+                                        </button>
                                     </div>
-                                </div>
-                            </li>
-
-                            {/* SPORT */}
-                            <li className="header__nav-item header__nav-item--mega">
-                                <NavLink
-                                    to="/shop/sport"
-                                    prefetch="intent"
-                                    className="header__nav-link"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    SPORT
-                                </NavLink>
-                                <div className="mega-menu">
-                                    <div className="mega-menu__inner">
-                                        <div className="mega-menu__col">
-                                            <h4 className="mega-menu__heading">Категорії</h4>
-                                            <Link
-                                                to="/shop/sport"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Всі товари
-                                            </Link>
-                                            <Link
-                                                to="/shop/sport/jumpsuit"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Комбінезони
-                                            </Link>
-                                            <Link
-                                                to="/shop/sport/leggings"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Легінси
-                                            </Link>
-                                            <Link
-                                                to="/shop/sport/velo"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                VELO
-                                            </Link>
-                                            <Link
-                                                to="/shop/sport/tops"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Топи
-                                            </Link>
-                                            <Link
-                                                to="/shop/sport/shorts"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Шорти
-                                            </Link>
-                                            <Link
-                                                to="/shop/sport/longsleeve"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Лонгсліви
-                                            </Link>
-                                            <Link
-                                                to="/shop/sport/sets"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Комплекти
-                                            </Link>
-                                        </div>
-                                        <div className="mega-menu__featured">
-                                            <div className="mega-menu__featured-img">
-                                                <picture>
-                                                    <source
-                                                        srcSet={buildWebpSrcset(
-                                                            "/generalpics/333_131123.webp",
-                                                        )}
-                                                        sizes="(max-width: 1024px) 50vw, 300px"
-                                                        type="image/webp"
-                                                    />
-                                                    <img
-                                                        src="/generalpics/333_131123.webp"
-                                                        alt="Sport Collection"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                    />
-                                                </picture>
-                                                <div className="mega-menu__featured-badge">
-                                                    SPORT
-                                                </div>
-                                            </div>
-                                            <div className="mega-menu__featured-content">
-                                                <h5>Sport Колекція</h5>
-                                                <Link
-                                                    to="/shop/sport"
-                                                    className="mega-menu__featured-link"
-                                                    onClick={() => setIsMenuOpen(false)}
-                                                >
-                                                    Переглянути →
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-
-                            {/* DANCE */}
-                            <li className="header__nav-item header__nav-item--mega">
-                                <NavLink
-                                    to="/shop/dance"
-                                    prefetch="intent"
-                                    className="header__nav-link"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    DANCE
-                                </NavLink>
-                                <div className="mega-menu">
-                                    <div className="mega-menu__inner">
-                                        <div className="mega-menu__col">
-                                            <h4 className="mega-menu__heading">Категорії</h4>
-                                            <Link
-                                                to="/shop/dance"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Всі товари
-                                            </Link>
-                                            <Link
-                                                to="/shop/dance/jumpsuit"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Комбінезони
-                                            </Link>
-                                            <Link
-                                                to="/shop/dance/net-models"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Моделі із сітки
-                                            </Link>
-                                            <Link
-                                                to="/shop/dance/pole-sets"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Комплекти пілон
-                                            </Link>
-                                        </div>
-                                        <div className="mega-menu__featured">
-                                            <div className="mega-menu__featured-img">
-                                                <picture>
-                                                    <source
-                                                        srcSet={buildWebpSrcset(
-                                                            "/generalpics/374_131123.webp",
-                                                        )}
-                                                        sizes="(max-width: 1024px) 50vw, 300px"
-                                                        type="image/webp"
-                                                    />
-                                                    <img
-                                                        src="/generalpics/374_131123.webp"
-                                                        alt="Dance Collection"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                    />
-                                                </picture>
-                                                <div className="mega-menu__featured-badge">
-                                                    DANCE
-                                                </div>
-                                            </div>
-                                            <div className="mega-menu__featured-content">
-                                                <h5>Dance Колекція</h5>
-                                                <Link
-                                                    to="/shop/dance"
-                                                    className="mega-menu__featured-link"
-                                                    onClick={() => setIsMenuOpen(false)}
-                                                >
-                                                    Переглянути →
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-
-                            {/* CASUAL */}
-                            <li className="header__nav-item header__nav-item--mega">
-                                <NavLink
-                                    to="/shop/casual"
-                                    prefetch="intent"
-                                    className="header__nav-link"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    CASUAL
-                                </NavLink>
-                                <div className="mega-menu">
-                                    <div className="mega-menu__inner">
-                                        <div className="mega-menu__col">
-                                            <h4 className="mega-menu__heading">Категорії</h4>
-                                            <Link
-                                                to="/shop/casual"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Всі товари
-                                            </Link>
-                                            <Link
-                                                to="/shop/casual/suits"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Костюми
-                                            </Link>
-                                            <Link
-                                                to="/shop/casual/shirts"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Сорочки
-                                            </Link>
-                                            <Link
-                                                to="/shop/casual/tshirts"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Футболки
-                                            </Link>
-                                            <Link
-                                                to="/shop/casual/singlets"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Майки
-                                            </Link>
-                                        </div>
-                                        <div className="mega-menu__col">
-                                            <h4 className="mega-menu__heading">Ще</h4>
-                                            <Link
-                                                to="/shop/casual/shorts"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Шорти
-                                            </Link>
-                                            <Link
-                                                to="/shop/casual/thermo"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Термо
-                                            </Link>
-                                            <Link
-                                                to="/shop/casual/hoodies"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Худі / Світшоти
-                                            </Link>
-                                            <Link
-                                                to="/shop/casual/joggers"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Джоггери
-                                            </Link>
-                                        </div>
-                                        <div className="mega-menu__featured">
-                                            <div className="mega-menu__featured-img">
-                                                <picture>
-                                                    <source
-                                                        srcSet={buildWebpSrcset(
-                                                            "/generalpics/595_131123.webp",
-                                                        )}
-                                                        sizes="(max-width: 1024px) 50vw, 300px"
-                                                        type="image/webp"
-                                                    />
-                                                    <img
-                                                        src="/generalpics/595_131123.webp"
-                                                        alt="Casual Collection"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                    />
-                                                </picture>
-                                                <div className="mega-menu__featured-badge">
-                                                    CASUAL
-                                                </div>
-                                            </div>
-                                            <div className="mega-menu__featured-content">
-                                                <h5>Casual Колекція</h5>
-                                                <Link
-                                                    to="/shop/casual"
-                                                    className="mega-menu__featured-link"
-                                                    onClick={() => setIsMenuOpen(false)}
-                                                >
-                                                    Переглянути →
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-
-                            {/* KIDS */}
-                            <li className="header__nav-item header__nav-item--mega">
-                                <NavLink
-                                    to="/shop/kids"
-                                    prefetch="intent"
-                                    className="header__nav-link"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    KIDS
-                                </NavLink>
-                                <div className="mega-menu">
-                                    <div className="mega-menu__inner">
-                                        <div className="mega-menu__col">
-                                            <h4 className="mega-menu__heading">Категорії</h4>
-                                            <Link
-                                                to="/shop/kids"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Всі товари
-                                            </Link>
-                                            <Link
-                                                to="/shop/kids/jumpsuit"
-                                                className="mega-menu__link"
-                                                prefetch="intent"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Комбінезони
-                                            </Link>
-                                        </div>
-                                        <div className="mega-menu__featured">
-                                            <div className="mega-menu__featured-img">
-                                                <picture>
-                                                    <source
-                                                        srcSet={buildWebpSrcset(
-                                                            "/pics2cloths/IMG_5222.webp",
-                                                        )}
-                                                        sizes="(max-width: 1024px) 50vw, 300px"
-                                                        type="image/webp"
-                                                    />
-                                                    <img
-                                                        src="/pics2cloths/IMG_5222.webp"
-                                                        alt="Kids Collection"
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                    />
-                                                </picture>
-                                            </div>
-                                            <div className="mega-menu__featured-content">
-                                                <h5>Дитяча Колекція</h5>
-                                                <Link
-                                                    to="/shop/kids"
-                                                    className="mega-menu__featured-link"
-                                                    onClick={() => setIsMenuOpen(false)}
-                                                >
-                                                    Переглянути →
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-
-                            {/* YOGATOOLS */}
-                            <li className="header__nav-item">
-                                <NavLink
-                                    to="/shop/yogatools"
-                                    prefetch="intent"
-                                    className="header__nav-link"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    YOGATOOLS
-                                </NavLink>
-                            </li>
+                                    <MegaMenu
+                                        shop={item.shop}
+                                        featured={item.featured}
+                                        onNavigate={() => setIsMenuOpen(false)}
+                                    />
+                                </li>
+                            ))}
                         </ul>
 
                         {/* Secondary links — shown only inside the mobile

@@ -1,10 +1,16 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { redirect, useLoaderData, useSubmit, useNavigate, Link } from "react-router";
 import { prisma } from "../../../db.server";
-import { isAuthenticated } from "../../../utils/admin.server";
+import { requireAdmin } from "../../../utils/admin-guard.server";
 import { useState } from "react";
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
+    // Defense-in-depth: this endpoint returns full customer PII, so guard it in
+    // its own loader rather than relying solely on the parent _layout loader
+    // (mirrors customers/$id.tsx). requireAdmin skips CSRF for GET.
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
+
     const order = await prisma.order.findUnique({
         where: { id: params.id },
         include: {
@@ -25,15 +31,21 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-    if (!(await isAuthenticated(request))) {
-        return redirect("/admin/login");
-    }
+    // requireAdmin adds the same-origin (CSRF) check the bare isAuthenticated
+    // gate was missing — these are state-changing mutations.
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     try {
         const formData = await request.formData();
         const intent = formData.get("intent");
 
         if (intent === "update_status") {
             const status = formData.get("status") as string;
+            // Whitelist — never write an arbitrary string the storefront/admin
+            // badge maps don't know about.
+            if (!Object.prototype.hasOwnProperty.call(statusLabels, status)) {
+                return { error: "Невідомий статус замовлення" };
+            }
             await prisma.order.update({
                 where: { id: params.id },
                 data: { status },
@@ -42,6 +54,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
         if (intent === "update_payment") {
             const paymentStatus = formData.get("paymentStatus") as string;
+            if (!Object.prototype.hasOwnProperty.call(paymentLabels, paymentStatus)) {
+                return { error: "Невідомий статус оплати" };
+            }
             await prisma.order.update({
                 where: { id: params.id },
                 data: { paymentStatus },
@@ -49,13 +64,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
         }
 
         if (intent === "delete") {
-            // First delete order items, then the order
-            await prisma.orderItem.deleteMany({
-                where: { orderId: params.id },
-            });
-            await prisma.order.delete({
-                where: { id: params.id },
-            });
+            // Atomic: items + order go together so a mid-way failure can't
+            // leave an order with no line items.
+            await prisma.$transaction([
+                prisma.orderItem.deleteMany({ where: { orderId: params.id } }),
+                prisma.order.delete({ where: { id: params.id } }),
+            ]);
             return redirect("/admin/orders");
         }
 
@@ -462,10 +476,10 @@ export default function AdminOrderDetails() {
                                         </div>
                                         <div className="item-pricing">
                                             <div className="item-price">
-                                                {price.toLocaleString()} ₴
+                                                {price.toLocaleString("uk-UA")} ₴
                                             </div>
                                             <div className="item-total">
-                                                {total.toLocaleString()} ₴
+                                                {total.toLocaleString("uk-UA")} ₴
                                             </div>
                                         </div>
                                     </div>
@@ -483,7 +497,7 @@ export default function AdminOrderDetails() {
                         >
                             <div className="summary-row">
                                 <span style={{ color: "#94a3b8" }}>Підсумок товарів</span>
-                                <span>{itemsSubtotal.toLocaleString()} ₴</span>
+                                <span>{itemsSubtotal.toLocaleString("uk-UA")} ₴</span>
                             </div>
                             <div className="summary-row">
                                 <span style={{ color: "#94a3b8" }}>Доставка (Нова Пошта)</span>
@@ -492,7 +506,7 @@ export default function AdminOrderDetails() {
                             <div className="summary-row total">
                                 <span>Разом до сплати</span>
                                 <span style={{ color: "#5eead4" }}>
-                                    {Number(order.total).toLocaleString()} ₴
+                                    {Number(order.total).toLocaleString("uk-UA")} ₴
                                 </span>
                             </div>
                         </div>

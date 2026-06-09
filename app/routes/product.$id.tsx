@@ -4,6 +4,8 @@ import { useToast } from "../components/Toast";
 import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
 import { buildWebpSrcset } from "../utils/responsive-image";
+import { shopPageTitle, isRealShopSlug } from "../utils/shop-pages";
+import { formatPrice } from "../utils/format";
 import type {
     InventoryVariant,
     ReviewData,
@@ -29,6 +31,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const image = product.images?.[0] || "/brand-sun.png";
     const fullImage = image.startsWith("http") ? image : `${siteUrl}${image}`;
     const price = Number(product.price) || 0;
+    // Reflect real stock in the rich-result offer (the UI already shows
+    // "Немає в наявності" for all-zero-stock products); a hardcoded InStock
+    // here is a Merchant mismatch that can suppress the result.
+    const inStock =
+        !product.inventory?.length || product.inventory.some((v) => (v.stock ?? 0) > 0);
     const canonicalUrl = `${siteUrl}/product/${product.id}`;
     return [
         { title: `${product.name} | MIND BODY` },
@@ -67,7 +74,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
                     url: canonicalUrl,
                     priceCurrency: "UAH",
                     price: price,
-                    availability: "https://schema.org/InStock",
+                    availability: inStock
+                        ? "https://schema.org/InStock"
+                        : "https://schema.org/OutOfStock",
                     seller: { "@type": "Organization", name: "MIND BODY" },
                 },
             },
@@ -83,9 +92,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
                               {
                                   "@type": "ListItem",
                                   position: 2,
-                                  name:
-                                      product.shopPageSlug.charAt(0).toUpperCase() +
-                                      product.shopPageSlug.slice(1),
+                                  name: shopPageTitle(product.shopPageSlug),
                                   item: `${siteUrl}/shop/${product.shopPageSlug}`,
                               },
                           ]
@@ -116,7 +123,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export function headers() {
     return {
-        "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+        // No long HTML cache — a stale document survives a deploy that deleted
+        // its JS chunks and then can't hydrate. Always revalidate.
+        "Cache-Control": "no-cache",
     };
 }
 
@@ -296,6 +305,9 @@ function ReviewsSection({ productId }: { productId: string }) {
     const [formText, setFormText] = useState("");
     const [formRating, setFormRating] = useState(5);
     const [submitting, setSubmitting] = useState(false);
+    // Track first load so we don't flash "be the first to review" before the
+    // fetch resolves (which misrepresents products that DO have reviews).
+    const [loaded, setLoaded] = useState(false);
 
     const fetchReviews = useCallback(async () => {
         try {
@@ -308,6 +320,8 @@ function ReviewsSection({ productId }: { productId: string }) {
             }
         } catch {
             /* silent */
+        } finally {
+            setLoaded(true);
         }
     }, [productId]);
 
@@ -353,12 +367,14 @@ function ReviewsSection({ productId }: { productId: string }) {
 
     const renderStars = (rating: number) => "★".repeat(rating) + "☆".repeat(5 - rating);
     const getInitials = (name: string) =>
-        name
-            .split(" ")
+        (name || "")
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
             .map((w) => w[0])
             .join("")
             .toUpperCase()
-            .substring(0, 2);
+            .substring(0, 2) || "?";
     const formatDate = (dateStr: string) => {
         try {
             return new Date(dateStr).toLocaleDateString("uk-UA", {
@@ -383,7 +399,11 @@ function ReviewsSection({ productId }: { productId: string }) {
                 )}
             </div>
 
-            {reviews.length > 0 ? (
+            {!loaded ? (
+                <p className="reviews-empty" aria-busy="true">
+                    Завантаження відгуків…
+                </p>
+            ) : reviews.length > 0 ? (
                 <div className="reviews-list">
                     {reviews.map((r) => (
                         <div key={r.id} className="review-card">
@@ -505,6 +525,11 @@ export default function ProductDetail() {
     const [quickBuyPhone, setQuickBuyPhone] = useState("");
     const [quickBuyName, setQuickBuyName] = useState("");
     const [quickBuySending, setQuickBuySending] = useState(false);
+    /* Sprint 1 D2.2 — #3 CRO-002 sticky CTA visible-confirm state.
+       Cart is localStorage (sync) so no fetcher.state to bind to; we
+       fake a brief "✓ Додано" lock instead. Double-purpose: visual
+       feedback + 1.2s guard against accidental double-add. */
+    const [justAdded, setJustAdded] = useState(false);
 
     // Scroll lock for modals
     useEffect(() => {
@@ -590,6 +615,13 @@ export default function ProductDetail() {
             quantity: 1,
         });
 
+        /* Sprint 1 D2.2 — #3 CRO-002 — flip CTA to "✓ Додано" for 1.2s.
+           Guards against double-tap dupes (mobile users tap fast)
+           and gives instant visual confirmation even if the toast is
+           missed. */
+        setJustAdded(true);
+        setTimeout(() => setJustAdded(false), 1200);
+
         showToast(
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                 <span style={{ fontWeight: 600 }}>Додано у кошик! ✨</span>
@@ -628,8 +660,12 @@ export default function ProductDetail() {
                     <nav className="luxe-breadcrumb">
                         <Link to="/">Головна</Link>
                         <span className="sep">/</span>
-                        <Link to={`/shop/${product.shopPageSlug || "women"}`}>
-                            {product.shopPageSlug === "kids" ? "Дітям" : "Жінкам"}
+                        <Link
+                            to={`/shop/${isRealShopSlug(product.shopPageSlug) ? product.shopPageSlug : "yoga"}`}
+                        >
+                            {isRealShopSlug(product.shopPageSlug)
+                                ? shopPageTitle(product.shopPageSlug)
+                                : "Магазин"}
                         </Link>
                         <span className="sep">/</span>
                         <span className="current">{product.name}</span>
@@ -831,13 +867,13 @@ export default function ProductDetail() {
                                 <div className="product-price-block">
                                     <span
                                         className="current-price"
-                                        style={product.is_sale ? { color: "#dc2626" } : undefined}
+                                        style={product.is_sale ? { color: "#b91c1c" } : undefined}
                                     >
-                                        {Number(product.price).toLocaleString()} ₴
+                                        {formatPrice(product.price)} ₴
                                     </span>
                                     {product.is_sale && product.comparePrice > 0 && (
                                         <span className="old-price">
-                                            {Number(product.comparePrice).toLocaleString()} ₴
+                                            {formatPrice(product.comparePrice)} ₴
                                         </span>
                                     )}
                                 </div>
@@ -856,13 +892,19 @@ export default function ProductDetail() {
                                                 </span>
                                             </span>
                                         </div>
-                                        <div className="color-options">
+                                        <div
+                                            className="color-options"
+                                            role="radiogroup"
+                                            aria-label="Колір"
+                                        >
                                             {product.colors.map((color: string) => {
                                                 const available = isColorAvailable(color);
                                                 return (
                                                     <button
                                                         key={color}
                                                         type="button"
+                                                        role="radio"
+                                                        aria-checked={selectedColor === color}
                                                         className={`color-swatch ${selectedColor === color ? "selected" : ""} ${!available ? "unavailable" : ""}`}
                                                         onClick={() =>
                                                             available && setSelectedColor(color)
@@ -887,15 +929,41 @@ export default function ProductDetail() {
                                                 Таблиця розмірів
                                             </Link>
                                         </div>
-                                        <div className="size-options">
+                                        {/* Sprint 1 D2.3 — #19/#14 PDP a11y: aria-label spells out
+                                            sold-out so SR users hear "Розмір M, немає в наявності"
+                                            instead of just the dimmed pill being skipped. */}
+                                        <div className="size-options" role="radiogroup" aria-label="Розмір">
                                             {product.sizes.map((size: string) => {
                                                 const available = isSizeAvailable(size);
                                                 return (
                                                     <button
                                                         key={size}
                                                         type="button"
+                                                        role="radio"
+                                                        aria-checked={selectedSize === size}
+                                                        aria-label={
+                                                            available
+                                                                ? `Розмір ${size}`
+                                                                : `Розмір ${size}, немає в наявності`
+                                                        }
                                                         className={`size-chip ${selectedSize === size ? "selected" : ""} ${!available ? "unavailable" : ""}`}
-                                                        onClick={() => setSelectedSize(size)}
+                                                        onClick={() => {
+                                                            setSelectedSize(size);
+                                                            // If the current colour isn't in stock
+                                                            // for this size, switch to one that is —
+                                                            // otherwise a buyable item wrongly reads
+                                                            // "Немає в наявності".
+                                                            const inStockColors = product.colors.filter(
+                                                                (c) => getVariantStock(size, c) > 0,
+                                                            );
+                                                            if (
+                                                                selectedColor &&
+                                                                inStockColors.length > 0 &&
+                                                                !inStockColors.includes(selectedColor)
+                                                            ) {
+                                                                setSelectedColor(inStockColors[0]);
+                                                            }
+                                                        }}
                                                         disabled={!available}
                                                     >
                                                         {size}
@@ -907,13 +975,18 @@ export default function ProductDetail() {
                                 )}
                             </div>
 
-                            {/* Stock indicator — enhanced urgency */}
+                            {/* Stock indicator — enhanced urgency.
+                                Sprint 1 D2.4 — #37 PDP-006 threshold raised
+                                from ≤3 to ≤5 for earlier scarcity messaging.
+                                Last-piece state distinguishes singular item
+                                so the urgency tier reads correctly. */}
                             {selectedSize && selectedColor && product.inventory?.length > 0 && (
                                 <div
-                                    className={`stock-indicator ${isInStock ? (currentStock <= 3 ? "stock-indicator--low" : "stock-indicator--ok") : "stock-indicator--out"}`}
+                                    className={`stock-indicator ${isInStock ? (currentStock <= 5 ? "stock-indicator--low" : "stock-indicator--ok") : "stock-indicator--out"}`}
+                                    aria-live="polite"
                                 >
                                     {isInStock ? (
-                                        currentStock <= 3 ? (
+                                        currentStock <= 5 ? (
                                             <>
                                                 <svg
                                                     aria-hidden="true"
@@ -933,7 +1006,11 @@ export default function ProductDetail() {
                                                 >
                                                     <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
                                                 </svg>{" "}
-                                                Залишилось лише {currentStock} шт — поспішіть!
+                                                {currentStock === 1
+                                                    ? "🔥 Останній — поспішіть!"
+                                                    : currentStock <= 2
+                                                      ? `🔥 Залишилось лише ${currentStock} шт — поспішіть!`
+                                                      : `Залишилось ${currentStock} шт`}
                                             </>
                                         ) : (
                                             `✓ В наявності: ${currentStock} шт`
@@ -1011,9 +1088,11 @@ export default function ProductDetail() {
                                     className="btn-primary-add"
                                     onClick={addToCart}
                                     disabled={
+                                        justAdded ||
                                         (product.sizes.length > 0 && !selectedSize) ||
                                         (!isInStock && product.inventory?.length > 0)
                                     }
+                                    aria-live="polite"
                                     style={{
                                         opacity:
                                             (product.sizes.length > 0 && !selectedSize) ||
@@ -1023,11 +1102,13 @@ export default function ProductDetail() {
                                     }}
                                 >
                                     <span>
-                                        {!isInStock && product.inventory?.length > 0
-                                            ? "Немає в наявності"
-                                            : product.sizes.length > 0 && !selectedSize
-                                              ? "Оберіть розмір"
-                                              : "Додати в кошик"}
+                                        {justAdded
+                                            ? "✓ Додано"
+                                            : !isInStock && product.inventory?.length > 0
+                                              ? "Немає в наявності"
+                                              : product.sizes.length > 0 && !selectedSize
+                                                ? "Оберіть розмір"
+                                                : "Додати в кошик"}
                                     </span>
                                 </button>
                                 <button
@@ -1103,9 +1184,7 @@ export default function ProductDetail() {
                                         </h3>
                                         <p className="quick-buy-modal__product">
                                             {product.name} &mdash;{" "}
-                                            {product.comparePrice > product.price
-                                                ? product.price
-                                                : product.price}{" "}
+                                            {formatPrice(product.price)}{" "}
                                             ₴{selectedSize ? ` · ${selectedSize}` : ""}
                                             {selectedColor ? ` · ${selectedColor}` : ""}
                                         </p>
@@ -1134,7 +1213,7 @@ export default function ProductDetail() {
                                             onClick={async () => {
                                                 setQuickBuySending(true);
                                                 try {
-                                                    await fetch("/api/telegram/send", {
+                                                    const res = await fetch("/api/telegram/send", {
                                                         method: "POST",
                                                         headers: {
                                                             "Content-Type": "application/json",
@@ -1143,6 +1222,9 @@ export default function ProductDetail() {
                                                             message: `🔥 ШВИДКЕ ЗАМОВЛЕННЯ\n\n📦 ${product.name}\n💰 ${product.price} ₴${selectedSize ? `\n📏 Розмір: ${selectedSize}` : ""}${selectedColor ? `\n🎨 Колір: ${selectedColor}` : ""}\n👤 Ім'я: ${quickBuyName || "Не вказано"}\n📞 Телефон: ${quickBuyPhone}`,
                                                         }),
                                                     });
+                                                    // Don't tell the customer the order was accepted
+                                                    // if the send actually failed (a dropped order).
+                                                    if (!res.ok) throw new Error("send failed");
                                                     setQuickBuyOpen(false);
                                                     setQuickBuyPhone("");
                                                     setQuickBuyName("");
@@ -1251,7 +1333,7 @@ export default function ProductDetail() {
                                     </div>
                                     <div className="related-info">
                                         <h4>{rp.name}</h4>
-                                        <span>{rp.price.toLocaleString()} ₴</span>
+                                        <span>{formatPrice(rp.price)} ₴</span>
                                     </div>
                                 </Link>
                             ))}
@@ -1268,23 +1350,26 @@ export default function ProductDetail() {
             {/* Mobile Sticky CTA */}
             <div className="mobile-sticky-cta">
                 <div className="mobile-sticky-cta__price">
-                    {Number(product.price).toLocaleString()} ₴
+                    {formatPrice(product.price)} ₴
                 </div>
                 <button
                     type="button"
                     className="mobile-sticky-cta__btn"
                     onClick={addToCart}
                     disabled={
+                        justAdded ||
                         (product.sizes.length > 0 && !selectedSize) ||
                         (!isInStock && product.inventory?.length > 0)
                     }
                     aria-live="polite"
                 >
-                    {!isInStock && product.inventory?.length > 0
-                        ? "Немає в наявності"
-                        : product.sizes.length > 0 && !selectedSize
-                          ? "Оберіть розмір"
-                          : "Додати в кошик"}
+                    {justAdded
+                        ? "✓ Додано"
+                        : !isInStock && product.inventory?.length > 0
+                          ? "Немає в наявності"
+                          : product.sizes.length > 0 && !selectedSize
+                            ? "Оберіть розмір"
+                            : "Додати в кошик"}
                 </button>
             </div>
         </main>

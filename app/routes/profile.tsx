@@ -72,11 +72,14 @@ export default function Profile() {
             setSettings(AuthUtils.getSettings());
             setWishlistCount(StorageUtils.getWishlist().length);
 
-            // Load orders
+            // Load orders. Guard against non-OK responses (the endpoint returns
+            // a 403 { error } object when the server session email ≠ requested
+            // email); without this, that object lands in `orders` and the later
+            // orders.slice()/orders.map() throw, blanking the whole tab.
             if (authState.user) {
                 fetch(`/api/orders/list?email=${authState.user.email}`)
-                    .then((res) => res.json())
-                    .then((data) => setOrders(data))
+                    .then((res) => (res.ok ? res.json() : []))
+                    .then((data) => setOrders(Array.isArray(data) ? data : []))
                     .catch((err) => console.error("Failed to fetch orders:", err));
             }
         };
@@ -186,12 +189,16 @@ export default function Profile() {
     };
 
     const getInitials = (name: string) => {
-        return name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2);
+        return (
+            (name || "")
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean)
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2) || "?"
+        );
     };
 
     if (!user) {

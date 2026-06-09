@@ -51,7 +51,11 @@ export async function action({ request }: ActionFunctionArgs) {
             });
         }
 
-        return new Response(JSON.stringify(customer), {
+        // NEVER send the bcrypt hash (or any secret column) to the client —
+        // auth.ts persists this object into sessionStorage, so the hash would be
+        // readable in DevTools and exfiltratable for offline cracking.
+        const { passwordHash: _omitHash, ...safeCustomer } = customer;
+        return new Response(JSON.stringify(safeCustomer), {
             headers: { "Content-Type": "application/json" },
         });
     } catch (e) {

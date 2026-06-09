@@ -17,6 +17,11 @@ model Product {
   stock           Int         @default(0)
   status          String      @default("draft")
   category        String?
+  // Deeper taxonomy (see app/utils/taxonomy.ts). Nullable; written/read via
+  // raw SQL until a clean `prisma generate` (PM2 holds the engine DLL),
+  // same pattern as Category.moodType.
+  fabric          String? // sport | cotton
+  sleeve          String? // long | short | sleeveless | velo
   images          String?
   colors          String?
   sizes           String?
@@ -33,6 +38,8 @@ model Product {
   @@index([status])
   @@index([shopPageSlug])
   @@index([category])
+  @@index([fabric])
+  @@index([sleeve])
   @@index([createdAt])
   @@index([slug])
 }

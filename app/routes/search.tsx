@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { prisma } from "../db.server";
 import { useState } from "react";
 import ProductCard, { type Product } from "../components/ProductCard";
+import { pluralizeUA } from "../utils/plural";
 
 const SITE_URL = "https://saleid.icu";
 
@@ -200,7 +201,7 @@ export default function Search() {
                     {hasQuery && (
                         <p style={{ marginTop: "20px", color: "var(--color-text-secondary)" }}>
                             {products.length > 0
-                                ? `Знайдено ${products.length} ${products.length === 1 ? "товар" : "товарів"} за запитом «${initialQ}»`
+                                ? `Знайдено ${products.length} ${pluralizeUA(products.length, "товар", "товари", "товарів")} за запитом «${initialQ}»`
                                 : `Нічого не знайдено за запитом «${initialQ}»`}
                         </p>
                     )}

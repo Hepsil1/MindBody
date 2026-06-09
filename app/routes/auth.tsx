@@ -239,7 +239,7 @@ export default function Auth() {
 
                         {/* Error/Success Messages */}
                         {error && (
-                            <div className="auth-message auth-message--error">
+                            <div className="auth-message auth-message--error" role="alert">
                                 <svg
                                     width="20"
                                     height="20"
@@ -256,7 +256,7 @@ export default function Auth() {
                             </div>
                         )}
                         {success && (
-                            <div className="auth-message auth-message--success">
+                            <div className="auth-message auth-message--success" role="status">
                                 <svg
                                     width="20"
                                     height="20"

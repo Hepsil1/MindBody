@@ -1,5 +1,10 @@
 import { prisma } from "../db.server";
 import { parseAndMergeFilterConfig, type MergedFilterConfig } from "./filters";
+import { cachedFetch } from "./cache.server";
+
+/** Shop listings only change via admin saves, and every such action calls
+    invalidateAll() — so this TTL is just a backstop against unbounded staleness. */
+const SHOP_CACHE_TTL = 60_000;
 
 /**
  * Shape returned by loadShopData — used by both /shop/:category and
@@ -17,6 +22,8 @@ export interface ShopProductCard {
     image2: string | undefined;
     images: string[];
     category: string | undefined;
+    fabric: string | undefined;
+    sleeve: string | undefined;
     colors: string[];
     sizes: string[];
     is_new: boolean;
@@ -43,6 +50,24 @@ export interface LoadShopOptions {
     subcategoryFilter?: string;
 }
 
+/** Raw row shape from the $queryRawUnsafe product read (incl. fabric/sleeve). */
+interface RawProductRow {
+    id: string;
+    name: string;
+    description: string | null;
+    price: string | number;
+    comparePrice: string | number | null;
+    category: string | null;
+    fabric: string | null;
+    sleeve: string | null;
+    images: string | null;
+    colors: string | null;
+    sizes: string | null;
+    shopPageSlug: string | null;
+    status: string;
+    createdAt: Date | string;
+}
+
 function parseJson<T>(str: string | null | undefined, fallback: T): T {
     if (!str) return fallback;
     try {
@@ -65,6 +90,30 @@ export async function loadShopData(
     categorySlug: string,
     opts: LoadShopOptions = {},
 ): Promise<ShopData> {
+    // Cache the 3-query fan-out per shop/subcategory. Every admin mutation
+    // (product / shop-page / slide save) calls invalidateAll(), so edits
+    // surface immediately; the 60s TTL is only a backstop. Serves both
+    // /shop/:category and /shop/:category/:subcategory.
+    const cacheKey = `shop:${categorySlug}:${opts.subcategoryFilter ?? "all"}`;
+    return cachedFetch(cacheKey, SHOP_CACHE_TTL, () =>
+        loadShopDataUncached(categorySlug, opts),
+    );
+}
+
+async function loadShopDataUncached(
+    categorySlug: string,
+    opts: LoadShopOptions = {},
+): Promise<ShopData> {
+    // fabric/sleeve aren't on the un-regenerated Prisma client, so read
+    // products via raw SQL (moodType pattern). Conditional subcategory WHERE
+    // mirrors the previous typed query; both params are bound, not interpolated.
+    const productWhere = opts.subcategoryFilter
+        ? `"shopPageSlug" = $1 AND status = 'active' AND category = $2`
+        : `"shopPageSlug" = $1 AND status = 'active'`;
+    const productParams = opts.subcategoryFilter
+        ? [categorySlug, opts.subcategoryFilter]
+        : [categorySlug];
+
     const [configs, shopPageResult, rawProducts] = await Promise.all([
         prisma.filterConfig
             .findMany({
@@ -79,35 +128,16 @@ export async function loadShopData(
             console.error("ShopPage fetch failed", e);
             return null;
         }),
-        prisma.product
-            .findMany({
-                where: {
-                    shopPageSlug: categorySlug,
-                    status: "active",
-                    // Narrow at SQL level when caller asked for a specific
-                    // subcategory. Index on Product.category makes this free.
-                    ...(opts.subcategoryFilter ? { category: opts.subcategoryFilter } : {}),
-                },
-                orderBy: { createdAt: "desc" },
-                select: {
-                    id: true,
-                    name: true,
-                    description: true,
-                    price: true,
-                    comparePrice: true,
-                    category: true,
-                    images: true,
-                    colors: true,
-                    sizes: true,
-                    shopPageSlug: true,
-                    status: true,
-                    createdAt: true,
-                },
-            })
+        prisma
+            .$queryRawUnsafe<RawProductRow[]>(
+                `SELECT id, name, description, price, "comparePrice", category, fabric, sleeve, images, colors, sizes, "shopPageSlug", status, "createdAt"
+                 FROM "Product" WHERE ${productWhere} ORDER BY "createdAt" DESC`,
+                ...productParams,
+            )
             .catch((e: unknown) => {
                 const msg = e instanceof Error ? e.message : String(e);
                 console.warn("Product fetch failed:", msg);
-                return [] as never[];
+                return [] as RawProductRow[];
             }),
     ]);
 
@@ -138,6 +168,8 @@ export async function loadShopData(
             image2: images[1] || undefined,
             images,
             category: p.category ?? undefined,
+            fabric: p.fabric ?? undefined,
+            sleeve: p.sleeve ?? undefined,
             colors: parseJson<string[]>(p.colors, []),
             sizes: parseJson<string[]>(p.sizes, []),
             is_new: isNew,

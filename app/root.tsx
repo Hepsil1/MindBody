@@ -68,7 +68,12 @@ function AppContent({ children }: { children: React.ReactNode }) {
             {!isAdminRoute && <SmartSunParticles />}
             <LoadingScreen />
             {!isAdminRoute && <Header />}
-            <div id="main-content">{children}</div>
+            {/* tabIndex=-1 so the skip link actually moves focus into the
+                content (a bare div isn't focusable, so focus would stay on the
+                link and the next Tab re-enters the header). */}
+            <div id="main-content" tabIndex={-1}>
+                {children}
+            </div>
             {!isAdminRoute && <Footer />}
             {!isAdminRoute && <FloatingContact />}
         </ToastProvider>
@@ -99,6 +104,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {children}
                 <ScrollRestoration />
                 <Scripts />
+                {/* Loading-screen escape hatch — independent of React.
+                    The <LoadingScreen> hides itself from a useEffect, so if the
+                    client bundle ever fails to hydrate (e.g. a stale cached
+                    document references a JS chunk a later deploy removed), that
+                    effect never runs and the overlay sticks forever. This inline
+                    script force-reveals the page on `load` and via a hard
+                    backstop, regardless of hydration. For a healthy page React
+                    has already removed the overlay long before these fire, so
+                    this is a pure safety net (no flicker). */}
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `(function(){function h(){var e=document.querySelector('.loading-screen');if(e){e.style.opacity='0';e.style.visibility='hidden';e.style.pointerEvents='none';}}if(document.readyState==='complete'){h();}else{window.addEventListener('load',h);}setTimeout(h,4000);})();`,
+                    }}
+                />
             </body>
         </html>
     );

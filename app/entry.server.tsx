@@ -17,7 +17,9 @@ const CSP = [
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com",
     "connect-src 'self' https://api.novaposhta.ua https://api.telegram.org",
-    "frame-ancestors 'none'",
+    // 'self' (not 'none') so the admin visual editor can iframe-preview our own
+    // storefront. Cross-origin framing (clickjacking) is still blocked.
+    "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
     "object-src 'none'",
@@ -25,7 +27,9 @@ const CSP = [
 
 const SECURITY_HEADERS: Record<string, string> = {
     "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
+    // SAMEORIGIN (not DENY) so the admin visual editor can iframe-preview our
+    // own storefront; cross-origin framing stays blocked. Matches the Caddyfile.
+    "X-Frame-Options": "SAMEORIGIN",
     "X-XSS-Protection": "1; mode=block",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(self)",

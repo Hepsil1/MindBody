@@ -46,16 +46,26 @@ export async function action({ request }: Route.ActionArgs) {
 
     if (intent === "create") {
         const code = (formData.get("code") as string)?.trim().toUpperCase();
-        const discountType = (formData.get("discountType") as string) || "percent";
+        // Whitelist the discount type — anything other than "fixed" is a percent.
+        const discountType =
+            (formData.get("discountType") as string) === "fixed" ? "fixed" : "percent";
         const discountValue = parseFloat(formData.get("discountValue") as string) || 0;
         const minOrder = parseFloat(formData.get("minOrder") as string) || 0;
         const maxUses = formData.get("maxUses")
             ? parseInt(formData.get("maxUses") as string)
             : null;
         const expiresAt = (formData.get("expiresAt") as string) || null;
-        if (!code || discountValue <= 0)
-            return actionError("Заповніть код і значення знижки", {
-                fieldErrors: { code: !code ? "Обов'язкове" : "" },
+        if (!code) return actionError("Заповніть код", { fieldErrors: { code: "Обов'язкове" } });
+        if (!(discountValue > 0))
+            return actionError("Значення знижки має бути більше 0", {
+                fieldErrors: { discountValue: "Більше 0" },
+            });
+        // Clamp percent discounts to 100% — without this a percent=200 code makes
+        // the order total negative at checkout (the anti-fraud guard passes
+        // because client and server use the same formula).
+        if (discountType === "percent" && discountValue > 100)
+            return actionError("Відсоткова знижка не може перевищувати 100%", {
+                fieldErrors: { discountValue: "Максимум 100%" },
             });
         return runAction("promo.create", async () => {
             await prisma.promoCode.create({
@@ -67,7 +77,10 @@ export async function action({ request }: Route.ActionArgs) {
                     maxUses,
                     usedCount: 0,
                     isActive: true,
-                    expiresAt: expiresAt ? new Date(expiresAt) : null,
+                    // Store inclusive end-of-day so a code stays valid through its
+                    // last day — a bare YYYY-MM-DD parses to UTC midnight (~03:00
+                    // Kyiv), which would expire the code mid-way through that day.
+                    expiresAt: expiresAt ? new Date(`${expiresAt}T23:59:59.999`) : null,
                 },
             });
             return actionOk(undefined, { type: "success", message: `Промокод ${code} створено` });

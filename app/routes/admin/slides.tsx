@@ -1,7 +1,7 @@
 import type { Route } from "./+types/slides";
 import { prisma } from "../../db.server";
 import { useState, useRef, useEffect } from "react";
-import { useLoaderData, useFetcher, Link } from "react-router";
+import { useLoaderData, useFetcher, Link, useSearchParams } from "react-router";
 import HeroSlider, { type SlideData } from "../../components/HeroSlider";
 import CategoryCard from "../../components/CategoryCard";
 import { parseAndMergeFilterConfig } from "../../utils/filters";
@@ -9,6 +9,8 @@ import { TrashIcon, ChevronDown, CloseIcon } from "../../components/admin/AdminI
 import { ImageCropSelector } from "../../components/admin/ImageCropSelector";
 import { FilterEditorModal } from "../../components/admin/FilterEditorModal";
 import { AboutSlidesModal } from "../../components/admin/AboutSlidesModal";
+import { SHOP_SLUGS } from "../../utils/taxonomy";
+import { SHOP_PAGE_OPTIONS, shopPageTitle, shopPageLabel } from "../../utils/shop-pages";
 import homeStyles from "../../styles/home.css?url";
 
 export function links() {
@@ -23,7 +25,7 @@ export async function loader({ request }: Route.LoaderArgs) {
                 any[]
             >,
             prisma.$queryRawUnsafe(
-                `SELECT id, title, subtitle, image, "imagePos", link, "buttonText", "order" FROM "Category" ORDER BY "order" ASC`,
+                `SELECT id, title, subtitle, image, "imagePos", link, "buttonText", "moodType", "order" FROM "Category" ORDER BY "order" ASC`,
             ) as Promise<any[]>,
             prisma.shopPage.findMany(),
             prisma.$queryRawUnsafe(`SELECT * FROM "FilterConfig"`) as Promise<any[]>,
@@ -69,6 +71,11 @@ export async function action({ request }: Route.ActionArgs) {
 
         if (intent === "update_shop_page") {
             const slug = formData.get("slug") as string;
+            // Only real shop slugs (taxonomy.ts) — never the legacy women/kids
+            // phantom pages, which no storefront route reads.
+            if (!SHOP_SLUGS.includes(slug)) {
+                return { error: `Невідома сторінка магазину "${slug}".` };
+            }
             const heroImagePos = (formData.get("heroImagePos") as string) || "50% 50% 1";
             let heroImage = formData.get("currentHeroImage") as string;
             const file = formData.get("heroImageFile");
@@ -83,7 +90,7 @@ export async function action({ request }: Route.ActionArgs) {
                     slug,
                     heroImage,
                     heroImagePos,
-                    title: slug === "women" ? "Жіноча" : "Діти", // Defaults
+                    title: shopPageTitle(slug),
                     subtitle: "колекція",
                 },
             });
@@ -203,6 +210,10 @@ export async function action({ request }: Route.ActionArgs) {
                 );
             } catch (e) {
                 console.error("FilterConfig update failed:", e);
+                // Don't report success on a failed write — the product editor's
+                // colour/size pickers read FilterConfig, so a silent failure
+                // would build the next product against stale options.
+                return { error: "Не вдалося зберегти фільтри" };
             }
             return { success: true };
         }
@@ -305,7 +316,34 @@ export default function AdminVisualEditor() {
 
     const [expandedSlideId, setExpandedSlideId] = useState<string | null>(null);
     const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
-    const [currentView, setCurrentView] = useState<"home" | "shop" | "about">("home");
+    // Editor state lives in the URL (refreshable / shareable). `tab` = which
+    // section, `shop` = which shop page the Shop tab previews/edits. setCurrentView
+    // keeps the same signature the sidebar tabs already call.
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentView = (searchParams.get("tab") as "home" | "shop" | "about") || "home";
+    const activeShop = searchParams.get("shop") || SHOP_SLUGS[0];
+    const setCurrentView = (view: "home" | "shop" | "about") => {
+        setSearchParams(
+            (prev) => {
+                const p = new URLSearchParams(prev);
+                p.set("tab", view);
+                if (view === "shop" && !p.get("shop")) p.set("shop", SHOP_SLUGS[0]);
+                return p;
+            },
+            { preventScrollReset: true },
+        );
+    };
+    const setActiveShop = (slug: string) => {
+        setSearchParams(
+            (prev) => {
+                const p = new URLSearchParams(prev);
+                p.set("tab", "shop");
+                p.set("shop", slug);
+                return p;
+            },
+            { preventScrollReset: true },
+        );
+    };
 
     // Focal Point State
     const [positions, setPositions] = useState<Record<string, string>>({});
@@ -324,6 +362,8 @@ export default function AdminVisualEditor() {
     // Temp state for editing
     const [shopBgPos, setShopBgPos] = useState("50% 50% 1");
     const [shopBgImage, setShopBgImage] = useState("");
+    // Bumped after a successful save to force the preview iframe to reload.
+    const [previewNonce, setPreviewNonce] = useState(0);
 
     useEffect(() => {
         if (activeShopPage) {
@@ -338,6 +378,9 @@ export default function AdminVisualEditor() {
 
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
+            // Only trust messages from our own storefront (same origin) — closes
+            // the wildcard '*' gap.
+            if (event.origin !== window.location.origin) return;
             if (event.data?.type === "OPEN_SHOP_BG_EDITOR") {
                 const slug = event.data.category;
                 setEditingShopPageSlug(slug);
@@ -346,6 +389,13 @@ export default function AdminVisualEditor() {
         window.addEventListener("message", handleMessage);
         return () => window.removeEventListener("message", handleMessage);
     }, []);
+
+    // Reload the preview iframe after any successful save so edits show at once.
+    useEffect(() => {
+        if ((fetcher.data as { success?: boolean } | undefined)?.success) {
+            setPreviewNonce((n) => n + 1);
+        }
+    }, [fetcher.data]);
 
     const closeShopEditor = () => setEditingShopPageSlug(null);
     // Screenshot shows "ADD NEW SLIDE" as a section, so let's keep it visible at the bottom of the list.
@@ -641,18 +691,60 @@ export default function AdminVisualEditor() {
             >
                 {currentView === "shop" ? (
                     <div style={{ width: "100%", height: "100%", position: "relative" }}>
-                        {/* Edit Filters Button Overlay */}
+                        {/* Top overlay: real-shop selector + actions */}
                         <div
                             style={{
                                 position: "absolute",
-                                top: "120px",
-                                left: "210px",
+                                top: "16px",
+                                left: "16px",
+                                right: "16px",
                                 zIndex: 10,
+                                display: "flex",
+                                gap: "10px",
+                                alignItems: "center",
+                                flexWrap: "wrap",
                                 pointerEvents: "auto",
                             }}
                         >
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "4px",
+                                    flexWrap: "wrap",
+                                    background: "rgba(15, 23, 42, 0.85)",
+                                    backdropFilter: "blur(8px)",
+                                    padding: "5px",
+                                    borderRadius: "24px",
+                                    border: "1px solid rgba(148, 163, 184, 0.2)",
+                                }}
+                            >
+                                {SHOP_PAGE_OPTIONS.map((o) => (
+                                    <button
+                                        key={o.slug}
+                                        onClick={() => setActiveShop(o.slug)}
+                                        style={{
+                                            padding: "6px 14px",
+                                            borderRadius: "18px",
+                                            border: "none",
+                                            cursor: "pointer",
+                                            fontSize: "12px",
+                                            fontWeight: 700,
+                                            letterSpacing: "0.03em",
+                                            background:
+                                                o.slug === activeShop
+                                                    ? "var(--accent-primary)"
+                                                    : "transparent",
+                                            color: o.slug === activeShop ? "#000" : "#cbd5e1",
+                                            transition: "all 0.15s",
+                                        }}
+                                    >
+                                        {o.title}
+                                    </button>
+                                ))}
+                            </div>
+
                             <button
-                                onClick={() => setFiltersOpen(true)}
+                                onClick={() => setEditingShopPageSlug(activeShop)}
                                 style={{
                                     display: "flex",
                                     alignItems: "center",
@@ -666,32 +758,38 @@ export default function AdminVisualEditor() {
                                     fontWeight: 700,
                                     cursor: "pointer",
                                     boxShadow: "0 8px 20px rgba(94, 234, 212, 0.4)",
-                                    transition: "all 0.2s",
                                     textTransform: "uppercase",
                                     letterSpacing: "0.05em",
                                 }}
-                                onMouseOver={(e) =>
-                                    (e.currentTarget.style.transform = "scale(1.05)")
-                                }
-                                onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
                             >
-                                <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                >
-                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
+                                Змінити фон
+                            </button>
+                            <button
+                                onClick={() => setFiltersOpen(true)}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    padding: "8px 16px",
+                                    background: "rgba(15, 23, 42, 0.85)",
+                                    backdropFilter: "blur(8px)",
+                                    border: "1px solid rgba(148, 163, 184, 0.3)",
+                                    borderRadius: "20px",
+                                    color: "#e2e8f0",
+                                    fontSize: "12px",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.05em",
+                                }}
+                            >
                                 Редагувати фільтри
                             </button>
                         </div>
 
                         <iframe
-                            src="/shop/women"
+                            key={`${activeShop}-${previewNonce}`}
+                            src={`/shop/${activeShop}`}
                             style={{ width: "100%", height: "100%", border: "none" }}
                             title="Shop Preview"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -750,6 +848,7 @@ export default function AdminVisualEditor() {
                         </div>
 
                         <iframe
+                            key={`about-${previewNonce}`}
                             src="/about"
                             style={{ width: "100%", height: "100%", border: "none" }}
                             title="About Preview"
@@ -798,6 +897,7 @@ export default function AdminVisualEditor() {
                                                 imagePos={cat.imagePos}
                                                 link={cat.link}
                                                 buttonText={cat.buttonText}
+                                                moodType={cat.moodType}
                                             />
                                         ))}
                                     </div>
@@ -2170,7 +2270,7 @@ export default function AdminVisualEditor() {
                                             <div style={{ marginBottom: "24px" }}>
                                                 <input
                                                     name="link"
-                                                    placeholder="Посилання (напр. /shop/women)"
+                                                    placeholder="Посилання (напр. /shop/yoga)"
                                                     style={{
                                                         width: "100%",
                                                         background: "#16191f",
@@ -2349,11 +2449,7 @@ export default function AdminVisualEditor() {
                                 }}
                             >
                                 Фон сторінки:{" "}
-                                {editingShopPageSlug === "women"
-                                    ? "Жіноча"
-                                    : editingShopPageSlug === "kids"
-                                      ? "Діти"
-                                      : editingShopPageSlug}
+                                {shopPageLabel(editingShopPageSlug).title}
                             </h3>
                             <button
                                 onClick={closeShopEditor}
@@ -2472,11 +2568,7 @@ export default function AdminVisualEditor() {
                                                         lineHeight: 1.1,
                                                     }}
                                                 >
-                                                    {editingShopPageSlug === "women"
-                                                        ? "ЖІНОЧА"
-                                                        : editingShopPageSlug === "kids"
-                                                          ? "ДИТЯЧА"
-                                                          : editingShopPageSlug?.toUpperCase()}
+                                                    {shopPageLabel(editingShopPageSlug).title.toUpperCase()}
                                                 </div>
                                                 <div
                                                     style={{
@@ -2547,11 +2639,7 @@ export default function AdminVisualEditor() {
                                                         fontFamily: "DM Sans, sans-serif",
                                                     }}
                                                 >
-                                                    {editingShopPageSlug === "women"
-                                                        ? "для неї"
-                                                        : editingShopPageSlug === "kids"
-                                                          ? "для малечі"
-                                                          : ""}
+                                                    {shopPageLabel(editingShopPageSlug).tagline}
                                                 </span>
                                                 <div
                                                     style={{
@@ -2580,11 +2668,7 @@ export default function AdminVisualEditor() {
                                                     userSelect: "none",
                                                 }}
                                             >
-                                                {editingShopPageSlug === "women"
-                                                    ? "WOMEN"
-                                                    : editingShopPageSlug === "kids"
-                                                      ? "KIDS"
-                                                      : editingShopPageSlug?.toUpperCase()}
+                                                {shopPageLabel(editingShopPageSlug).stroke}
                                             </div>
                                         </div>
                                     }

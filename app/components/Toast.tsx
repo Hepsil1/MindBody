@@ -28,9 +28,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         (text: ReactNode, type: ToastMessage["type"] = "success", image?: string) => {
             const id = ++toastId;
             setToasts((prev) => [...prev, { id, text, type, image }]);
+            /* Sprint 1 D2.4 — #13 PDP-002 duration 3500 → 5500ms.
+               Mobile users need time to decide continue shopping vs go
+               to cart. Error toasts get extra time below. */
+            const duration = type === "error" || type === "warning" ? 6000 : 5500;
             setTimeout(() => {
                 setToasts((prev) => prev.filter((t) => t.id !== id));
-            }, 3500);
+            }, duration);
         },
         [],
     );
@@ -51,6 +55,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             {children}
             <div
                 className="toast-container"
+                role="status"
+                aria-live="polite"
+                aria-atomic="false"
                 style={{
                     position: "fixed",
                     top: "20px",

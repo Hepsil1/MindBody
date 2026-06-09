@@ -1,0 +1,272 @@
+- generic [active] [ref=e1]:
+  - link "Перейти до контенту":
+    - /url: "#main-content"
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button "Меню" [ref=e6] [cursor=pointer]
+      - link "MIND BODY" [ref=e10] [cursor=pointer]:
+        - /url: /
+        - img "MIND BODY" [ref=e11]
+      - text: КАТЕГОРІЇ АКАУНТ
+      - generic [ref=e12]:
+        - button "Пошук" [ref=e13] [cursor=pointer]:
+          - img [ref=e14]
+        - 'button "Кошик: 3 товарів" [ref=e256] [cursor=pointer]':
+          - img [ref=e18]
+          - generic [ref=e257]: "3"
+  - dialog [ref=e21]:
+    - generic [ref=e22]:
+      - heading [level=3] [ref=e23]:
+        - text: Кошик
+        - generic [ref=e258]: "3"
+      - button [ref=e24] [cursor=pointer]:
+        - img [ref=e25]
+    - generic [ref=e259]:
+      - generic [ref=e260]:
+        - img [ref=e262]
+        - generic [ref=e263]:
+          - heading [level=4] [ref=e264]: Лонгслів CALM
+          - generic [ref=e265]:
+            - generic [ref=e266]: "Розмір: M"
+            - generic [ref=e267]: "Колір: beige"
+          - generic [ref=e268]:
+            - generic [ref=e269]:
+              - button [ref=e270] [cursor=pointer]: −
+              - generic [ref=e271]: "1"
+              - button [ref=e272] [cursor=pointer]: +
+            - generic [ref=e273]: 1,290 ₴
+        - button [ref=e274] [cursor=pointer]:
+          - img [ref=e275]
+      - generic [ref=e278]:
+        - img [ref=e280]
+        - generic [ref=e281]:
+          - heading [level=4] [ref=e282]: Лосини PRO
+          - generic [ref=e283]:
+            - generic [ref=e284]: "Розмір: M"
+            - generic [ref=e285]: "Колір: black"
+          - generic [ref=e286]:
+            - generic [ref=e287]:
+              - button [ref=e288] [cursor=pointer]: −
+              - generic [ref=e289]: "2"
+              - button [ref=e290] [cursor=pointer]: +
+            - generic [ref=e291]: 2,980 ₴
+        - button [ref=e292] [cursor=pointer]:
+          - img [ref=e293]
+    - generic [ref=e296]:
+      - generic [ref=e297]: 🎉 Безкоштовна доставка!
+      - generic [ref=e298]:
+        - generic [ref=e299]: "Разом:"
+        - generic [ref=e300]: 4,270 ₴
+      - link [ref=e301] [cursor=pointer]:
+        - /url: /checkout
+        - text: Оформити замовлення
+      - button [ref=e302] [cursor=pointer]: Продовжити покупки
+  - main [ref=e35]:
+    - region "Вітрина бренду MIND BODY" [ref=e36]:
+      - generic [ref=e37]:
+        - img "Teal Collection Image 2" [ref=e41]
+        - img "Cocoa Collection Image 2" [ref=e306]
+      - generic:
+        - img "MIND BODY" [ref=e44]
+        - generic [ref=e45]:
+          - button "Slide 1" [ref=e46] [cursor=pointer]
+          - button "Slide 2" [ref=e47] [cursor=pointer]
+          - button "Slide 3" [ref=e48] [cursor=pointer]
+          - button "Slide 4" [ref=e49] [cursor=pointer]
+          - button "Slide 5" [ref=e50] [cursor=pointer]
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - img "MIND BODY" [ref=e54]
+        - generic [ref=e56]: Est. 2020
+      - generic [ref=e58]:
+        - generic [ref=e59]: Our Story
+        - heading "Motivate for active life" [level=2] [ref=e60]
+        - generic [ref=e61]:
+          - paragraph [ref=e62]:
+            - strong [ref=e63]: MIND BODY sport wear
+            - text: — бренд одягу для йоги, танців, фітнесу та інших видів спорту, який
+            - emphasis [ref=e64]: чудово зарекомендував себе
+            - text: серед відомих тренерів по всьому світу.
+          - paragraph [ref=e65]: Одяг, стимулюючий до практики, в ньому всі твої улюблені заняття перетворюються на справжнє задоволення!
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - img [ref=e69]
+            - generic [ref=e72]: Premium Quality
+          - generic [ref=e73]:
+            - img [ref=e75]
+            - generic [ref=e77]: Handmade with Love
+          - generic [ref=e78]:
+            - img [ref=e80]
+            - generic [ref=e84]: Eco Materials
+    - generic [ref=e86]:
+      - generic [ref=e87]:
+        - generic [ref=e88]: Наш процес
+        - heading "Шлях до досконалості" [level=2] [ref=e89]:
+          - text: Шлях до
+          - emphasis [ref=e90]: досконалості
+      - generic [ref=e91]:
+        - generic [ref=e92]:
+          - generic [ref=e93]: "01"
+          - img "Idea" [ref=e96]
+          - generic [ref=e97]:
+            - heading "Ідея" [level=3] [ref=e98]
+            - paragraph [ref=e99]: Натхнення з практики йоги та активного руху. Ми створюємо образи, що відповідають духу свободи.
+        - generic [ref=e100]:
+          - generic [ref=e101]: "02"
+          - img "Materials" [ref=e104]
+          - generic [ref=e105]:
+            - heading "Матеріали" [level=3] [ref=e106]
+            - paragraph [ref=e107]: Тканини найвищої якості з усього світу. Дихаючі, еластичні та довговічні.
+        - generic [ref=e108]:
+          - generic [ref=e109]: "03"
+          - img "Sewing" [ref=e112]
+          - generic [ref=e113]:
+            - heading "Пошив" [level=3] [ref=e114]
+            - paragraph [ref=e115]: Ручна робота досвідчених майстрів. Кожен шов — це прояв любові до справи.
+        - generic [ref=e116]:
+          - generic [ref=e117]: "04"
+          - img "Result" [ref=e120]
+          - generic [ref=e121]:
+            - heading "Результат" [level=3] [ref=e122]
+            - paragraph [ref=e123]: Одяг, що надихає на нові звершення. Стиль, комфорт та впевненість у кожному русі.
+    - generic [ref=e124]:
+      - generic [ref=e126]:
+        - generic [ref=e127]: Ми на зв'язку
+        - heading "Давай поговоримо" [level=2] [ref=e128]:
+          - text: Давай
+          - emphasis [ref=e129]: поговоримо
+      - generic [ref=e130]:
+        - paragraph [ref=e131]:
+          - emphasis [ref=e132]: Готові відповісти
+          - text: на будь-які питання та допомогти з вибором ідеального образу для вас
+        - generic [ref=e133]:
+          - link "+380 (96) 665-08-55 Основний" [ref=e134] [cursor=pointer]:
+            - /url: tel:+380966650855
+            - img [ref=e136]
+            - generic [ref=e138]:
+              - generic [ref=e139]: +380 (96) 665-08-55
+              - generic [ref=e140]: Основний
+          - link "+380 (50) 965-67-37 Viber / Telegram" [ref=e141] [cursor=pointer]:
+            - /url: tel:+380509656737
+            - img [ref=e143]
+            - generic [ref=e145]:
+              - generic [ref=e146]: +380 (50) 965-67-37
+              - generic [ref=e147]: Viber / Telegram
+          - link "+380 (97) 354-28-48 WhatsApp" [ref=e148] [cursor=pointer]:
+            - /url: tel:+380973542848
+            - img [ref=e150]
+            - generic [ref=e152]:
+              - generic [ref=e153]: +380 (97) 354-28-48
+              - generic [ref=e154]: WhatsApp
+        - link "Слідкуй за нами в Instagram" [ref=e155] [cursor=pointer]:
+          - /url: https://www.instagram.com/mind_body_sportwear/
+          - img [ref=e156]
+          - generic [ref=e158]: Слідкуй за нами в Instagram
+  - contentinfo [ref=e159]:
+    - generic [ref=e161]:
+      - generic [ref=e162]:
+        - img "MIND BODY" [ref=e164]
+        - generic [ref=e165]:
+          - generic [ref=e166]:
+            - heading "Допомога" [level=3] [ref=e167]
+            - list [ref=e168]:
+              - listitem [ref=e169]:
+                - link "Контакти" [ref=e170] [cursor=pointer]:
+                  - /url: /contacts
+              - listitem [ref=e171]:
+                - link "Таблиця розмірів" [ref=e172] [cursor=pointer]:
+                  - /url: /size-guide
+              - listitem [ref=e173]:
+                - link "Доставка та оплата" [ref=e174] [cursor=pointer]:
+                  - /url: /delivery
+              - listitem [ref=e175]:
+                - link "Повернення" [ref=e176] [cursor=pointer]:
+                  - /url: /return-policy
+              - listitem [ref=e177]:
+                - link "Догляд за виробами" [ref=e178] [cursor=pointer]:
+                  - /url: /care-guide
+              - listitem [ref=e179]:
+                - link "Часті запитання" [ref=e180] [cursor=pointer]:
+                  - /url: /faq
+          - generic [ref=e181]:
+            - heading "Каталог" [level=3] [ref=e182]
+            - list [ref=e183]:
+              - listitem [ref=e184]:
+                - link "Yoga" [ref=e185] [cursor=pointer]:
+                  - /url: /shop/yoga
+              - listitem [ref=e186]:
+                - link "Sport" [ref=e187] [cursor=pointer]:
+                  - /url: /shop/sport
+              - listitem [ref=e188]:
+                - link "Dance" [ref=e189] [cursor=pointer]:
+                  - /url: /shop/dance
+              - listitem [ref=e190]:
+                - link "Casual" [ref=e191] [cursor=pointer]:
+                  - /url: /shop/casual
+              - listitem [ref=e192]:
+                - link "Kids" [ref=e193] [cursor=pointer]:
+                  - /url: /shop/kids
+              - listitem [ref=e194]:
+                - link "YogaTools" [ref=e195] [cursor=pointer]:
+                  - /url: /shop/yogatools
+          - generic [ref=e196]:
+            - heading "Про компанію" [level=3] [ref=e197]
+            - list [ref=e198]:
+              - listitem [ref=e199]:
+                - link "Про нас" [ref=e200] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e201]:
+                - link "Політика конфіденційності" [ref=e202] [cursor=pointer]:
+                  - /url: /privacy
+              - listitem [ref=e203]:
+                - link "Умови користування" [ref=e204] [cursor=pointer]:
+                  - /url: /terms
+          - generic [ref=e205]:
+            - heading "Зв'язатись" [level=3] [ref=e206]
+            - list [ref=e207]:
+              - listitem [ref=e208]:
+                - link "+38 (096) 665-08-55" [ref=e209] [cursor=pointer]:
+                  - /url: tel:+380966650855
+                  - img [ref=e210]
+                  - text: +38 (096) 665-08-55
+              - listitem [ref=e212]:
+                - link "Viber" [ref=e213] [cursor=pointer]:
+                  - /url: viber://chat?number=%2B380509656737
+              - listitem [ref=e214]:
+                - link "WhatsApp" [ref=e215] [cursor=pointer]:
+                  - /url: https://wa.me/380973542848
+              - listitem [ref=e216]:
+                - link "Telegram" [ref=e217] [cursor=pointer]:
+                  - /url: https://t.me/Juliamindbody
+              - listitem [ref=e218]:
+                - link "Instagram" [ref=e219] [cursor=pointer]:
+                  - /url: https://instagram.com/mindbody.sportwear
+      - generic [ref=e221]:
+        - generic [ref=e222]:
+          - generic [ref=e223]:
+            - heading "Давай поговоримо" [level=4] [ref=e224]
+            - text: маєш запитання — напиши
+          - link "Instagram" [ref=e225] [cursor=pointer]:
+            - /url: https://instagram.com/mindbody.sportwear
+            - img [ref=e227]
+        - generic [ref=e229]:
+          - generic [ref=e230]: Ваш номер телефону або email
+          - textbox "Ваш номер телефону або email" [ref=e231]
+          - button "НАДIСЛАТИ" [ref=e232] [cursor=pointer]
+    - generic [ref=e235]:
+      - generic [ref=e236] [cursor=pointer]:
+        - img [ref=e237]
+        - generic [ref=e240]: УКРАЇНА (УКРАЇНСЬКА)
+        - generic [ref=e241]: ▼
+      - img "MIND BODY" [ref=e243]
+      - generic [ref=e244]: Всі права захищені © MIND BODY, 2026
+  - generic [ref=e246]:
+    - link "Telegram" [ref=e247] [cursor=pointer]:
+      - /url: https://t.me/+380509656737
+      - img [ref=e248]
+    - link "Viber" [ref=e250] [cursor=pointer]:
+      - /url: viber://chat?number=%2B380509656737
+      - img [ref=e251]
+    - link "WhatsApp" [ref=e253] [cursor=pointer]:
+      - /url: https://wa.me/380973542848
+      - img [ref=e254]

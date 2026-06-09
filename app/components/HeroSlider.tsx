@@ -252,7 +252,8 @@ export default function HeroSlider({
                                 key={index}
                                 className={`hero-slider__dot ${index === activeSlide ? "is-active" : ""}`}
                                 data-slide={index}
-                                aria-label={`Slide ${index + 1}`}
+                                aria-label={`Слайд ${index + 1}`}
+                                aria-current={index === activeSlide ? "true" : undefined}
                                 onClick={() => goToSlide(index)}
                             />
                         ))}

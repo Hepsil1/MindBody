@@ -5082,3 +5082,314 @@
         }
     }
 }
+
+/* ==================================================================
+   Batch 53 — BrandStories: interactive mobile "stories" viewer.
+   Component: app/components/BrandStories.tsx.  Replaces the passive
+   auto-advancing video in «Рух що перетворює» on phones with a
+   tap / hold / swipe stories player.  Desktop keeps the original
+   3-column .bw-v3-frame-container layout entirely untouched.
+   ================================================================== */
+
+/* ≥769px: the component is fully hidden — desktop is unchanged. */
+@media (min-width: 769px) {
+    .brand-stories {
+        display: none !important;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Retire the legacy full-bleed video + its standalone CTA on phones;
+       <BrandStories> owns the video slot and carries its own CTA.
+       (home.tsx also pauses the legacy <video> — display:none won't.) */
+    .bw-v3-layout .bw-v3-frame-container,
+    .bw-v3-layout .bw-btn-elegant {
+        display: none !important;
+    }
+
+    .brand-stories {
+        order: 1 !important;
+        display: flex !important;
+        flex-direction: column;
+        gap: 18px;
+        width: 100%;
+        margin: 0;
+        outline: none;
+    }
+    .brand-stories:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 6px;
+        border-radius: 28px;
+    }
+
+    /* Intro — gives the section a proper heading on mobile (the old
+       overlay title disappears with the legacy frame). */
+    .brand-stories__intro {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+    }
+    .brand-stories__kicker {
+        font-family: var(--font-body);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--color-primary);
+    }
+    .brand-stories__title {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: clamp(1.9rem, 8vw, 2.4rem);
+        font-weight: 400;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        color: var(--color-text-primary);
+    }
+    .brand-stories__title em {
+        font-style: italic;
+        color: var(--color-primary);
+    }
+
+    /* Card — the framed 9:16 stage. */
+    .brand-stories__card {
+        position: relative;
+        width: 100%;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #0d0d0f;
+        box-shadow:
+            0 18px 48px rgba(0, 0, 0, 0.28),
+            0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+    .brand-stories__stage {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 9 / 16;
+        max-height: 74dvh;
+        margin: 0 auto;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        touch-action: pan-y;
+    }
+
+    .brand-stories__video {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.6s ease;
+    }
+    .brand-stories__video.is-active {
+        opacity: 1;
+    }
+
+    /* Scrim — top + bottom gradients so chrome stays legible on any
+       frame. */
+    .brand-stories__scrim {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background:
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 22%),
+            linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 38%);
+    }
+
+    /* Gesture capture layer — sits above the film, below the buttons. */
+    .brand-stories__gestures {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        touch-action: pan-y;
+    }
+
+    /* Progress segments. */
+    .brand-stories__progress {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        z-index: 6;
+        display: flex;
+        gap: 5px;
+        transition: opacity 0.3s ease;
+    }
+    .brand-stories__seg {
+        flex: 1 1 0;
+        /* thin visible bar, but a tall invisible hit area */
+        padding: 9px 0;
+        margin: -9px 0;
+        background: none;
+        border: 0;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .brand-stories__seg-track {
+        display: block;
+        height: 2.5px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.34);
+        overflow: hidden;
+    }
+    .brand-stories__seg-fill {
+        display: block;
+        width: 0%;
+        height: 100%;
+        border-radius: 2px;
+        background: #fff;
+    }
+
+    /* Caption — chapter eyebrow + line, bottom-left. */
+    .brand-stories__caption {
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        bottom: 24px;
+        z-index: 4;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    .brand-stories__chx {
+        display: block;
+        margin-bottom: 8px;
+        font-family: var(--font-body);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.82);
+    }
+    .brand-stories__line {
+        margin: 0;
+        max-width: 14ch;
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: clamp(1.5rem, 6.5vw, 1.9rem);
+        font-weight: 400;
+        line-height: 1.18;
+        letter-spacing: -0.01em;
+        color: #fff;
+        text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Play / pause — visible WCAG 2.2.2 control, 44px target.
+       Top-right (just below the progress bar): keeps it clear of the
+       caption at the bottom-left AND the page-global floating-contact
+       FAB, which is position:fixed over the card's lower-right on every
+       section. Right edge aligns with the progress bar (right:12px). */
+    .brand-stories__pp {
+        position: absolute;
+        right: 12px;
+        top: 44px;
+        z-index: 6;
+        display: flex;
+        width: 44px;
+        height: 44px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.32);
+        border-radius: 50%;
+        background: rgba(20, 20, 22, 0.42);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        color: #fff;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition:
+            opacity 0.3s ease,
+            transform 0.2s ease,
+            background 0.2s ease;
+    }
+    .brand-stories__pp:active {
+        transform: scale(0.92);
+    }
+
+    /* First-time hint pill. */
+    .brand-stories__hint {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        z-index: 5;
+        transform: translate(-50%, -50%);
+        padding: 10px 18px;
+        border-radius: 999px;
+        background: rgba(20, 20, 22, 0.55);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #fff;
+        font-family: var(--font-body);
+        font-size: 13px;
+        letter-spacing: 0.02em;
+        pointer-events: none;
+        animation: brandStoriesHint 3.8s ease forwards;
+    }
+    @keyframes brandStoriesHint {
+        0% {
+            opacity: 0;
+            transform: translate(-50%, -46%);
+        }
+        14% {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+        }
+        80% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -54%);
+        }
+    }
+
+    /* Hold-to-pause: fade the chrome away so the film reads clean. */
+    .brand-stories.is-holding .brand-stories__progress,
+    .brand-stories.is-holding .brand-stories__caption,
+    .brand-stories.is-holding .brand-stories__pp {
+        opacity: 0;
+    }
+
+    /* CTA row. */
+    .brand-stories__cta-row {
+        display: flex;
+        justify-content: center;
+    }
+    .brand-stories__cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 32px;
+        border: 1px solid var(--color-primary);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--color-primary);
+        font-family: var(--font-body);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition:
+            background 0.3s ease,
+            color 0.3s ease;
+    }
+    .brand-stories__cta:active {
+        background: var(--color-primary);
+        color: #fff;
+    }
+
+    /* Reduced motion — no crossfade, no hint motion. */
+    @media (prefers-reduced-motion: reduce) {
+        .brand-stories__video {
+            transition: none;
+        }
+        .brand-stories__hint {
+            animation: none;
+        }
+    }
+}

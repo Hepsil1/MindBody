@@ -55,7 +55,9 @@ export async function action({ request }: ActionFunctionArgs) {
             },
         });
 
-        return new Response(JSON.stringify(customer), {
+        // Never echo the bcrypt hash back to the client (it lands in sessionStorage).
+        const { passwordHash: _omitHash, ...safeCustomer } = customer;
+        return new Response(JSON.stringify(safeCustomer), {
             headers: { "Content-Type": "application/json" },
         });
     } catch (e) {

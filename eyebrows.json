@@ -1,0 +1,75 @@
+{
+  "matches": [],
+  "beforeAfter": [
+    {
+      "class": "header__nav-list",
+      "tag": "UL",
+      "p": "::before",
+      "content": "\"КАТЕГОРІЇ\"",
+      "font": "11px",
+      "ls": "2.2px",
+      "color": "rgb(102, 102, 102)",
+      "mb": "20px"
+    },
+    {
+      "class": "mega-menu",
+      "tag": "DIV",
+      "p": "::before",
+      "content": "\"\"",
+      "font": "16px",
+      "ls": "normal",
+      "color": "rgb(26, 26, 26)",
+      "mb": "0px"
+    },
+    {
+      "class": "mega-menu",
+      "tag": "DIV",
+      "p": "::before",
+      "content": "\"\"",
+      "font": "16px",
+      "ls": "normal",
+      "color": "rgb(26, 26, 26)",
+      "mb": "0px"
+    },
+    {
+      "class": "mega-menu",
+      "tag": "DIV",
+      "p": "::before",
+      "content": "\"\"",
+      "font": "16px",
+      "ls": "normal",
+      "color": "rgb(26, 26, 26)",
+      "mb": "0px"
+    },
+    {
+      "class": "mega-menu",
+      "tag": "DIV",
+      "p": "::before",
+      "content": "\"\"",
+      "font": "16px",
+      "ls": "normal",
+      "color": "rgb(26, 26, 26)",
+      "mb": "0px"
+    },
+    {
+      "class": "mega-menu",
+      "tag": "DIV",
+      "p": "::before",
+      "content": "\"\"",
+      "font": "16px",
+      "ls": "normal",
+      "color": "rgb(26, 26, 26)",
+      "mb": "0px"
+    },
+    {
+      "class": "header__nav-extra",
+      "tag": "DIV",
+      "p": "::before",
+      "content": "\"АКАУНТ\"",
+      "font": "11px",
+      "ls": "2.2px",
+      "color": "rgb(102, 102, 102)",
+      "mb": "4px"
+    }
+  ]
+}

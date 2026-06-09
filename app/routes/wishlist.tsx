@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { StorageUtils, type WishlistItem } from "../utils/storage";
 import { useToast } from "../components/Toast";
 import { pluralizeUA } from "../utils/plural";
+import { slugToLabel } from "../utils/categoryMap";
 import "../styles/wishlist.css";
 
 export default function Wishlist() {
@@ -74,7 +75,9 @@ export default function Wishlist() {
                 quantity: 1,
             });
         });
-        showToast(`${items.length} товарів додано до кошика!`);
+        showToast(
+            `${items.length} ${pluralizeUA(items.length, "товар", "товари", "товарів")} додано до кошика!`,
+        );
     };
 
     const clearWishlist = () => {
@@ -243,9 +246,11 @@ export default function Wishlist() {
                                                 </button>
                                             </div>
                                             <div className="wishlist-card__info">
-                                                <span className="wishlist-card__category">
-                                                    {item.category === "kids" ? "Дітям" : "Жінкам"}
-                                                </span>
+                                                {item.category && (
+                                                    <span className="wishlist-card__category">
+                                                        {slugToLabel(item.category)}
+                                                    </span>
+                                                )}
                                                 <Link
                                                     to={`/product/${item.id}`}
                                                     className="wishlist-card__name"
@@ -286,7 +291,8 @@ export default function Wishlist() {
                                                 Додати все
                                             </span>
                                             <span className="wishlist-action-btn__subtitle">
-                                                {items.length} товарів •{" "}
+                                                {items.length}{" "}
+                                                {pluralizeUA(items.length, "товар", "товари", "товарів")} •{" "}
                                                 {totalValue.toLocaleString()} ₴
                                             </span>
                                         </div>

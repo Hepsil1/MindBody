@@ -132,6 +132,12 @@ export default function Footer() {
                                     </svg>
                                     +38 (096) 665-08-55
                                 </a>
+                                {/* Sprint 1 D1.2 #45 TRUST-006 — explicit support
+                                    hours sets response expectation. Baymard:
+                                    reduces "когда мне ответят?" anxiety. */}
+                                <p className="footer-puma__hours">
+                                    Пн–Пт · 9:00–18:00
+                                </p>
                                 <ul
                                     className="footer-puma__social-icons"
                                     aria-label="Месенджери та соцмережі"
@@ -285,6 +291,75 @@ export default function Footer() {
                 </div>
             </div>
 
+            {/* Sprint 1 D1.4 — #4 TRUST-001 payment + security badges.
+                Critical first-time-visitor trust signal. SVGs from
+                simple-icons.org (MIT). currentColor inherits parent text
+                tint so they read as quiet supporting info, not loud
+                logos. NP shipping note kept text-only since simple-icons
+                has no Ukrainian carrier marks. */}
+            <div className="footer-puma__trust-row">
+                <ul className="footer-puma__pay-icons" aria-label="Способи оплати">
+                    <li>
+                        <img
+                            src="/icons/payment/visa.svg"
+                            alt="Visa"
+                            width="32"
+                            height="20"
+                            loading="lazy"
+                            decoding="async"
+                        />
+                    </li>
+                    <li>
+                        <img
+                            src="/icons/payment/mastercard.svg"
+                            alt="Mastercard"
+                            width="32"
+                            height="20"
+                            loading="lazy"
+                            decoding="async"
+                        />
+                    </li>
+                    <li>
+                        <img
+                            src="/icons/payment/applepay.svg"
+                            alt="Apple Pay"
+                            width="40"
+                            height="20"
+                            loading="lazy"
+                            decoding="async"
+                        />
+                    </li>
+                    <li>
+                        <img
+                            src="/icons/payment/googlepay.svg"
+                            alt="Google Pay"
+                            width="40"
+                            height="20"
+                            loading="lazy"
+                            decoding="async"
+                        />
+                    </li>
+                    <li className="footer-puma__pay-text">Готівка при отриманні</li>
+                </ul>
+                <p className="footer-puma__ssl-badge">
+                    <svg
+                        aria-hidden="true"
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Безпечне з'єднання · SSL
+                </p>
+            </div>
+
             {/* FULL WIDTH DIVIDER */}
             <div className="footer-puma__full-divider"></div>
 
@@ -315,8 +390,20 @@ export default function Footer() {
                         Доставка Новою Поштою
                     </div>
 
+                    {/* Sprint 1 D1.3 — #33 TRUST-004 business info (placeholder).
+                        Legal entity per ЗУ «Про захист прав споживачів» ст.15 +
+                        Baymard trust signal. Real ФОП / ЄДРПОУ replaces this
+                        when the user provides values. */}
+                    <address className="footer-puma__legal">
+                        MIND BODY
+                        <span aria-hidden="true"> · </span>
+                        <a href="mailto:hello@mindbody.ua">hello@mindbody.ua</a>
+                        <span aria-hidden="true"> · </span>
+                        м. Київ, Україна
+                    </address>
+
                     <div className="footer-puma__copyright-text">
-                        © MIND BODY, {new Date().getFullYear()}
+                        © MIND BODY, <span suppressHydrationWarning>{new Date().getFullYear()}</span>
                     </div>
                 </div>
             </div>

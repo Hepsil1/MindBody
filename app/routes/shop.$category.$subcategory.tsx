@@ -16,7 +16,7 @@ import ShopCategory from "./shop.$category";
 export async function loader(args: LoaderFunctionArgs) {
     const { category, subcategory } = args.params;
     if (!category || !subcategory) {
-        throw redirect("/shop", 301);
+        throw redirect("/shop/yoga", 301);
     }
     if (!isValidSubcategory(category, subcategory)) {
         // Unknown sub for this shop: send the user (and search bots) back to
@@ -31,12 +31,15 @@ export async function loader(args: LoaderFunctionArgs) {
     return { ...data, subcategory };
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
     const shopPage = data?.shopPage;
     const subcategory = data?.subcategory ?? "";
     const category = data?.category ?? "";
     const siteUrl = data?.siteUrl || "https://saleid.icu";
     const products = data?.products ?? [];
+    // ?fabric / ?sleeve / sort variants are facets of the clean subcategory
+    // URL — keep them out of the index (canonical already points home).
+    const isFiltered = Boolean(location?.search && location.search.length > 1);
 
     const shopLabel = shopPage?.title || category.toUpperCase();
     const subLabel = slugToLabel(subcategory);
@@ -56,6 +59,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     return [
         { title },
         { name: "description", content: description },
+        ...(isFiltered ? [{ name: "robots", content: "noindex, follow" }] : []),
         { tagName: "link", rel: "canonical", href: canonicalUrl },
         { property: "og:url", content: canonicalUrl },
         { property: "og:title", content: title },
@@ -106,7 +110,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export function headers() {
     return {
-        "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+        // No long HTML cache — a stale document survives a deploy that deleted
+        // its JS chunks and then can't hydrate. Always revalidate.
+        "Cache-Control": "no-cache",
     };
 }
 

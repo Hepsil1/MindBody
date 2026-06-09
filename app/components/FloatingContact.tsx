@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router";
 
 // Business contact numbers
 const PHONE = "380509656737";
@@ -26,6 +27,16 @@ const STORAGE_KEY = "mb-floating-contact-collapsed";
 export default function FloatingContact() {
     const [showBackToTop, setShowBackToTop] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
+    const location = useLocation();
+
+    /* Sprint 1 D4.1 — #12 NAV-001: hide widget on PDP + checkout where
+       the sticky bottom CTA lives. Three messenger circles + the back-to-top
+       FAB clipped the "Додати в кошик" button on iPhone 14 — direct revenue
+       loss. Desktop still shows the widget on those routes because the
+       sticky CTA is mobile-only. */
+    const isPDP = /^\/product\//.test(location.pathname);
+    const isCheckout = location.pathname === "/checkout";
+    const hideOnSticky = isPDP || isCheckout;
 
     // Restore user's last collapse preference. Default is expanded
     // (no localStorage entry = false) so first-time visitors always
@@ -65,7 +76,9 @@ export default function FloatingContact() {
     };
 
     return (
-        <div className={`floating-contact ${collapsed ? "is-collapsed" : ""}`}>
+        <div
+            className={`floating-contact ${collapsed ? "is-collapsed" : ""} ${hideOnSticky ? "floating-contact--hide-mobile" : ""}`}
+        >
             {/* Minimise affordance — small subtle × above the panel.
                 Only visible when the cluster is expanded. Sized
                 deliberately small (28px) so it doesn't visually

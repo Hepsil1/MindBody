@@ -1,12 +1,13 @@
 import { Link, useLoaderData, useFetcher, useNavigation } from "react-router";
 import type { Route } from "./+types/index";
 import { Prisma } from "@prisma/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { prisma } from "../../../db.server";
 import { invalidateAll } from "../../../utils/cache.server";
 import { actionOk, actionError, runAction } from "../../../utils/action-result.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
 import { buildListQuery, paginate, type ListSpec } from "../../../utils/admin-list.server";
+import { slugToLabel } from "../../../utils/categoryMap";
 import {
     AdminToolbar,
     SearchInput,
@@ -171,6 +172,13 @@ export default function AdminProducts() {
 
     const { selected, toggle, toggleAll, clear, allSelected, someSelected, selectedIds } =
         useRowSelection(products);
+    // Clear selection whenever the visible result set changes (page/search/
+    // sort/filter), so a bulk action can't hit page-1 rows the operator can no
+    // longer see (client nav keeps this component mounted).
+    useEffect(() => {
+        clear();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state.page, state.q, state.sort, state.dir, JSON.stringify(state.filters), lowStock]);
     const [activeStockId, setActiveStockId] = useState<string | null>(null);
     const [confirmProduct, setConfirmProduct] = useState<{ id: string; name: string } | null>(null);
 
@@ -229,7 +237,7 @@ export default function AdminProducts() {
                         name="category"
                         value={state.filters.category ?? ""}
                         allLabel="Всі категорії"
-                        options={categories.map((c) => ({ value: c, label: c }))}
+                        options={categories.map((c) => ({ value: c, label: slugToLabel(c) }))}
                     />
                 )}
                 <label
@@ -292,11 +300,10 @@ export default function AdminProducts() {
             ) : (
                 <div className="admin-card" style={{ padding: 0, overflow: "visible" }}>
                     <div
-                        className="admin-table-container"
+                        className="admin-table-container admin-table-container--products"
                         style={{
                             border: "none",
                             borderRadius: 0,
-                            overflow: "visible",
                             opacity: isListLoading ? 0.55 : 1,
                             transition: "opacity 0.15s",
                             pointerEvents: isListLoading ? "none" : "auto",

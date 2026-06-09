@@ -9,6 +9,8 @@ import {
     ALLOWED_CATEGORY_SLUGS,
     isValidSubcategory,
 } from "../utils/categoryMap";
+import { fabricsForShop, sleevesForShop, fabricLabel, sleeveLabel } from "../utils/taxonomy";
+import { shopPageLabel } from "../utils/shop-pages";
 import {
     loadShopData,
     type ShopProductCard as SharedShopProductCard,
@@ -23,19 +25,21 @@ import { cachedFetch } from "../utils/cache.server";
 // keep compiling without changes.
 type ShopProductCard = SharedShopProductCard;
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
     const shopPage = data?.shopPage;
-    const slug = data?.category || "women";
-    const titles: Record<string, string> = {
-        women: "Жіноча колекція",
-        kids: "Дитяча колекція",
-    };
-    const title = shopPage?.title || titles[slug] || "Каталог";
+    const slug = data?.category || "yoga";
+    // Title: admin-set DB title wins; else the taxonomy label (all 6 real
+    // slugs), not the legacy women/kids-only map.
+    const title = shopPage?.title || shopPageLabel(slug).title || "Каталог";
     const heroImage = shopPage?.heroImage || "/brand-sun.png";
     const siteUrl = data?.siteUrl || "https://saleid.icu";
     const products = data?.products ?? [];
 
     const canonicalUrl = `${siteUrl}/shop/${slug}`;
+    // Faceted/sorted/paginated variants (any ?query) are non-canonical
+    // duplicates of the clean /shop/:slug page — keep them out of the index
+    // while still following links so products keep getting crawled.
+    const isFiltered = Boolean(location?.search && location.search.length > 1);
 
     // First 10 products as an ItemList — Google recommends keeping the
     // exposed list short. The full set still lives in the dynamic
@@ -53,6 +57,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
             name: "description",
             content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика. Українське виробництво.`,
         },
+        ...(isFiltered ? [{ name: "robots", content: "noindex, follow" }] : []),
         { tagName: "link", rel: "canonical", href: canonicalUrl },
         { property: "og:url", content: canonicalUrl },
         { property: "og:title", content: `${title} | MIND BODY` },
@@ -108,7 +113,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export function headers() {
     return {
-        "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+        // No long HTML cache — a stale document survives a deploy that deleted
+        // its JS chunks and then can't hydrate. Always revalidate.
+        "Cache-Control": "no-cache",
     };
 }
 
@@ -123,7 +130,7 @@ function parseJson<T>(str: string | null | undefined, fallback: T): T {
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-    const categorySlug = params.category || "women";
+    const categorySlug = params.category || "yoga";
 
     // 301 redirect legacy query-string filters to the new nested path form.
     // We only redirect *single* selections — multi-filter (?categories=a,b)
@@ -186,6 +193,14 @@ export default function ShopCategory() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [selectedSizes, setSelectedSizes] = useState<string[]>(getListParam("sizes"));
     const [selectedColors, setSelectedColors] = useState<string[]>(getListParam("colors"));
+    // Deeper taxonomy facets — single-select, sourced from the URL like the
+    // others. Mega-menu deep links land here pre-filtered (?fabric=&sleeve=).
+    const [selectedFabric, setSelectedFabric] = useState<string | null>(
+        searchParams.get("fabric"),
+    );
+    const [selectedSleeve, setSelectedSleeve] = useState<string | null>(
+        searchParams.get("sleeve"),
+    );
     const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(
         searchParams.get("priceRange"),
     );
@@ -196,6 +211,8 @@ export default function ShopCategory() {
         size: true,
         color: true,
         price: true,
+        fabric: true,
+        sleeve: true,
     });
     const LOAD_MORE_COUNT = 12;
 
@@ -242,6 +259,18 @@ export default function ShopCategory() {
         }
     }, [pathSubcategory]);
 
+    // Honour fabric/sleeve coming FROM the URL — e.g. a deep mega-menu link
+    // (/shop/yoga/jumpsuit?fabric=sport) clicked while already on a shop page,
+    // where the component is reused and mount-time init doesn't re-run.
+    // One-way URL→state; the no-op-when-equal guard stops it looping with the
+    // state→URL sync below (which only writes when the string actually changes).
+    useEffect(() => {
+        const f = searchParams.get("fabric");
+        const s = searchParams.get("sleeve");
+        setSelectedFabric((prev) => (prev === f ? prev : f));
+        setSelectedSleeve((prev) => (prev === s ? prev : s));
+    }, [searchParams]);
+
     const navigate = useNavigate();
 
     // Sync state changes to URL Params
@@ -279,6 +308,12 @@ export default function ShopCategory() {
         if (selectedColors.length > 0) newParams.set("colors", selectedColors.join(","));
         else newParams.delete("colors");
 
+        if (selectedFabric) newParams.set("fabric", selectedFabric);
+        else newParams.delete("fabric");
+
+        if (selectedSleeve) newParams.set("sleeve", selectedSleeve);
+        else newParams.delete("sleeve");
+
         if (selectedPriceRange) newParams.set("priceRange", selectedPriceRange);
         else newParams.delete("priceRange");
 
@@ -293,20 +328,26 @@ export default function ShopCategory() {
         selectedCategories,
         selectedSizes,
         selectedColors,
+        selectedFabric,
+        selectedSleeve,
         selectedPriceRange,
         sortBy,
         searchParams,
         setSearchParams,
     ]);
 
-    const toggleSection = (section: "category" | "size" | "color" | "price") => {
+    const toggleSection = (
+        section: "category" | "size" | "color" | "price" | "fabric" | "sleeve",
+    ) => {
         setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
     };
 
-    // Use DB data or basic defaults
-    const prefixLabel =
-        shopPage?.prefixLabel || (category === "kids" ? "For little stars" : "For active life");
-    const mainLabel = shopPage?.title || (category === "kids" ? "Діти" : "Жіноча");
+    // Use DB data, else fall back to the taxonomy labels (shop-pages.ts) so
+    // every real slug (yoga/sport/dance/casual/kids/yogatools) shows a correct
+    // hero title — not the legacy women/kids "Жіноча" default.
+    const fallbackLabels = shopPageLabel(category);
+    const prefixLabel = shopPage?.prefixLabel || fallbackLabels.tagline || "For active life";
+    const mainLabel = shopPage?.title || fallbackLabels.title;
     const layerLabel = "MIND BODY";
 
     // Parse Image Position. Default = "50% 30%" (face-safe crop for
@@ -383,6 +424,12 @@ export default function ShopCategory() {
                 }),
             );
         }
+        if (selectedFabric) {
+            result = result.filter((p) => p.fabric === selectedFabric);
+        }
+        if (selectedSleeve) {
+            result = result.filter((p) => p.sleeve === selectedSleeve);
+        }
         if (selectedPriceRange) {
             const range = priceRanges.find((r) => r.id === selectedPriceRange);
             if (range) {
@@ -405,6 +452,8 @@ export default function ShopCategory() {
         selectedCategories,
         selectedSizes,
         selectedColors,
+        selectedFabric,
+        selectedSleeve,
         selectedPriceRange,
         sortBy,
         priceRanges,
@@ -438,8 +487,96 @@ export default function ShopCategory() {
         setSelectedCategories([]);
         setSelectedSizes([]);
         setSelectedColors([]);
+        setSelectedFabric(null);
+        setSelectedSleeve(null);
         setSelectedPriceRange(null);
         setDisplayCount(12);
+    };
+
+    // Fabric/sleeve options available for THIS shop section (taxonomy union).
+    // Empty for casual/dance/yogatools → those accordions never render.
+    const fabricOptions = useMemo(() => fabricsForShop(category), [category]);
+    const sleeveOptions = useMemo(() => sleevesForShop(category), [category]);
+
+    // Single-select accordion for a deeper facet (fabric | sleeve), shared by
+    // the sidebar and the mobile drawer. Options with zero matching products
+    // are hidden; the whole section disappears when nothing matches — mirrors
+    // the size/color behaviour. `idPrefix` keeps radio groups unique per host.
+    const renderFacetFilter = (
+        title: string,
+        sectionKey: "fabric" | "sleeve",
+        options: string[],
+        selected: string | null,
+        setSelected: (v: string | null) => void,
+        labelFn: (s: string) => string,
+        idPrefix: string,
+    ) => {
+        const withCounts = options
+            .map((o) => ({
+                o,
+                count: products.filter(
+                    (p) => (sectionKey === "fabric" ? p.fabric : p.sleeve) === o,
+                ).length,
+            }))
+            .filter((x) => x.count > 0);
+        if (withCounts.length === 0) return null;
+        const name = `${idPrefix}-${sectionKey}`;
+        return (
+            <div className={`filter-accordion ${openSections[sectionKey] ? "active" : ""}`}>
+                <button
+                    type="button"
+                    className="accordion-trigger"
+                    aria-expanded={openSections[sectionKey]}
+                    onClick={() => toggleSection(sectionKey)}
+                >
+                    <span>{title}</span>
+                    <span className="icon">{openSections[sectionKey] ? "−" : "+"}</span>
+                </button>
+                <div className="accordion-content">
+                    <div className="filter-checkbox-list">
+                        <label className="mb-checkbox-item">
+                            <input
+                                type="radio"
+                                name={name}
+                                checked={!selected}
+                                onChange={() => {
+                                    setSelected(null);
+                                    setDisplayCount(12);
+                                }}
+                            />
+                            <span className="checkbox-visual radio"></span>
+                            <span className="label-text">Усі</span>
+                        </label>
+                        {withCounts.map(({ o, count }) => (
+                            <label key={`${name}-${o}`} className="mb-checkbox-item">
+                                <input
+                                    type="radio"
+                                    name={name}
+                                    checked={selected === o}
+                                    onChange={() => {
+                                        setSelected(o);
+                                        setDisplayCount(12);
+                                    }}
+                                />
+                                <span className="checkbox-visual radio"></span>
+                                <span className="label-text">
+                                    {labelFn(o)}
+                                    <span
+                                        style={{
+                                            marginLeft: "6px",
+                                            opacity: 0.4,
+                                            fontSize: "11px",
+                                        }}
+                                    >
+                                        ({count})
+                                    </span>
+                                </span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -523,9 +660,9 @@ export default function ShopCategory() {
                                 window.parent.postMessage(
                                     {
                                         type: "OPEN_SHOP_BG_EDITOR",
-                                        category: category, // 'women', 'kids', etc.
+                                        category: category, // real shop slug (yoga/sport/…)
                                     },
-                                    "*",
+                                    window.location.origin,
                                 );
                             }}
                             style={{
@@ -626,12 +763,16 @@ export default function ShopCategory() {
                     {selectedCategories.length +
                         selectedSizes.length +
                         selectedColors.length +
+                        (selectedFabric ? 1 : 0) +
+                        (selectedSleeve ? 1 : 0) +
                         (selectedPriceRange ? 1 : 0) >
                         0 && (
                         <span className="mobile-filter-badge">
                             {selectedCategories.length +
                                 selectedSizes.length +
                                 selectedColors.length +
+                                (selectedFabric ? 1 : 0) +
+                                (selectedSleeve ? 1 : 0) +
                                 (selectedPriceRange ? 1 : 0)}
                         </span>
                     )}
@@ -666,15 +807,17 @@ export default function ShopCategory() {
                         <div className="filter-drawer__body">
                             {/* Same filter content rendered inside drawer */}
                             <div className="filter-accordion active">
-                                <div
+                                <button
+                                    type="button"
                                     className="accordion-trigger"
+                                    aria-expanded={openSections.category}
                                     onClick={() => toggleSection("category")}
                                 >
                                     <span>КАТЕГОРІЯ</span>
                                     <span className="icon">
                                         {openSections.category ? "−" : "+"}
                                     </span>
-                                </div>
+                                </button>
                                 <div className="accordion-content">
                                     <div className="filter-checkbox-list">
                                         {categories.map((cat, idx) => {
@@ -713,14 +856,34 @@ export default function ShopCategory() {
                                     </div>
                                 </div>
                             </div>
+                            {renderFacetFilter(
+                                "ТКАНИНА",
+                                "fabric",
+                                fabricOptions,
+                                selectedFabric,
+                                setSelectedFabric,
+                                fabricLabel,
+                                "d",
+                            )}
+                            {renderFacetFilter(
+                                "РУКАВ",
+                                "sleeve",
+                                sleeveOptions,
+                                selectedSleeve,
+                                setSelectedSleeve,
+                                sleeveLabel,
+                                "d",
+                            )}
                             <div className="filter-accordion active">
-                                <div
+                                <button
+                                    type="button"
                                     className="accordion-trigger"
+                                    aria-expanded={openSections.size}
                                     onClick={() => toggleSection("size")}
                                 >
                                     <span>РОЗМІР</span>
                                     <span className="icon">{openSections.size ? "−" : "+"}</span>
-                                </div>
+                                </button>
                                 <div className="accordion-content">
                                     <div className="mb-size-grid">
                                         {sizes.map((size: string, idx: number) => {
@@ -742,13 +905,15 @@ export default function ShopCategory() {
                                 </div>
                             </div>
                             <div className="filter-accordion active">
-                                <div
+                                <button
+                                    type="button"
                                     className="accordion-trigger"
+                                    aria-expanded={openSections.color}
                                     onClick={() => toggleSection("color")}
                                 >
                                     <span>КОЛІР</span>
                                     <span className="icon">{openSections.color ? "−" : "+"}</span>
-                                </div>
+                                </button>
                                 <div className="accordion-content">
                                     <div className="mb-color-grid">
                                         {colors.map((color: string, idx: number) => {
@@ -764,6 +929,8 @@ export default function ShopCategory() {
                                                     key={`dcol-${color}-${idx}`}
                                                     className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? "active" : ""}`}
                                                     onClick={() => toggleColor(color)}
+                                                    aria-label={colorLabels[color] || color}
+                                                    aria-pressed={selectedColors.includes(color)}
                                                     title={colorLabels[color] || color}
                                                 >
                                                     <span className="swatch-check">✓</span>
@@ -774,13 +941,15 @@ export default function ShopCategory() {
                                 </div>
                             </div>
                             <div className="filter-accordion active">
-                                <div
+                                <button
+                                    type="button"
                                     className="accordion-trigger"
+                                    aria-expanded={openSections.price}
                                     onClick={() => toggleSection("price")}
                                 >
                                     <span>ЦІНА</span>
                                     <span className="icon">{openSections.price ? "−" : "+"}</span>
-                                </div>
+                                </button>
                                 <div className="accordion-content">
                                     <div className="filter-checkbox-list">
                                         {priceRanges.map((range: PriceRange, idx: number) => (
@@ -809,6 +978,8 @@ export default function ShopCategory() {
                             {(selectedCategories.length > 0 ||
                                 selectedSizes.length > 0 ||
                                 selectedColors.length > 0 ||
+                                selectedFabric ||
+                                selectedSleeve ||
                                 selectedPriceRange) && (
                                 <button
                                     onClick={() => {
@@ -843,15 +1014,17 @@ export default function ShopCategory() {
                             <div
                                 className={`filter-accordion ${openSections.category ? "active" : ""}`}
                             >
-                                <div
+                                <button
+                                    type="button"
                                     className="accordion-trigger"
+                                    aria-expanded={openSections.category}
                                     onClick={() => toggleSection("category")}
                                 >
                                     <span>КАТЕГОРІЯ</span>
                                     <span className="icon">
                                         {openSections.category ? "−" : "+"}
                                     </span>
-                                </div>
+                                </button>
                                 <div className="accordion-content">
                                     <div className="filter-checkbox-list">
                                         {categories.map((cat, idx) => {
@@ -891,17 +1064,38 @@ export default function ShopCategory() {
                                 </div>
                             </div>
 
+                            {renderFacetFilter(
+                                "ТКАНИНА",
+                                "fabric",
+                                fabricOptions,
+                                selectedFabric,
+                                setSelectedFabric,
+                                fabricLabel,
+                                "s",
+                            )}
+                            {renderFacetFilter(
+                                "РУКАВ",
+                                "sleeve",
+                                sleeveOptions,
+                                selectedSleeve,
+                                setSelectedSleeve,
+                                sleeveLabel,
+                                "s",
+                            )}
+
                             {/* Size Accordion */}
                             <div
                                 className={`filter-accordion ${openSections.size ? "active" : ""}`}
                             >
-                                <div
+                                <button
+                                    type="button"
                                     className="accordion-trigger"
+                                    aria-expanded={openSections.size}
                                     onClick={() => toggleSection("size")}
                                 >
                                     <span>РОЗМІР</span>
                                     <span className="icon">{openSections.size ? "−" : "+"}</span>
-                                </div>
+                                </button>
                                 <div className="accordion-content">
                                     <div className="mb-size-grid">
                                         {sizes.map((size: string, idx: number) => {
@@ -927,13 +1121,15 @@ export default function ShopCategory() {
                             <div
                                 className={`filter-accordion ${openSections.color ? "active" : ""}`}
                             >
-                                <div
+                                <button
+                                    type="button"
                                     className="accordion-trigger"
+                                    aria-expanded={openSections.color}
                                     onClick={() => toggleSection("color")}
                                 >
                                     <span>КОЛІР</span>
                                     <span className="icon">{openSections.color ? "−" : "+"}</span>
-                                </div>
+                                </button>
                                 <div className="accordion-content">
                                     <div className="mb-color-grid">
                                         {colors.map((color: string, idx: number) => {
@@ -949,6 +1145,8 @@ export default function ShopCategory() {
                                                     key={`color-${color}-${idx}`}
                                                     className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? "active" : ""}`}
                                                     onClick={() => toggleColor(color)}
+                                                    aria-label={colorLabels[color] || color}
+                                                    aria-pressed={selectedColors.includes(color)}
                                                     title={colorLabels[color] || color}
                                                 >
                                                     <span className="swatch-check">✓</span>
@@ -963,13 +1161,15 @@ export default function ShopCategory() {
                             <div
                                 className={`filter-accordion ${openSections.price ? "active" : ""}`}
                             >
-                                <div
+                                <button
+                                    type="button"
                                     className="accordion-trigger"
+                                    aria-expanded={openSections.price}
                                     onClick={() => toggleSection("price")}
                                 >
                                     <span>ЦІНА</span>
                                     <span className="icon">{openSections.price ? "−" : "+"}</span>
-                                </div>
+                                </button>
                                 <div className="accordion-content">
                                     <div className="filter-checkbox-list">
                                         {priceRanges.map((range: PriceRange, idx: number) => (
@@ -997,6 +1197,8 @@ export default function ShopCategory() {
                             {(selectedCategories.length > 0 ||
                                 selectedSizes.length > 0 ||
                                 selectedColors.length > 0 ||
+                                selectedFabric ||
+                                selectedSleeve ||
                                 selectedPriceRange) && (
                                 <button onClick={clearFilters} className="mb-reset-filters">
                                     Скинути всі фільтри

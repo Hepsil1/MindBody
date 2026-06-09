@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
 import ProductCard from "../components/ProductCard";
+import BrandStories from "../components/BrandStories";
 import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
 import { buildWebpSrcset } from "../utils/responsive-image";
@@ -150,7 +151,12 @@ export function meta({ data }: Route.MetaArgs) {
 
 export function headers() {
     return {
-        "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+        // HTML must NOT be cached across deploys: each deploy deletes the old
+        // hashed JS chunks, so a stale cached document would reference a 404'd
+        // chunk and fail to hydrate (loading screen sticks). Revalidate every
+        // time so the browser always gets the current chunk references. (Loader
+        // data is still cached server-side via cachedFetch, so this is cheap.)
+        "Cache-Control": "no-cache",
     };
 }
 
@@ -263,6 +269,11 @@ export async function loader({ request }: Route.LoaderArgs) {
             image1: s.image1,
             image2: s.image2,
             image3: s.image3,
+            // Carry the admin's face-safe crop positions — without these the
+            // hero falls back to center-crop and slices through portrait photos.
+            image1Pos: s.image1Pos,
+            image2Pos: s.image2Pos,
+            image3Pos: s.image3Pos,
         }));
 
         // Normalise into HomeCategoryCard[] so the render side doesn't have
@@ -521,6 +532,32 @@ export default function Home() {
         // Spring back to rest state smoothly
         magneticRef.current.style.transform = `perspective(800px) rotateX(0deg) rotateY(0deg) translate3d(0px, 0px, 0)`;
     };
+
+    // Mobile: <BrandStories> replaces the legacy .bw-v3-frame-container
+    // video (CSS display:none'd below 768px).  But display:none does NOT
+    // pause a <video> — it keeps decoding in the background.  Pause &
+    // de-autoplay the legacy clips on phones so only the stories player
+    // runs.  Desktop is untouched.
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const mq = window.matchMedia("(max-width: 768px)");
+        const apply = () => {
+            if (!mq.matches) return;
+            document
+                .querySelectorAll<HTMLVideoElement>(".bw-v3-frame-container video")
+                .forEach((v) => {
+                    try {
+                        v.pause();
+                        v.removeAttribute("autoplay");
+                    } catch {
+                        /* ignore */
+                    }
+                });
+        };
+        apply();
+        mq.addEventListener("change", apply);
+        return () => mq.removeEventListener("change", apply);
+    }, []);
 
     // Animated counters — trigger when section enters viewport
     useEffect(() => {
@@ -803,7 +840,7 @@ export default function Home() {
                         <div className="new-arrivals-header__text">
                             <span className="new-arrivals-badge">
                                 <span className="new-arrivals-badge__dot" />
-                                Новинки {new Date().getFullYear()}
+                                Новинки <span suppressHydrationWarning>{new Date().getFullYear()}</span>
                             </span>
                             <h2 className="section__title">Нові надходження</h2>
                             <p className="section__subtitle">Сезонні новинки з усіх колекцій</p>
@@ -878,7 +915,7 @@ export default function Home() {
                     </div>
 
                     <div className="section__cta-center">
-                        <Link to="/shop" className="btn btn--outline">
+                        <Link to="/shop/yoga" className="btn btn--outline">
                             Переглянути всі новинки →
                         </Link>
                     </div>
@@ -950,6 +987,13 @@ export default function Home() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Batch 53: Interactive mobile "stories" player.
+                                Mobile-only (desktop display:none) — replaces the
+                                passive auto-advancing video below.  Tap / hold /
+                                swipe between the 3 brand films.  See
+                                app/components/BrandStories.tsx. */}
+                            <BrandStories videos={videoPlaylist} />
 
                             {/* Batch 51: Story-Strip chips above video frame.
                                 Mobile-only — tap-to-jump between 4 features.
@@ -1155,7 +1199,7 @@ export default function Home() {
                                             100% контроль, створено з любов'ю та увагою до кожної
                                             деталі.
                                         </p>
-                                        <Link to="/shop" className="bw-feat-link">
+                                        <Link to="/shop/yoga" className="bw-feat-link">
                                             Каталог <span className="bw-feat-link-arr">→</span>
                                         </Link>
                                     </div>
@@ -1257,7 +1301,14 @@ export default function Home() {
                                         <div className="ig-ui-wrapper">
                                             {/* iOS Status Bar */}
                                             <div className="ig-ui-statusbar">
-                                                <div className="ig-ui-time">
+                                                {/* Live clock in a decorative iOS-mockup status bar.
+                                                   The SSR-rendered minute can differ from the
+                                                   minute at client hydration, which produced an
+                                                   intermittent React #418 (text hydration mismatch)
+                                                   on the home route. suppressHydrationWarning is the
+                                                   documented fix for intentionally dynamic timestamp
+                                                   text: keep the live value, silence the expected diff. */}
+                                                <div className="ig-ui-time" suppressHydrationWarning>
                                                     {new Date().toLocaleTimeString("uk-UA", {
                                                         hour: "2-digit",
                                                         minute: "2-digit",

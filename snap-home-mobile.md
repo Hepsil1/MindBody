@@ -1,0 +1,462 @@
+- generic [active] [ref=e1]:
+  - link "Перейти до контенту":
+    - /url: "#main-content"
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button "Меню" [ref=e6] [cursor=pointer]
+      - link "MIND BODY" [ref=e10] [cursor=pointer]:
+        - /url: /
+        - img "MIND BODY" [ref=e12]
+      - text: КАТЕГОРІЇ АКАУНТ → → → →
+      - generic [ref=e13]:
+        - button "Пошук" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+        - button "Кошик" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+  - dialog [ref=e22]:
+    - generic [ref=e23]:
+      - heading [level=3] [ref=e24]: Кошик
+      - button [ref=e25] [cursor=pointer]:
+        - img [ref=e26]
+    - generic [ref=e29]:
+      - img [ref=e30]
+      - paragraph [ref=e33]: Кошик порожній
+      - button [ref=e34] [cursor=pointer]: Продовжити покупки
+  - main [ref=e36]:
+    - heading "MIND BODY — преміум жіночий спортивний одяг для йоги, гімнастики та активного життя" [level=1] [ref=e37]
+    - region "Вітрина бренду MIND BODY" [ref=e38]:
+      - img "123 Image 1" [ref=e43]
+      - generic:
+        - img "MIND BODY — sport wear" [ref=e48]
+        - link "Переглянути колекцію" [ref=e51] [cursor=pointer]:
+          - /url: /shop/yoga
+    - region "Переваги бренду" [ref=e52]:
+      - heading "Переваги бренду" [level=2] [ref=e53]
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - img [ref=e58]
+          - generic [ref=e61]:
+            - heading "Українське виробництво" [level=3] [ref=e62]
+            - paragraph [ref=e63]: 100% контроль якості у своєму цеху
+        - generic [ref=e64]:
+          - img [ref=e66]
+          - generic [ref=e68]:
+            - heading "Premium Supplex" [level=3] [ref=e69]
+            - paragraph [ref=e70]: Технологічні тканини, що дихають
+        - generic [ref=e71]:
+          - img [ref=e73]
+          - generic [ref=e75]:
+            - heading "Повернення 14 днів" [level=3] [ref=e76]
+            - paragraph [ref=e77]: Обмін та повернення без проблем
+        - generic [ref=e78]:
+          - img [ref=e80]
+          - generic [ref=e82]:
+            - heading "Швидка оплата" [level=3] [ref=e83]
+            - paragraph [ref=e84]: Безпечно карткою або при отриманні
+    - generic [ref=e85]:
+      - generic [ref=e86]:
+        - generic [ref=e87]:
+          - generic [ref=e90]: Exclusive Collections
+          - heading "Обирайте свій стиль" [level=2] [ref=e92]
+          - paragraph [ref=e93]:
+            - text: Втілення ідеального балансу між
+            - text: функціональністю та бездоганною естетикою
+        - generic [ref=e94]:
+          - link "YOGA YOGA Для гармонії тіла та духу Переглянути →" [ref=e95] [cursor=pointer]:
+            - /url: /shop/yoga
+            - img "YOGA" [ref=e98]
+            - generic [ref=e101]:
+              - heading "YOGA" [level=3] [ref=e102]
+              - generic [ref=e104]:
+                - paragraph [ref=e105]: Для гармонії тіла та духу
+                - generic [ref=e106]:
+                  - text: Переглянути
+                  - generic [ref=e107]: →
+          - link "SPORT SPORT Для активних тренувань Переглянути →" [ref=e108] [cursor=pointer]:
+            - /url: /shop/sport
+            - img "SPORT" [ref=e111]
+            - generic [ref=e114]:
+              - heading "SPORT" [level=3] [ref=e115]
+              - generic [ref=e117]:
+                - paragraph [ref=e118]: Для активних тренувань
+                - generic [ref=e119]:
+                  - text: Переглянути
+                  - generic [ref=e120]: →
+          - link "DANCE DANCE Свобода рухів Переглянути →" [ref=e121] [cursor=pointer]:
+            - /url: /shop/dance
+            - img "DANCE" [ref=e124]
+            - generic [ref=e127]:
+              - heading "DANCE" [level=3] [ref=e128]
+              - generic [ref=e130]:
+                - paragraph [ref=e131]: Свобода рухів
+                - generic [ref=e132]:
+                  - text: Переглянути
+                  - generic [ref=e133]: →
+          - link "CASUAL CASUAL Повсякденний комфорт Переглянути →" [ref=e134] [cursor=pointer]:
+            - /url: /shop/casual
+            - img "CASUAL" [ref=e137]
+            - generic [ref=e140]:
+              - heading "CASUAL" [level=3] [ref=e141]
+              - generic [ref=e143]:
+                - paragraph [ref=e144]: Повсякденний комфорт
+                - generic [ref=e145]:
+                  - text: Переглянути
+                  - generic [ref=e146]: →
+          - link "KIDS KIDS Для наймолодших Переглянути →" [ref=e147] [cursor=pointer]:
+            - /url: /shop/kids
+            - img "KIDS" [ref=e150]
+            - generic [ref=e153]:
+              - heading "KIDS" [level=3] [ref=e154]
+              - generic [ref=e156]:
+                - paragraph [ref=e157]: Для наймолодших
+                - generic [ref=e158]:
+                  - text: Переглянути
+                  - generic [ref=e159]: →
+          - link "YOGATOOLS YOGATOOLS Аксесуари та інвентар Переглянути →" [ref=e160] [cursor=pointer]:
+            - /url: /shop/yogatools
+            - img "YOGATOOLS" [ref=e163]
+            - generic [ref=e166]:
+              - heading "YOGATOOLS" [level=3] [ref=e167]
+              - generic [ref=e169]:
+                - paragraph [ref=e170]: Аксесуари та інвентар
+                - generic [ref=e171]:
+                  - text: Переглянути
+                  - generic [ref=e172]: →
+      - generic [ref=e173]:
+        - generic [ref=e175]:
+          - generic [ref=e176]: Новинки 2026
+          - heading "Нові надходження" [level=2] [ref=e178]
+          - paragraph [ref=e179]: Сезонні новинки з усіх колекцій
+        - generic [ref=e180]:
+          - article [ref=e181]:
+            - generic [ref=e182]:
+              - link "Дитячий комбінезон MINI" [ref=e183] [cursor=pointer]:
+                - /url: /product/8b607aac-7d84-4513-81ca-9e410afcbd96
+                - img "Дитячий комбінезон MINI" [ref=e184]
+              - generic: New
+              - button "Додати в обране" [ref=e185] [cursor=pointer]:
+                - img [ref=e186]
+            - generic [ref=e188]:
+              - heading "Дитячий комбінезон MINI" [level=3] [ref=e189]:
+                - link "Дитячий комбінезон MINI" [ref=e190] [cursor=pointer]:
+                  - /url: /product/8b607aac-7d84-4513-81ca-9e410afcbd96
+              - generic [ref=e192]: 1,290 ₴
+          - article [ref=e193]:
+            - generic [ref=e194]:
+              - link "Джогери FLOW" [ref=e195] [cursor=pointer]:
+                - /url: /product/0903f132-6cd2-4823-926b-d96ac0e2b17b
+                - img "Джогери FLOW" [ref=e196]
+              - generic: New
+              - button "Додати в обране" [ref=e197] [cursor=pointer]:
+                - img [ref=e198]
+            - generic [ref=e200]:
+              - heading "Джогери FLOW" [level=3] [ref=e201]:
+                - link "Джогери FLOW" [ref=e202] [cursor=pointer]:
+                  - /url: /product/0903f132-6cd2-4823-926b-d96ac0e2b17b
+              - generic [ref=e204]: 1,390 ₴
+          - article [ref=e205]:
+            - generic [ref=e206]:
+              - link "Худі EASE" [ref=e207] [cursor=pointer]:
+                - /url: /product/0efa4b6d-34d0-48af-8ed8-3dbcf8da02b4
+                - img "Худі EASE" [ref=e208]
+              - generic: New
+              - button "Додати в обране" [ref=e209] [cursor=pointer]:
+                - img [ref=e210]
+            - generic [ref=e212]:
+              - heading "Худі EASE" [level=3] [ref=e213]:
+                - link "Худі EASE" [ref=e214] [cursor=pointer]:
+                  - /url: /product/0efa4b6d-34d0-48af-8ed8-3dbcf8da02b4
+              - generic [ref=e216]: 1,890 ₴
+          - article [ref=e217]:
+            - generic [ref=e218]:
+              - link "Комплект для пілону" [ref=e219] [cursor=pointer]:
+                - /url: /product/797ff454-4e3c-441a-ac40-6860a4b36187
+                - img "Комплект для пілону" [ref=e220]
+              - generic: New
+              - button "Додати в обране" [ref=e221] [cursor=pointer]:
+                - img [ref=e222]
+            - generic [ref=e224]:
+              - heading "Комплект для пілону" [level=3] [ref=e225]:
+                - link "Комплект для пілону" [ref=e226] [cursor=pointer]:
+                  - /url: /product/797ff454-4e3c-441a-ac40-6860a4b36187
+              - generic [ref=e228]: 1,990 ₴
+          - article [ref=e229]:
+            - generic [ref=e230]:
+              - link "Комплект MESH" [ref=e231] [cursor=pointer]:
+                - /url: /product/3319f55b-7c22-4070-ad57-3c3df86fdfc6
+                - img "Комплект MESH" [ref=e232]
+              - generic: −9%
+              - button "Додати в обране" [ref=e233] [cursor=pointer]:
+                - img [ref=e234]
+            - generic [ref=e236]:
+              - heading "Комплект MESH" [level=3] [ref=e237]:
+                - link "Комплект MESH" [ref=e238] [cursor=pointer]:
+                  - /url: /product/3319f55b-7c22-4070-ad57-3c3df86fdfc6
+              - generic [ref=e239]:
+                - generic [ref=e240]: 2,890 ₴
+                - generic "Попередня ціна 3,190 гривень" [ref=e241]: 3,190 ₴
+          - article [ref=e242]:
+            - generic [ref=e243]:
+              - link "VELO AERA" [ref=e244] [cursor=pointer]:
+                - /url: /product/5d705a49-90c0-432d-889e-08e93832dcbe
+                - img "VELO AERA" [ref=e245]
+              - generic: New
+              - button "Додати в обране" [ref=e246] [cursor=pointer]:
+                - img [ref=e247]
+            - generic [ref=e249]:
+              - heading "VELO AERA" [level=3] [ref=e250]:
+                - link "VELO AERA" [ref=e251] [cursor=pointer]:
+                  - /url: /product/5d705a49-90c0-432d-889e-08e93832dcbe
+              - generic [ref=e253]: 990 ₴
+        - link "Переглянути всі новинки →" [ref=e255] [cursor=pointer]:
+          - /url: /shop
+      - generic [ref=e258]:
+        - generic [ref=e260]:
+          - generic [ref=e261]: MIND BODY®
+          - heading "Рух що перетворює" [level=2] [ref=e262]:
+            - text: Рух що
+            - emphasis [ref=e263]: перетворює
+          - paragraph [ref=e264]: Ми не просто шиємо одяг — ми створюємо другу шкіру, що слідує за кожним рухом. Кожна колекція народжується з глибокою увагою до деталей та любов'ю до тіла.
+          - generic [ref=e265]:
+            - text: Подаруй собі
+            - emphasis [ref=e266]: комфорт
+            - text: — і ти подаруєш собі крила
+          - link "Філософія бренду →" [ref=e267] [cursor=pointer]:
+            - /url: /about
+            - text: Філософія бренду
+            - generic [ref=e268]: →
+        - generic [ref=e274]:
+          - generic [ref=e275] [cursor=pointer]:
+            - generic: "01"
+            - generic [ref=e276]:
+              - heading "Дихаючі тканини" [level=3] [ref=e277]
+              - paragraph [ref=e278]: Преміальні матеріали, що забезпечують ідеальну терморегуляцію.
+          - generic [ref=e279] [cursor=pointer]:
+            - generic: "02"
+            - generic [ref=e280]:
+              - heading "Ексклюзивний дизайн" [level=3] [ref=e281]
+              - paragraph [ref=e282]: Естетика, що надихає навіть під час найважчих тренувань.
+          - generic [ref=e283] [cursor=pointer]:
+            - generic: "03"
+            - generic [ref=e284]:
+              - heading "Ідеальна посадка" [level=3] [ref=e285]
+              - paragraph [ref=e286]: Анатомічний крій, що бездоганно підкреслює вашу фігуру.
+          - generic [ref=e287] [cursor=pointer]:
+            - generic: "04"
+            - generic [ref=e288]:
+              - heading "Сертифікована якість" [level=3] [ref=e289]
+              - paragraph [ref=e290]: 100% контроль, створено з любов'ю та увагою до кожної деталі.
+              - link "Каталог →":
+                - /url: /shop
+                - text: Каталог
+                - generic: →
+      - generic [ref=e293]:
+        - generic [ref=e294]:
+          - generic [ref=e295]: 63.9K
+          - generic [ref=e296]: Підписників в Instagram
+        - generic [ref=e297]:
+          - generic [ref=e298]: "2168"
+          - generic [ref=e299]: Публікацій у соцмережах
+        - generic [ref=e300]:
+          - generic [ref=e301]: 10+
+          - generic [ref=e302]: Років на ринку
+        - generic [ref=e303]:
+          - generic [ref=e304]: 5000+
+          - generic [ref=e305]: Задоволених клієнтів
+      - generic [ref=e306]:
+        - generic [ref=e307]:
+          - generic [ref=e308]:
+            - paragraph [ref=e309]: Наш Instagram
+            - heading "Світ Mind Body" [level=2] [ref=e310]:
+              - generic [ref=e311]: Світ
+              - emphasis [ref=e312]: Mind Body
+            - paragraph [ref=e313]:
+              - text: Більше, ніж просто одяг — це естетика, мотивація та щоденне натхнення.
+              - text: Будь в курсі нових колекцій першою.
+          - generic [ref=e315]:
+            - generic [ref=e323]:
+              - generic [ref=e324]:
+                - generic [ref=e325]: 05:03
+                - generic [ref=e328]:
+                  - img [ref=e329]
+                  - img [ref=e334]
+                  - generic [ref=e337]:
+                    - generic [ref=e338]: "28"
+                    - img [ref=e339]
+              - generic [ref=e342]:
+                - generic [ref=e343]:
+                  - img [ref=e344]
+                  - generic [ref=e346]: mindbody_sportwear
+                - generic [ref=e347]:
+                  - img [ref=e348]
+                  - img [ref=e351]
+              - generic [ref=e355]:
+                - generic [ref=e356]:
+                  - img "mindbody_sportwear" [ref=e358]
+                  - generic [ref=e359]:
+                    - generic [ref=e360]:
+                      - generic [ref=e361]: "2168"
+                      - generic [ref=e362]: публікації
+                    - generic [ref=e363]:
+                      - generic [ref=e364]: 63,9 тис.
+                      - generic [ref=e365]: підписники
+                    - generic [ref=e366]:
+                      - generic [ref=e367]: "1257"
+                      - generic [ref=e368]: підписки
+                - generic [ref=e369]:
+                  - generic [ref=e370]: MIND BODY sport wear одяг для йоги та фітнесу
+                  - generic [ref=e371]:
+                    - text: Комбінезон твоєї мрії!✨
+                    - text: Найбільший вибір,найкраща якість
+                    - text: для маленьких 👸 @mindbody_kidswear
+                    - text: casual одяг @fluid_feel_free ще
+                    - text: Показати переклад
+                  - link "t.me/mindbody_sportwear" [ref=e372] [cursor=pointer]:
+                    - /url: /
+                    - img [ref=e373]
+                    - text: t.me/mindbody_sportwear
+                - generic [ref=e376]:
+                  - generic [ref=e377] [cursor=pointer]:
+                    - text: Ви підписані
+                    - img [ref=e378]
+                  - generic [ref=e380] [cursor=pointer]: Повідомлення
+                  - img [ref=e382] [cursor=pointer]
+                - generic [ref=e385]:
+                  - generic [ref=e390]: SALE
+                  - generic [ref=e395]: SALE FLUID
+                  - generic [ref=e400]: SALE SET
+                  - generic [ref=e405]: ВІДГУКИ 11
+                - generic [ref=e406]:
+                  - img [ref=e408]
+                  - img [ref=e412]
+                  - img [ref=e416]
+                - generic [ref=e419]:
+                  - link "Post 1" [ref=e420] [cursor=pointer]:
+                    - /url: https://www.instagram.com/mindbody_sportwear/
+                    - img "Post 1" [ref=e422]
+                  - link "Post 2" [ref=e423] [cursor=pointer]:
+                    - /url: https://www.instagram.com/mindbody_sportwear/
+                    - img "Post 2" [ref=e425]
+                  - link "Post 3" [ref=e426] [cursor=pointer]:
+                    - /url: https://www.instagram.com/mindbody_sportwear/
+                    - img "Post 3" [ref=e428]
+                  - link "Post 4" [ref=e429] [cursor=pointer]:
+                    - /url: https://www.instagram.com/mindbody_sportwear/
+                    - img "Post 4" [ref=e431]
+                  - link "Post 5" [ref=e432] [cursor=pointer]:
+                    - /url: https://www.instagram.com/mindbody_sportwear/
+                    - img "Post 5" [ref=e434]
+                  - link "Post 6" [ref=e435] [cursor=pointer]:
+                    - /url: https://www.instagram.com/mindbody_sportwear/
+                    - img "Post 6" [ref=e437]
+                  - link "Post 7" [ref=e438] [cursor=pointer]:
+                    - /url: https://www.instagram.com/mindbody_sportwear/
+                    - img "Post 7" [ref=e440]
+                  - link "Post 8" [ref=e441] [cursor=pointer]:
+                    - /url: https://www.instagram.com/mindbody_sportwear/
+                    - img "Post 8" [ref=e443]
+                  - link "Post 9" [ref=e444] [cursor=pointer]:
+                    - /url: https://www.instagram.com/mindbody_sportwear/
+                    - img "Post 9" [ref=e446]
+              - generic [ref=e447]:
+                - img [ref=e448]
+                - img [ref=e451]
+                - img [ref=e454]
+                - img [ref=e456]
+                - img "Profile" [ref=e460]
+            - generic [ref=e461]: LIVE
+          - link "Відкрити Instagram" [ref=e463] [cursor=pointer]:
+            - /url: https://www.instagram.com/mindbody_sportwear/
+            - img [ref=e464]
+            - text: Відкрити Instagram
+        - text: MIND BODY
+  - contentinfo [ref=e466]:
+    - generic [ref=e468]:
+      - generic [ref=e469]:
+        - img "MIND BODY" [ref=e472]
+        - generic [ref=e473]:
+          - generic [ref=e474]:
+            - heading "Допомога" [level=3] [ref=e475]
+            - list [ref=e476]:
+              - listitem [ref=e477]:
+                - link "Контакти" [ref=e478] [cursor=pointer]:
+                  - /url: /contacts
+              - listitem [ref=e479]:
+                - link "Таблиця розмірів" [ref=e480] [cursor=pointer]:
+                  - /url: /size-guide
+              - listitem [ref=e481]:
+                - link "Доставка та оплата" [ref=e482] [cursor=pointer]:
+                  - /url: /delivery
+              - listitem [ref=e483]:
+                - link "Повернення" [ref=e484] [cursor=pointer]:
+                  - /url: /return-policy
+              - listitem [ref=e485]:
+                - link "Часті запитання" [ref=e486] [cursor=pointer]:
+                  - /url: /faq
+          - generic [ref=e487]:
+            - heading "Про компанію" [level=3] [ref=e488]
+            - list [ref=e489]:
+              - listitem [ref=e490]:
+                - link "Про нас" [ref=e491] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e492]:
+                - link "Умови користування" [ref=e493] [cursor=pointer]:
+                  - /url: /terms
+              - listitem [ref=e494]:
+                - link "Політика конфіденційності" [ref=e495] [cursor=pointer]:
+                  - /url: /privacy
+          - generic [ref=e496]:
+            - heading "Зв'язатись" [level=3] [ref=e497]
+            - 'link "Подзвонити: +38 (096) 665-08-55" [ref=e498] [cursor=pointer]':
+              - /url: tel:+380966650855
+              - img [ref=e499]
+              - text: +38 (096) 665-08-55
+            - list "Месенджери та соцмережі" [ref=e501]:
+              - listitem [ref=e502]:
+                - link "Instagram MindBody" [ref=e503] [cursor=pointer]:
+                  - /url: https://instagram.com/mindbody.sportwear
+                  - img [ref=e504]
+              - listitem [ref=e506]:
+                - link "Telegram MindBody" [ref=e507] [cursor=pointer]:
+                  - /url: https://t.me/Juliamindbody
+                  - img [ref=e508]
+              - listitem [ref=e510]:
+                - link "Viber MindBody" [ref=e511] [cursor=pointer]:
+                  - /url: viber://chat?number=%2B380509656737
+                  - img [ref=e512]
+              - listitem [ref=e514]:
+                - link "WhatsApp MindBody" [ref=e515] [cursor=pointer]:
+                  - /url: https://wa.me/380973542848
+                  - img [ref=e516]
+      - generic [ref=e519]:
+        - generic [ref=e520]:
+          - generic [ref=e521]:
+            - heading "Давай поговоримо" [level=4] [ref=e522]
+            - generic [ref=e523]: маєш запитання — напиши
+          - link "Instagram" [ref=e524] [cursor=pointer]:
+            - /url: https://instagram.com/mindbody.sportwear
+            - img [ref=e526]
+        - generic [ref=e528]:
+          - generic [ref=e529]: Ваш номер телефону або email
+          - textbox "Ваш номер телефону або email" [ref=e530]
+          - button "НАДIСЛАТИ" [ref=e531] [cursor=pointer]
+    - generic [ref=e534]:
+      - img "MIND BODY" [ref=e537]
+      - generic [ref=e538]:
+        - text: Зроблено в Україні
+        - generic [ref=e539]: ·
+        - text: Доставка Новою Поштою
+      - generic [ref=e540]: © MIND BODY, 2026
+  - generic [ref=e541]:
+    - button "Згорнути контакти" [ref=e542] [cursor=pointer]:
+      - img [ref=e543]
+    - generic [ref=e546]:
+      - link "Telegram" [ref=e547] [cursor=pointer]:
+        - /url: https://t.me/+380509656737
+        - img [ref=e548]
+      - link "Viber" [ref=e550] [cursor=pointer]:
+        - /url: viber://chat?number=%2B380509656737
+        - img [ref=e551]
+      - link "WhatsApp" [ref=e553] [cursor=pointer]:
+        - /url: https://wa.me/380973542848
+        - img [ref=e554]

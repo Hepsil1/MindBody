@@ -126,12 +126,30 @@
 @media (max-width: 1024px) {
     .cart-grid,
     .checkout-form-grid {
-        grid-template-columns: 1fr;
+        /* minmax(0,1fr), NOT bare 1fr.  `1fr` is shorthand for
+           minmax(auto,1fr); the `auto` floor refuses to shrink below
+           the grid item's min-content width, so this single column
+           computed to 386px inside a ~335px grid and shoved every cart
+           card 16px past the right edge of the phone — the exact
+           "криво / не ровно на айфон" the user reported.  A 0 floor
+           lets the track collapse to the container width. */
+        grid-template-columns: minmax(0, 1fr);
         gap: 30px;
     }
 
+    /* Belt-and-suspenders: grid/flex children default to
+       min-width:auto, which is the same min-content trap one level
+       down (a long product title or wide price row would still bulge
+       the card).  Pin them to 0 so text wraps instead of overflowing. */
+    .cart-items,
+    .cart-summary,
+    .checkout-form,
+    .checkout-sidebar {
+        min-width: 0;
+    }
+
     .checkout-content {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
