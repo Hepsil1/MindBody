@@ -1,4 +1,5 @@
 import { Link, useLoaderData, useFetcher, useNavigation } from "react-router";
+import { useEffect, useState } from "react";
 import type { Route } from "./+types/index";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../db.server";
@@ -11,8 +12,11 @@ import {
     FilterSelect,
     SortableTh,
     AdminPagination,
+    BulkActionBar,
     EmptyState,
+    useRowSelection,
 } from "../../../components/admin/list";
+import { ConfirmDialog } from "../../../components/admin/ConfirmDialog";
 import { useActionToast } from "../../../components/admin/useActionToast";
 import {
     ORDER_STATUSES,
@@ -44,6 +48,61 @@ export async function action({ request }: Route.ActionArgs) {
 
     const formData = await request.formData();
     const intent = formData.get("intent");
+
+    if (intent === "bulk_status") {
+        const ids = formData.getAll("ids").map(String).filter(Boolean);
+        const status = formData.get("status");
+        if (ids.length === 0) return actionError("Нічого не обрано");
+        if (typeof status !== "string" || !isOrderStatus(status))
+            return actionError("Невірний статус");
+        return runAction("orders.bulkStatus", async () => {
+            // Each order has its OWN lifecycle position, so a bulk change can't be
+            // a blind updateMany: apply only where the transition is legal, write
+            // history per order (and return stock via the shared cancel path),
+            // then report what was skipped instead of silently "succeeding".
+            let applied = 0;
+            let skipped = 0;
+            for (const id of ids) {
+                const cur = await prisma.order.findUnique({
+                    where: { id },
+                    select: { status: true },
+                });
+                if (!cur || cur.status === status || !canTransition(cur.status, status)) {
+                    skipped++;
+                    continue;
+                }
+                if (status === "cancelled") {
+                    await cancelOrder(id, cur.status, "Масове скасування зі списку");
+                } else {
+                    await prisma.$transaction(async (tx) => {
+                        await tx.order.update({ where: { id }, data: { status } });
+                        await writeOrderHistory(
+                            tx,
+                            id,
+                            "status",
+                            cur.status,
+                            status,
+                            "Масова зміна статусу зі списку",
+                        );
+                    });
+                }
+                applied++;
+            }
+            const label = ORDER_STATUS_LABELS[status];
+            if (applied === 0)
+                return actionError(
+                    `Жодне з ${ids.length} замовлень не можна перевести у «${label}»`,
+                );
+            return actionOk(undefined, {
+                type: skipped > 0 ? "info" : "success",
+                message:
+                    skipped > 0
+                        ? `${label}: оновлено ${applied}, пропущено ${skipped} (недопустимий перехід)`
+                        : `${label}: оновлено ${applied}`,
+            });
+        });
+    }
+
     const id = String(formData.get("id") || "");
     if (!id) return actionError("Не вказано замовлення");
 
@@ -196,6 +255,36 @@ export default function AdminOrdersList() {
     const isListLoading =
         navigation.state === "loading" && navigation.location?.pathname === "/admin/orders";
 
+    // Bulk status change (mirrors products/reviews): row selection is ephemeral
+    // and cleared whenever the visible result set changes, so a bulk action can
+    // never hit rows the operator no longer sees.
+    const { selected, toggle, toggleAll, clear, allSelected, someSelected, selectedIds } =
+        useRowSelection(orders);
+    const rowsSignature = orders.map((o) => o.id).join(",");
+    useEffect(() => {
+        clear();
+    }, [rowsSignature, clear]);
+
+    const [bulkStatus, setBulkStatus] = useState("");
+    const [confirmBulkCancel, setConfirmBulkCancel] = useState(false);
+    const mutating = mutate.state !== "idle";
+
+    const submitBulk = (status: string) => {
+        const fd = new FormData();
+        fd.set("intent", "bulk_status");
+        fd.set("status", status);
+        selectedIds.forEach((id) => fd.append("ids", id));
+        mutate.submit(fd, { method: "post" });
+        clear();
+        setBulkStatus("");
+    };
+    const applyBulk = () => {
+        if (!bulkStatus || selectedIds.length === 0) return;
+        // Mass-cancel returns stock for every order — confirm before firing.
+        if (bulkStatus === "cancelled") setConfirmBulkCancel(true);
+        else submitBulk(bulkStatus);
+    };
+
     return (
         <>
             <div className="admin-page-header">
@@ -274,6 +363,18 @@ export default function AdminOrdersList() {
                         <table className="admin-table">
                             <thead>
                                 <tr>
+                                    <th style={{ width: "36px" }}>
+                                        <input
+                                            type="checkbox"
+                                            aria-label="Обрати всі замовлення на сторінці"
+                                            checked={allSelected}
+                                            ref={(el) => {
+                                                if (el) el.indeterminate = someSelected;
+                                            }}
+                                            onChange={toggleAll}
+                                            style={{ accentColor: "var(--accent-primary)" }}
+                                        />
+                                    </th>
                                     <SortableTh
                                         field="orderNumber"
                                         label="Замовлення"
@@ -290,6 +391,15 @@ export default function AdminOrdersList() {
                             <tbody>
                                 {orders.map((order) => (
                                     <tr key={order.id}>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                aria-label={`Обрати замовлення #${order.orderNumber}`}
+                                                checked={selected.has(order.id)}
+                                                onChange={() => toggle(order.id)}
+                                                style={{ accentColor: "var(--accent-primary)" }}
+                                            />
+                                        </td>
                                         <td style={{ fontWeight: 600, color: "var(--text-main)" }}>
                                             #{order.orderNumber}
                                         </td>
@@ -399,6 +509,69 @@ export default function AdminOrdersList() {
                     <AdminPagination page={page} />
                 </div>
             )}
+
+            <BulkActionBar count={selectedIds.length} onClear={clear}>
+                <select
+                    value={bulkStatus}
+                    onChange={(e) => setBulkStatus(e.target.value)}
+                    aria-label="Новий статус для обраних замовлень"
+                    style={{
+                        background: "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        borderRadius: "10px",
+                        color: "var(--text-main)",
+                        padding: "8px 12px",
+                        fontSize: "14px",
+                        cursor: "pointer",
+                    }}
+                >
+                    <option value="" style={{ color: "#000" }}>
+                        Новий статус…
+                    </option>
+                    {ORDER_STATUSES.map((s) => (
+                        <option key={s} value={s} style={{ color: "#000" }}>
+                            {ORDER_STATUS_LABELS[s]}
+                        </option>
+                    ))}
+                </select>
+                <button
+                    type="button"
+                    onClick={applyBulk}
+                    disabled={mutating || !bulkStatus}
+                    style={{
+                        padding: "8px 18px",
+                        borderRadius: "10px",
+                        border: "none",
+                        background: "var(--accent-primary)",
+                        color: "#0f172a",
+                        fontWeight: 700,
+                        fontSize: "14px",
+                        cursor: mutating || !bulkStatus ? "default" : "pointer",
+                        opacity: mutating || !bulkStatus ? 0.5 : 1,
+                    }}
+                >
+                    {mutating ? "Застосування…" : "Застосувати"}
+                </button>
+            </BulkActionBar>
+
+            <ConfirmDialog
+                open={confirmBulkCancel}
+                title="Скасувати обрані замовлення?"
+                body={
+                    <>
+                        Буде скасовано <strong>{selectedIds.length}</strong> замовлень, залишок за
+                        кожним повернеться на склад. Замовлення, для яких скасування недопустиме,
+                        будуть пропущені.
+                    </>
+                }
+                confirmLabel="Скасувати замовлення"
+                busy={mutating}
+                onConfirm={() => {
+                    setConfirmBulkCancel(false);
+                    submitBulk("cancelled");
+                }}
+                onCancel={() => setConfirmBulkCancel(false)}
+            />
         </>
     );
 }

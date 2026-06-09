@@ -34,7 +34,32 @@ export async function loader({ request }: Route.LoaderArgs) {
         prisma.promoCode.findMany({ where, orderBy, skip, take }),
         prisma.promoCode.count({ where }),
     ]);
-    return { promos, page: paginate(total, state.page, state.perPage), state };
+    // Compute every time-dependent flag HERE (server) so the component renders
+    // purely — React forbids Date.now()/new Date() during render.
+    const now = Date.now();
+    const rows = promos.map((p) => {
+        const expiresMs = p.expiresAt ? new Date(p.expiresAt).getTime() : null;
+        const isExpired = expiresMs !== null && expiresMs < now;
+        const isExhausted = p.maxUses !== null && p.usedCount >= p.maxUses;
+        const daysLeft = expiresMs !== null ? Math.ceil((expiresMs - now) / 86_400_000) : null;
+        return {
+            id: p.id,
+            code: p.code,
+            discountType: p.discountType,
+            discountValue: Number(p.discountValue),
+            minOrder: Number(p.minOrder),
+            usedCount: p.usedCount,
+            maxUses: p.maxUses,
+            isActive: p.isActive,
+            expiresAt: p.expiresAt ? p.expiresAt.toISOString() : null,
+            isExpired,
+            isExhausted,
+            daysLeft,
+            expiringSoon: !isExpired && daysLeft !== null && daysLeft <= 7,
+            nearlyExhausted: !isExhausted && p.maxUses !== null && p.usedCount >= p.maxUses * 0.8,
+        };
+    });
+    return { promos: rows, page: paginate(total, state.page, state.perPage), state };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -312,10 +337,11 @@ export default function AdminPromo() {
                             </thead>
                             <tbody>
                                 {promos.map((p) => {
-                                    const isExpired =
-                                        p.expiresAt && new Date(p.expiresAt) < new Date();
-                                    const isExhausted =
-                                        p.maxUses !== null && p.usedCount >= p.maxUses;
+                                    // All time-dependent flags are precomputed in the
+                                    // loader (server) so render stays pure.
+                                    const { isExpired, isExhausted, daysLeft } = p;
+                                    const expiringSoon = p.expiringSoon;
+                                    const nearlyExhausted = p.nearlyExhausted;
                                     const cls =
                                         isExpired || isExhausted
                                             ? "warn"
@@ -326,6 +352,29 @@ export default function AdminPromo() {
                                         <tr key={p.id}>
                                             <td>
                                                 <span className="promo-code">{p.code}</span>
+                                                <button
+                                                    type="button"
+                                                    className="promo-btn-sm"
+                                                    aria-label={`Копіювати код ${p.code}`}
+                                                    title="Копіювати"
+                                                    style={{
+                                                        marginLeft: "8px",
+                                                        padding: "4px 8px",
+                                                    }}
+                                                    onClick={() => {
+                                                        void navigator.clipboard
+                                                            .writeText(p.code)
+                                                            .then(() =>
+                                                                import("sonner").then(({ toast }) =>
+                                                                    toast.success(
+                                                                        `Код ${p.code} скопійовано`,
+                                                                    ),
+                                                                ),
+                                                            );
+                                                    }}
+                                                >
+                                                    ⧉
+                                                </button>
                                             </td>
                                             <td
                                                 style={{
@@ -340,9 +389,22 @@ export default function AdminPromo() {
                                             <td style={{ color: "var(--text-muted)" }}>
                                                 {p.minOrder > 0 ? `${p.minOrder} ₴` : "—"}
                                             </td>
-                                            <td style={{ color: "var(--text-muted)" }}>
+                                            <td
+                                                style={{
+                                                    color: nearlyExhausted
+                                                        ? "#f59e0b"
+                                                        : "var(--text-muted)",
+                                                    fontWeight: nearlyExhausted ? 600 : undefined,
+                                                }}
+                                                title={
+                                                    nearlyExhausted
+                                                        ? "Промокод майже вичерпано"
+                                                        : undefined
+                                                }
+                                            >
                                                 {p.usedCount}
                                                 {p.maxUses ? ` / ${p.maxUses}` : ""}
+                                                {nearlyExhausted ? " ⚠" : ""}
                                             </td>
                                             <td>
                                                 <span className={`promo-badge ${cls}`}>
@@ -363,12 +425,22 @@ export default function AdminPromo() {
                                                             : "Вимкнений"}
                                                 </span>
                                             </td>
-                                            <td style={{ color: "var(--text-muted)" }}>
+                                            <td
+                                                style={{
+                                                    color: expiringSoon
+                                                        ? "#f59e0b"
+                                                        : "var(--text-muted)",
+                                                    fontWeight: expiringSoon ? 600 : undefined,
+                                                }}
+                                            >
                                                 {p.expiresAt
                                                     ? new Date(p.expiresAt).toLocaleDateString(
                                                           "uk-UA",
                                                       )
                                                     : "∞"}
+                                                {expiringSoon
+                                                    ? ` (${daysLeft} ${daysLeft === 1 ? "день" : daysLeft && daysLeft < 5 ? "дні" : "днів"})`
+                                                    : ""}
                                             </td>
                                             <td style={{ textAlign: "right" }}>
                                                 <div
@@ -397,6 +469,7 @@ export default function AdminPromo() {
                                                     <button
                                                         type="button"
                                                         className="promo-btn-sm danger"
+                                                        aria-label={`Видалити промокод ${p.code}`}
                                                         onClick={() =>
                                                             setConfirmPromo({
                                                                 id: p.id,
