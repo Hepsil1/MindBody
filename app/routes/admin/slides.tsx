@@ -55,13 +55,27 @@ export async function action({ request }: Route.ActionArgs) {
     // use the new path on success, and ABORT the save (throw → caught below,
     // returns { error }) when a chosen file fails to process. Previously a failed
     // upload was silently swallowed and the record saved with a stale/empty image.
+    // `label` names the field in the error so the operator knows WHICH image
+    // failed (e.g. a triptych has three — "Фото 2: …" beats a bare reason).
     const resolveImage = async (
         file: FormDataEntryValue | null,
         current: string,
+        label: string,
     ): Promise<string> => {
         const outcome = await uploadFileChecked(file);
-        if (outcome.status === "error") throw new Error(outcome.reason);
+        if (outcome.status === "error") throw new Error(`${label}: ${outcome.reason}`);
         return outcome.status === "ok" ? outcome.path : current;
+    };
+    // Image focal positions are free-form strings that end up in CSS
+    // object-position / background-position. Accept only keyword/percent pairs
+    // with an optional scale ("center center", "50% 30%", "50% 30% 1.2") and
+    // silently normalize anything else to `fallback` — never block a save over
+    // a stale position value, but never let garbage reach the storefront CSS.
+    const POS_RE =
+        /^(?:left|center|right|top|bottom|\d{1,3}%)\s+(?:left|center|right|top|bottom|\d{1,3}%)(?:\s+\d*\.?\d+)?$/;
+    const normalizePos = (raw: FormDataEntryValue | null, fallback: string): string => {
+        const value = typeof raw === "string" ? raw.trim() : "";
+        return POS_RE.test(value) ? value : fallback;
     };
     try {
         const formData = await request.formData();
@@ -75,11 +89,14 @@ export async function action({ request }: Route.ActionArgs) {
             if (!SHOP_SLUGS.includes(slug)) {
                 return { error: `Невідома сторінка магазину "${slug}".` };
             }
-            const heroImagePos = (formData.get("heroImagePos") as string) || "50% 50% 1";
-            let heroImage = formData.get("currentHeroImage") as string;
+            const heroImagePos = normalizePos(formData.get("heroImagePos"), "50% 50% 1");
+            let heroImage = (formData.get("currentHeroImage") as string) || "";
             const file = formData.get("heroImageFile");
 
-            heroImage = await resolveImage(file, heroImage);
+            heroImage = await resolveImage(file, heroImage, "Фонове зображення");
+            if (!heroImage) {
+                return { error: "Потрібне фонове зображення сторінки." };
+            }
 
             // Upsert logic for shop page
             await prisma.shopPage.upsert({
@@ -102,9 +119,9 @@ export async function action({ request }: Route.ActionArgs) {
             const type = (formData.get("type") as string) || "triptych";
             const link = (formData.get("link") as string) || null;
 
-            const image1Pos = (formData.get("image1Pos") as string) || "center center";
-            const image2Pos = (formData.get("image2Pos") as string) || "center center";
-            const image3Pos = (formData.get("image3Pos") as string) || "center center";
+            const image1Pos = normalizePos(formData.get("image1Pos"), "center center");
+            const image2Pos = normalizePos(formData.get("image2Pos"), "center center");
+            const image3Pos = normalizePos(formData.get("image3Pos"), "center center");
 
             let image1 = (formData.get("image1_url") as string) || "";
             let image2 = (formData.get("image2_url") as string) || "";
@@ -114,10 +131,13 @@ export async function action({ request }: Route.ActionArgs) {
             const image2File = formData.get("image2_file");
             const image3File = formData.get("image3_file");
 
-            image1 = await resolveImage(image1File, image1);
-            image2 = await resolveImage(image2File, image2);
-            image3 = await resolveImage(image3File, image3);
+            image1 = await resolveImage(image1File, image1, "Фото 1");
+            image2 = await resolveImage(image2File, image2, "Фото 2");
+            image3 = await resolveImage(image3File, image3, "Фото 3");
 
+            if (!image1) {
+                return { error: "Потрібне головне зображення (фото 1)." };
+            }
             if (type === "triptych" && (!image2 || !image3)) {
                 return { error: "Триптих потребує 3 зображення (додайте фото 2 і 3)." };
             }
@@ -162,7 +182,7 @@ export async function action({ request }: Route.ActionArgs) {
             const subtitle = (formData.get("subtitle") as string) || null;
             const link = (formData.get("link") as string) || "";
             const buttonText = (formData.get("buttonText") as string) || "Переглянути все";
-            const imagePos = (formData.get("imagePos") as string) || "center center";
+            const imagePos = normalizePos(formData.get("imagePos"), "center center");
 
             // Batch 41: moodType is optional.  Empty string from the
             // dropdown ("Без mood") translates to NULL so the card
@@ -174,7 +194,10 @@ export async function action({ request }: Route.ActionArgs) {
             let image = (formData.get("image_url") as string) || "";
             const imageFile = formData.get("image_file");
 
-            image = await resolveImage(imageFile, image);
+            image = await resolveImage(imageFile, image, "Зображення категорії");
+            if (!image) {
+                return { error: "Потрібне зображення категорії." };
+            }
 
             await prisma.category.update({
                 where: { id },
@@ -227,18 +250,21 @@ export async function action({ request }: Route.ActionArgs) {
             let image2 = (formData.get("image2_url") as string) || "";
             let image3 = (formData.get("image3_url") as string) || "";
 
-            const image1Pos = (formData.get("image1Pos") as string) || "center center";
-            const image2Pos = (formData.get("image2Pos") as string) || "center center";
-            const image3Pos = (formData.get("image3Pos") as string) || "center center";
+            const image1Pos = normalizePos(formData.get("image1Pos"), "center center");
+            const image2Pos = normalizePos(formData.get("image2Pos"), "center center");
+            const image3Pos = normalizePos(formData.get("image3Pos"), "center center");
 
             const image1File = formData.get("image1_file");
             const image2File = formData.get("image2_file");
             const image3File = formData.get("image3_file");
 
-            image1 = await resolveImage(image1File, image1);
-            image2 = await resolveImage(image2File, image2);
-            image3 = await resolveImage(image3File, image3);
+            image1 = await resolveImage(image1File, image1, "Фото 1");
+            image2 = await resolveImage(image2File, image2, "Фото 2");
+            image3 = await resolveImage(image3File, image3, "Фото 3");
 
+            if (!image1) {
+                return { error: "Потрібне головне зображення (фото 1)." };
+            }
             if (type === "triptych" && (!image2 || !image3)) {
                 return { error: "Триптих потребує 3 зображення." };
             }
@@ -269,9 +295,9 @@ export async function action({ request }: Route.ActionArgs) {
             const name = (formData.get("name") as string) || "About Slide";
             const type = (formData.get("type") as string) || "triptych";
 
-            const image1Pos = (formData.get("image1Pos") as string) || "center center";
-            const image2Pos = (formData.get("image2Pos") as string) || "center center";
-            const image3Pos = (formData.get("image3Pos") as string) || "center center";
+            const image1Pos = normalizePos(formData.get("image1Pos"), "center center");
+            const image2Pos = normalizePos(formData.get("image2Pos"), "center center");
+            const image3Pos = normalizePos(formData.get("image3Pos"), "center center");
 
             let image1 = (formData.get("image1_url") as string) || "";
             let image2 = (formData.get("image2_url") as string) || "";
@@ -281,10 +307,13 @@ export async function action({ request }: Route.ActionArgs) {
             const image2File = formData.get("image2_file");
             const image3File = formData.get("image3_file");
 
-            image1 = await resolveImage(image1File, image1);
-            image2 = await resolveImage(image2File, image2);
-            image3 = await resolveImage(image3File, image3);
+            image1 = await resolveImage(image1File, image1, "Фото 1");
+            image2 = await resolveImage(image2File, image2, "Фото 2");
+            image3 = await resolveImage(image3File, image3, "Фото 3");
 
+            if (!image1) {
+                return { error: "Потрібне головне зображення (фото 1)." };
+            }
             if (type === "triptych" && (!image2 || !image3)) {
                 return { error: "Триптих потребує 3 зображення." };
             }

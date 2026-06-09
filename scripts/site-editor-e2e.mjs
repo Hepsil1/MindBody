@@ -88,7 +88,12 @@ async function main() {
     await post(cookie, {
         intent: "update_filters",
         pageSlug: "yoga",
-        config: JSON.stringify({ categories: {}, colors: {}, sizes: [], priceRanges: [{ id: "x", label: "bad", min: 9000, max: 10 }] }),
+        config: JSON.stringify({
+            categories: {},
+            colors: {},
+            sizes: [],
+            priceRanges: [{ id: "x", label: "bad", min: 9000, max: 10 }],
+        }),
     });
     const afterBadRange = await prisma.filterConfig.findUnique({ where: { id: "yoga" } });
     ok("price range min>max is rejected (row unchanged)", afterBadRange?.config === VALID_CFG);
@@ -125,6 +130,83 @@ async function main() {
 
     // cleanup the test slide
     await prisma.slide.deleteMany({ where: { name: "E2E triptych ok" } });
+
+    // --- A1: non-empty image guards + imagePos normalization ----------------
+    const beforeA1 = await prisma.slide.count({ where: { page: "home" } });
+
+    await post(cookie, {
+        intent: "create",
+        name: "E2E single no image",
+        type: "single",
+        // no image1_url, no file → must be rejected (broken hero otherwise)
+    });
+    const afterNoImg = await prisma.slide.count({ where: { page: "home" } });
+    ok("single slide without image1 is rejected", afterNoImg === beforeA1);
+
+    await post(cookie, {
+        intent: "create",
+        name: "E2E garbage pos",
+        type: "single",
+        image1_url: "/pics1cloths/IMG_6201.JPG",
+        image1Pos: "garbage; background:url(evil)",
+    });
+    const garbageSlide = await prisma.slide.findFirst({ where: { name: "E2E garbage pos" } });
+    ok(
+        "garbage image1Pos is normalized to 'center center'",
+        garbageSlide?.image1Pos === "center center",
+        garbageSlide?.image1Pos,
+    );
+    await prisma.slide.deleteMany({ where: { name: "E2E garbage pos" } });
+
+    // Category: empty image must not overwrite the existing one.
+    const cat = await prisma.category.create({
+        data: {
+            title: "E2E cat",
+            subtitle: null,
+            image: "/pics1cloths/IMG_6201.JPG",
+            imagePos: "center center",
+            link: "/shop/yoga",
+            buttonText: "Переглянути все",
+            order: 999,
+        },
+    });
+    await post(cookie, {
+        intent: "update_category",
+        id: cat.id,
+        title: "E2E cat",
+        link: "/shop/yoga",
+        image_url: "", // cleared client-side, no new file → must be rejected
+    });
+    const catAfter = await prisma.category.findUnique({ where: { id: cat.id } });
+    ok(
+        "category update with empty image is rejected (image kept)",
+        catAfter?.image === "/pics1cloths/IMG_6201.JPG",
+        catAfter?.image,
+    );
+    await prisma.category.delete({ where: { id: cat.id } });
+
+    // Shop hero: bad heroImagePos falls back to "50% 50% 1".
+    const shopBefore = await prisma.shopPage.findUnique({ where: { slug: "yoga" } });
+    await post(cookie, {
+        intent: "update_shop_page",
+        slug: "yoga",
+        currentHeroImage: "/pics1cloths/IMG_6201.JPG",
+        heroImagePos: "999",
+    });
+    const shopAfter = await prisma.shopPage.findUnique({ where: { slug: "yoga" } });
+    ok(
+        "bad heroImagePos falls back to '50% 50% 1'",
+        shopAfter?.heroImagePos === "50% 50% 1",
+        shopAfter?.heroImagePos,
+    );
+    if (shopBefore) {
+        await prisma.shopPage.update({
+            where: { slug: "yoga" },
+            data: { heroImage: shopBefore.heroImage, heroImagePos: shopBefore.heroImagePos },
+        });
+    } else {
+        await prisma.shopPage.delete({ where: { slug: "yoga" } });
+    }
 
     console.log(`\n=== RESULT: ${pass} passed, ${fail} failed ===\n`);
     await prisma.$disconnect();
