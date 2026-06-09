@@ -26,6 +26,7 @@ import {
     subcategoriesFor,
 } from "../../../utils/taxonomy";
 import { slugify } from "../../../utils/slugify";
+import { publishChecklist, publishBlockers } from "../../../utils/productQuality";
 
 // --- Types ---
 interface FilterConfigData {
@@ -299,6 +300,27 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const stock = hasVariants
                 ? variantStock
                 : parseInt(formData.get("stock") as string) || 0;
+
+            // Publication quality gate — a product can only go LIVE when it's
+            // complete (stock, and fabric/sleeve when the category offers them).
+            // Drafts/archived may be incomplete. Server is the source of truth;
+            // the form mirrors this to disable the button + show a checklist.
+            if (status === "active") {
+                const blockers = publishBlockers({
+                    price,
+                    imagesCount: cleanImages.length,
+                    category: category ?? "",
+                    shopPageSlug: shopPageSlug ?? "",
+                    stock,
+                    fabric: fabric ?? "",
+                    sleeve: sleeve ?? "",
+                });
+                if (blockers.length > 0) {
+                    return {
+                        error: `Не можна опублікувати: ${blockers.join(", ")}. Збережіть як чернетку або заповніть ці поля.`,
+                    };
+                }
+            }
 
             // Re-serialize the cleaned arrays so the DB matches what we validated.
             const images = JSON.stringify(cleanImages);
@@ -597,7 +619,26 @@ export default function AdminProductEdit() {
     if (!formData.shopPageSlug) missingFields.push("розділ");
     if (!formData.category) missingFields.push("категорію");
     if (formData.images.length === 0) missingFields.push("фото");
-    const canSave = missingFields.length === 0;
+
+    // Publish-readiness: a product can be saved as a draft incomplete, but going
+    // LIVE (active) requires the full checklist (mirrors the server gate).
+    const publishChecks = publishChecklist({
+        price: priceNum,
+        imagesCount: formData.images.length,
+        category: formData.category,
+        shopPageSlug: formData.shopPageSlug,
+        stock: Number(formData.stock) || 0,
+        fabric: formData.fabric,
+        sleeve: formData.sleeve,
+    });
+    const publishIssues = publishChecks.filter((c) => !c.ok).map((c) => c.label);
+    const wantsActive = formData.status === "active";
+    const canSave = missingFields.length === 0 && (!wantsActive || publishIssues.length === 0);
+    const saveBlockMessage = canSave
+        ? undefined
+        : missingFields.length > 0
+          ? `Заповніть: ${missingFields.join(", ")}`
+          : `Для публікації: ${publishIssues.join(", ").toLowerCase()}`;
 
     const handleSave = () => {
         if (!canSave) return;
@@ -988,11 +1029,11 @@ export default function AdminProductEdit() {
                             className="btn-save"
                             onClick={handleSave}
                             disabled={fetcher.state !== "idle" || !canSave}
-                            title={!canSave ? `Заповніть: ${missingFields.join(", ")}` : undefined}
+                            title={saveBlockMessage}
                         >
                             {fetcher.state !== "idle" ? "Збереження..." : "Зберегти зміни"}
                         </button>
-                        {!canSave && (
+                        {saveBlockMessage && (
                             <p
                                 style={{
                                     margin: "8px 0 0",
@@ -1000,7 +1041,7 @@ export default function AdminProductEdit() {
                                     color: "#f59e0b",
                                 }}
                             >
-                                Заповніть: {missingFields.join(", ")}
+                                {saveBlockMessage}
                             </p>
                         )}
                     </div>
@@ -1408,6 +1449,70 @@ export default function AdminProductEdit() {
                                     <option value="draft">🟡 Чернетка (Draft)</option>
                                     <option value="archived">🔴 Архів (Archived)</option>
                                 </select>
+                            </div>
+                            <div
+                                style={{
+                                    borderTop: "1px solid var(--ad-border)",
+                                    paddingTop: "16px",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        fontSize: "12px",
+                                        fontWeight: 600,
+                                        textTransform: "uppercase",
+                                        letterSpacing: "0.05em",
+                                        color: "var(--ad-text-muted)",
+                                        marginBottom: "10px",
+                                    }}
+                                >
+                                    Готовність до публікації
+                                </div>
+                                <ul
+                                    style={{
+                                        listStyle: "none",
+                                        margin: 0,
+                                        padding: 0,
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "6px",
+                                    }}
+                                >
+                                    {publishChecks.map((c) => (
+                                        <li
+                                            key={c.label}
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "8px",
+                                                fontSize: "13px",
+                                                color: c.ok ? "var(--ad-text-main)" : "#f59e0b",
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    color: c.ok ? "#10b981" : "#f59e0b",
+                                                    fontWeight: 700,
+                                                }}
+                                            >
+                                                {c.ok ? "✓" : "✗"}
+                                            </span>
+                                            {c.label}
+                                        </li>
+                                    ))}
+                                </ul>
+                                {wantsActive && publishIssues.length > 0 && (
+                                    <p
+                                        style={{
+                                            margin: "12px 0 0",
+                                            fontSize: "12px",
+                                            color: "#f59e0b",
+                                        }}
+                                    >
+                                        Заповніть пункти вище, щоб опублікувати, або збережіть як
+                                        чернетку.
+                                    </p>
+                                )}
                             </div>
                         </div>
 
