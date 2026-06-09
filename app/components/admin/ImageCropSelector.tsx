@@ -307,6 +307,7 @@ export function ImageCropSelector({
                                 step="0.05"
                                 value={pos.scale}
                                 onChange={handleScaleChange}
+                                aria-label="Масштаб зображення"
                                 style={{
                                     flex: 1,
                                     accentColor: "var(--accent-primary)",

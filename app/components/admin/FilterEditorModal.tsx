@@ -4,6 +4,7 @@ import type { ShopPage, FilterConfig } from "@prisma/client";
 import { parseAndMergeFilterConfig } from "../../utils/filters";
 import { useDirty } from "./useDirty";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { useModalA11y } from "./useModalA11y";
 
 /**
  * Filter Editor Modal — extracted from app/routes/admin/slides.tsx
@@ -84,6 +85,10 @@ export function FilterEditorModal({
         if (dirty) setShowDiscard(true);
         else onClose();
     };
+    // Focus trap + Escape-to-close; suspended while the discard ConfirmDialog
+    // (which has its own trap) is open.
+    const dialogRef = useRef<HTMLDivElement>(null);
+    useModalA11y(dialogRef, requestClose, !showDiscard);
 
     // Category Logic
     const [newCatKey, setNewCatKey] = useState("");
@@ -184,6 +189,10 @@ export function FilterEditorModal({
                     }}
                 />
                 <div
+                    ref={dialogRef}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Керування фільтрами"
                     style={{
                         width: "100%",
                         maxWidth: "900px",
@@ -238,6 +247,7 @@ export function FilterEditorModal({
                                 <select
                                     value={selectedPage}
                                     onChange={(e) => setSelectedPage(e.target.value)}
+                                    aria-label="Сторінка, для якої редагуються фільтри"
                                     style={{
                                         background: "#0f1216",
                                         border: "1px solid rgba(255,255,255,0.1)",
@@ -258,7 +268,9 @@ export function FilterEditorModal({
                             </div>
                         </div>
                         <button
+                            type="button"
                             onClick={requestClose}
+                            aria-label="Закрити"
                             style={{
                                 color: "#94a3b8",
                                 background: "rgba(255,255,255,0.05)",

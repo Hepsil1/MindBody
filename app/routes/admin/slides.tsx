@@ -445,8 +445,12 @@ export default function AdminVisualEditor() {
             // the wildcard '*' gap.
             if (event.origin !== window.location.origin) return;
             if (event.data?.type === "OPEN_SHOP_BG_EDITOR") {
+                // Never trust an arbitrary string from a postMessage, even
+                // same-origin — only open the editor for a real shop slug.
                 const slug = event.data.category;
-                setEditingShopPageSlug(slug);
+                if (typeof slug === "string" && SHOP_SLUGS.includes(slug)) {
+                    setEditingShopPageSlug(slug);
+                }
             }
         };
         window.addEventListener("message", handleMessage);
@@ -854,8 +858,12 @@ export default function AdminVisualEditor() {
                             key={`${activeShop}-${previewNonce}`}
                             src={`/shop/${activeShop}`}
                             style={{ width: "100%", height: "100%", border: "none" }}
-                            title="Shop Preview"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            title="Перегляд магазину"
+                            // Same-origin storefront preview: allow its scripts +
+                            // same-origin (hydration + the OPEN_SHOP_BG_EDITOR
+                            // postMessage bridge) but block top-navigation, popups
+                            // and forms so a storefront bug can't drive the admin UI.
+                            sandbox="allow-scripts allow-same-origin"
                         />
                     </div>
                 ) : currentView === "about" ? (
@@ -914,8 +922,8 @@ export default function AdminVisualEditor() {
                             key={`about-${previewNonce}`}
                             src="/about"
                             style={{ width: "100%", height: "100%", border: "none" }}
-                            title="About Preview"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            title="Перегляд сторінки «Про бренд»"
+                            sandbox="allow-scripts allow-same-origin"
                         />
                     </div>
                 ) : (

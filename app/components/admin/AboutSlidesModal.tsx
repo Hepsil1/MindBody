@@ -4,6 +4,7 @@ import type { Slide } from "@prisma/client";
 import { CloseIcon, TrashIcon } from "./AdminIcons";
 import { ImageCropSelector } from "./ImageCropSelector";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { useModalA11y } from "./useModalA11y";
 
 interface AboutSlideForm {
     name: string;
@@ -154,6 +155,10 @@ export function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: AboutSlid
         setConfirmDelId(null);
     };
 
+    // Focus trap + Escape-to-close; suspended while the delete ConfirmDialog owns focus.
+    const dialogRef = useRef<HTMLDivElement>(null);
+    useModalA11y(dialogRef, onClose, isOpen && confirmDelId === null);
+
     if (!isOpen) return null;
 
     return (
@@ -171,6 +176,10 @@ export function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: AboutSlid
                 }}
             >
                 <div
+                    ref={dialogRef}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Слайди «Про бренд»"
                     style={{
                         background: "#0f1216",
                         borderRadius: "16px",
@@ -209,7 +218,9 @@ export function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: AboutSlid
                             </p>
                         </div>
                         <button
+                            type="button"
                             onClick={onClose}
+                            aria-label="Закрити"
                             style={{
                                 background: "transparent",
                                 border: "none",
