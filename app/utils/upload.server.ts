@@ -2,6 +2,13 @@ import path from "path";
 import fs from "fs";
 import sharp from "sharp";
 
+// Raster formats we accept, by Sharp's detected `metadata().format`. SVG is
+// deliberately excluded: an uploaded SVG served as a document executes embedded
+// <script>/event handlers on our origin (stored XSS), and product/hero/category
+// images are photos anyway. Everything that passes is re-encoded to WebP, so the
+// file we persist is always a clean raster (any embedded payload/EXIF stripped).
+const ALLOWED_INPUT_FORMATS = new Set(["jpeg", "png", "webp", "avif", "gif", "tiff"]);
+
 /**
  * Upload a file to the server's public/uploads directory.
  * Automatically resizes and converts most images to WebP via Sharp for SEO.
@@ -24,33 +31,34 @@ export async function uploadFile(file: FormDataEntryValue | null): Promise<strin
             return null;
         }
 
-        const mimeType = file instanceof File ? file.type || "image/jpeg" : "image/jpeg";
-        const isSvg = mimeType.includes("svg");
-        const isImage = mimeType.startsWith("image/");
+        // Validate by CONTENT, not the client-supplied MIME (which is spoofable):
+        // Sharp decodes the buffer and reports the real format. This rejects
+        // non-images (Sharp throws / no format) AND SVG (format "svg").
+        let format: string | undefined;
+        try {
+            format = (await sharp(buffer).metadata()).format;
+        } catch {
+            format = undefined; // not a decodable image
+        }
+        if (!format || !ALLOWED_INPUT_FORMATS.has(format)) {
+            console.error("❌ Rejected upload: unsupported/unsafe format:", format ?? "unknown");
+            return null;
+        }
 
-        // Define extension (webp for converted images, svg for icons, else fallback)
-        const ext = isSvg ? "svg" : isImage ? "webp" : "jpg";
-        const filename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
+        const filename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.webp`;
         const uploadsDir = path.join(process.cwd(), "public", "uploads");
         if (!fs.existsSync(uploadsDir)) {
             fs.mkdirSync(uploadsDir, { recursive: true });
         }
-
         const filePath = path.join(uploadsDir, filename);
 
-        // Compress and convert Raster Images to WebP using sharp
-        if (isImage && !isSvg) {
-            await sharp(buffer)
-                // Максимально возможное разрешение для 4K/Retina (3500px). Площадь до 12 Мегапикселей.
-                // Apple iOS безопасно рендерит WebP только до 16.7 Мегапикселей. Это сохраняет 100% визуального качества.
-                .resize({ width: 3500, height: 3500, withoutEnlargement: true, fit: "inside" })
-                .webp({ quality: 95, effort: 4 }) // Ultra-high HQ
-                .toFile(filePath);
-        } else {
-            // SVGs or other files saved directly
-            fs.writeFileSync(filePath, buffer);
-        }
+        // Re-encode to WebP — the persisted file is always a clean raster.
+        await sharp(buffer)
+            // Максимально возможное разрешение для 4K/Retina (3500px). Площадь до 12 Мегапикселей.
+            // Apple iOS безопасно рендерит WebP только до 16.7 Мегапикселей. Это сохраняет 100% визуального качества.
+            .resize({ width: 3500, height: 3500, withoutEnlargement: true, fit: "inside" })
+            .webp({ quality: 95, effort: 4 }) // Ultra-high HQ
+            .toFile(filePath);
 
         const sizeKB = (buffer.length / 1024).toFixed(0);
         console.log(`✅ Uploaded: /uploads/${filename} (${sizeKB} KB)`);
@@ -79,7 +87,10 @@ export async function uploadFileChecked(file: FormDataEntryValue | null): Promis
     const path = await uploadFile(file);
     return path
         ? { status: "ok", path }
-        : { status: "error", reason: "Не вдалося обробити зображення" };
+        : {
+              status: "error",
+              reason: "Підтримуються лише зображення JPG, PNG, WebP, AVIF, GIF (до 10 МБ)",
+          };
 }
 
 /**
