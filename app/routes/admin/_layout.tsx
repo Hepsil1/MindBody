@@ -4,6 +4,7 @@ import adminCss from "../../styles/admin.css?url";
 import appCss from "../../app.css?url";
 import { isAuthenticated, adminSession } from "../../utils/admin.server";
 import { Toaster } from "sonner";
+import { CommandPalette } from "../../components/admin/CommandPalette";
 import type { Route } from "./+types/_layout";
 
 export function links() {
@@ -219,6 +220,7 @@ const navItems = [
 export default function AdminLayout() {
     const [editMode, setEditMode] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [paletteOpen, setPaletteOpen] = useState(false);
 
     // Close the mobile drawer on Escape.
     useEffect(() => {
@@ -229,6 +231,18 @@ export default function AdminLayout() {
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
     }, [menuOpen]);
+
+    // Cmd+K / Ctrl+K opens the global search palette from anywhere in the admin.
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+                e.preventDefault();
+                setPaletteOpen((v) => !v);
+            }
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, []);
 
     return (
         <div className="admin-layout">
@@ -311,6 +325,46 @@ export default function AdminLayout() {
                         </svg>
                     </Link>
                 </div>
+
+                {/* Global search (Cmd+K) */}
+                <button
+                    type="button"
+                    className="admin-nav__item"
+                    style={{ width: "100%", background: "none", cursor: "pointer" }}
+                    onClick={() => {
+                        setMenuOpen(false);
+                        setPaletteOpen(true);
+                    }}
+                >
+                    <span className="admin-nav__icon">
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            width="20"
+                            height="20"
+                        >
+                            <circle cx="11" cy="11" r="7" />
+                            <line x1="21" y1="21" x2="16.5" y2="16.5" />
+                        </svg>
+                    </span>
+                    <span className="admin-nav__label">
+                        Пошук{" "}
+                        <kbd
+                            style={{
+                                fontSize: "10px",
+                                color: "var(--text-muted)",
+                                border: "1px solid var(--border-highlight)",
+                                borderRadius: "4px",
+                                padding: "1px 5px",
+                                marginLeft: "6px",
+                            }}
+                        >
+                            Ctrl K
+                        </kbd>
+                    </span>
+                </button>
 
                 {/* Navigation */}
                 <nav className="admin-nav">
@@ -399,6 +453,7 @@ export default function AdminLayout() {
                 <Outlet />
             </main>
             <Toaster richColors theme="dark" position="top-right" />
+            <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
         </div>
     );
 }

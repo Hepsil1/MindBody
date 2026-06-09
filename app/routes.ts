@@ -42,6 +42,8 @@ export default [
     // CSV export — resource route (no component), kept outside the layout so it
     // returns a raw CSV Response instead of being wrapped in the layout HTML.
     route("admin/customers/export", "routes/admin/customers/export.tsx"),
+    // Cmd+K palette backend — bare-JSON resource route (admin-guarded).
+    route("admin/api/search", "routes/admin/api.search.tsx"),
 
     // Admin Panel Routes
     layout("routes/admin/_layout.tsx", [
