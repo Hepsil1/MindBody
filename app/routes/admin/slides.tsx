@@ -44,13 +44,18 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 import { uploadFileChecked } from "../../utils/upload.server";
 import { requireAdmin } from "../../utils/admin-guard.server";
-import { invalidateAll, invalidateCache } from "../../utils/cache.server";
+import { invalidateCache } from "../../utils/cache.server";
 
 export async function action({ request }: Route.ActionArgs) {
     const denied = await requireAdmin(request);
     if (denied) return denied;
-    // Clear home page cache on any admin change (slides, categories, filters)
-    invalidateAll();
+    // Cache is invalidated per-intent on SUCCESS (see each branch) rather than a
+    // blanket invalidateAll() up front: the old call cleared every cached surface
+    // (home + all shop pages) on every submit — even validation failures and
+    // unknown intents — re-running 3+ Prisma queries for unrelated pages. The
+    // read keys are: home:slides, home:categories (home.tsx) and shop:{slug}
+    // (shop.$category.tsx → loadShopData, which holds both the shop's FilterConfig
+    // and its hero). /about is uncached, so about-slide edits invalidate nothing.
     // Resolve an uploaded image field: keep `current` when no file was chosen,
     // use the new path on success, and ABORT the save (throw → caught below,
     // returns { error }) when a chosen file fails to process. Previously a failed
@@ -110,6 +115,7 @@ export async function action({ request }: Route.ActionArgs) {
                     subtitle: "колекція",
                 },
             });
+            invalidateCache(`shop:${slug}`);
             return { success: true };
         }
 
@@ -162,6 +168,7 @@ export async function action({ request }: Route.ActionArgs) {
             } else {
                 await prisma.slide.update({ where: { id }, data: slideData });
             }
+            invalidateCache("home:slides");
             return { success: true };
         }
 
@@ -169,6 +176,7 @@ export async function action({ request }: Route.ActionArgs) {
             const id = formData.get("id") as string;
             try {
                 await prisma.slide.delete({ where: { id } });
+                invalidateCache("home:slides");
                 return { success: true };
             } catch (error) {
                 console.error("Failed to delete slide:", error);
@@ -237,6 +245,14 @@ export async function action({ request }: Route.ActionArgs) {
                 // colour/size pickers read FilterConfig, so a silent failure
                 // would build the next product against stale options.
                 return { error: "Не вдалося зберегти фільтри" };
+            }
+            // A per-shop config is read only by that shop's page; the global
+            // config is the fallback for EVERY shop (loadShopData reads id IN
+            // {slug, "global"}), so editing global must clear all shop caches.
+            if (pageSlug === "global") {
+                for (const s of SHOP_SLUGS) invalidateCache(`shop:${s}`);
+            } else {
+                invalidateCache(`shop:${pageSlug}`);
             }
             return { success: true };
         }
