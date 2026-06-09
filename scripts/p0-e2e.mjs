@@ -89,6 +89,7 @@ async function makeProduct({ status, stock, variant }) {
             stock,
             inventory,
             sku: `P0-${status}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
+            slug: `p0-${status}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
             shopPageSlug: "yoga",
             category: "tops",
             colors: JSON.stringify([variant.color]),
