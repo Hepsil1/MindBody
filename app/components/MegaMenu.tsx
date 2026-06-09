@@ -36,7 +36,10 @@ export default function MegaMenu({ shop, featured, onNavigate }: MegaMenuProps) 
         const s = d.sleeves?.length ?? 0;
         return n + (f > 0 ? f * (1 + s) : s);
     }, 0);
-    const wide = deepCount >= 8;
+    // Go 3-column when there's real facet depth OR simply many subcategories
+    // (e.g. casual's 8 flat groups read better across 3 columns than 2 tall ones);
+    // otherwise a compact 2-column panel.
+    const wide = deepCount >= 8 || subs.length >= 6;
 
     // Smart positioning: the panel is centred under its nav item via
     // translateX(-50%). On the edge items (yoga = leftmost, yogatools =
@@ -93,6 +96,10 @@ export default function MegaMenu({ shop, featured, onNavigate }: MegaMenuProps) 
 
                     {subs.map(([sub, def]) => {
                         const base = `/shop/${shop}/${sub}`;
+                        // Capture into consts so narrowing survives the nested
+                        // .map callbacks below (TS drops it for property access).
+                        const fabrics = def.fabrics ?? [];
+                        const sleeves = def.sleeves ?? [];
                         return (
                             <div key={sub} className="mega-menu__group">
                                 <Link
@@ -104,42 +111,69 @@ export default function MegaMenu({ shop, featured, onNavigate }: MegaMenuProps) 
                                     {def.label}
                                 </Link>
 
-                                {/* Level 3/4: fabric → sleeve (if any). */}
-                                {def.fabrics && def.fabrics.length > 0
-                                    ? def.fabrics.map((f) => (
-                                          <div key={f} className="mega-menu__fabric">
-                                              <Link
-                                                  to={`${base}?fabric=${f}`}
-                                                  prefetch="intent"
-                                                  className="mega-menu__sublink mega-menu__sublink--fabric"
-                                                  onClick={onNavigate}
-                                              >
-                                                  {fabricLabel(f)}
-                                              </Link>
-                                              {def.sleeves?.map((s) => (
-                                                  <Link
-                                                      key={s}
-                                                      to={`${base}?fabric=${f}&sleeve=${s}`}
-                                                      prefetch="intent"
-                                                      className="mega-menu__sublink mega-menu__sublink--sleeve"
-                                                      onClick={onNavigate}
-                                                  >
-                                                      {sleeveLabel(s)}
-                                                  </Link>
-                                              ))}
-                                          </div>
-                                      ))
-                                    : def.sleeves?.map((s) => (
-                                          <Link
-                                              key={s}
-                                              to={`${base}?sleeve=${s}`}
-                                              prefetch="intent"
-                                              className="mega-menu__sublink mega-menu__sublink--sleeve"
-                                              onClick={onNavigate}
-                                          >
-                                              {sleeveLabel(s)}
-                                          </Link>
-                                      ))}
+                                {/* Level 3/4 facets as compact chips. Deep
+                                    categories (fabric × sleeve) stack a fabric
+                                    chip over its wrapping sleeve chips; shallow
+                                    ones render a single inline chip row. */}
+                                {fabrics.length > 0 ? (
+                                    sleeves.length > 0 ? (
+                                        <div className="mega-menu__fabrics">
+                                            {fabrics.map((f) => (
+                                                <div key={f} className="mega-menu__fabric">
+                                                    <Link
+                                                        to={`${base}?fabric=${f}`}
+                                                        prefetch="intent"
+                                                        className="mega-menu__chip mega-menu__chip--fabric"
+                                                        onClick={onNavigate}
+                                                    >
+                                                        {fabricLabel(f)}
+                                                    </Link>
+                                                    <div className="mega-menu__chiprow">
+                                                        {sleeves.map((s) => (
+                                                            <Link
+                                                                key={s}
+                                                                to={`${base}?fabric=${f}&sleeve=${s}`}
+                                                                prefetch="intent"
+                                                                className="mega-menu__chip"
+                                                                onClick={onNavigate}
+                                                            >
+                                                                {sleeveLabel(s)}
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="mega-menu__chiprow">
+                                            {fabrics.map((f) => (
+                                                <Link
+                                                    key={f}
+                                                    to={`${base}?fabric=${f}`}
+                                                    prefetch="intent"
+                                                    className="mega-menu__chip mega-menu__chip--fabric"
+                                                    onClick={onNavigate}
+                                                >
+                                                    {fabricLabel(f)}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )
+                                ) : sleeves.length > 0 ? (
+                                    <div className="mega-menu__chiprow">
+                                        {sleeves.map((s) => (
+                                            <Link
+                                                key={s}
+                                                to={`${base}?sleeve=${s}`}
+                                                prefetch="intent"
+                                                className="mega-menu__chip"
+                                                onClick={onNavigate}
+                                            >
+                                                {sleeveLabel(s)}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                ) : null}
                             </div>
                         );
                     })}
