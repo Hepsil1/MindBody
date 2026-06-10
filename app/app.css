@@ -1677,7 +1677,6 @@ button.product-card__swatch:focus-visible {
     transition:
         opacity 0.16s ease,
         transform 0.16s ease,
-        width 0.26s cubic-bezier(0.22, 1, 0.36, 1),
         visibility 0s linear 0.18s;
 }
 .mega-panel.is-open {
@@ -1685,6 +1684,15 @@ button.product-card__swatch:focus-visible {
     visibility: visible;
     pointer-events: auto;
     transform: translate(-50%, 0);
+    transition:
+        opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Width is animated ONLY when switching sections on an already-open panel
+   (.is-morph, set in JS). On open-from-closed the width must SNAP first —
+   otherwise the old→new width transition runs during the open fade and the
+   masonry visibly relays out in front of the user. */
+.mega-panel.is-open.is-morph {
     transition:
         opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
         transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
@@ -1704,14 +1712,20 @@ button.product-card__swatch:focus-visible {
 .mega-panel--c3 {
     width: 866px;
 }
+/* Explicit column-count (NOT the ideal-width form): the count must never
+   depend on the panel's CURRENT width, or the masonry re-flows 2↔3 columns
+   mid-width-morph. Columns simply stretch/shrink during the animation. */
 .mega-panel--c1 .mega-menu__cols {
-    columns: 190px 1;
+    column-count: 1;
+    column-width: auto;
 }
 .mega-panel--c2 .mega-menu__cols {
-    columns: 150px 2;
+    column-count: 2;
+    column-width: auto;
 }
 .mega-panel--c3 .mega-menu__cols {
-    columns: 150px 3;
+    column-count: 3;
+    column-width: auto;
 }
 
 /* One page per category; only the active one is displayed. Switching

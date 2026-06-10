@@ -78,6 +78,10 @@ export function Header() {
     // non-null one so the panel keeps its content while fading out.
     const [megaShop, setMegaShop] = useState<string | null>(null);
     const [megaShown, setMegaShown] = useState<string>(NAV[0].shop);
+    // Width morph is for SWITCHING an open panel only. On open-from-closed
+    // the panel must snap to the new section's width — otherwise the width
+    // transition runs during the open fade and the masonry visibly reflows.
+    const [megaMorph, setMegaMorph] = useState(false);
     // Hover-intent timers: a short open delay kills accidental fly-by opens;
     // a close delay lets the pointer cross the gap between pill and panel.
     const megaTimers = useRef<{ open: number | null; close: number | null }>({
@@ -152,6 +156,7 @@ export function Header() {
 
     const openMega = (shop: string) => {
         clearMegaTimers();
+        setMegaMorph(megaShop !== null);
         setMegaShown(shop);
         setMegaShop(shop);
     };
@@ -614,6 +619,7 @@ export function Header() {
                     items={NAV}
                     active={megaShop}
                     shown={megaShown}
+                    morph={megaMorph}
                     id="header-mega-panel"
                     onNavigate={() => {
                         setIsMenuOpen(false);

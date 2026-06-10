@@ -180,6 +180,10 @@ interface MegaPanelProps {
     active: string | null;
     /** Last non-null shop — keeps content rendered during the close fade. */
     shown: string;
+    /** True when the panel was already open (section switch) — enables the
+     *  width morph. False on open-from-closed so the width snaps instead of
+     *  animating during the open fade. */
+    morph: boolean;
     id: string;
     onNavigate?: () => void;
     onPanelEnter?: (e: React.PointerEvent) => void;
@@ -197,6 +201,7 @@ export function MegaPanel({
     items,
     active,
     shown,
+    morph,
     id,
     onNavigate,
     onPanelEnter,
@@ -210,7 +215,9 @@ export function MegaPanel({
             <div className={`mega-panel-backdrop${open ? " is-open" : ""}`} aria-hidden="true" />
             <div
                 id={id}
-                className={`mega-panel mega-panel--c${cols}${open ? " is-open" : ""}`}
+                className={`mega-panel mega-panel--c${cols}${open ? " is-open" : ""}${
+                    morph ? " is-morph" : ""
+                }`}
                 onPointerEnter={onPanelEnter}
                 onPointerLeave={onPanelLeave}
             >
