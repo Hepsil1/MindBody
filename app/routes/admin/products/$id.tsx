@@ -762,7 +762,30 @@ export default function AdminProductEdit() {
                     {/* Left Column: Main Info */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
                         <div className="ad-card">
-                            <h3 className="ad-card-title">Загальна інформація</h3>
+                            <h3 className="ad-card-title">
+                                <span
+                                    className="ad-card-ico"
+                                    style={{
+                                        background: "rgba(94,234,212,0.14)",
+                                        color: "#5eead4",
+                                    }}
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <line x1="8" y1="6" x2="21" y2="6" />
+                                        <line x1="8" y1="12" x2="21" y2="12" />
+                                        <line x1="8" y1="18" x2="21" y2="18" />
+                                        <line x1="3" y1="6" x2="3.01" y2="6" />
+                                        <line x1="3" y1="12" x2="3.01" y2="12" />
+                                        <line x1="3" y1="18" x2="3.01" y2="18" />
+                                    </svg>
+                                </span>
+                                Загальна інформація
+                            </h3>
 
                             <div className="ad-field-grid">
                                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -940,10 +963,25 @@ export default function AdminProductEdit() {
                                     paddingBottom: "16px",
                                 }}
                             >
-                                <h3
-                                    className="ad-card-title"
-                                    style={{ margin: 0, padding: 0, border: "none" }}
-                                >
+                                <h3 className="ad-card-title" style={{ margin: 0 }}>
+                                    <span
+                                        className="ad-card-ico"
+                                        style={{
+                                            background: "rgba(167,139,250,0.16)",
+                                            color: "#a78bfa",
+                                        }}
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                        >
+                                            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                                            <polyline points="2 17 12 22 22 17" />
+                                            <polyline points="2 12 12 17 22 12" />
+                                        </svg>
+                                    </span>
                                     Варіанти та Склад
                                 </h3>
                                 <div
@@ -952,7 +990,7 @@ export default function AdminProductEdit() {
                                         padding: "6px 12px",
                                         background: "rgba(255,255,255,0.05)",
                                         borderRadius: "100px",
-                                        color: "#5eead4",
+                                        color: "var(--ad-primary)",
                                     }}
                                 >
                                     Загальна кількість: <b>{formData.stock} шт.</b>
@@ -1138,7 +1176,26 @@ export default function AdminProductEdit() {
                     {/* Right Column: Sidebar */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
                         <div className="ad-card">
-                            <h3 className="ad-card-title">Статус публікації</h3>
+                            <h3 className="ad-card-title">
+                                <span
+                                    className="ad-card-ico"
+                                    style={{
+                                        background: "rgba(96,165,250,0.16)",
+                                        color: "#60a5fa",
+                                    }}
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                </span>
+                                Статус публікації
+                            </h3>
                             <div className="form-group">
                                 <select
                                     className="form-select"
@@ -1233,7 +1290,27 @@ export default function AdminProductEdit() {
                         </div>
 
                         <div className="ad-card">
-                            <h3 className="ad-card-title">Фотографії</h3>
+                            <h3 className="ad-card-title">
+                                <span
+                                    className="ad-card-ico"
+                                    style={{
+                                        background: "rgba(244,114,182,0.16)",
+                                        color: "#f472b6",
+                                    }}
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                        <circle cx="8.5" cy="8.5" r="1.5" />
+                                        <polyline points="21 15 16 10 5 21" />
+                                    </svg>
+                                </span>
+                                Фотографії
+                            </h3>
                             <p
                                 style={{
                                     margin: "0 0 12px",
@@ -1345,7 +1422,26 @@ export default function AdminProductEdit() {
                         </div>
 
                         <div className="ad-card">
-                            <h3 className="ad-card-title">Ціноутворення</h3>
+                            <h3 className="ad-card-title">
+                                <span
+                                    className="ad-card-ico"
+                                    style={{
+                                        background: "rgba(52,211,153,0.16)",
+                                        color: "#34d399",
+                                    }}
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                                        <line x1="7" y1="7" x2="7.01" y2="7" />
+                                    </svg>
+                                </span>
+                                Ціноутворення
+                            </h3>
                             <div className="form-group">
                                 <label className="form-label">Ціна (UAH)</label>
                                 <input

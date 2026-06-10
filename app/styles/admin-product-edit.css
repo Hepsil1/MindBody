@@ -1,23 +1,31 @@
 :root {
-    --ad-bg: #0f1115;
-    --ad-bg-card: #181b21;
-    --ad-bg-input: #232830;
-    --ad-border: rgba(255, 255, 255, 0.08);
-    --ad-text-main: #f1f5f9;
-    --ad-text-muted: #94a3b8;
-    --ad-primary: #5eead4; /* Teal */
+    /* AU8: this page predated the admin design system and shipped its own
+       --ad-* palette. Remap those vars onto the shared tokens (admin.css) so
+       the product editor reads as the same material as the dashboard / order
+       detail — every rule below already consumes var(--ad-*), so harmonizing
+       here propagates everywhere with no markup churn. */
+    --ad-bg: var(--bg-app, #0f1115);
+    --ad-bg-card: var(--bg-card, rgba(30, 35, 42, 0.55));
+    --ad-bg-input: rgba(10, 12, 16, 0.6);
+    --ad-border: var(--border-subtle, rgba(255, 255, 255, 0.06));
+    --ad-text-main: var(--text-main, #f8fafc);
+    --ad-text-muted: var(--text-secondary, #94a3b8);
+    --ad-primary: var(--accent-primary, #5eead4); /* Teal */
     --ad-primary-hover: #2dd4bf;
     --ad-danger: #ef4444;
-    --ad-radius: 12px;
-    --ad-radius-sm: 8px;
+    --ad-radius: var(--radius-md, 16px);
+    --ad-radius-sm: var(--radius-sm, 10px);
 }
 
+/* Sit natively inside .admin-main (no solid bg covering the ambient gradient,
+   no second 40px gutter, shared Outfit type) instead of painting a separate
+   full-height dark panel. */
 .admin-wrapper {
-    background-color: var(--ad-bg);
-    min-height: 100vh;
+    background-color: transparent;
+    min-height: auto;
     color: var(--ad-text-main);
-    font-family: "DM Sans", sans-serif;
-    padding: 40px;
+    font-family: "Outfit", sans-serif;
+    padding: 0;
 }
 
 .admin-container {
@@ -47,9 +55,12 @@
 }
 
 .page-title {
-    font-size: 32px;
-    font-family: var(--font-display);
+    /* Match the admin page-header h1 (Outfit 34/400) — was the storefront
+       display serif (--font-display), the only serif heading in the panel. */
+    font-size: 34px;
+    font-family: "Outfit", sans-serif;
     font-weight: 400;
+    letter-spacing: -0.01em;
     margin: 0;
     line-height: 1.2;
 }
@@ -96,22 +107,39 @@
     }
 }
 
-/* Cards */
+/* Cards — glass surface + blur, matching .dash-tile / .order-detail-card. */
 .ad-card {
     background: var(--ad-bg-card);
     border: 1px solid var(--ad-border);
     border-radius: var(--ad-radius);
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    backdrop-filter: blur(var(--glass-blur, 20px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 20px));
 }
+/* Title with a tinted icon chip — the same language as the order-detail and
+   dashboard card headers (no more underline rule). */
 .ad-card-title {
-    font-size: 18px;
-    font-weight: 500;
-    margin: 0 0 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 18px 0;
     color: var(--ad-text-main);
-    border-bottom: 1px solid var(--ad-border);
-    padding-bottom: 16px;
+}
+.ad-card-ico {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.ad-card-ico svg {
+    width: 17px;
+    height: 17px;
 }
 
 /* Forms */
