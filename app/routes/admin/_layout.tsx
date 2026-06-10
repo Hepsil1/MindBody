@@ -124,7 +124,7 @@ const Icons = {
 };
 
 const navItems = [
-    { to: "/admin", icon: <Icons.Dashboard />, label: "Dashboard", end: true },
+    { to: "/admin", icon: <Icons.Dashboard />, label: "Дашборд", end: true },
     {
         to: "/admin/orders",
         icon: (

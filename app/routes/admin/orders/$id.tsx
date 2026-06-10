@@ -17,6 +17,7 @@ import {
     allowedNext,
 } from "../../../utils/statuses";
 import { useState } from "react";
+import { ConfirmDialog } from "../../../components/admin/ConfirmDialog";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
     // Defense-in-depth: this endpoint returns full customer PII, so guard it in
@@ -55,7 +56,28 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     });
 
     return {
-        order,
+        // Prisma Decimal fields (order.total, items[].price, product.price) are
+        // class instances the single-fetch serializer turns into plain objects —
+        // Number(<that object>) is NaN ("Разом до сплати: NaN ₴" bug). Normalize
+        // every money field to a plain number at the loader boundary.
+        order: {
+            ...order,
+            total: Number(order.total),
+            items: order.items.map((item) => ({
+                ...item,
+                price: Number(item.price),
+                product: item.product
+                    ? {
+                          ...item.product,
+                          price: Number(item.product.price),
+                          comparePrice:
+                              item.product.comparePrice !== null
+                                  ? Number(item.product.comparePrice)
+                                  : null,
+                      }
+                    : item.product,
+            })),
+        },
         emailStatus: order.emailStatus ?? null,
         appliedPromoCode: order.appliedPromoCode ?? null,
         discountAmount: order.discountAmount ? Number(order.discountAmount) : 0,
@@ -231,9 +253,11 @@ export default function AdminOrderDetails() {
         submit(formData, { method: "post" });
     };
 
-    const handleCancel = () => {
-        if (!window.confirm("Скасувати замовлення? Залишок товарів буде повернено на склад."))
-            return;
+    // Cancel-order confirmation lives in a branded ConfirmDialog (window.confirm
+    // was unstyled, non-accessible, and easy to mistake for "discard edits").
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const doCancelOrder = () => {
+        setShowCancelConfirm(false);
         const formData = new FormData();
         formData.append("intent", "cancel");
         submit(formData, { method: "post" });
@@ -570,7 +594,8 @@ export default function AdminOrderDetails() {
                     </select>
                     {order.status !== "cancelled" && (
                         <button
-                            onClick={handleCancel}
+                            onClick={() => setShowCancelConfirm(true)}
+                            title="Скасувати замовлення та повернути товари на склад"
                             style={{
                                 background: "rgba(245,158,11,0.12)",
                                 border: "1px solid rgba(245,158,11,0.4)",
@@ -582,7 +607,7 @@ export default function AdminOrderDetails() {
                                 cursor: "pointer",
                             }}
                         >
-                            Скасувати
+                            Скасувати замовлення
                         </button>
                     )}
                     <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
@@ -905,6 +930,16 @@ export default function AdminOrderDetails() {
                     </div>
                 </div>
             )}
+
+            <ConfirmDialog
+                open={showCancelConfirm}
+                title="Скасувати замовлення?"
+                body={`Замовлення #${order.orderNumber} буде позначено скасованим, а залишок товарів повернеться на склад. Клієнт отримає лист про скасування.`}
+                confirmLabel="Скасувати замовлення"
+                cancelLabel="Залишити"
+                onConfirm={doCancelOrder}
+                onCancel={() => setShowCancelConfirm(false)}
+            />
         </div>
     );
 }

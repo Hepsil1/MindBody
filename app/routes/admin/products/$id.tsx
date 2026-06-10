@@ -26,6 +26,7 @@ import {
     subcategoriesFor,
 } from "../../../utils/taxonomy";
 import { slugify } from "../../../utils/slugify";
+import { getColorHex, getColorLabel } from "../../../utils/colors";
 import { publishChecklist, publishBlockers } from "../../../utils/productQuality";
 import productEditStyles from "../../../styles/admin-product-edit.css?url";
 
@@ -1062,7 +1063,9 @@ export default function AdminProductEdit() {
                                                                             width: "12px",
                                                                             height: "12px",
                                                                             borderRadius: "50%",
-                                                                            background: color,
+                                                                            background:
+                                                                                getColorHex(color),
+                                                                            border: "1px solid rgba(255,255,255,0.2)",
                                                                         }}
                                                                     ></div>
                                                                     <span
@@ -1070,7 +1073,10 @@ export default function AdminProductEdit() {
                                                                     >
                                                                         {filterConfig?.colors?.[
                                                                             color
-                                                                        ] || color}{" "}
+                                                                        ] ||
+                                                                            getColorLabel(
+                                                                                color,
+                                                                            )}{" "}
                                                                         / {size}
                                                                     </span>
                                                                 </td>

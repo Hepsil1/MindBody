@@ -32,3 +32,36 @@ export function getColorHex(code: string | undefined | null): string {
     const key = String(code).trim().toLowerCase();
     return COLOR_MAP[key] ?? code;
 }
+
+/**
+ * Ukrainian display names for the palette codes. FilterConfig's own colour
+ * labels take precedence where present; this is the fallback so codes the
+ * config doesn't know (marsala, lavender…) never leak raw slugs into the UI.
+ */
+export const COLOR_LABELS: Record<string, string> = {
+    black: "Чорний",
+    white: "Білий",
+    blue: "Синій",
+    pink: "Рожевий",
+    green: "Зелений",
+    gray: "Сірий",
+    grey: "Сірий",
+    red: "Червоний",
+    purple: "Фіолетовий",
+    yellow: "Жовтий",
+    orange: "Помаранчевий",
+    teal: "Бірюзовий",
+    brown: "Коричневий",
+    navy: "Темно-синій",
+    beige: "Бежевий",
+    marsala: "Марсала",
+    lavender: "Лавандовий",
+    mint: "М'ятний",
+    cream: "Кремовий",
+};
+
+export function getColorLabel(code: string | undefined | null): string {
+    if (!code) return "";
+    const key = String(code).trim().toLowerCase();
+    return COLOR_LABELS[key] ?? code;
+}

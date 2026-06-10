@@ -143,7 +143,7 @@ export default function AdminDashboard() {
     return (
         <>
             <div className="admin-page-header">
-                <h1>Dashboard</h1>
+                <h1>Дашборд</h1>
                 <p>Огляд магазину за тиждень</p>
             </div>
 
