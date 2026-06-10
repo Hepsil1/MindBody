@@ -10,6 +10,7 @@ import {
     isValidSubcategory,
 } from "../utils/categoryMap";
 import { fabricsForShop, sleevesForShop, fabricLabel, sleeveLabel } from "../utils/taxonomy";
+import { DEFAULT_SITE_URL } from "../utils/site-url";
 import { shopPageLabel } from "../utils/shop-pages";
 import {
     loadShopData,
@@ -32,7 +33,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
     // slugs), not the legacy women/kids-only map.
     const title = shopPage?.title || shopPageLabel(slug).title || "Каталог";
     const heroImage = shopPage?.heroImage || "/brand-sun.png";
-    const siteUrl = data?.siteUrl || "https://saleid.icu";
+    const siteUrl = data?.siteUrl || DEFAULT_SITE_URL;
     const products = data?.products ?? [];
 
     const canonicalUrl = `${siteUrl}/shop/${slug}`;

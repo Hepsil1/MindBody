@@ -1,5 +1,6 @@
 import { prisma } from "../db.server";
 import { isValidSubcategory } from "../utils/categoryMap";
+import { resolveSiteUrl } from "../utils/site-url";
 
 // Dynamic sitemap.xml — all canonical, indexable pages for Google.
 //
@@ -15,7 +16,7 @@ import { isValidSubcategory } from "../utils/categoryMap";
 //  - Filtered / search / paginated URLs are intentionally excluded
 //    (they are noindex or query-only and don't deserve sitemap entries).
 export async function loader() {
-    const baseUrl = process.env.SITE_URL || "https://saleid.icu";
+    const baseUrl = resolveSiteUrl();
 
     const products = await prisma.product.findMany({
         where: { status: "active" },

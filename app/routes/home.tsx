@@ -9,8 +9,7 @@ import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
-
-const DEFAULT_SITE_URL = "https://saleid.icu";
+import { DEFAULT_SITE_URL } from "../utils/site-url";
 
 // One Instagram post tile rendered in the social proof section.
 interface InstagramPost {

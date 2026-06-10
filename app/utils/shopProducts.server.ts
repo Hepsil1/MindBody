@@ -1,6 +1,7 @@
 import { prisma } from "../db.server";
 import { parseAndMergeFilterConfig, type MergedFilterConfig } from "./filters";
 import { cachedFetch } from "./cache.server";
+import { resolveSiteUrl } from "./site-url";
 
 /** Shop listings only change via admin saves, and every such action calls
     invalidateAll() — so this TTL is just a backstop against unbounded staleness. */
@@ -176,6 +177,6 @@ async function loadShopDataUncached(
         category: categorySlug,
         shopPage: shopPageResult,
         filterConfig,
-        siteUrl: process.env.SITE_URL || "https://saleid.icu",
+        siteUrl: resolveSiteUrl(),
     };
 }

@@ -1,6 +1,7 @@
 import { type LoaderFunctionArgs, type MetaFunction, redirect } from "react-router";
 import { isValidSubcategory, slugToLabel } from "../utils/categoryMap";
 import { loadShopData } from "../utils/shopProducts.server";
+import { DEFAULT_SITE_URL } from "../utils/site-url";
 import ShopCategory from "./shop.$category";
 
 /**
@@ -35,7 +36,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
     const shopPage = data?.shopPage;
     const subcategory = data?.subcategory ?? "";
     const category = data?.category ?? "";
-    const siteUrl = data?.siteUrl || "https://saleid.icu";
+    const siteUrl = data?.siteUrl || DEFAULT_SITE_URL;
     const products = data?.products ?? [];
     // ?fabric / ?sleeve / sort variants are facets of the clean subcategory
     // URL — keep them out of the index (canonical already points home).

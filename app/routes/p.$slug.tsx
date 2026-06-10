@@ -7,6 +7,7 @@ import { StorageUtils } from "../utils/storage";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import { shopPageTitle, isRealShopSlug } from "../utils/shop-pages";
 import { formatPrice } from "../utils/format";
+import { DEFAULT_SITE_URL, resolveSiteUrl } from "../utils/site-url";
 import type { InventoryVariant, RelatedProductCard, FilterConfigData } from "../types/product";
 import "../styles/product-page.css";
 
@@ -21,7 +22,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     if (!product) {
         return [{ title: "Товар не знайдено | MIND BODY" }];
     }
-    const siteUrl = data?.siteUrl || "https://saleid.icu";
+    const siteUrl = data?.siteUrl || DEFAULT_SITE_URL;
 
     const desc = (product.description || `${product.name} — купити в MIND BODY`).substring(0, 160);
     const image = product.images?.[0] || "/brand-sun.png";
@@ -295,7 +296,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         product,
         filterConfig,
         relatedProducts,
-        siteUrl: process.env.SITE_URL ?? "https://saleid.icu",
+        siteUrl: resolveSiteUrl(),
     };
 }
 

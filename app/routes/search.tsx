@@ -4,8 +4,7 @@ import { prisma } from "../db.server";
 import { useState } from "react";
 import ProductCard, { type Product } from "../components/ProductCard";
 import { pluralizeUA } from "../utils/plural";
-
-const SITE_URL = "https://saleid.icu";
+import { DEFAULT_SITE_URL as SITE_URL } from "../utils/site-url";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const q = data?.q || "";
