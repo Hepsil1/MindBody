@@ -23,6 +23,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
         return [{ title: "Товар не знайдено | MIND BODY" }];
     }
     const siteUrl = data?.siteUrl || DEFAULT_SITE_URL;
+    const reviewStats = data?.reviewStats;
 
     const desc = (product.description || `${product.name} — купити в MIND BODY`).substring(0, 160);
     const image = product.images?.[0] || "/brand-sun.png";
@@ -77,6 +78,17 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
                         : "https://schema.org/OutOfStock",
                     seller: { "@type": "Organization", name: "MIND BODY" },
                 },
+                ...(reviewStats && reviewStats.count > 0
+                    ? {
+                          aggregateRating: {
+                              "@type": "AggregateRating",
+                              ratingValue: reviewStats.avg,
+                              reviewCount: reviewStats.count,
+                              bestRating: 5,
+                              worstRating: 1,
+                          },
+                      }
+                    : {}),
             },
         },
         {
@@ -292,10 +304,24 @@ export async function loader({ params }: LoaderFunctionArgs) {
         throw new Response("Not Found", { status: 404 });
     }
 
+    // Aggregate of APPROVED reviews → drives the JSON-LD AggregateRating (review
+    // stars in Google). Only the moderated reviews shown on the page are counted,
+    // so the rich result reflects what the visitor actually sees (Google policy).
+    const reviewAgg = await prisma.review.aggregate({
+        where: { productId: product.id, isApproved: true },
+        _avg: { rating: true },
+        _count: { _all: true },
+    });
+    const reviewStats = {
+        count: reviewAgg._count._all,
+        avg: reviewAgg._avg.rating ? Math.round(reviewAgg._avg.rating * 10) / 10 : 0,
+    };
+
     return {
         product,
         filterConfig,
         relatedProducts,
+        reviewStats,
         siteUrl: resolveSiteUrl(),
     };
 }

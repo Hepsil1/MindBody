@@ -1,7 +1,8 @@
 import { Link } from "react-router";
+import { DEFAULT_SITE_URL } from "../utils/site-url";
 
 export function meta() {
-    const siteUrl = "https://saleid.icu";
+    const siteUrl = DEFAULT_SITE_URL;
     return [
         { title: "Політика конфіденційності | MIND BODY" },
         {

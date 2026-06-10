@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { useState } from "react";
+import { DEFAULT_SITE_URL } from "../utils/site-url";
 
 const FAQS = [
     {
@@ -45,7 +46,7 @@ const FAQS = [
 ];
 
 export function meta() {
-    const siteUrl = "https://saleid.icu";
+    const siteUrl = DEFAULT_SITE_URL;
     const faqSchema = {
         "@context": "https://schema.org",
         "@type": "FAQPage",
