@@ -247,7 +247,7 @@ export default function AdminReviews() {
                                                     { method: "post" },
                                                 )
                                             }
-                                            style={moderateBtn("#10b981")}
+                                            className="admin-btn admin-btn--primary admin-btn--sm"
                                         >
                                             Схвалити
                                         </button>
@@ -260,7 +260,7 @@ export default function AdminReviews() {
                                                     { method: "post" },
                                                 )
                                             }
-                                            style={moderateBtn("#f59e0b")}
+                                            className="admin-btn admin-btn--warning admin-btn--sm"
                                         >
                                             Сховати
                                         </button>
@@ -268,7 +268,7 @@ export default function AdminReviews() {
                                     <button
                                         type="button"
                                         onClick={() => setConfirmId(r.id)}
-                                        style={moderateBtn("#ef4444")}
+                                        className="admin-btn admin-btn--danger admin-btn--sm"
                                     >
                                         Видалити
                                     </button>
@@ -285,7 +285,7 @@ export default function AdminReviews() {
                     type="button"
                     onClick={runBulkApprove}
                     disabled={mutate.state !== "idle"}
-                    style={moderateBtn("#10b981")}
+                    className="admin-btn admin-btn--primary admin-btn--sm"
                 >
                     Схвалити обрані
                 </button>
@@ -306,14 +306,3 @@ export default function AdminReviews() {
         </>
     );
 }
-
-const moderateBtn = (color: string): React.CSSProperties => ({
-    padding: "8px 16px",
-    borderRadius: "8px",
-    border: `1px solid ${color}55`,
-    background: `${color}1f`,
-    color,
-    fontSize: "13px",
-    fontWeight: 600,
-    cursor: "pointer",
-});

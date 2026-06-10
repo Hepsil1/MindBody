@@ -190,17 +190,7 @@ export default function AdminPromo() {
                     <button
                         type="button"
                         onClick={() => setShowForm((v) => !v)}
-                        style={{
-                            background: showForm ? "transparent" : "var(--accent-primary)",
-                            color: showForm ? "var(--text-secondary)" : "#0f172a",
-                            border: showForm ? "1px solid rgba(255,255,255,0.12)" : "none",
-                            padding: "10px 20px",
-                            borderRadius: "8px",
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            fontSize: "14px",
-                            whiteSpace: "nowrap",
-                        }}
+                        className={`admin-btn ${showForm ? "admin-btn--secondary" : "admin-btn--primary"}`}
                     >
                         {showForm ? "Закрити" : "+ Створити промокод"}
                     </button>

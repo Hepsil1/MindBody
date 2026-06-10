@@ -1,4 +1,5 @@
 import { Link, useLoaderData, useFetcher, useNavigation } from "react-router";
+import { AdminLinkButton } from "../../../components/admin/AdminButton";
 import type { Route } from "./+types/index";
 import { Prisma } from "@prisma/client";
 import { useState, useEffect } from "react";
@@ -200,21 +201,9 @@ export default function AdminProducts() {
     const hasFilters = Boolean(state.q) || Object.keys(state.filters).length > 0 || lowStock;
 
     const addButton = (
-        <Link
-            to="/admin/products/new"
-            style={{
-                background: "var(--accent-primary)",
-                color: "#0f172a",
-                padding: "12px 24px",
-                borderRadius: "8px",
-                fontWeight: 600,
-                textDecoration: "none",
-                fontSize: "14px",
-                whiteSpace: "nowrap",
-            }}
-        >
+        <AdminLinkButton to="/admin/products/new" variant="primary">
             + Додати товар
-        </Link>
+        </AdminLinkButton>
     );
 
     return (

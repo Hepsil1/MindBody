@@ -834,3 +834,157 @@ body {
         background-position: 0 50%;
     }
 }
+
+/* =====================================================
+   UNIFIED BUTTON SYSTEM (AU3)
+   Single source of truth for admin buttons — every page used to inline its
+   own teal-bg/padding/radius blob, so no two buttons matched. Use .admin-btn
+   + a variant. Works on <button>, <a> and <Link>.
+   ===================================================== */
+.admin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        opacity 0.18s ease;
+}
+.admin-btn:disabled,
+.admin-btn[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+}
+.admin-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+.admin-btn--sm {
+    padding: 7px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+}
+.admin-btn--block {
+    width: 100%;
+}
+
+/* Primary — the page's main action (teal, dark text). */
+.admin-btn--primary {
+    background: var(--accent-primary);
+    color: #06251f;
+    box-shadow: 0 6px 18px -6px var(--accent-glow);
+}
+.admin-btn--primary:hover {
+    background: #7af0db;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px -8px var(--accent-glow);
+}
+
+/* Secondary — neutral glass, for less-prominent actions. */
+.admin-btn--secondary {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--border-highlight);
+    color: var(--text-main);
+}
+.admin-btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Ghost — transparent until hover, for inline/toolbar actions. */
+.admin-btn--ghost {
+    background: transparent;
+    color: var(--text-secondary);
+}
+.admin-btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-main);
+}
+
+/* Danger — destructive (amber-warning tint, not full red, to read as
+   "careful" rather than "error"). */
+.admin-btn--danger {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+}
+.admin-btn--danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fecaca;
+}
+
+/* Warning — reversible-but-significant (e.g. cancel order). */
+.admin-btn--warning {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+}
+.admin-btn--warning:hover {
+    background: rgba(245, 158, 11, 0.2);
+}
+
+/* =====================================================
+   UNIFIED FORM CONTROLS (AU3)
+   ===================================================== */
+.admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.admin-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.admin-input,
+.admin-select,
+.admin-textarea {
+    width: 100%;
+    background: rgba(10, 12, 16, 0.6);
+    border: 1px solid var(--border-highlight);
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 11px 14px;
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease;
+}
+.admin-input::placeholder,
+.admin-textarea::placeholder {
+    color: var(--text-muted);
+}
+.admin-input:hover,
+.admin-select:hover,
+.admin-textarea:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+}
+.admin-input:focus,
+.admin-select:focus,
+.admin-textarea:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    background: rgba(10, 12, 16, 0.85);
+}
+.admin-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+.admin-select {
+    cursor: pointer;
+}

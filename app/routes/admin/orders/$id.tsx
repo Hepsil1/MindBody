@@ -607,16 +607,7 @@ export default function AdminOrderDetails() {
                         <button
                             onClick={() => setShowCancelConfirm(true)}
                             title="Скасувати замовлення та повернути товари на склад"
-                            style={{
-                                background: "rgba(245,158,11,0.12)",
-                                border: "1px solid rgba(245,158,11,0.4)",
-                                color: "#f59e0b",
-                                padding: "10px 20px",
-                                borderRadius: "8px",
-                                fontSize: "14px",
-                                fontWeight: 500,
-                                cursor: "pointer",
-                            }}
+                            className="admin-btn admin-btn--warning"
                         >
                             Скасувати замовлення
                         </button>

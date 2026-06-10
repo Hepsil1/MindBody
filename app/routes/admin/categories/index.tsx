@@ -291,10 +291,7 @@ export default function AdminCategories() {
                         setShowCreate((v) => !v);
                         setEditId(null);
                     }}
-                    style={btn(
-                        showCreate ? "transparent" : "var(--accent-primary)",
-                        showCreate ? "var(--text-secondary)" : "#0f172a",
-                    )}
+                    className={`admin-btn ${showCreate ? "admin-btn--secondary" : "admin-btn--primary"}`}
                 >
                     {showCreate ? "Закрити" : "+ Додати категорію"}
                 </button>

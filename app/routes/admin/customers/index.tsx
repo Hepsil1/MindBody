@@ -73,20 +73,12 @@ export default function AdminCustomers() {
     const hasSearch = Boolean(state.q);
 
     const csvButton = (
-        <a
-            href={exportHref}
-            style={{
-                background: "var(--accent-primary)",
-                color: "#0f172a",
-                padding: "10px 20px",
-                borderRadius: "8px",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontSize: "14px",
-                textDecoration: "none",
-                whiteSpace: "nowrap",
-            }}
-        >
+        <a href={exportHref} className="admin-btn admin-btn--secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             Експорт CSV
         </a>
     );
