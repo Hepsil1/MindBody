@@ -300,77 +300,93 @@ export default function AdminOrderDetails() {
     return (
         <div
             className="admin-wrapper"
-            style={{ maxWidth: "1200px", margin: "0 auto", color: "#e2e8f0" }}
+            style={{ maxWidth: "1200px", margin: "0 auto", color: "var(--text-secondary)" }}
         >
             <style>{`
                 .order-detail-card {
-                    background: #1e293b;
-                    border: 1px solid #334155;
-                    border-radius: 12px;
-                    padding: 24px;
-                    margin-bottom: 20px;
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-subtle);
+                    border-radius: var(--radius-md);
+                    padding: 22px 24px;
+                    margin-bottom: 18px;
+                    backdrop-filter: blur(var(--glass-blur));
+                    -webkit-backdrop-filter: blur(var(--glass-blur));
                 }
                 .order-detail-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: flex-start;
-                    margin-bottom: 32px;
-                    padding-bottom: 24px;
-                    border-bottom: 1px solid #334155;
+                    gap: 20px;
+                    flex-wrap: wrap;
+                    margin-bottom: 26px;
+                    padding-bottom: 22px;
+                    border-bottom: 1px solid var(--border-subtle);
                 }
                 .order-detail-grid {
                     display: grid;
-                    grid-template-columns: 1.5fr 1fr;
-                    gap: 24px;
+                    grid-template-columns: 1.6fr 1fr;
+                    gap: 18px;
                 }
                 @media (max-width: 900px) {
                     .order-detail-grid { grid-template-columns: 1fr; }
                 }
-                .status-select {
-                    background: #0f172a;
-                    border: 1px solid #334155;
-                    color: #e2e8f0;
-                    padding: 10px 14px;
-                    border-radius: 8px;
-                    font-size: 14px;
-                    cursor: pointer;
-                    min-width: 160px;
+                /* Card title with tinted icon chip — same language as the dashboard tiles. */
+                .ocard-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 11px;
+                    font-size: 15px;
+                    font-weight: 600;
+                    color: var(--text-main);
+                    margin: 0 0 18px 0;
                 }
-                .status-select:focus { outline: none; border-color: #5eead4; }
+                .ocard-title__ico {
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+                .ocard-title__ico svg { width: 17px; height: 17px; }
+                .ocard-title__spacer { margin-left: auto; }
                 .info-row {
                     display: flex;
                     justify-content: space-between;
-                    padding: 12px 0;
-                    border-bottom: 1px solid rgba(255,255,255,0.06);
+                    gap: 12px;
+                    padding: 11px 0;
+                    border-bottom: 1px solid var(--border-subtle);
                 }
                 .info-row:last-child { border-bottom: none; }
-                .info-label { color: #94a3b8; font-size: 14px; }
-                .info-value { font-weight: 500; color: #f8fafc; }
+                .info-label { color: var(--text-secondary); font-size: 14px; }
+                .info-value { font-weight: 500; color: var(--text-main); font-size: 14px; text-align: right; }
                 .item-card {
                     display: flex;
                     align-items: center;
                     gap: 16px;
-                    padding: 16px;
-                    background: rgba(0,0,0,0.2);
-                    border-radius: 10px;
-                    margin-bottom: 12px;
+                    padding: 14px;
+                    background: rgba(0,0,0,0.18);
+                    border: 1px solid var(--border-subtle);
+                    border-radius: var(--radius-sm);
+                    margin-bottom: 10px;
                 }
                 .item-card:last-child { margin-bottom: 0; }
                 .item-image {
-                    width: 70px;
-                    height: 90px;
+                    width: 64px;
+                    height: 82px;
                     object-fit: cover;
                     border-radius: 8px;
-                    background: #334155;
+                    background: rgba(255,255,255,0.06);
                     flex-shrink: 0;
                 }
-                .item-details { flex: 1; }
-                .item-name { font-weight: 600; font-size: 15px; margin-bottom: 6px; color: #f8fafc; }
-                .item-meta { font-size: 13px; color: #94a3b8; display: flex; gap: 16px; flex-wrap: wrap; }
-                .item-meta span { display: flex; align-items: center; gap: 4px; }
-                .item-pricing { text-align: right; min-width: 100px; }
-                .item-price { font-size: 14px; color: #94a3b8; margin-bottom: 4px; }
-                .item-total { font-weight: 700; font-size: 16px; color: #f8fafc; }
+                .item-details { flex: 1; min-width: 0; }
+                .item-name { font-weight: 600; font-size: 15px; margin-bottom: 6px; color: var(--text-main); }
+                .item-meta { font-size: 13px; color: var(--text-secondary); display: flex; gap: 16px; flex-wrap: wrap; }
+                .item-meta span { display: flex; align-items: center; gap: 5px; }
+                .item-pricing { text-align: right; min-width: 96px; }
+                .item-price { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+                .item-total { font-weight: 700; font-size: 16px; color: var(--text-main); }
                 .status-badge {
                     display: inline-flex;
                     align-items: center;
@@ -384,80 +400,23 @@ export default function AdminOrderDetails() {
                     display: inline-flex;
                     align-items: center;
                     gap: 8px;
-                    color: #94a3b8;
+                    color: var(--text-secondary);
                     text-decoration: none;
                     font-size: 14px;
-                    margin-bottom: 20px;
+                    margin-bottom: 18px;
                     transition: color 0.2s;
                 }
-                .btn-back:hover { color: #5eead4; }
-                .btn-delete {
-                    background: rgba(239, 68, 68, 0.1);
-                    border: 1px solid rgba(239, 68, 68, 0.3);
-                    color: #ef4444;
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    font-size: 14px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .btn-delete:hover {
-                    background: rgba(239, 68, 68, 0.2);
-                    border-color: #ef4444;
-                }
-                .delete-modal {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: rgba(0,0,0,0.7);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 1000;
-                }
-                .delete-modal-content {
-                    background: #1e293b;
-                    border: 1px solid #334155;
-                    border-radius: 16px;
-                    padding: 32px;
-                    max-width: 400px;
-                    text-align: center;
-                }
-                .delete-modal h3 { margin: 0 0 12px 0; font-size: 20px; color: #f8fafc; }
-                .delete-modal p { margin: 0 0 24px 0; color: #94a3b8; font-size: 14px; line-height: 1.6; }
-                .delete-modal-actions { display: flex; gap: 12px; justify-content: center; }
-                .btn-cancel {
-                    background: transparent;
-                    border: 1px solid #334155;
-                    color: #e2e8f0;
-                    padding: 10px 24px;
-                    border-radius: 8px;
-                    font-size: 14px;
-                    cursor: pointer;
-                }
-                .btn-confirm-delete {
-                    background: #ef4444;
-                    border: none;
-                    color: white;
-                    padding: 10px 24px;
-                    border-radius: 8px;
-                    font-size: 14px;
-                    font-weight: 500;
-                    cursor: pointer;
-                }
+                .btn-back:hover { color: var(--accent-primary); }
                 .summary-row {
                     display: flex;
                     justify-content: space-between;
-                    padding: 10px 0;
+                    padding: 9px 0;
                     font-size: 14px;
                 }
                 .summary-row.total {
                     font-size: 18px;
                     font-weight: 700;
-                    border-top: 1px solid #334155;
+                    border-top: 1px solid var(--border-subtle);
                     padding-top: 16px;
                     margin-top: 8px;
                 }
@@ -515,9 +474,10 @@ export default function AdminOrderDetails() {
                     <h1
                         style={{
                             fontSize: "28px",
-                            fontWeight: "700",
+                            fontWeight: "600",
                             margin: "0 0 8px 0",
-                            color: "#f8fafc",
+                            color: "var(--text-main)",
+                            letterSpacing: "-0.01em",
                         }}
                     >
                         Замовлення #{order.orderNumber}
@@ -570,63 +530,67 @@ export default function AdminOrderDetails() {
                         </span>
                     </div>
                 </div>
-                <div style={{ marginBottom: "10px" }}>
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px",
+                        alignItems: "stretch",
+                        minWidth: "min(360px, 100%)",
+                    }}
+                >
                     <input
                         type="text"
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                         placeholder="ТТН Нової Пошти / примітка (увійде в лист клієнту при «Відправлено»)"
                         aria-label="ТТН або примітка до зміни статусу"
-                        style={{
-                            width: "100%",
-                            boxSizing: "border-box",
-                            padding: "10px 12px",
-                            background: "rgba(255,255,255,0.04)",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            borderRadius: "8px",
-                            color: "var(--text-main)",
-                            fontSize: "14px",
-                        }}
+                        className="admin-input"
                     />
-                </div>
-                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                    <select
-                        value={order.status}
-                        onChange={handleStatusChange}
-                        className="status-select"
-                    >
-                        {/* Only the current status + its legal next states — the
-                            action also enforces this (defence in depth). */}
-                        {allowedNext(order.status).map((s) => (
-                            <option key={s} value={s}>
-                                {ORDER_STATUS_LABELS[s]}
-                            </option>
-                        ))}
-                    </select>
-                    {order.status !== "cancelled" && (
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <select
+                            value={order.status}
+                            onChange={handleStatusChange}
+                            className="admin-select"
+                            aria-label="Змінити статус замовлення"
+                            style={{ flex: 1 }}
+                        >
+                            {/* Only the current status + its legal next states — the
+                                action also enforces this (defence in depth). */}
+                            {allowedNext(order.status).map((s) => (
+                                <option key={s} value={s}>
+                                    {ORDER_STATUS_LABELS[s]}
+                                </option>
+                            ))}
+                        </select>
+                        {order.status !== "cancelled" && (
+                            <button
+                                onClick={() => setShowCancelConfirm(true)}
+                                title="Скасувати замовлення та повернути товари на склад"
+                                className="admin-btn admin-btn--warning admin-btn--sm"
+                            >
+                                Скасувати
+                            </button>
+                        )}
                         <button
-                            onClick={() => setShowCancelConfirm(true)}
-                            title="Скасувати замовлення та повернути товари на склад"
-                            className="admin-btn admin-btn--warning"
+                            className="admin-btn admin-btn--danger admin-btn--sm"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            title="Видалити замовлення назавжди"
+                            aria-label="Видалити замовлення"
                         >
-                            Скасувати замовлення
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
                         </button>
-                    )}
-                    <button className="btn-delete" onClick={() => setShowDeleteConfirm(true)}>
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            style={{ marginRight: 6, verticalAlign: "middle" }}
-                        >
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                        Видалити
-                    </button>
+                    </div>
                 </div>
             </div>
 
@@ -635,24 +599,30 @@ export default function AdminOrderDetails() {
                 {/* Left Column - Items */}
                 <div>
                     <div className="order-detail-card">
-                        <h3
-                            style={{
-                                fontSize: "16px",
-                                fontWeight: "600",
-                                margin: "0 0 20px 0",
-                                color: "#f8fafc",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                            }}
-                        >
-                            <span>📦 Товари ({order.items.length})</span>
+                        <h3 className="ocard-title">
+                            <span
+                                className="ocard-title__ico"
+                                style={{ background: "rgba(94,234,212,0.14)", color: "#5eead4" }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                                </svg>
+                            </span>
+                            Товари ({order.items.length})
                             <Link
                                 to={`/admin/inventory?orderId=${order.id}`}
+                                className="ocard-title__spacer"
                                 style={{
                                     fontSize: "13px",
                                     fontWeight: 500,
-                                    color: "#5eead4",
+                                    color: "var(--accent-primary)",
                                     textDecoration: "none",
                                 }}
                             >
@@ -747,7 +717,7 @@ export default function AdminOrderDetails() {
                             </div>
                             <div className="summary-row total">
                                 <span>Разом до сплати</span>
-                                <span style={{ color: "#5eead4" }}>
+                                <span style={{ color: "var(--accent-primary)" }}>
                                     {Number(order.total).toLocaleString("uk-UA")} ₴
                                 </span>
                             </div>
@@ -759,15 +729,22 @@ export default function AdminOrderDetails() {
                 <div>
                     {/* Customer Card */}
                     <div className="order-detail-card">
-                        <h3
-                            style={{
-                                fontSize: "16px",
-                                fontWeight: "600",
-                                margin: "0 0 16px 0",
-                                color: "#f8fafc",
-                            }}
-                        >
-                            👤 Клієнт
+                        <h3 className="ocard-title">
+                            <span
+                                className="ocard-title__ico"
+                                style={{ background: "rgba(167,139,250,0.16)", color: "#a78bfa" }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+                            </span>
+                            Клієнт
                         </h3>
                         <div className="info-row">
                             <span className="info-label">Ім'я</span>
@@ -777,7 +754,7 @@ export default function AdminOrderDetails() {
                         </div>
                         <div className="info-row">
                             <span className="info-label">Email</span>
-                            <span className="info-value" style={{ color: "#5eead4" }}>
+                            <span className="info-value" style={{ color: "var(--accent-primary)" }}>
                                 {order.customer?.email}
                             </span>
                         </div>
@@ -789,15 +766,22 @@ export default function AdminOrderDetails() {
 
                     {/* Payment Card */}
                     <div className="order-detail-card">
-                        <h3
-                            style={{
-                                fontSize: "16px",
-                                fontWeight: "600",
-                                margin: "0 0 16px 0",
-                                color: "#f8fafc",
-                            }}
-                        >
-                            💳 Оплата
+                        <h3 className="ocard-title">
+                            <span
+                                className="ocard-title__ico"
+                                style={{ background: "rgba(96,165,250,0.16)", color: "#60a5fa" }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                                    <line x1="1" y1="10" x2="23" y2="10" />
+                                </svg>
+                            </span>
+                            Оплата
                         </h3>
                         <div className="info-row">
                             <span className="info-label">Спосіб оплати</span>
@@ -816,21 +800,14 @@ export default function AdminOrderDetails() {
                             </span>
                         </div>
                         <div style={{ marginTop: "16px" }}>
-                            <label
-                                style={{
-                                    display: "block",
-                                    fontSize: "13px",
-                                    color: "#94a3b8",
-                                    marginBottom: "8px",
-                                }}
-                            >
+                            <label className="admin-label" htmlFor="payment-status-select">
                                 Змінити статус оплати
                             </label>
                             <select
+                                id="payment-status-select"
                                 value={order.paymentStatus}
                                 onChange={handlePaymentChange}
-                                className="status-select"
-                                style={{ width: "100%" }}
+                                className="admin-select"
                             >
                                 {PAYMENT_STATUSES.map((s) => (
                                     <option key={s} value={s}>
@@ -843,15 +820,24 @@ export default function AdminOrderDetails() {
 
                     {/* Delivery Card */}
                     <div className="order-detail-card">
-                        <h3
-                            style={{
-                                fontSize: "16px",
-                                fontWeight: "600",
-                                margin: "0 0 16px 0",
-                                color: "#f8fafc",
-                            }}
-                        >
-                            🚚 Доставка
+                        <h3 className="ocard-title">
+                            <span
+                                className="ocard-title__ico"
+                                style={{ background: "rgba(45,212,191,0.14)", color: "#2dd4bf" }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
+                                    <rect x="1" y="3" width="15" height="13" />
+                                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                                    <circle cx="5.5" cy="18.5" r="2.5" />
+                                    <circle cx="18.5" cy="18.5" r="2.5" />
+                                </svg>
+                            </span>
+                            Доставка
                         </h3>
                         <div className="info-row">
                             <span className="info-label">Спосіб</span>
@@ -868,15 +854,22 @@ export default function AdminOrderDetails() {
             {/* Order audit trail */}
             {history.length > 0 && (
                 <div className="order-detail-card" style={{ marginTop: "20px" }}>
-                    <h3
-                        style={{
-                            fontSize: "16px",
-                            fontWeight: 600,
-                            margin: "0 0 16px",
-                            color: "#f8fafc",
-                        }}
-                    >
-                        🕓 Історія замовлення
+                    <h3 className="ocard-title">
+                        <span
+                            className="ocard-title__ico"
+                            style={{ background: "rgba(148,163,184,0.16)", color: "#94a3b8" }}
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </span>
+                        Історія замовлення
                     </h3>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                         {history.map((h, i) => (
@@ -887,17 +880,19 @@ export default function AdminOrderDetails() {
                                     justifyContent: "space-between",
                                     gap: "12px",
                                     fontSize: "13px",
-                                    color: "#94a3b8",
-                                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                                    color: "var(--text-secondary)",
+                                    borderBottom: "1px solid var(--border-subtle)",
                                     paddingBottom: "8px",
                                 }}
                             >
                                 <span>
-                                    <span style={{ color: "#e2e8f0" }}>
+                                    <span style={{ color: "var(--text-main)" }}>
                                         {h.field === "paymentStatus" ? "Оплата" : "Статус"}:
                                     </span>{" "}
                                     {h.fromValue ? `${h.fromValue} → ` : ""}
-                                    <strong style={{ color: "#5eead4" }}>{h.toValue}</strong>
+                                    <strong style={{ color: "var(--accent-primary)" }}>
+                                        {h.toValue}
+                                    </strong>
                                     {h.note ? ` · ${h.note}` : ""}
                                 </span>
                                 <span style={{ whiteSpace: "nowrap" }}>
@@ -909,29 +904,21 @@ export default function AdminOrderDetails() {
                 </div>
             )}
 
-            {/* Delete Confirmation Modal */}
-            {showDeleteConfirm && (
-                <div className="delete-modal" onClick={() => setShowDeleteConfirm(false)}>
-                    <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h3>Видалити замовлення?</h3>
-                        <p>
-                            Замовлення <strong>#{order.orderNumber}</strong> буде назавжди видалено.
-                            Цю дію неможливо скасувати.
-                        </p>
-                        <div className="delete-modal-actions">
-                            <button
-                                className="btn-cancel"
-                                onClick={() => setShowDeleteConfirm(false)}
-                            >
-                                Скасувати
-                            </button>
-                            <button className="btn-confirm-delete" onClick={handleDelete}>
-                                Видалити
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Delete Confirmation — same branded ConfirmDialog as Cancel (was a
+                bespoke, non-accessible inline modal). */}
+            <ConfirmDialog
+                open={showDeleteConfirm}
+                title="Видалити замовлення?"
+                body={`Замовлення #${order.orderNumber} буде назавжди видалено. Цю дію неможливо скасувати.`}
+                confirmLabel="Видалити"
+                cancelLabel="Скасувати"
+                tone="danger"
+                onConfirm={() => {
+                    setShowDeleteConfirm(false);
+                    handleDelete();
+                }}
+                onCancel={() => setShowDeleteConfirm(false)}
+            />
 
             <ConfirmDialog
                 open={showCancelConfirm}
