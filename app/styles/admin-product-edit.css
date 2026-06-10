@@ -55,14 +55,20 @@
 }
 
 .page-title {
-    /* Match the admin page-header h1 (Outfit 34/400) — was the storefront
-       display serif (--font-display), the only serif heading in the panel. */
+    /* Match .admin-page-header h1 exactly — the canonical admin heading is the
+       Cormorant display serif with a white->slate gradient fill (34/400). It's
+       what the dashboard and every list page use, so the product editor title
+       reads as part of the same panel. */
+    font-family: var(--font-display);
     font-size: 34px;
-    font-family: "Outfit", sans-serif;
     font-weight: 400;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.03em;
     margin: 0;
     line-height: 1.2;
+    background: linear-gradient(to right, #fff, #cbd5e1);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 .page-subtitle {
     color: var(--ad-text-muted);

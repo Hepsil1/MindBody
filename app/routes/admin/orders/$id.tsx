@@ -473,11 +473,17 @@ export default function AdminOrderDetails() {
                 <div>
                     <h1
                         style={{
-                            fontSize: "28px",
-                            fontWeight: "600",
+                            // Canonical admin heading (matches .admin-page-header h1
+                            // and the customer/product titles): Cormorant serif,
+                            // 34/400, white->slate gradient fill.
+                            fontSize: "34px",
+                            fontWeight: 400,
                             margin: "0 0 8px 0",
-                            color: "var(--text-main)",
-                            letterSpacing: "-0.01em",
+                            letterSpacing: "-0.03em",
+                            background: "linear-gradient(to right, #fff, #cbd5e1)",
+                            WebkitBackgroundClip: "text",
+                            backgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
                         }}
                     >
                         Замовлення #{order.orderNumber}
