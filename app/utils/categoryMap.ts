@@ -68,6 +68,21 @@ export const CATEGORY_BY_SHOP_PAGE: Record<string, string[]> = (() => {
 /** Set of every slug we accept anywhere (for fast O(1) validation in actions). */
 export const ALLOWED_CATEGORY_SLUGS: ReadonlySet<string> = new Set(Object.keys(CATEGORY_MAP));
 
+/**
+ * Ordered {slug, label} catalog categories for a filter-editor page.
+ * "global" returns every taxonomy slug (first-seen order); a shop slug returns
+ * that shop's subcategories. Used by FilterEditorModal so new filter categories
+ * are PICKED from the taxonomy (single source of truth) instead of free-typed —
+ * which is how drift like `sets`/`jackets` crept into the global config.
+ */
+export function knownCategorySlugsFor(page: string): Array<{ slug: string; label: string }> {
+    const slugs =
+        page === "global"
+            ? [...new Set(Object.values(TAXONOMY).flatMap((subs) => Object.keys(subs)))]
+            : (CATEGORY_BY_SHOP_PAGE[page] ?? []);
+    return slugs.map((slug) => ({ slug, label: slugToLabel(slug) }));
+}
+
 /** True if (shop, sub) is a real combination — see CATEGORY_BY_SHOP_PAGE. */
 export function isValidSubcategory(shop: string, sub: string): boolean {
     return CATEGORY_BY_SHOP_PAGE[shop]?.includes(sub) ?? false;

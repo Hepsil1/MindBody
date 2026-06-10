@@ -12,6 +12,8 @@ import {
     EditorToolbar,
     TOOLBAR_BUTTON_STYLE,
     TOOLBAR_BUTTON_PRIMARY_STYLE,
+    PREVIEW_DEVICE_WIDTH,
+    type PreviewDevice,
 } from "../../components/admin/editor/EditorToolbar";
 import { ContactsSettingsPanel } from "../../components/admin/editor/ContactsSettingsPanel";
 import { SiteSettingListPanel } from "../../components/admin/editor/SiteSettingListPanel";
@@ -456,6 +458,8 @@ export default function AdminVisualEditor() {
     const [activePanel, setActivePanel] = useState<ActivePanel>(null);
     // Which settings sub-section is shown in the "settings" view.
     const [settingsSection, setSettingsSection] = useState<EditorSettingsSection>("contacts");
+    // Preview device width (desktop/tablet/mobile) for the iframe.
+    const [device, setDevice] = useState<PreviewDevice>("desktop");
 
     // Editor state lives in the URL (refreshable / shareable). `tab` = which
     // section, `shop` = which shop page the Shop tab previews/edits.
@@ -983,6 +987,8 @@ export default function AdminVisualEditor() {
                         <EditorToolbar
                             siteUrl={openSiteHref}
                             onRefresh={() => setPreviewNonce((n) => n + 1)}
+                            device={device}
+                            onDeviceChange={setDevice}
                         >
                             {currentView === "home" && (
                                 <>
@@ -1070,19 +1076,46 @@ export default function AdminVisualEditor() {
                             )}
                         </EditorToolbar>
 
-                        <iframe
-                            ref={iframeRef}
-                            key={`${currentView}-${activeShop}-${previewNonce}`}
-                            src={previewSrc}
-                            onLoad={restorePreviewScroll}
-                            style={{ flex: 1, width: "100%", border: "none", background: "#fff" }}
-                            title="Перегляд сайту"
-                            // Same-origin storefront preview: allow its scripts +
-                            // same-origin (hydration + the postMessage bridge) but block
-                            // top-navigation, popups and forms so a storefront bug can't
-                            // drive the admin UI.
-                            sandbox="allow-scripts allow-same-origin"
-                        />
+                        {/* Centered, device-width-constrained preview frame.
+                            A neutral gutter around the narrowed iframe makes the
+                            tablet/mobile widths read as a device, not a crop. */}
+                        <div
+                            style={{
+                                flex: 1,
+                                minHeight: 0,
+                                display: "flex",
+                                justifyContent: "center",
+                                background: device === "desktop" ? "#fff" : "#1a1f26",
+                                padding: device === "desktop" ? 0 : "16px 0",
+                            }}
+                        >
+                            <iframe
+                                ref={iframeRef}
+                                key={`${currentView}-${activeShop}-${previewNonce}`}
+                                src={previewSrc}
+                                onLoad={restorePreviewScroll}
+                                style={{
+                                    width: "100%",
+                                    maxWidth: PREVIEW_DEVICE_WIDTH[device]
+                                        ? `${PREVIEW_DEVICE_WIDTH[device]}px`
+                                        : "100%",
+                                    height: "100%",
+                                    border: "none",
+                                    background: "#fff",
+                                    borderRadius: device === "desktop" ? 0 : "12px",
+                                    boxShadow:
+                                        device === "desktop"
+                                            ? "none"
+                                            : "0 12px 40px rgba(0,0,0,0.4)",
+                                }}
+                                title="Перегляд сайту"
+                                // Same-origin storefront preview: allow its scripts +
+                                // same-origin (hydration + the postMessage bridge) but block
+                                // top-navigation, popups and forms so a storefront bug can't
+                                // drive the admin UI.
+                                sandbox="allow-scripts allow-same-origin"
+                            />
+                        </div>
                     </>
                 )}
             </div>

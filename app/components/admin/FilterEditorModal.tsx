@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { FetcherWithComponents } from "react-router";
 import type { ShopPage, FilterConfig } from "@prisma/client";
 import { parseAndMergeFilterConfig } from "../../utils/filters";
+import { knownCategorySlugsFor, ALLOWED_CATEGORY_SLUGS } from "../../utils/categoryMap";
 import { useDirty } from "./useDirty";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { useModalA11y } from "./useModalA11y";
@@ -90,9 +91,13 @@ export function FilterEditorModal({
     const dialogRef = useRef<HTMLDivElement>(null);
     useModalA11y(dialogRef, requestClose, !showDiscard);
 
-    // Category Logic
+    // Category Logic. New categories are picked from the taxonomy catalog for
+    // the current page, minus the ones already in the config.
     const [newCatKey, setNewCatKey] = useState("");
     const [newCatLabel, setNewCatLabel] = useState("");
+    const availableCatalogCats = knownCategorySlugsFor(selectedPage).filter(
+        (c) => !(c.slug in data.categories),
+    );
     const addCategory = () => {
         if (!newCatKey || !newCatLabel) return;
         setData((prev) => ({
@@ -355,9 +360,30 @@ export function FilterEditorModal({
                                                 marginBottom: "8px",
                                                 textTransform: "uppercase",
                                                 fontWeight: 600,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "8px",
                                             }}
                                         >
                                             ID: {key}
+                                            {/* Surface drift: a key not in the taxonomy catalog
+                                                (e.g. legacy sets/jackets) is flagged so the
+                                                operator can prune it. */}
+                                            {!ALLOWED_CATEGORY_SLUGS.has(key) && (
+                                                <span
+                                                    style={{
+                                                        color: "#fbbf24",
+                                                        background: "rgba(251, 191, 36, 0.12)",
+                                                        border: "1px solid rgba(251, 191, 36, 0.3)",
+                                                        borderRadius: "6px",
+                                                        padding: "1px 6px",
+                                                        textTransform: "none",
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
+                                                    немає в каталозі
+                                                </span>
+                                            )}
                                         </div>
                                         <input
                                             type="text"
@@ -389,10 +415,21 @@ export function FilterEditorModal({
                                     gap: "12px",
                                 }}
                             >
-                                <input
-                                    placeholder="ID (напр. jumpsuits)"
+                                {/* New category is PICKED from the taxonomy catalog (single
+                                    source of truth) rather than free-typed — picking a slug
+                                    prefills its catalog label, which the operator can still
+                                    edit. Slugs already present are filtered out. */}
+                                <select
                                     value={newCatKey}
-                                    onChange={(e) => setNewCatKey(e.target.value)}
+                                    onChange={(e) => {
+                                        const slug = e.target.value;
+                                        setNewCatKey(slug);
+                                        const found = availableCatalogCats.find(
+                                            (c) => c.slug === slug,
+                                        );
+                                        if (found && !newCatLabel) setNewCatLabel(found.label);
+                                    }}
+                                    aria-label="Категорія з каталогу"
                                     style={{
                                         flex: 1,
                                         background: "#0f1216",
@@ -401,8 +438,16 @@ export function FilterEditorModal({
                                         borderRadius: "8px",
                                         padding: "10px 14px",
                                         fontSize: "13px",
+                                        cursor: "pointer",
                                     }}
-                                />
+                                >
+                                    <option value="">— оберіть категорію —</option>
+                                    {availableCatalogCats.map((c) => (
+                                        <option key={c.slug} value={c.slug}>
+                                            {c.label} ({c.slug})
+                                        </option>
+                                    ))}
+                                </select>
                                 <input
                                     placeholder="Назва (напр. Комбінезони)"
                                     value={newCatLabel}
