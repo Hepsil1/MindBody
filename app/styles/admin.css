@@ -836,6 +836,191 @@ body {
 }
 
 /* =====================================================
+   DASHBOARD REDESIGN (AU4)
+   Icon metric tiles + a revenue hero, replacing the flat 5-up stat grid.
+   ===================================================== */
+.dash-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+@media (max-width: 1100px) {
+    .dash-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+@media (max-width: 640px) {
+    .dash-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Revenue hero — the headline metric, spanning two rows on desktop. */
+.dash-hero {
+    grid-row: span 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 28px;
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 28%, transparent);
+    background:
+        radial-gradient(
+            120% 120% at 100% 0%,
+            color-mix(in srgb, var(--accent-primary) 16%, transparent),
+            transparent 55%
+        ),
+        var(--bg-card);
+    position: relative;
+    overflow: hidden;
+}
+.dash-hero__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+    color: var(--accent-primary);
+}
+.dash-hero__icon svg {
+    width: 24px;
+    height: 24px;
+}
+.dash-hero__label {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+.dash-hero__value {
+    font-size: 44px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(120deg, #fff, var(--accent-text));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.dash-hero__foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+.dash-hero__chip {
+    padding: 3px 10px;
+    border-radius: 100px;
+    background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+/* Metric tile — icon square + value + label. */
+.dash-tile {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px 22px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-card);
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease;
+    text-decoration: none;
+}
+a.dash-tile:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-highlight);
+    background: var(--bg-card-hover);
+}
+.dash-tile__icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.dash-tile__icon svg {
+    width: 20px;
+    height: 20px;
+}
+.dash-tile__value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text-main);
+    letter-spacing: -0.01em;
+}
+.dash-tile__label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* Attention strip — actionable counts; glow only when there's work to do. */
+.dash-attn {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+}
+@media (max-width: 700px) {
+    .dash-attn {
+        grid-template-columns: 1fr;
+    }
+}
+.dash-attn-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-card);
+    text-decoration: none;
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease;
+}
+.dash-attn-card:hover {
+    transform: translateY(-2px);
+}
+.dash-attn-card__icon {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.dash-attn-card__icon svg {
+    width: 19px;
+    height: 19px;
+}
+.dash-attn-card__label {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+.dash-attn-card__count {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+/* =====================================================
    UNIFIED BUTTON SYSTEM (AU3)
    Single source of truth for admin buttons — every page used to inline its
    own teal-bg/padding/radius blob, so no two buttons matched. Use .admin-btn
