@@ -15,6 +15,7 @@
 import { Resend } from "resend";
 import { env } from "./env.server";
 import { logger } from "./logger.server";
+import { prisma } from "../db.server";
 
 const apiKey = env.RESEND_API_KEY;
 const FROM_EMAIL = env.EMAIL_FROM ?? "hello@saleid.icu";
@@ -309,4 +310,107 @@ export function renderNewsletterWelcome(data: { email: string; unsubKey?: string
         bodyHtml,
         cta: { label: "Перейти в магазин", href: SITE_URL },
     });
+}
+
+// ---------------------------------------------------------------------------
+// Order status-change notifications ("де моя посилка"). The confirmation email
+// already promises a shipping update ("Як тільки відправимо — пришлемо ТТН"),
+// so this closes that loop. Only the three customer-relevant transitions are
+// emailed; the optional `note` carries the Nova Poshta ТТН (operator-entered).
+// ---------------------------------------------------------------------------
+
+const STATUS_EMAIL: Record<
+    string,
+    { subject: (n: number | string) => string; title: string; msg: string }
+> = {
+    shipped: {
+        subject: (n) => `Замовлення №${n} відправлено`,
+        title: "Замовлення в дорозі",
+        msg: "Ваше замовлення відправлено Новою Поштою. Очікуйте на SMS від перевізника про прибуття у відділення.",
+    },
+    delivered: {
+        subject: (n) => `Замовлення №${n} доставлено`,
+        title: "Замовлення доставлено",
+        msg: "Ваше замовлення доставлено. Дякуємо, що обрали MIND BODY 💚 Будемо вдячні за відгук про товар.",
+    },
+    cancelled: {
+        subject: (n) => `Замовлення №${n} скасовано`,
+        title: "Замовлення скасовано",
+        msg: "Ваше замовлення було скасовано. Якщо це сталося помилково — просто напишіть нам у відповідь на цей лист.",
+    },
+};
+
+export function renderOrderStatusEmail(data: {
+    orderNumber: number | string;
+    customerName: string;
+    status: string;
+    note?: string | null;
+}): string | null {
+    const cfg = STATUS_EMAIL[data.status];
+    if (!cfg) return null;
+    const ttn =
+        data.status === "shipped" && data.note && data.note.trim()
+            ? `<p style="font-size:14px; color:#555; margin:0 0 6px;">Номер для відстеження (ТТН):</p>
+               <p style="font-size:20px; font-weight:700; letter-spacing:1px; color:#1e4444; margin:0 0 24px;">${esc(
+                   data.note.trim(),
+               )}</p>`
+            : "";
+    const bodyHtml = `
+        <p style="font-size:16px; line-height:1.6; color:#1a1a1a; margin:0 0 16px;">
+            ${esc(data.customerName)}, вітаємо!
+        </p>
+        <p style="font-size:15px; line-height:1.7; color:#555; margin:0 0 16px;">
+            Замовлення <strong>№${esc(data.orderNumber)}</strong> — ${esc(cfg.msg)}
+        </p>
+        ${ttn}
+    `;
+    return shell({
+        preheader: cfg.subject(data.orderNumber),
+        eyebrow: `Замовлення №${data.orderNumber}`,
+        title: cfg.title,
+        bodyHtml,
+        cta: { label: "До магазину", href: SITE_URL },
+    });
+}
+
+/**
+ * Best-effort customer email on a status change. No-op for non-customer-facing
+ * statuses and for guest orders (placeholder @mindbody.local email). NEVER
+ * throws — the admin status change must succeed regardless of email outcome.
+ */
+export async function notifyOrderStatus(
+    orderId: string,
+    status: string,
+    note?: string | null,
+): Promise<void> {
+    if (!STATUS_EMAIL[status]) return;
+    try {
+        const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            select: {
+                orderNumber: true,
+                customer: { select: { email: true, firstName: true } },
+            },
+        });
+        const email = order?.customer?.email;
+        if (!order || !email || email.endsWith("@mindbody.local")) return;
+        const html = renderOrderStatusEmail({
+            orderNumber: order.orderNumber,
+            customerName: order.customer?.firstName || "Вітаємо",
+            status,
+            note,
+        });
+        if (!html) return;
+        await sendEmail({
+            to: email,
+            subject: STATUS_EMAIL[status].subject(order.orderNumber),
+            html,
+            tags: [
+                { name: "type", value: "order-status" },
+                { name: "status", value: status },
+            ],
+        });
+    } catch (e) {
+        logger.error({ err: e, orderId, status }, "[email] order-status notify failed");
+    }
 }

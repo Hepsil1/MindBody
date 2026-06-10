@@ -31,6 +31,7 @@ import {
     allowedNext,
 } from "../../../utils/statuses";
 import { cancelOrder, writeOrderHistory } from "../../../services/order.server";
+import { notifyOrderStatus } from "../../../utils/email.server";
 
 const ORDER_LIST: ListSpec = {
     sortable: { createdAt: "createdAt", total: "total", orderNumber: "orderNumber" },
@@ -60,8 +61,8 @@ export async function action({ request }: Route.ActionArgs) {
             // a blind updateMany: apply only where the transition is legal, write
             // history per order (and return stock via the shared cancel path),
             // then report what was skipped instead of silently "succeeding".
-            let applied = 0;
             let skipped = 0;
+            const appliedIds: string[] = [];
             for (const id of ids) {
                 const cur = await prisma.order.findUnique({
                     where: { id },
@@ -86,8 +87,11 @@ export async function action({ request }: Route.ActionArgs) {
                         );
                     });
                 }
-                applied++;
+                appliedIds.push(id);
             }
+            // Best-effort customer notifications (no per-order ТТН from a bulk op).
+            await Promise.allSettled(appliedIds.map((oid) => notifyOrderStatus(oid, status)));
+            const applied = appliedIds.length;
             const label = ORDER_STATUS_LABELS[status];
             if (applied === 0)
                 return actionError(
@@ -125,6 +129,7 @@ export async function action({ request }: Route.ActionArgs) {
             // Cancel goes through the shared path so stock is always returned.
             if (status === "cancelled") {
                 await cancelOrder(id, cur.status, "Скасовано зі списку замовлень");
+                await notifyOrderStatus(id, "cancelled");
                 return actionOk(undefined, {
                     type: "success",
                     message: "Скасовано, залишок повернено",
@@ -141,6 +146,7 @@ export async function action({ request }: Route.ActionArgs) {
                     "Зміна статусу зі списку",
                 );
             });
+            await notifyOrderStatus(id, status);
             return actionOk(undefined, {
                 type: "success",
                 message: `Статус: ${ORDER_STATUS_LABELS[status]}`,

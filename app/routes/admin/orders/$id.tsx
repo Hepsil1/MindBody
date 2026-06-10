@@ -4,6 +4,7 @@ import { prisma } from "../../../db.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
 import { restoreForCancelTx } from "../../../services/inventory.server";
 import { cancelOrder, writeOrderHistory } from "../../../services/order.server";
+import { notifyOrderStatus } from "../../../utils/email.server";
 import {
     ORDER_STATUS_LABELS,
     ORDER_STATUS_COLORS,
@@ -85,6 +86,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
             if (!isOrderStatus(status)) {
                 return { error: "Невідомий статус замовлення" };
             }
+            // Optional operator note — for "shipped" this is the Nova Poshta ТТН,
+            // which goes into the history AND the customer status email.
+            const note = ((formData.get("note") as string) || "").trim() || null;
             const cur = await prisma.order.findUnique({ where: { id }, select: { status: true } });
             if (!cur) return { error: "Замовлення не знайдено" };
             if (cur.status === status) return { success: true };
@@ -100,13 +104,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
             // Moving to "cancelled" restores stock (same path as the Cancel button)
             // so selecting it from the dropdown can't silently lose inventory.
             if (status === "cancelled") {
-                await cancelOrder(id, cur.status, "Скасовано (зміна статусу)");
+                await cancelOrder(id, cur.status, note || "Скасовано (зміна статусу)");
+                await notifyOrderStatus(id, "cancelled", note);
                 return { success: true };
             }
             await prisma.$transaction(async (tx) => {
                 await tx.order.update({ where: { id }, data: { status } });
-                await writeOrderHistory(tx, id, "status", cur.status, status, "Зміна статусу");
+                await writeOrderHistory(
+                    tx,
+                    id,
+                    "status",
+                    cur.status,
+                    status,
+                    note ? `Зміна статусу · ${note}` : "Зміна статусу",
+                );
             });
+            // Best-effort customer notification (shipped/delivered) — never blocks.
+            await notifyOrderStatus(id, status, note);
             return { success: true };
         }
 
@@ -140,6 +154,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
             if (!cur) return { error: "Замовлення не знайдено" };
             if (cur.status === "cancelled") return { success: true };
             await cancelOrder(id, cur.status, "Скасовано адміністратором");
+            await notifyOrderStatus(id, "cancelled");
             return { success: true };
         }
 
@@ -197,11 +212,15 @@ export default function AdminOrderDetails() {
     const submit = useSubmit();
     const navigate = useNavigate();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    // Optional ТТН / note sent with a status change → into the history + the
+    // customer email (shows as the tracking number on "Відправлено").
+    const [note, setNote] = useState("");
 
     const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const formData = new FormData();
         formData.append("intent", "update_status");
         formData.append("status", e.target.value);
+        if (note.trim()) formData.append("note", note.trim());
         submit(formData, { method: "post" });
     };
 
@@ -515,6 +534,25 @@ export default function AdminOrderDetails() {
                             {statusInfo.text}
                         </span>
                     </div>
+                </div>
+                <div style={{ marginBottom: "10px" }}>
+                    <input
+                        type="text"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder="ТТН Нової Пошти / примітка (увійде в лист клієнту при «Відправлено»)"
+                        aria-label="ТТН або примітка до зміни статусу"
+                        style={{
+                            width: "100%",
+                            boxSizing: "border-box",
+                            padding: "10px 12px",
+                            background: "rgba(255,255,255,0.04)",
+                            border: "1px solid rgba(255,255,255,0.1)",
+                            borderRadius: "8px",
+                            color: "var(--text-main)",
+                            fontSize: "14px",
+                        }}
+                    />
                 </div>
                 <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                     <select
