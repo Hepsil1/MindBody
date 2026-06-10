@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FetcherWithComponents } from "react-router";
 import type { Slide } from "@prisma/client";
 import { TrashIcon, ChevronDown, CloseIcon } from "../AdminIcons";
 import { ImageCropSelector } from "../ImageCropSelector";
+import { ConfirmDialog } from "../ConfirmDialog";
+import { FilePickerField } from "../FilePickerField";
+import { useModalA11y } from "../useModalA11y";
 
 interface SlideManagerPanelProps {
     slides: Slide[];
@@ -39,8 +42,27 @@ export function SlideManagerPanel({ slides, fetcher, onClose }: SlideManagerPane
         setExpandedSlideId((prev) => (prev === id ? null : id));
     };
 
+    // Delete confirmation (ConfirmDialog instead of window.confirm) + the
+    // shared dialog a11y: ESC closes, Tab is trapped, focus restored to the
+    // opener. The trap is suspended while ConfirmDialog owns focus.
+    const [confirmDelId, setConfirmDelId] = useState<string | null>(null);
+    const dialogRef = useRef<HTMLDivElement>(null);
+    useModalA11y(dialogRef, onClose, confirmDelId === null);
+    const doDelete = () => {
+        if (!confirmDelId) return;
+        const fd = new FormData();
+        fd.append("intent", "delete");
+        fd.append("id", confirmDelId);
+        fetcher.submit(fd, { method: "post" });
+        setConfirmDelId(null);
+    };
+
     return (
         <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Управління слайдами"
             style={{
                 position: "fixed",
                 top: "24px",
@@ -103,6 +125,28 @@ export function SlideManagerPanel({ slides, fetcher, onClose }: SlideManagerPane
                     >
                         Активні слайди ({slides.length})
                     </div>
+
+                    {/* The storefront HeroSlider silently substitutes built-in
+                        fallback slides when the DB has none — without this note
+                        the operator sees slides in the preview while the list
+                        says (0) and can't connect the two. */}
+                    {slides.length === 0 && (
+                        <div
+                            style={{
+                                marginBottom: "16px",
+                                padding: "12px 14px",
+                                background: "rgba(94, 234, 212, 0.07)",
+                                border: "1px solid rgba(94, 234, 212, 0.25)",
+                                borderRadius: "10px",
+                                color: "#9fe8d8",
+                                fontSize: "12.5px",
+                                lineHeight: 1.5,
+                            }}
+                        >
+                            Зараз показуються стандартні запасні слайди. Додайте власний слайд
+                            нижче, щоб замінити їх.
+                        </div>
+                    )}
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                         {slides.map((slide) => (
@@ -195,35 +239,25 @@ export function SlideManagerPanel({ slides, fetcher, onClose }: SlideManagerPane
                                             <ChevronDown />
                                         </button>
 
-                                        <fetcher.Form
-                                            method="post"
-                                            onSubmit={(e) => {
-                                                if (!confirm("Видалити слайд?")) {
-                                                    e.preventDefault();
-                                                }
+                                        <button
+                                            type="button"
+                                            onClick={() => setConfirmDelId(slide.id)}
+                                            aria-label="Видалити слайд"
+                                            style={{
+                                                width: 32,
+                                                height: 32,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                background: "rgba(255,80,80,0.1)",
+                                                border: "none",
+                                                borderRadius: 8,
+                                                color: "#ff6b6b",
+                                                cursor: "pointer",
                                             }}
                                         >
-                                            <input type="hidden" name="intent" value="delete" />
-                                            <input type="hidden" name="id" value={slide.id} />
-                                            <button
-                                                type="submit"
-                                                aria-label="Видалити слайд"
-                                                style={{
-                                                    width: 32,
-                                                    height: 32,
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    background: "rgba(255,80,80,0.1)",
-                                                    border: "none",
-                                                    borderRadius: 8,
-                                                    color: "#ff6b6b",
-                                                    cursor: "pointer",
-                                                }}
-                                            >
-                                                <TrashIcon />
-                                            </button>
-                                        </fetcher.Form>
+                                            <TrashIcon />
+                                        </button>
                                     </div>
                                 </div>
 
@@ -551,26 +585,14 @@ export function SlideManagerPanel({ slides, fetcher, onClose }: SlideManagerPane
                                 >
                                     Головне фото (обов'язково)
                                 </label>
-                                <div style={{ position: "relative" }}>
-                                    <input
-                                        type="file"
-                                        name="image1_file"
-                                        accept="image/*"
-                                        required
-                                        style={{
-                                            width: "100%",
-                                            fontSize: "12px",
-                                            color: "#94a3b8",
-                                        }}
-                                    />
-                                </div>
+                                <FilePickerField name="image1_file" label="Обрати фото" required />
                             </div>
 
                             {newSlideType === "triptych" && (
                                 <div
                                     style={{
-                                        display: "grid",
-                                        gridTemplateColumns: "1fr 1fr",
+                                        display: "flex",
+                                        flexDirection: "column",
                                         gap: "16px",
                                     }}
                                 >
@@ -585,16 +607,10 @@ export function SlideManagerPanel({ slides, fetcher, onClose }: SlideManagerPane
                                         >
                                             Фото 2 (центр)
                                         </label>
-                                        <input
-                                            type="file"
+                                        <FilePickerField
                                             name="image2_file"
-                                            accept="image/*"
+                                            label="Обрати фото"
                                             required
-                                            style={{
-                                                width: "100%",
-                                                fontSize: "12px",
-                                                color: "#94a3b8",
-                                            }}
                                         />
                                     </div>
                                     <div>
@@ -608,16 +624,10 @@ export function SlideManagerPanel({ slides, fetcher, onClose }: SlideManagerPane
                                         >
                                             Фото 3 (праворуч)
                                         </label>
-                                        <input
-                                            type="file"
+                                        <FilePickerField
                                             name="image3_file"
-                                            accept="image/*"
+                                            label="Обрати фото"
                                             required
-                                            style={{
-                                                width: "100%",
-                                                fontSize: "12px",
-                                                color: "#94a3b8",
-                                            }}
                                         />
                                     </div>
                                 </div>
@@ -644,6 +654,16 @@ export function SlideManagerPanel({ slides, fetcher, onClose }: SlideManagerPane
                     </fetcher.Form>
                 </div>
             </div>
+
+            <ConfirmDialog
+                open={confirmDelId !== null}
+                title="Видалити слайд?"
+                body="Слайд зникне з головної сторінки. Дію не можна скасувати."
+                confirmLabel="Видалити"
+                cancelLabel="Скасувати"
+                onConfirm={doDelete}
+                onCancel={() => setConfirmDelId(null)}
+            />
         </div>
     );
 }

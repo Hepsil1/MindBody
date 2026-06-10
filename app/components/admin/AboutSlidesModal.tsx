@@ -4,6 +4,7 @@ import type { Slide } from "@prisma/client";
 import { CloseIcon, TrashIcon } from "./AdminIcons";
 import { ImageCropSelector } from "./ImageCropSelector";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { FilePickerField } from "./FilePickerField";
 import { useModalA11y } from "./useModalA11y";
 
 interface AboutSlideForm {
@@ -425,10 +426,9 @@ export function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: AboutSlid
                                     >
                                         Фото 1 (ліве/головне)
                                     </div>
-                                    <input
-                                        type="file"
-                                        onChange={(e) => setFile1(e.target.files?.[0] || null)}
-                                        style={{ fontSize: "12px", color: "#fff" }}
+                                    <FilePickerField
+                                        label="Обрати фото"
+                                        onFileChange={(f) => setFile1(f)}
                                     />
                                     <input
                                         type="text"
@@ -466,12 +466,9 @@ export function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: AboutSlid
                                             >
                                                 Фото 2 (центр)
                                             </div>
-                                            <input
-                                                type="file"
-                                                onChange={(e) =>
-                                                    setFile2(e.target.files?.[0] || null)
-                                                }
-                                                style={{ fontSize: "12px", color: "#fff" }}
+                                            <FilePickerField
+                                                label="Обрати фото"
+                                                onFileChange={(f) => setFile2(f)}
                                             />
                                             <input
                                                 type="text"
@@ -506,12 +503,9 @@ export function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: AboutSlid
                                             >
                                                 Фото 3 (праве)
                                             </div>
-                                            <input
-                                                type="file"
-                                                onChange={(e) =>
-                                                    setFile3(e.target.files?.[0] || null)
-                                                }
-                                                style={{ fontSize: "12px", color: "#fff" }}
+                                            <FilePickerField
+                                                label="Обрати фото"
+                                                onFileChange={(f) => setFile3(f)}
                                             />
                                             <input
                                                 type="text"

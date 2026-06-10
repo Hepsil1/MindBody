@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { FetcherWithComponents } from "react-router";
 import type { Category } from "@prisma/client";
 import { ChevronDown, CloseIcon } from "../AdminIcons";
 import { ImageCropSelector } from "../ImageCropSelector";
+import { useModalA11y } from "../useModalA11y";
 
 /* moodType is a raw-SQL column (Windows query-engine DLL gotcha) — the local
    generated client may predate it, so widen the row type structurally. */
@@ -28,8 +29,16 @@ export function CategoryManagerPanel({ categories, fetcher, onClose }: CategoryM
         setPositions((prev) => ({ ...prev, [`${id}_${field}`]: value }));
     };
 
+    // ESC closes, Tab trapped, focus restored to the opener.
+    const dialogRef = useRef<HTMLDivElement>(null);
+    useModalA11y(dialogRef, onClose);
+
     return (
         <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Редагування категорій"
             style={{
                 position: "fixed",
                 top: "24px",
@@ -77,6 +86,23 @@ export function CategoryManagerPanel({ categories, fetcher, onClose }: CategoryM
                 className="custom-scrollbar"
                 style={{ flex: 1, overflowY: "auto", padding: "24px" }}
             >
+                {categories.length === 0 && (
+                    <div
+                        style={{
+                            padding: "12px 14px",
+                            background: "rgba(94, 234, 212, 0.07)",
+                            border: "1px solid rgba(94, 234, 212, 0.25)",
+                            borderRadius: "10px",
+                            color: "#9fe8d8",
+                            fontSize: "12.5px",
+                            lineHeight: 1.5,
+                            marginBottom: "16px",
+                        }}
+                    >
+                        Категорій у базі немає — на головній показуються стандартні картки. Додайте
+                        категорії в розділі «Категорії» адмін-панелі.
+                    </div>
+                )}
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     {categories.map((cat) => (
                         <div

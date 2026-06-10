@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { FetcherWithComponents } from "react-router";
 import type { ShopPage } from "@prisma/client";
 import { ImageCropSelector } from "../ImageCropSelector";
+import { useModalA11y } from "../useModalA11y";
 import { shopPageLabel } from "../../../utils/shop-pages";
 
 interface ShopBgEditorModalProps {
@@ -24,8 +25,15 @@ export function ShopBgEditorModal({ slug, shopPage, fetcher, onClose }: ShopBgEd
     const [shopBgPos, setShopBgPos] = useState(shopPage?.heroImagePos || "50% 50% 1");
     const [shopBgImage] = useState(shopPage?.heroImage || "");
 
+    // ESC closes, Tab trapped, focus restored — plus click-on-backdrop close
+    // (this modal's full-screen backdrop used to swallow every click while
+    // only its small ✕ could dismiss it).
+    const dialogRef = useRef<HTMLDivElement>(null);
+    useModalA11y(dialogRef, onClose);
+
     return (
         <div
+            onClick={onClose}
             style={{
                 position: "fixed",
                 inset: 0,
@@ -38,6 +46,11 @@ export function ShopBgEditorModal({ slug, shopPage, fetcher, onClose }: ShopBgEd
             }}
         >
             <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label={`Фон сторінки: ${shopPageLabel(slug).title}`}
+                onClick={(e) => e.stopPropagation()}
                 style={{
                     width: "90%",
                     maxWidth: "500px",
