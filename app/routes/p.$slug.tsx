@@ -124,8 +124,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
             rel: "preload",
             as: "image",
             href: product.images?.[0] || "/brand-sun.png",
-            imagesrcset: product.images?.[0] ? buildWebpSrcset(product.images[0]) : undefined,
-            imagesizes: "(max-width: 768px) 100vw, 50vw",
+            imageSrcSet: product.images?.[0] ? buildWebpSrcset(product.images[0]) : undefined,
+            imageSizes: "(max-width: 768px) 100vw, 50vw",
             fetchpriority: "high",
         },
     ];

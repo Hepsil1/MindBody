@@ -208,6 +208,30 @@ async function main() {
         await prisma.shopPage.delete({ where: { slug: "yoga" } });
     }
 
+    // --- SE2: live home preview + editor-mode invariants ---------------------
+    // The editor's home view must preview the REAL home page in an iframe.
+    const editorHtml = await (
+        await fetch(`${BASE}/admin/slides`, {
+            headers: { Cookie: cookie, "x-forwarded-for": nextIp() },
+        })
+    ).text();
+    ok(
+        "editor home view embeds the live home page (/?editor=1 iframe)",
+        editorHtml.includes("/?editor=1"),
+    );
+
+    // Edit affordances are editor-iframe-only (client-side): the SSR HTML of
+    // /?editor=1 must NOT contain them (real visitors / crawlers never see them).
+    const homeEditorRes = await fetch(`${BASE}/?editor=1`, {
+        headers: { "x-forwarded-for": nextIp() },
+    });
+    const homeEditorHtml = await homeEditorRes.text();
+    ok(
+        "GET /?editor=1 is 200 with no affordance markup in SSR HTML",
+        homeEditorRes.status === 200 && !homeEditorHtml.includes("data-editor-affordance"),
+        `status=${homeEditorRes.status}`,
+    );
+
     console.log(`\n=== RESULT: ${pass} passed, ${fail} failed ===\n`);
     await prisma.$disconnect();
     process.exit(fail === 0 ? 0 : 1);

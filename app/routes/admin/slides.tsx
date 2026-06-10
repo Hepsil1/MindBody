@@ -2,24 +2,20 @@ import type { Route } from "./+types/slides";
 import { prisma } from "../../db.server";
 import { useState, useRef, useEffect } from "react";
 import { useLoaderData, useFetcher, Link, useSearchParams } from "react-router";
-import HeroSlider, { type SlideData } from "../../components/HeroSlider";
-import CategoryCard from "../../components/CategoryCard";
 import { validateFilterConfig } from "../../utils/filters";
 import { FilterEditorModal } from "../../components/admin/FilterEditorModal";
 import { AboutSlidesModal } from "../../components/admin/AboutSlidesModal";
 import { SlideManagerPanel } from "../../components/admin/editor/SlideManagerPanel";
 import { CategoryManagerPanel } from "../../components/admin/editor/CategoryManagerPanel";
 import { ShopBgEditorModal } from "../../components/admin/editor/ShopBgEditorModal";
-import { ShopView } from "../../components/admin/editor/ShopView";
-import { AboutView } from "../../components/admin/editor/AboutView";
+import {
+    EditorToolbar,
+    TOOLBAR_BUTTON_STYLE,
+    TOOLBAR_BUTTON_PRIMARY_STYLE,
+} from "../../components/admin/editor/EditorToolbar";
 import { useActionToast } from "../../components/admin/useActionToast";
 import { SHOP_SLUGS } from "../../utils/taxonomy";
-import { shopPageTitle } from "../../utils/shop-pages";
-import homeStyles from "../../styles/home.css?url";
-
-export function links() {
-    return [{ rel: "stylesheet", href: homeStyles }];
-}
+import { SHOP_PAGE_OPTIONS, shopPageTitle } from "../../utils/shop-pages";
 
 export async function loader({ request }: Route.LoaderArgs) {
     // Defense-in-depth: the _layout loader already redirects unauthenticated
@@ -48,7 +44,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 import { uploadFileChecked } from "../../utils/upload.server";
 import { requireAdmin } from "../../utils/admin-guard.server";
-import { invalidateCache } from "../../utils/cache.server";
+import { invalidateCache, invalidatePrefix } from "../../utils/cache.server";
 import { actionOk, actionError } from "../../utils/action-result.server";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -62,9 +58,12 @@ export async function action({ request }: Route.ActionArgs) {
     // blanket invalidateAll() up front: the old call cleared every cached surface
     // (home + all shop pages) on every submit — even validation failures and
     // unknown intents — re-running 3+ Prisma queries for unrelated pages. The
-    // read keys are: home:slides, home:categories (home.tsx) and shop:{slug}
-    // (shop.$category.tsx → loadShopData, which holds both the shop's FilterConfig
-    // and its hero). /about is uncached, so about-slide edits invalidate nothing.
+    // read keys are: home:slides, home:categories (home.tsx) and the shop pages'
+    // TWO-LAYER namespace — shop:{slug} (route loader) wrapping
+    // shop:{slug}:{sub|all} (loadShopData) — hence invalidatePrefix, which
+    // clears the key AND its sub-keys so the preview reload can't serve stale
+    // inner-cache data. /about is uncached, so about-slide edits invalidate
+    // nothing.
     // Resolve an uploaded image field: keep `current` when no file was chosen,
     // use the new path on success, and ABORT the save (throw → caught below,
     // returns an ActionError) when a chosen file fails to process. Previously a
@@ -125,7 +124,7 @@ export async function action({ request }: Route.ActionArgs) {
                     subtitle: "колекція",
                 },
             });
-            invalidateCache(`shop:${slug}`);
+            invalidatePrefix(`shop:${slug}`);
             return saved();
         }
 
@@ -260,9 +259,9 @@ export async function action({ request }: Route.ActionArgs) {
             // config is the fallback for EVERY shop (loadShopData reads id IN
             // {slug, "global"}), so editing global must clear all shop caches.
             if (pageSlug === "global") {
-                for (const s of SHOP_SLUGS) invalidateCache(`shop:${s}`);
+                for (const s of SHOP_SLUGS) invalidatePrefix(`shop:${s}`);
             } else {
-                invalidateCache(`shop:${pageSlug}`);
+                invalidatePrefix(`shop:${pageSlug}`);
             }
             return saved();
         }
@@ -375,25 +374,34 @@ export async function action({ request }: Route.ActionArgs) {
     }
 }
 
-// The slide/category panels, the shop-bg modal and the shop/about iframe views
-// live in app/components/admin/editor/ (SE1 split). This route keeps the
-// loader/action, the sidebar shell and the legacy home replica (replaced by a
-// real /?editor=1 iframe in SE2).
+// One panel/modal can be open at a time — a discriminated union instead of
+// five independent booleans, which let panels stack and block each other
+// (the old shop-bg backdrop trapped clicks while a side panel was open).
+type ActivePanel =
+    | { kind: "slides" }
+    | { kind: "categories" }
+    | { kind: "filters" }
+    | { kind: "about" }
+    | { kind: "shopBg"; slug: string }
+    | null;
 
+/**
+ * Visual site editor. Every view previews the REAL storefront page in an
+ * iframe (`/?editor=1`, `/shop/{slug}?editor=1`, `/about`) under a persistent
+ * toolbar — the old hand-built home replica (stale sections, "[Product Grid
+ * Preview]" placeholder) is gone. Editable sections inside the preview render
+ * click-to-edit affordances (see app/components/EditorAffordance.tsx) that
+ * post bridge messages back here.
+ */
 export default function AdminVisualEditor() {
     const { slides, categories, shopPages, filterConfigs, aboutSlides } =
         useLoaderData<typeof loader>();
     const fetcher = useFetcher<typeof action>();
 
-    // UI State
-    const [managerOpen, setManagerOpen] = useState(false);
-    const [categoriesOpen, setCategoriesOpen] = useState(false);
-    const [filtersOpen, setFiltersOpen] = useState(false);
-    const [aboutSlidesOpen, setAboutSlidesOpen] = useState(false);
+    const [activePanel, setActivePanel] = useState<ActivePanel>(null);
 
     // Editor state lives in the URL (refreshable / shareable). `tab` = which
-    // section, `shop` = which shop page the Shop tab previews/edits. setCurrentView
-    // keeps the same signature the sidebar tabs already call.
+    // section, `shop` = which shop page the Shop tab previews/edits.
     const [searchParams, setSearchParams] = useSearchParams();
     const currentView = (searchParams.get("tab") as "home" | "shop" | "about") || "home";
     const activeShop = searchParams.get("shop") || SHOP_SLUGS[0];
@@ -420,71 +428,79 @@ export default function AdminVisualEditor() {
         );
     };
 
-    // --- Shop page background editor (opened from the toolbar or the in-iframe
-    // storefront button via postMessage) ---
-    const [editingShopPageSlug, setEditingShopPageSlug] = useState<string | null>(null);
     // Bumped after a successful save to force the preview iframe to reload.
     const [previewNonce, setPreviewNonce] = useState(0);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+    // Preview scroll position captured right before a reload, restored on load.
+    const savedScrollRef = useRef(0);
 
+    // Storefront → editor bridge: validated dispatch map. Trust requires the
+    // same origin AND our own preview iframe as the source (not another
+    // same-origin tab/window), then a per-type payload whitelist.
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
-            // Only trust messages from our own storefront (same origin) — closes
-            // the wildcard '*' gap.
             if (event.origin !== window.location.origin) return;
-            if (event.data?.type === "OPEN_SHOP_BG_EDITOR") {
-                // Never trust an arbitrary string from a postMessage, even
-                // same-origin — only open the editor for a real shop slug.
-                const slug = event.data.category;
+            if (!iframeRef.current || event.source !== iframeRef.current.contentWindow) return;
+            const msg = event.data as { type?: unknown; category?: unknown } | null;
+            if (!msg || typeof msg.type !== "string") return;
+            if (msg.type === "OPEN_SHOP_BG_EDITOR") {
+                const slug = msg.category;
                 if (typeof slug === "string" && SHOP_SLUGS.includes(slug)) {
-                    setEditingShopPageSlug(slug);
+                    setActivePanel({ kind: "shopBg", slug });
                 }
+            } else if (msg.type === "OPEN_HOME_SLIDES_EDITOR") {
+                setActivePanel({ kind: "slides" });
+            } else if (msg.type === "OPEN_HOME_CATEGORIES_EDITOR") {
+                setActivePanel({ kind: "categories" });
             }
         };
         window.addEventListener("message", handleMessage);
         return () => window.removeEventListener("message", handleMessage);
     }, []);
 
-    // Reload the preview iframe after any successful save so edits show at once.
+    // Reload the preview after any successful save — capturing its scroll
+    // position first so the operator doesn't lose their place (same-origin
+    // access is legal under the iframe's allow-same-origin sandbox).
     useEffect(() => {
         if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
+            try {
+                savedScrollRef.current = iframeRef.current?.contentWindow?.scrollY ?? 0;
+            } catch {
+                savedScrollRef.current = 0;
+            }
             setPreviewNonce((n) => n + 1);
         }
     }, [fetcher.data]);
 
+    const restorePreviewScroll = () => {
+        const w = iframeRef.current?.contentWindow;
+        const y = savedScrollRef.current;
+        if (!w || !y) return;
+        const apply = () => {
+            try {
+                w.scrollTo(0, y);
+            } catch {
+                /* preview navigated cross-origin — nothing to restore */
+            }
+        };
+        apply();
+        // Lazy images shift layout once shortly after load — re-apply.
+        window.setTimeout(apply, 300);
+    };
+
     // Action results carry their toast payload (actionOk/actionError).
     useActionToast(fetcher.data);
 
-    const closeShopEditor = () => setEditingShopPageSlug(null);
+    const previewSrc =
+        currentView === "shop"
+            ? `/shop/${activeShop}?editor=1`
+            : currentView === "about"
+              ? "/about"
+              : "/?editor=1";
+    const openSiteHref =
+        currentView === "shop" ? `/shop/${activeShop}` : currentView === "about" ? "/about" : "/";
 
-    // Scroll Logic for "Visual" background
-    const contentScrollRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const scrollContainer = contentScrollRef.current;
-        if (!scrollContainer) return;
-
-        const handleScroll = () => {
-            // Use plain querySelector inside the route container, or scoped ref if possible.
-            // But existing code uses querySelector globally on document.
-            // We'll keep it simple: selector finds the element inside the page.
-            const section = document.querySelector(".values-modern") as HTMLElement;
-            const bgElement = document.querySelector(
-                ".values-modern .values-premium__bg-image",
-            ) as HTMLElement;
-
-            if (section && bgElement) {
-                // Get rect relative to viewport. This works fine with internal scrolling.
-                const rect = section.getBoundingClientRect();
-                const sectionCenter = rect.top + rect.height / 2;
-                const viewportCenter = window.innerHeight / 2;
-                const offset = (sectionCenter - viewportCenter) * 0.4;
-                bgElement.style.transform = `translateY(${offset}px)`;
-            }
-        };
-
-        scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
-        return () => scrollContainer.removeEventListener("scroll", handleScroll);
-    }, []);
+    const closePanel = () => setActivePanel(null);
 
     return (
         <div
@@ -708,7 +724,7 @@ export default function AdminVisualEditor() {
                 </div>
             </div>
 
-            {/* Main Content Area - Identical Layout for both views */}
+            {/* Main area: persistent toolbar + the live storefront preview */}
             <div
                 style={{
                     position: "fixed",
@@ -718,389 +734,145 @@ export default function AdminVisualEditor() {
                     bottom: 0,
                     background: "#fff",
                     overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
                 }}
             >
-                {currentView === "shop" ? (
-                    <ShopView
-                        activeShop={activeShop}
-                        previewNonce={previewNonce}
-                        onSelectShop={setActiveShop}
-                        onEditBg={() => setEditingShopPageSlug(activeShop)}
-                        onEditFilters={() => setFiltersOpen(true)}
-                    />
-                ) : currentView === "about" ? (
-                    <AboutView
-                        previewNonce={previewNonce}
-                        onEditSlides={() => setAboutSlidesOpen(true)}
-                    />
-                ) : (
-                    <div
-                        ref={contentScrollRef}
-                        className="visual-editor-container"
-                        style={{
-                            background: "var(--color-bg-cream)",
-                            height: "100%",
-                            width: "100%",
-                            overflowY: "auto",
-                            position: "relative",
-                        }}
-                    >
-                        {/* --- VISUAL SITE BACKGROUND ---
-                            Legacy hand-built replica of the home page (hero +
-                            categories + stale sections). SE2 replaces this whole
-                            block with the real / page in an iframe. */}
-                        <div
-                            style={{
-                                position: "relative",
-                                opacity: managerOpen ? 0.4 : 1,
-                                transition: "opacity 0.3s",
-                                pointerEvents: managerOpen ? "none" : "auto",
-                            }}
-                        >
-                            {/* Prisma types Slide.type as plain string; SlideData narrows it
-                                to the "triptych" | "single" union the DB actually holds. */}
-                            <HeroSlider slides={slides as unknown as SlideData[]} />
-
-                            {/* Categories */}
-                            <section className="categories section" id="shop">
-                                <div className="container">
-                                    <div className="section__header">
-                                        <h2 className="section__title">Обирайте свій стиль</h2>
-                                        <p className="section__subtitle">
-                                            Колекції для активного способу життя
-                                        </p>
-                                    </div>
-                                    <div className="categories__grid">
-                                        {categories.map((cat) => (
-                                            <CategoryCard
-                                                key={cat.id}
-                                                title={cat.title}
-                                                subtitle={cat.subtitle ?? ""}
-                                                image={cat.image}
-                                                imagePos={cat.imagePos ?? undefined}
-                                                link={cat.link}
-                                                buttonText={cat.buttonText}
-                                                moodType={cat.moodType}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* New Collections Preview */}
-                            <section
-                                className="section section--alt new-arrivals"
-                                id="new-collections"
+                <EditorToolbar
+                    siteUrl={openSiteHref}
+                    onRefresh={() => setPreviewNonce((n) => n + 1)}
+                >
+                    {currentView === "home" && (
+                        <>
+                            <button
+                                type="button"
+                                style={TOOLBAR_BUTTON_PRIMARY_STYLE}
+                                onClick={() => setActivePanel({ kind: "slides" })}
                             >
-                                <div className="logo-pattern-bg"></div>
-                                <div className="container">
-                                    <div className="section__header section__header--center">
-                                        <span className="section__badge">Новинки 2025</span>
-                                        <h2 className="section__title">Нові надходження</h2>
-                                        <p className="section__subtitle">
-                                            Сезонні новинки колекції для всієї родини
-                                        </p>
-                                    </div>
-
-                                    <div
+                                Слайди
+                            </button>
+                            <button
+                                type="button"
+                                style={TOOLBAR_BUTTON_STYLE}
+                                onClick={() => setActivePanel({ kind: "categories" })}
+                            >
+                                Категорії
+                            </button>
+                        </>
+                    )}
+                    {currentView === "shop" && (
+                        <>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "4px",
+                                    background: "rgba(255,255,255,0.04)",
+                                    padding: "4px",
+                                    borderRadius: "20px",
+                                    border: "1px solid rgba(148, 163, 184, 0.2)",
+                                }}
+                            >
+                                {SHOP_PAGE_OPTIONS.map((o) => (
+                                    <button
+                                        key={o.slug}
+                                        type="button"
+                                        onClick={() => setActiveShop(o.slug)}
                                         style={{
-                                            padding: "40px",
-                                            textAlign: "center",
-                                            color: "var(--text-muted)",
-                                            border: "1px dashed rgba(255,255,255,0.1)",
-                                            borderRadius: "12px",
+                                            padding: "5px 12px",
+                                            borderRadius: "16px",
+                                            border: "none",
+                                            cursor: "pointer",
+                                            fontSize: "12px",
+                                            fontWeight: 700,
+                                            letterSpacing: "0.03em",
+                                            background:
+                                                o.slug === activeShop
+                                                    ? "var(--accent-primary)"
+                                                    : "transparent",
+                                            color: o.slug === activeShop ? "#000" : "#cbd5e1",
+                                            transition: "all 0.15s",
+                                            whiteSpace: "nowrap",
                                         }}
                                     >
-                                        [Product Grid Preview]
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Values Section */}
-                            <section className="section values-modern" id="values">
-                                <div
-                                    className="values-premium__bg-image"
-                                    data-parallax="true"
-                                ></div>
-                                <div className="values-premium__overlay"></div>
-                                <div className="logo-pattern-bg"></div>
-
-                                <div className="container">
-                                    <div className="values-modern__header">
-                                        <span
-                                            className="values-modern__signature"
-                                            style={{
-                                                fontFamily: "'Great Vibes', cursive",
-                                                fontSize: "3.2rem",
-                                                color: "#ffffff",
-                                                textShadow: "0 2px 15px rgba(0,0,0,0.25)",
-                                                fontWeight: 400,
-                                            }}
-                                        >
-                                            Motivate for active life
-                                        </span>
-                                        <h3 className="values-modern__title">
-                                            Що робить нас особливими
-                                        </h3>
-                                    </div>
-
-                                    <div className="values-modern__grid">
-                                        <div className="value-item">
-                                            <div className="value-item__icon">
-                                                <svg
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="1.5"
-                                                >
-                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                                </svg>
-                                            </div>
-                                            <div className="value-item__content">
-                                                <h4 className="value-item__title">
-                                                    Made with soul
-                                                </h4>
-                                                <p className="value-item__text">
-                                                    Українська дух у кожному шві
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="value-item">
-                                            <div className="value-item__icon">
-                                                <svg
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="1.5"
-                                                >
-                                                    <circle cx="12" cy="12" r="10" />
-                                                    <path d="M12 6v6l4 2" />
-                                                </svg>
-                                            </div>
-                                            <div className="value-item__content">
-                                                <h4 className="value-item__title">Breathable</h4>
-                                                <p className="value-item__text">
-                                                    Комфорт, що дихає разом з вами
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="value-item">
-                                            <div className="value-item__icon">
-                                                <svg
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="1.5"
-                                                >
-                                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                                </svg>
-                                            </div>
-                                            <div className="value-item__content">
-                                                <h4 className="value-item__title">Eco-friendly</h4>
-                                                <p className="value-item__text">
-                                                    Турбота про майбутнє планети
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* About Section */}
-                            <section className="about-modern section" id="about">
-                                <div className="logo-pattern-bg"></div>
-                                <div className="container">
-                                    <div className="about-modern__wrapper">
-                                        <div className="about-modern__grid">
-                                            <div className="about-modern__image-side">
-                                                <div className="about-modern__image-container">
-                                                    <img
-                                                        src="/generalpics/338_131123.jpg"
-                                                        alt="MIND BODY Lifestyle"
-                                                        className="about-modern__image"
-                                                    />
-                                                    <div className="about-modern__image-overlay"></div>
-                                                    <div className="about-modern__floating-badge">
-                                                        <span className="about-modern__badge-text">
-                                                            Est. 2024
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="about-modern__content-side">
-                                                <div className="about-modern__header">
-                                                    <span className="about-modern__tagline">
-                                                        Про бренд
-                                                    </span>
-                                                    <h2 className="about-modern__title">
-                                                        Подаруй собі <span>комфорт</span>
-                                                    </h2>
-                                                </div>
-                                                <div className="about-modern__text-block">
-                                                    <p className="about-modern__description">
-                                                        MIND BODY &mdash; це більше, ніж просто
-                                                        одяг. Це філософія гармонії між тілом та
-                                                        розумом.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
-
-                        {/* --- CONTROL BUTTON --- */}
-                        {!managerOpen && (
+                                        {o.title}
+                                    </button>
+                                ))}
+                            </div>
                             <button
-                                onClick={() => setManagerOpen(true)}
-                                style={{
-                                    position: "absolute",
-                                    top: "75vh",
-                                    left: "50%",
-                                    transform: "translate(-50%, -50%)",
-                                    zIndex: 100,
-                                    background: "var(--accent-primary)",
-                                    color: "#000",
-                                    border: "none",
-                                    padding: "16px 32px",
-                                    borderRadius: "40px",
-                                    fontWeight: "bold",
-                                    boxShadow: "0 8px 40px rgba(94, 234, 212, 0.5)",
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "12px",
-                                    fontSize: "16px",
-                                    transition: "all 0.3s ease",
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform =
-                                        "translate(-50%, -50%) scale(1.05)";
-                                    e.currentTarget.style.boxShadow =
-                                        "0 12px 50px rgba(94, 234, 212, 0.6)";
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform =
-                                        "translate(-50%, -50%) scale(1)";
-                                    e.currentTarget.style.boxShadow =
-                                        "0 8px 40px rgba(94, 234, 212, 0.5)";
-                                }}
+                                type="button"
+                                style={TOOLBAR_BUTTON_PRIMARY_STYLE}
+                                onClick={() => setActivePanel({ kind: "shopBg", slug: activeShop })}
                             >
-                                <svg
-                                    width="22"
-                                    height="22"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                >
-                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
-                                Керування слайдами
+                                Змінити фон
                             </button>
-                        )}
-
-                        {/* --- CATEGORIES CONTROL BUTTON --- */}
-                        {!categoriesOpen && (
                             <button
-                                onClick={() => setCategoriesOpen(true)}
-                                style={{
-                                    position: "absolute",
-                                    top: "1100px", // Positioning it above the categories section
-                                    left: "50%",
-                                    transform: "translateX(-50%)",
-                                    zIndex: 100,
-                                    background: "var(--accent-primary)",
-                                    color: "#000",
-                                    border: "none",
-                                    padding: "12px 24px",
-                                    borderRadius: "30px",
-                                    fontWeight: "bold",
-                                    boxShadow: "0 4px 20px rgba(94, 234, 212, 0.4)",
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "10px",
-                                    fontSize: "14px",
-                                    transition: "all 0.3s ease",
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform =
-                                        "translateX(-50%) scale(1.05)";
-                                    e.currentTarget.style.boxShadow =
-                                        "0 10px 30px rgba(94, 234, 212, 0.6)";
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = "translateX(-50%) scale(1)";
-                                    e.currentTarget.style.boxShadow =
-                                        "0 4px 20px rgba(94, 234, 212, 0.4)";
-                                }}
+                                type="button"
+                                style={TOOLBAR_BUTTON_STYLE}
+                                onClick={() => setActivePanel({ kind: "filters" })}
                             >
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                >
-                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
-                                Редагувати блоки категорій
+                                Фільтри
                             </button>
-                        )}
+                        </>
+                    )}
+                    {currentView === "about" && (
+                        <button
+                            type="button"
+                            style={TOOLBAR_BUTTON_PRIMARY_STYLE}
+                            onClick={() => setActivePanel({ kind: "about" })}
+                        >
+                            Редагувати слайди
+                        </button>
+                    )}
+                </EditorToolbar>
 
-                        {/* --- CATEGORY MANAGER PANEL --- */}
-                        {categoriesOpen && (
-                            <CategoryManagerPanel
-                                categories={categories}
-                                fetcher={fetcher}
-                                onClose={() => setCategoriesOpen(false)}
-                            />
-                        )}
-
-                        {/* --- SLIDE MANAGER PANEL --- */}
-                        {managerOpen && (
-                            <SlideManagerPanel
-                                slides={slides}
-                                fetcher={fetcher}
-                                onClose={() => setManagerOpen(false)}
-                            />
-                        )}
-                    </div>
-                )}
+                <iframe
+                    ref={iframeRef}
+                    key={`${currentView}-${activeShop}-${previewNonce}`}
+                    src={previewSrc}
+                    onLoad={restorePreviewScroll}
+                    style={{ flex: 1, width: "100%", border: "none", background: "#fff" }}
+                    title="Перегляд сайту"
+                    // Same-origin storefront preview: allow its scripts +
+                    // same-origin (hydration + the postMessage bridge) but block
+                    // top-navigation, popups and forms so a storefront bug can't
+                    // drive the admin UI.
+                    sandbox="allow-scripts allow-same-origin"
+                />
             </div>
 
-            {/* --- SHOP BACKGROUND EDITOR MODAL --- */}
-            {editingShopPageSlug && (
-                <ShopBgEditorModal
-                    key={editingShopPageSlug}
-                    slug={editingShopPageSlug}
-                    shopPage={(shopPages || []).find((p) => p.slug === editingShopPageSlug)}
+            {/* --- Panels / modals (exactly one open — activePanel union) --- */}
+            {activePanel?.kind === "slides" && (
+                <SlideManagerPanel slides={slides} fetcher={fetcher} onClose={closePanel} />
+            )}
+            {activePanel?.kind === "categories" && (
+                <CategoryManagerPanel
+                    categories={categories}
                     fetcher={fetcher}
-                    onClose={closeShopEditor}
+                    onClose={closePanel}
                 />
             )}
-
-            {/* --- FILTER CONFIG EDITOR MODAL --- */}
-            {filtersOpen && (
+            {activePanel?.kind === "shopBg" && (
+                <ShopBgEditorModal
+                    key={activePanel.slug}
+                    slug={activePanel.slug}
+                    shopPage={(shopPages || []).find((p) => p.slug === activePanel.slug)}
+                    fetcher={fetcher}
+                    onClose={closePanel}
+                />
+            )}
+            {activePanel?.kind === "filters" && (
                 <FilterEditorModal
-                    isOpen={filtersOpen}
-                    onClose={() => setFiltersOpen(false)}
+                    isOpen
+                    onClose={closePanel}
                     filterConfigs={filterConfigs}
                     shopPages={shopPages}
                     fetcher={fetcher}
                 />
             )}
-
-            {/* --- ABOUT SLIDES EDITOR MODAL --- */}
-            {aboutSlidesOpen && (
+            {activePanel?.kind === "about" && (
                 <AboutSlidesModal
-                    isOpen={aboutSlidesOpen}
-                    onClose={() => setAboutSlidesOpen(false)}
+                    isOpen
+                    onClose={closePanel}
                     slides={aboutSlides}
                     fetcher={fetcher}
                 />

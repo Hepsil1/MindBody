@@ -3,6 +3,7 @@ import { Link, useLoaderData } from "react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
+import { EditorAffordance } from "../components/EditorAffordance";
 import ProductCard from "../components/ProductCard";
 import BrandStories from "../components/BrandStories";
 import { prisma } from "../db.server";
@@ -110,9 +111,9 @@ export function meta({ data }: Route.MetaArgs) {
             rel: "preload",
             as: "image",
             href: "/generalpics/333_131123.webp",
-            imagesrcset:
+            imageSrcSet:
                 "/generalpics/333_131123-400w.webp 400w, /generalpics/333_131123-800w.webp 800w, /generalpics/333_131123-1200w.webp 1200w, /generalpics/333_131123-1600w.webp 1600w, /generalpics/333_131123.webp 2400w",
-            imagesizes: "(max-width: 768px) 100vw, 33vw",
+            imageSizes: "(max-width: 768px) 100vw, 33vw",
             fetchPriority: "high",
         },
         {
@@ -120,18 +121,18 @@ export function meta({ data }: Route.MetaArgs) {
             rel: "preload",
             as: "image",
             href: "/generalpics/374_131123.webp",
-            imagesrcset:
+            imageSrcSet:
                 "/generalpics/374_131123-400w.webp 400w, /generalpics/374_131123-800w.webp 800w, /generalpics/374_131123-1200w.webp 1200w, /generalpics/374_131123-1600w.webp 1600w, /generalpics/374_131123.webp 2400w",
-            imagesizes: "(max-width: 768px) 100vw, 33vw",
+            imageSizes: "(max-width: 768px) 100vw, 33vw",
         },
         {
             tagName: "link",
             rel: "preload",
             as: "image",
             href: "/generalpics/338_131123.webp",
-            imagesrcset:
+            imageSrcSet:
                 "/generalpics/338_131123-400w.webp 400w, /generalpics/338_131123-800w.webp 800w, /generalpics/338_131123-1200w.webp 1200w, /generalpics/338_131123-1600w.webp 1600w, /generalpics/338_131123.webp 2400w",
-            imagesizes: "(max-width: 768px) 100vw, 33vw",
+            imageSizes: "(max-width: 768px) 100vw, 33vw",
         },
         {
             "script:ld+json": {
@@ -663,7 +664,16 @@ export default function Home() {
             <h1 className="visually-hidden">
                 MIND BODY — преміум жіночий спортивний одяг для йоги, гімнастики та активного життя
             </h1>
-            <HeroSlider slides={slides} />
+            {/* Inside the visual editor's iframe this section grows a
+                click-to-edit affordance; for real visitors it renders the
+                slider unchanged (EditorAffordance is a no-op outside the
+                editor — see app/utils/editor-bridge.ts). */}
+            <EditorAffordance
+                label="Редагувати слайди"
+                message={{ type: "OPEN_HOME_SLIDES_EDITOR" }}
+            >
+                <HeroSlider slides={slides} />
+            </EditorAffordance>
             {/* Premium Features Bar */}
             <section className="premium-features-bar" aria-labelledby="features-heading">
                 <h2 id="features-heading" className="visually-hidden">
@@ -810,20 +820,25 @@ export default function Home() {
                             естетикою
                         </p>
                     </div>
-                    <div className="editorial-categories-grid">
-                        {categories.map((cat) => (
-                            <CategoryCard
-                                key={cat.id}
-                                title={cat.title}
-                                subtitle={cat.subtitle ?? ""}
-                                image={cat.image}
-                                imagePos={cat.imagePos}
-                                link={cat.link}
-                                buttonText={cat.buttonText}
-                                moodType={cat.moodType}
-                            />
-                        ))}
-                    </div>
+                    <EditorAffordance
+                        label="Редагувати категорії"
+                        message={{ type: "OPEN_HOME_CATEGORIES_EDITOR" }}
+                    >
+                        <div className="editorial-categories-grid">
+                            {categories.map((cat) => (
+                                <CategoryCard
+                                    key={cat.id}
+                                    title={cat.title}
+                                    subtitle={cat.subtitle ?? ""}
+                                    image={cat.image}
+                                    imagePos={cat.imagePos}
+                                    link={cat.link}
+                                    buttonText={cat.buttonText}
+                                    moodType={cat.moodType}
+                                />
+                            ))}
+                        </div>
+                    </EditorAffordance>
                 </div>
 
                 {/* Sub-section: New Arrivals */}

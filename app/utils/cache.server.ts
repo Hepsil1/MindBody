@@ -42,6 +42,20 @@ export function invalidateCache(key: string) {
 }
 
 /**
+ * Invalidate a key AND all its sub-keys (`prefix` itself plus `prefix:*`).
+ * Needed where two cache layers share a namespace: the shop page caches the
+ * whole loader result under `shop:{slug}` while loadShopData() caches its own
+ * slice under `shop:{slug}:{sub|all}` — deleting only the outer key let the
+ * inner one serve stale data for up to its TTL after an admin save. The `:`
+ * boundary keeps `shop:yoga` from also nuking `shop:yogatools`.
+ */
+export function invalidatePrefix(prefix: string) {
+    for (const key of cache.keys()) {
+        if (key === prefix || key.startsWith(`${prefix}:`)) cache.delete(key);
+    }
+}
+
+/**
  * Invalidate all cache entries.
  */
 export function invalidateAll() {

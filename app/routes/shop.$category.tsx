@@ -19,6 +19,7 @@ import {
 import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
 import { getLqipStyle } from "../utils/lqip";
 import { cachedFetch } from "../utils/cache.server";
+import { useEditorMode, postToEditor } from "../utils/editor-bridge";
 
 // Product card shape used by the render side (filtering, sorting). The
 // loader returns this through the shared loadShopData() helper — re-export
@@ -383,10 +384,8 @@ export default function ShopCategory() {
     // render) so SSR and the first client render agree (both false) — otherwise
     // the editor preview hydration-mismatches on the admin edit button below.
     // Real visitors are never in an iframe, so this stays false for them.
-    const [isIframe, setIsIframe] = useState(false);
-    useEffect(() => {
-        setIsIframe(window.parent !== window);
-    }, []);
+    // ?editor=1 + iframe check live in the shared bridge (editor-bridge.ts).
+    const editorMode = useEditorMode();
 
     const dynamicFilters = filterConfig;
 
@@ -642,7 +641,7 @@ export default function ShopCategory() {
                 )}
 
                 {/* Admin Edit Button - Centered */}
-                {isIframe && (
+                {editorMode && (
                     <div
                         style={{
                             position: "absolute",
@@ -657,15 +656,13 @@ export default function ShopCategory() {
                         }}
                     >
                         <button
+                            data-editor-affordance
                             onClick={(e) => {
                                 e.preventDefault();
-                                window.parent.postMessage(
-                                    {
-                                        type: "OPEN_SHOP_BG_EDITOR",
-                                        category: category, // real shop slug (yoga/sport/…)
-                                    },
-                                    window.location.origin,
-                                );
+                                postToEditor({
+                                    type: "OPEN_SHOP_BG_EDITOR",
+                                    category: category, // real shop slug (yoga/sport/…)
+                                });
                             }}
                             style={{
                                 display: "inline-flex",
