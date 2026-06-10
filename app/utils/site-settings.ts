@@ -81,11 +81,28 @@ export const homeBrandWorldSchema = z.object({
 });
 export type HomeBrandWorldSettings = z.infer<typeof homeBrandWorldSchema>;
 
+/**
+ * Mega-menu featured cards — one per top-level category (keyed by shop slug).
+ * `items` is a slug→card map; the Header falls back to its hardcoded NAV
+ * featured for any slug not present, so partial maps are fine.
+ */
+export const navFeaturedItemSchema = z.object({
+    image: z.string().trim().min(1).max(300),
+    badge: z.string().trim().max(20).optional(),
+    title: z.string().trim().min(1).max(60),
+});
+export type NavFeaturedItem = z.infer<typeof navFeaturedItemSchema>;
+export const navFeaturedSchema = z.object({
+    items: z.record(z.string(), navFeaturedItemSchema),
+});
+export type NavFeaturedSettings = z.infer<typeof navFeaturedSchema>;
+
 export interface SiteSettings {
     contacts: ContactsSettings;
     homeFeatures: HomeFeaturesSettings;
     homeStats: HomeStatsSettings;
     homeBrandWorld: HomeBrandWorldSettings;
+    navFeatured: NavFeaturedSettings;
 }
 
 /** Per-key Zod schema — the action validates value JSON against these. */
@@ -94,6 +111,7 @@ export const SITE_SETTING_SCHEMAS = {
     homeFeatures: homeFeaturesSchema,
     homeStats: homeStatsSchema,
     homeBrandWorld: homeBrandWorldSchema,
+    navFeatured: navFeaturedSchema,
 } as const;
 
 export type SiteSettingKey = keyof typeof SITE_SETTING_SCHEMAS;
@@ -150,6 +168,32 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
                 desc: "100% контроль, створено з любов'ю та увагою до кожної деталі.",
             },
         ],
+    },
+    navFeatured: {
+        items: {
+            yoga: { image: "/pics1cloths/IMG_6201.webp", badge: "YOGA", title: "Yoga Колекція" },
+            sport: {
+                image: "/generalpics/333_131123.webp",
+                badge: "SPORT",
+                title: "Sport Колекція",
+            },
+            dance: {
+                image: "/generalpics/374_131123.webp",
+                badge: "DANCE",
+                title: "Dance Колекція",
+            },
+            casual: {
+                image: "/generalpics/595_131123.webp",
+                badge: "CASUAL",
+                title: "Casual Колекція",
+            },
+            kids: { image: "/pics2cloths/IMG_5222.webp", title: "Дитяча Колекція" },
+            yogatools: {
+                image: "/generalpics/348_131123.webp",
+                badge: "YOGATOOLS",
+                title: "Yoga Інвентар",
+            },
+        },
     },
 };
 

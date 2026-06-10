@@ -15,6 +15,7 @@ import {
 } from "../../components/admin/editor/EditorToolbar";
 import { ContactsSettingsPanel } from "../../components/admin/editor/ContactsSettingsPanel";
 import { SiteSettingListPanel } from "../../components/admin/editor/SiteSettingListPanel";
+import { NavFeaturedPanel } from "../../components/admin/editor/NavFeaturedPanel";
 import { useActionToast } from "../../components/admin/useActionToast";
 import { SHOP_SLUGS } from "../../utils/taxonomy";
 import { SHOP_PAGE_OPTIONS, shopPageTitle } from "../../utils/shop-pages";
@@ -389,6 +390,32 @@ export async function action({ request }: Route.ActionArgs) {
                 return actionError("Порожнє значення налаштувань");
             }
             const result = await saveSiteSetting(key as SiteSettingKey, raw);
+            if (!result.ok) return actionError(result.error);
+            return saved();
+        }
+
+        // Mega-menu featured cards — multipart (per-slug optional image upload),
+        // so it can't use the JSON-only update_site_settings path. Builds the
+        // nav_featured map from `{slug}_image_file` (new) / `{slug}_currentImage`
+        // (kept) + badge + title, then persists through saveSiteSetting (which
+        // Zod-validates the shape).
+        if (intent === "update_nav_featured") {
+            const items: Record<string, { image: string; badge?: string; title: string }> = {};
+            for (const slug of SHOP_SLUGS) {
+                const title = (formData.get(`${slug}_title`) as string)?.trim() || "";
+                const badge = (formData.get(`${slug}_badge`) as string)?.trim() || "";
+                let image = (formData.get(`${slug}_currentImage`) as string) || "";
+                image = await resolveImage(
+                    formData.get(`${slug}_image_file`),
+                    image,
+                    `Фото «${slug}»`,
+                );
+                if (!image || !title) {
+                    return actionError(`Категорія «${slug}»: потрібні зображення та назва.`);
+                }
+                items[slug] = badge ? { image, badge, title } : { image, title };
+            }
+            const result = await saveSiteSetting("navFeatured", JSON.stringify({ items }));
             if (!result.ok) return actionError(result.error);
             return saved();
         }
@@ -848,6 +875,7 @@ export default function AdminVisualEditor() {
                                     { id: "features", label: "Переваги" },
                                     { id: "stats", label: "Статистика" },
                                     { id: "brandWorld", label: "Brand World" },
+                                    { id: "navFeatured", label: "Мега-меню" },
                                 ] as Array<{ id: EditorSettingsSection; label: string }>
                             ).map((s) => (
                                 <button
@@ -939,6 +967,12 @@ export default function AdminVisualEditor() {
                                         { name: "desc", label: "Опис", type: "textarea" },
                                     ]}
                                     itemLabel={(i) => `Блок ${i + 1}`}
+                                    fetcher={fetcher}
+                                />
+                            )}
+                            {settingsSection === "navFeatured" && (
+                                <NavFeaturedPanel
+                                    navFeatured={siteSettings.navFeatured}
                                     fetcher={fetcher}
                                 />
                             )}

@@ -386,6 +386,53 @@ async function main() {
 
     await prisma.$executeRaw`DELETE FROM "SiteSetting" WHERE "key" IN ('homeFeatures','homeStats','homeBrandWorld')`;
 
+    // --- SE5b: mega-menu featured cards (nav_featured) -----------------------
+    await prisma.$executeRaw`DELETE FROM "SiteSetting" WHERE "key" = 'navFeatured'`;
+    const SHOP_SLUGS = ["yoga", "sport", "dance", "casual", "kids", "yogatools"];
+    const DEFAULT_IMG = "/pics1cloths/IMG_6201.webp";
+    // Build a urlencoded nav_featured payload (no files → currentImage kept).
+    const navFields = (overrides = {}) => {
+        const f = { intent: "update_nav_featured" };
+        for (const s of SHOP_SLUGS) {
+            f[`${s}_currentImage`] = DEFAULT_IMG;
+            f[`${s}_title`] = overrides[`${s}_title`] ?? `${s} card`;
+            f[`${s}_badge`] = overrides[`${s}_badge`] ?? "";
+        }
+        return { ...f, ...overrides };
+    };
+
+    await post(cookie, navFields({ yoga_title: "E2E Yoga Жива Картка" }));
+    const navRow =
+        await prisma.$queryRaw`SELECT "value" FROM "SiteSetting" WHERE "key" = 'navFeatured'`;
+    ok(
+        "nav_featured save persists all 6 cards",
+        navRow.length === 1 &&
+            Object.keys(JSON.parse(navRow[0].value).items).length === 6 &&
+            JSON.parse(navRow[0].value).items.yoga.title === "E2E Yoga Жива Картка",
+    );
+
+    // The custom title renders in the home mega-panel SSR (all category panels
+    // are in the DOM for crawlers).
+    const homeWithNav = await (
+        await fetch(`${BASE}/`, { headers: { "x-forwarded-for": nextIp() } })
+    ).text();
+    ok(
+        "nav_featured custom title renders in the home mega-panel",
+        homeWithNav.includes("E2E Yoga Жива Картка"),
+    );
+
+    // A missing title for any category is rejected — row unchanged.
+    await post(cookie, navFields({ dance_title: "" }));
+    const navAfterBad =
+        await prisma.$queryRaw`SELECT "value" FROM "SiteSetting" WHERE "key" = 'navFeatured'`;
+    ok(
+        "nav_featured with an empty title is rejected (row unchanged)",
+        navAfterBad.length === 1 &&
+            JSON.parse(navAfterBad[0].value).items.yoga.title === "E2E Yoga Жива Картка",
+    );
+
+    await prisma.$executeRaw`DELETE FROM "SiteSetting" WHERE "key" = 'navFeatured'`;
+
     console.log(`\n=== RESULT: ${pass} passed, ${fail} failed ===\n`);
     await prisma.$disconnect();
     process.exit(fail === 0 ? 0 : 1);

@@ -22,12 +22,18 @@ import { useSearchParams } from "react-router";
 export const EDITOR_QUERY_PARAM = "editor";
 
 /** Settings sub-sections an in-iframe affordance can deep-link to. */
-export type EditorSettingsSection = "contacts" | "features" | "stats" | "brandWorld";
+export type EditorSettingsSection =
+    | "contacts"
+    | "features"
+    | "stats"
+    | "brandWorld"
+    | "navFeatured";
 export const EDITOR_SETTINGS_SECTIONS: EditorSettingsSection[] = [
     "contacts",
     "features",
     "stats",
     "brandWorld",
+    "navFeatured",
 ];
 
 export type EditorBridgeMessage =

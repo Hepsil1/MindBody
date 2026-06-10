@@ -72,8 +72,15 @@ const NAV: Array<{ shop: string; label: string; featured: MegaFeatured }> = [
 ];
 
 export function Header() {
-    // Owner-editable contacts (admin → Редактор сайту → Налаштування).
-    const { contacts } = useSiteSettings();
+    // Owner-editable contacts + mega-menu featured cards (admin → Редактор
+    // сайту → Налаштування). The featured image/badge/title of each category's
+    // mega-panel is overridden from settings when present; NAV stays the
+    // structural source (slugs, labels, fallback featured).
+    const { contacts, navFeatured } = useSiteSettings();
+    const navItems = NAV.map((item) => ({
+        ...item,
+        featured: navFeatured.items[item.shop] ?? item.featured,
+    }));
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     // Mobile-only: which category's subcategory accordion is expanded in the drawer.
     const [expandedShop, setExpandedShop] = useState<string | null>(null);
@@ -417,7 +424,7 @@ export function Header() {
                             {/* Data-driven from TAXONOMY (app/utils/taxonomy.ts):
                                 each section renders the full subcategory →
                                 fabric → sleeve depth via <MegaMenu>. */}
-                            {NAV.map((item) => (
+                            {navItems.map((item) => (
                                 <li
                                     key={item.shop}
                                     className={`header__nav-item header__nav-item--mega${
@@ -619,7 +626,7 @@ export function Header() {
                     can never overlap. Hidden on mobile (drawer accordion
                     handles the taxonomy there). */}
                 <MegaPanel
-                    items={NAV}
+                    items={navItems}
                     active={megaShop}
                     shown={megaShown}
                     morph={megaMorph}
