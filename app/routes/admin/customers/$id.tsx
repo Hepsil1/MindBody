@@ -246,20 +246,62 @@ export default function CustomerDetail() {
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="admin-stats">
-                <div className="admin-stat">
-                    <div className="admin-stat__label">Замовлень</div>
-                    <div className="admin-stat__value">{customer.orders.length}</div>
+            {/* Stats — icon tiles (shared dashboard style). */}
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: "16px",
+                    marginBottom: "24px",
+                }}
+            >
+                <div className="dash-tile" style={{ cursor: "default" }}>
+                    <div
+                        className="dash-tile__icon"
+                        style={{ background: "rgba(94,234,212,0.16)", color: "#5eead4" }}
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <path d="M3 6h18M16 10a4 4 0 0 1-8 0" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div className="dash-tile__value">{customer.orders.length}</div>
+                        <div className="dash-tile__label">Замовлень</div>
+                    </div>
                 </div>
-                <div className="admin-stat">
-                    <div className="admin-stat__label">Витрачено</div>
-                    <div className="admin-stat__value">₴{totalSpent.toLocaleString()}</div>
+                <div className="dash-tile" style={{ cursor: "default" }}>
+                    <div
+                        className="dash-tile__icon"
+                        style={{ background: "rgba(167,139,250,0.16)", color: "#a78bfa" }}
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="12" y1="1" x2="12" y2="23" />
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div className="dash-tile__value">
+                            {totalSpent.toLocaleString("uk-UA")} ₴
+                        </div>
+                        <div className="dash-tile__label">Витрачено</div>
+                    </div>
                 </div>
-                <div className="admin-stat">
-                    <div className="admin-stat__label">Зареєстровано</div>
-                    <div className="admin-stat__value" style={{ fontSize: "18px" }}>
-                        {new Date(customer.createdAt).toLocaleDateString("uk-UA")}
+                <div className="dash-tile" style={{ cursor: "default" }}>
+                    <div
+                        className="dash-tile__icon"
+                        style={{ background: "rgba(96,165,250,0.16)", color: "#60a5fa" }}
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" />
+                            <path d="M16 2v4M8 2v4M3 10h18" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div className="dash-tile__value" style={{ fontSize: "18px" }}>
+                            {new Date(customer.createdAt).toLocaleDateString("uk-UA")}
+                        </div>
+                        <div className="dash-tile__label">Зареєстровано</div>
                     </div>
                 </div>
             </div>
