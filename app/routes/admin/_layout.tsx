@@ -329,41 +329,18 @@ export default function AdminLayout() {
                 {/* Global search (Cmd+K) */}
                 <button
                     type="button"
-                    className="admin-nav__item"
-                    style={{ width: "100%", background: "none", cursor: "pointer" }}
+                    className="admin-search-btn"
                     onClick={() => {
                         setMenuOpen(false);
                         setPaletteOpen(true);
                     }}
                 >
-                    <span className="admin-nav__icon">
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            width="20"
-                            height="20"
-                        >
-                            <circle cx="11" cy="11" r="7" />
-                            <line x1="21" y1="21" x2="16.5" y2="16.5" />
-                        </svg>
-                    </span>
-                    <span className="admin-nav__label">
-                        Пошук{" "}
-                        <kbd
-                            style={{
-                                fontSize: "10px",
-                                color: "var(--text-muted)",
-                                border: "1px solid var(--border-highlight)",
-                                borderRadius: "4px",
-                                padding: "1px 5px",
-                                marginLeft: "6px",
-                            }}
-                        >
-                            Ctrl K
-                        </kbd>
-                    </span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <circle cx="11" cy="11" r="7" />
+                        <line x1="21" y1="21" x2="16.5" y2="16.5" />
+                    </svg>
+                    <span>Пошук по магазину</span>
+                    <kbd>Ctrl K</kbd>
                 </button>
 
                 {/* Navigation */}
@@ -385,22 +362,10 @@ export default function AdminLayout() {
                 </nav>
 
                 {/* Site Modes */}
-                <div style={{ padding: "0 12px 24px 12px", marginTop: "auto" }}>
-                    <div
-                        style={{
-                            fontSize: "11px",
-                            textTransform: "uppercase",
-                            letterSpacing: "1px",
-                            color: "var(--text-muted)",
-                            marginBottom: "12px",
-                            paddingLeft: "12px",
-                            fontWeight: "600",
-                        }}
-                    >
-                        Режими сайту
-                    </div>
+                <div style={{ marginTop: "auto", paddingTop: "12px" }}>
+                    <div className="admin-nav-section">Режими сайту</div>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                         {/* View Mode */}
                         <a
                             href="/"
