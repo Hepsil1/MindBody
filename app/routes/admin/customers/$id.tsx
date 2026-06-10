@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../../db.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
 import { useState, useEffect } from "react";
+import { actionOk, actionError as actionErr } from "../../../utils/action-result.server";
 
 interface LoaderArgs {
     params: { id: string };
@@ -32,7 +33,25 @@ export async function loader({ params }: LoaderArgs) {
         throw new Response("Customer not found", { status: 404 });
     }
 
-    return { customer };
+    // Normalize Prisma Decimal money fields to plain numbers — the single-fetch
+    // serializer turns Decimal instances into plain objects and Number(<object>)
+    // is NaN (same bug as the order page's "Разом до сплати: NaN ₴").
+    return {
+        customer: {
+            ...customer,
+            orders: customer.orders.map((order) => ({
+                ...order,
+                total: Number(order.total),
+                items: order.items.map((item) => ({
+                    ...item,
+                    price: Number(item.price),
+                    product: item.product
+                        ? { ...item.product, price: Number(item.product.price) }
+                        : item.product,
+                })),
+            })),
+        },
+    };
 }
 
 export async function action({ request, params }: ActionArgs) {
@@ -68,7 +87,7 @@ export async function action({ request, params }: ActionArgs) {
             return redirect("/admin/customers");
         } catch (error) {
             console.error("Delete error:", error);
-            return { error: "Помилка при видаленні клієнта" };
+            return actionErr("Помилка при видаленні клієнта");
         }
     }
 
@@ -83,9 +102,9 @@ export async function action({ request, params }: ActionArgs) {
 
         // Validate before writing — empty fields used to silently overwrite the
         // record with "".
-        if (!firstName) return { error: "Вкажіть ім'я клієнта" };
+        if (!firstName) return actionErr("Вкажіть ім'я клієнта");
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-            return { error: "Вкажіть коректний email" };
+            return actionErr("Вкажіть коректний email");
 
         const updateData: Prisma.CustomerUpdateInput = {
             firstName,
@@ -103,16 +122,16 @@ export async function action({ request, params }: ActionArgs) {
             // email is @unique — a duplicate throws P2002. Surface it instead of
             // a raw 500 that discards the operator's edits.
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-                return { error: "Email вже використовується іншим клієнтом" };
+                return actionErr("Email вже використовується іншим клієнтом");
             }
             console.error("Customer update error:", error);
-            return { error: "Не вдалося оновити дані клієнта" };
+            return actionErr("Не вдалося оновити дані клієнта");
         }
 
-        return { success: true, message: "Дані оновлено!" };
+        return actionOk(undefined, { type: "success", message: "Дані оновлено" });
     }
 
-    return null;
+    return actionErr("Невідома дія");
 }
 
 export default function CustomerDetail() {
@@ -129,8 +148,8 @@ export default function CustomerDetail() {
         if ("error" in actionData && actionData.error) {
             const msg = actionData.error;
             void import("sonner").then(({ toast }) => toast.error(msg));
-        } else if ("success" in actionData && actionData.success) {
-            const msg = "message" in actionData ? actionData.message : "Збережено";
+        } else if ("ok" in actionData && actionData.ok) {
+            const msg = actionData.toast?.message ?? "Збережено";
             void import("sonner").then(({ toast }) => toast.success(msg));
             setIsEditing(false);
         }

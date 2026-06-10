@@ -18,6 +18,8 @@ import {
 } from "../../../utils/statuses";
 import { useState } from "react";
 import { ConfirmDialog } from "../../../components/admin/ConfirmDialog";
+import { actionOk, actionError as actionErr } from "../../../utils/action-result.server";
+import { useActionToast } from "../../../components/admin/useActionToast";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
     // Defense-in-depth: this endpoint returns full customer PII, so guard it in
@@ -106,29 +108,32 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const status = formData.get("status") as string;
             // Whitelist against the single source of truth.
             if (!isOrderStatus(status)) {
-                return { error: "Невідомий статус замовлення" };
+                return actionErr("Невідомий статус замовлення");
             }
             // Optional operator note — for "shipped" this is the Nova Poshta ТТН,
             // which goes into the history AND the customer status email.
             const note = ((formData.get("note") as string) || "").trim() || null;
             const cur = await prisma.order.findUnique({ where: { id }, select: { status: true } });
-            if (!cur) return { error: "Замовлення не знайдено" };
-            if (cur.status === status) return { success: true };
+            if (!cur) return actionErr("Замовлення не знайдено");
+            if (cur.status === status) return actionOk();
             // Enforce the lifecycle: reject illegal jumps (e.g. delivered → pending).
             if (!canTransition(cur.status, status)) {
                 const from =
                     ORDER_STATUS_LABELS[cur.status as keyof typeof ORDER_STATUS_LABELS] ??
                     cur.status;
-                return {
-                    error: `Неможливий перехід статусу: ${from} → ${ORDER_STATUS_LABELS[status]}`,
-                };
+                return actionErr(
+                    `Неможливий перехід статусу: ${from} → ${ORDER_STATUS_LABELS[status]}`,
+                );
             }
             // Moving to "cancelled" restores stock (same path as the Cancel button)
             // so selecting it from the dropdown can't silently lose inventory.
             if (status === "cancelled") {
                 await cancelOrder(id, cur.status, note || "Скасовано (зміна статусу)");
                 await notifyOrderStatus(id, "cancelled", note);
-                return { success: true };
+                return actionOk(undefined, {
+                    type: "success",
+                    message: "Замовлення скасовано, залишки повернено на склад",
+                });
             }
             await prisma.$transaction(async (tx) => {
                 await tx.order.update({ where: { id }, data: { status } });
@@ -143,20 +148,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
             });
             // Best-effort customer notification (shipped/delivered) — never blocks.
             await notifyOrderStatus(id, status, note);
-            return { success: true };
+            return actionOk(undefined, { type: "success", message: "Статус оновлено" });
         }
 
         if (intent === "update_payment") {
             const paymentStatus = formData.get("paymentStatus") as string;
             if (!isPaymentStatus(paymentStatus)) {
-                return { error: "Невідомий статус оплати" };
+                return actionErr("Невідомий статус оплати");
             }
             const cur = await prisma.order.findUnique({
                 where: { id },
                 select: { paymentStatus: true },
             });
-            if (!cur) return { error: "Замовлення не знайдено" };
-            if (cur.paymentStatus === paymentStatus) return { success: true };
+            if (!cur) return actionErr("Замовлення не знайдено");
+            if (cur.paymentStatus === paymentStatus) return actionOk();
             await prisma.$transaction(async (tx) => {
                 await tx.order.update({ where: { id }, data: { paymentStatus } });
                 await writeOrderHistory(
@@ -168,16 +173,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
                     "Зміна статусу оплати",
                 );
             });
-            return { success: true };
+            return actionOk(undefined, { type: "success", message: "Статус оплати оновлено" });
         }
 
         if (intent === "cancel") {
             const cur = await prisma.order.findUnique({ where: { id }, select: { status: true } });
-            if (!cur) return { error: "Замовлення не знайдено" };
-            if (cur.status === "cancelled") return { success: true };
+            if (!cur) return actionErr("Замовлення не знайдено");
+            if (cur.status === "cancelled") return actionOk();
             await cancelOrder(id, cur.status, "Скасовано адміністратором");
             await notifyOrderStatus(id, "cancelled");
-            return { success: true };
+            return actionOk(undefined, {
+                type: "success",
+                message: "Замовлення скасовано, залишки повернено на склад",
+            });
         }
 
         if (intent === "delete") {
@@ -189,9 +197,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
             // Never hard-delete an order that represents money taken or goods
             // shipped — it must be cancelled (auditable) instead.
             if (ord.paymentStatus === "paid" || ord.status === "delivered") {
-                return {
-                    error: "Оплачене або доставлене замовлення не можна видалити. Спочатку скасуйте його.",
-                };
+                return actionErr(
+                    "Оплачене або доставлене замовлення не можна видалити. Спочатку скасуйте його.",
+                );
             }
             await prisma.$transaction(async (tx) => {
                 // Return stock unless it was already restored by a prior cancel.
@@ -219,17 +227,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
             return redirect("/admin/orders");
         }
 
-        return null;
+        return actionErr("Невідома дія");
     } catch (e) {
         console.error("Order action error:", e);
         const message = e instanceof Error ? e.message : "Сталася серверна помилка";
-        return { error: message };
+        return actionErr(message);
     }
 }
 
 export default function AdminOrderDetails() {
     const { order, emailStatus, history } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>();
+    // Toast on every action result (success + error); the inline banner below
+    // additionally keeps errors visible on this money-critical page.
+    useActionToast(actionData as Parameters<typeof useActionToast>[0]);
     const actionError = actionData && "error" in actionData ? (actionData.error as string) : null;
     const submit = useSubmit();
     const navigate = useNavigate();
