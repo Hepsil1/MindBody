@@ -38,7 +38,15 @@ export function LoadingScreen() {
     if (!shouldRender) return null;
 
     return (
-        <div className={`loading-screen ${!isVisible ? "loading-screen--hidden" : ""}`}>
+        // The inline backstop script in root.tsx hides this element by setting its
+        // style (opacity/visibility/pointer-events) directly on the DOM — which may
+        // run before React hydrates. suppressHydrationWarning tells React that this
+        // one element's attributes are intentionally mutated outside it, so the
+        // (expected) style mismatch isn't reported on every page load.
+        <div
+            className={`loading-screen ${!isVisible ? "loading-screen--hidden" : ""}`}
+            suppressHydrationWarning
+        >
             <div className="loading-screen__container">
                 <img
                     src="/brand-sun.webp"

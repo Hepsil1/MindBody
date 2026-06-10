@@ -379,8 +379,14 @@ export default function ShopCategory() {
         };
     }, [shopPage]);
 
-    // Check if we are inside an iframe (visual editor mode)
-    const isIframe = typeof window !== "undefined" && window.parent !== window;
+    // Are we inside the visual-editor iframe? Computed AFTER mount (not during
+    // render) so SSR and the first client render agree (both false) — otherwise
+    // the editor preview hydration-mismatches on the admin edit button below.
+    // Real visitors are never in an iframe, so this stays false for them.
+    const [isIframe, setIsIframe] = useState(false);
+    useEffect(() => {
+        setIsIframe(window.parent !== window);
+    }, []);
 
     const dynamicFilters = filterConfig;
 
