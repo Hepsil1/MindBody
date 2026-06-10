@@ -79,8 +79,8 @@ export function AboutSlidesModal({ isOpen, onClose, slides, fetcher }: AboutSlid
         if (fetcher.state !== "idle" || !afterSubmit.current) return;
         const which = afterSubmit.current;
         afterSubmit.current = null;
-        const res = fetcher.data as { success?: boolean } | undefined;
-        if (!res?.success) return; // keep the form on error so the operator can retry
+        const res = fetcher.data as { ok?: boolean } | undefined;
+        if (!res?.ok) return; // keep the form on error so the operator can retry
         if (which === "create") {
             setCreationData(defaultSlideData);
             setFile1(null);

@@ -58,8 +58,8 @@ export function FilterEditorModal({
     useEffect(() => {
         if (fetcher.state !== "idle" || !closeOnSuccess.current) return;
         closeOnSuccess.current = false;
-        const res = fetcher.data as { success?: boolean; error?: string } | undefined;
-        if (res?.success) onClose();
+        const res = fetcher.data as { ok?: boolean; error?: string } | undefined;
+        if (res?.ok) onClose();
         else setSubmitError(res?.error ?? "Не вдалося зберегти зміни.");
     }, [fetcher.state, fetcher.data, onClose]);
 
@@ -447,7 +447,7 @@ export function FilterEditorModal({
                                     paddingLeft: "12px",
                                 }}
                             >
-                                КОЛЬОР�?
+                                КОЛЬОРИ
                             </h4>
 
                             <div
@@ -609,7 +609,7 @@ export function FilterEditorModal({
                                         paddingLeft: "12px",
                                     }}
                                 >
-                                    ДІАПАЗОН�? ЦІН
+                                    ДІАПАЗОНИ ЦІН
                                 </h4>
                                 <button
                                     onClick={addPriceRange}
@@ -624,7 +624,7 @@ export function FilterEditorModal({
                                         cursor: "pointer",
                                     }}
                                 >
-                                    + ДОДАТ�?
+                                    + ДОДАТИ
                                 </button>
                             </div>
 
@@ -780,7 +780,7 @@ export function FilterEditorModal({
                                         paddingLeft: "12px",
                                     }}
                                 >
-                                    РОЗМІР�?
+                                    РОЗМІРИ
                                 </h4>
                             </div>
 
