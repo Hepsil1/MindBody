@@ -14,10 +14,12 @@ import {
     TOOLBAR_BUTTON_PRIMARY_STYLE,
 } from "../../components/admin/editor/EditorToolbar";
 import { ContactsSettingsPanel } from "../../components/admin/editor/ContactsSettingsPanel";
+import { SiteSettingListPanel } from "../../components/admin/editor/SiteSettingListPanel";
 import { useActionToast } from "../../components/admin/useActionToast";
 import { SHOP_SLUGS } from "../../utils/taxonomy";
 import { SHOP_PAGE_OPTIONS, shopPageTitle } from "../../utils/shop-pages";
 import { SITE_SETTING_KEYS, type SiteSettingKey } from "../../utils/site-settings";
+import { EDITOR_SETTINGS_SECTIONS, type EditorSettingsSection } from "../../utils/editor-bridge";
 
 export async function loader({ request }: Route.LoaderArgs) {
     // Defense-in-depth: the _layout loader already redirects unauthenticated
@@ -425,6 +427,8 @@ export default function AdminVisualEditor() {
     const fetcher = useFetcher<typeof action>();
 
     const [activePanel, setActivePanel] = useState<ActivePanel>(null);
+    // Which settings sub-section is shown in the "settings" view.
+    const [settingsSection, setSettingsSection] = useState<EditorSettingsSection>("contacts");
 
     // Editor state lives in the URL (refreshable / shareable). `tab` = which
     // section, `shop` = which shop page the Shop tab previews/edits.
@@ -479,6 +483,23 @@ export default function AdminVisualEditor() {
                 setActivePanel({ kind: "slides" });
             } else if (msg.type === "OPEN_HOME_CATEGORIES_EDITOR") {
                 setActivePanel({ kind: "categories" });
+            } else if (msg.type === "OPEN_SETTINGS_SECTION") {
+                const section = (msg as { section?: unknown }).section;
+                if (
+                    typeof section === "string" &&
+                    EDITOR_SETTINGS_SECTIONS.includes(section as EditorSettingsSection)
+                ) {
+                    setSettingsSection(section as EditorSettingsSection);
+                    // Stable setter (useSearchParams) — safe inside the mount-time listener.
+                    setSearchParams(
+                        (prev) => {
+                            const p = new URLSearchParams(prev);
+                            p.set("tab", "settings");
+                            return p;
+                        },
+                        { preventScrollReset: true },
+                    );
+                }
             }
         };
         window.addEventListener("message", handleMessage);
@@ -806,7 +827,123 @@ export default function AdminVisualEditor() {
                 }}
             >
                 {currentView === "settings" ? (
-                    <ContactsSettingsPanel contacts={siteSettings.contacts} fetcher={fetcher} />
+                    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                        {/* Settings sub-nav — switches the editable group. */}
+                        <div
+                            style={{
+                                height: "56px",
+                                flexShrink: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                padding: "0 16px",
+                                background: "#0f1216",
+                                borderBottom: "1px solid rgba(255,255,255,0.08)",
+                                overflowX: "auto",
+                            }}
+                        >
+                            {(
+                                [
+                                    { id: "contacts", label: "Контакти" },
+                                    { id: "features", label: "Переваги" },
+                                    { id: "stats", label: "Статистика" },
+                                    { id: "brandWorld", label: "Brand World" },
+                                ] as Array<{ id: EditorSettingsSection; label: string }>
+                            ).map((s) => (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => setSettingsSection(s.id)}
+                                    style={{
+                                        padding: "7px 16px",
+                                        borderRadius: "18px",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        fontSize: "12px",
+                                        fontWeight: 700,
+                                        letterSpacing: "0.03em",
+                                        whiteSpace: "nowrap",
+                                        background:
+                                            settingsSection === s.id
+                                                ? "var(--accent-primary)"
+                                                : "rgba(255,255,255,0.05)",
+                                        color: settingsSection === s.id ? "#000" : "#cbd5e1",
+                                        transition: "all 0.15s",
+                                    }}
+                                >
+                                    {s.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div style={{ flex: 1, minHeight: 0 }}>
+                            {settingsSection === "contacts" && (
+                                <ContactsSettingsPanel
+                                    contacts={siteSettings.contacts}
+                                    fetcher={fetcher}
+                                />
+                            )}
+                            {settingsSection === "features" && (
+                                <SiteSettingListPanel
+                                    title="Переваги бренду"
+                                    description="Блок з 4 перевагами під першим екраном. Іконки фіксовані — редагуються заголовки й описи."
+                                    settingKey="homeFeatures"
+                                    items={siteSettings.homeFeatures.items}
+                                    fields={[
+                                        {
+                                            name: "title",
+                                            label: "Заголовок",
+                                            placeholder: "Українське виробництво",
+                                        },
+                                        { name: "desc", label: "Опис", type: "textarea" },
+                                    ]}
+                                    itemLabel={(i) => `Перевага ${i + 1}`}
+                                    fetcher={fetcher}
+                                />
+                            )}
+                            {settingsSection === "stats" && (
+                                <SiteSettingListPanel
+                                    title="Статистика"
+                                    description="Лічильники-цифри з анімацією. «Число» — ціль анімації; від 10 000 показується як «63.9K». Суфікс додається в кінці."
+                                    settingKey="homeStats"
+                                    items={siteSettings.homeStats.items}
+                                    fields={[
+                                        {
+                                            name: "count",
+                                            label: "Число",
+                                            type: "number",
+                                            placeholder: "63900",
+                                        },
+                                        { name: "suffix", label: "Суфікс", placeholder: "+" },
+                                        {
+                                            name: "label",
+                                            label: "Підпис",
+                                            placeholder: "Підписників в Instagram",
+                                        },
+                                    ]}
+                                    itemLabel={(i) => `Показник ${i + 1}`}
+                                    fetcher={fetcher}
+                                />
+                            )}
+                            {settingsSection === "brandWorld" && (
+                                <SiteSettingListPanel
+                                    title="Brand World"
+                                    description="4 переваги у блоці з відео. Нумерація 01–04 і посилання «Каталог» фіксовані — редагуються заголовки й описи."
+                                    settingKey="homeBrandWorld"
+                                    items={siteSettings.homeBrandWorld.items}
+                                    fields={[
+                                        {
+                                            name: "title",
+                                            label: "Заголовок",
+                                            placeholder: "Дихаючі тканини",
+                                        },
+                                        { name: "desc", label: "Опис", type: "textarea" },
+                                    ]}
+                                    itemLabel={(i) => `Блок ${i + 1}`}
+                                    fetcher={fetcher}
+                                />
+                            )}
+                        </div>
+                    </div>
                 ) : (
                     <>
                         <EditorToolbar

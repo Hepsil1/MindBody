@@ -308,6 +308,84 @@ async function main() {
     );
     await prisma.$executeRaw`DELETE FROM "SiteSetting" WHERE "key" = 'contacts'`;
 
+    // --- SE5a: editable home text sections -----------------------------------
+    await prisma.$executeRaw`DELETE FROM "SiteSetting" WHERE "key" IN ('homeFeatures','homeStats','homeBrandWorld')`;
+
+    // home_features: 4 items, custom title renders on the storefront.
+    const FEATURES = {
+        items: [
+            { title: "E2E Перевага Альфа", desc: "опис 1" },
+            { title: "B", desc: "опис 2" },
+            { title: "C", desc: "опис 3" },
+            { title: "D", desc: "опис 4" },
+        ],
+    };
+    await post(cookie, {
+        intent: "update_site_settings",
+        key: "homeFeatures",
+        value: JSON.stringify(FEATURES),
+    });
+    const homeWithFeatures = await (
+        await fetch(`${BASE}/`, { headers: { "x-forwarded-for": nextIp() } })
+    ).text();
+    ok("home_features save renders custom title", homeWithFeatures.includes("E2E Перевага Альфа"));
+
+    // Wrong item count (3 instead of 4) must be rejected — row unchanged.
+    await post(cookie, {
+        intent: "update_site_settings",
+        key: "homeFeatures",
+        value: JSON.stringify({ items: FEATURES.items.slice(0, 3) }),
+    });
+    const featuresRow =
+        await prisma.$queryRaw`SELECT "value" FROM "SiteSetting" WHERE "key" = 'homeFeatures'`;
+    ok(
+        "home_features wrong item count is rejected (row unchanged)",
+        featuresRow.length === 1 && JSON.parse(featuresRow[0].value).items.length === 4,
+    );
+
+    // home_stats: numeric count, large value formats to K on the storefront.
+    await post(cookie, {
+        intent: "update_site_settings",
+        key: "homeStats",
+        value: JSON.stringify({
+            items: [
+                { count: 88800, suffix: "+", label: "E2E Підписників" },
+                { count: 12, suffix: "", label: "B" },
+                { count: 34, suffix: "+", label: "C" },
+                { count: 56, suffix: "+", label: "D" },
+            ],
+        }),
+    });
+    const homeWithStats = await (
+        await fetch(`${BASE}/`, { headers: { "x-forwarded-for": nextIp() } })
+    ).text();
+    ok(
+        "home_stats save renders formatted counter (88.8K) + label",
+        homeWithStats.includes("88.8K") && homeWithStats.includes("E2E Підписників"),
+    );
+
+    // home_stats with a non-numeric count must be rejected.
+    await post(cookie, {
+        intent: "update_site_settings",
+        key: "homeStats",
+        value: JSON.stringify({
+            items: [
+                { count: "lots", suffix: "+", label: "x" },
+                { count: 1, suffix: "", label: "y" },
+                { count: 2, suffix: "", label: "z" },
+                { count: 3, suffix: "", label: "w" },
+            ],
+        }),
+    });
+    const statsRow =
+        await prisma.$queryRaw`SELECT "value" FROM "SiteSetting" WHERE "key" = 'homeStats'`;
+    ok(
+        "home_stats non-numeric count is rejected (row unchanged)",
+        statsRow.length === 1 && JSON.parse(statsRow[0].value).items[0].count === 88800,
+    );
+
+    await prisma.$executeRaw`DELETE FROM "SiteSetting" WHERE "key" IN ('homeFeatures','homeStats','homeBrandWorld')`;
+
     console.log(`\n=== RESULT: ${pass} passed, ${fail} failed ===\n`);
     await prisma.$disconnect();
     process.exit(fail === 0 ? 0 : 1);

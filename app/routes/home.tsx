@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
 import { EditorAffordance } from "../components/EditorAffordance";
+import { useSiteSettings, formatStatDisplay, type SiteSettings } from "../utils/site-settings";
 import ProductCard from "../components/ProductCard";
 import BrandStories from "../components/BrandStories";
 import { prisma } from "../db.server";
@@ -409,8 +410,86 @@ const FALLBACK_INSTAGRAM_POSTS = [
     },
 ];
 
+// Premium-features-bar icons — fixed in code, matched to the editable
+// homeFeatures.items by index (the texts are owner-editable, the iconography
+// is a brand-design decision that stays a deploy).
+const FEATURE_ICONS = [
+    <svg
+        key="0"
+        width="24"
+        height="24"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth="1.2"
+    >
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+        />
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"
+        />
+    </svg>,
+    <svg
+        key="1"
+        width="24"
+        height="24"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth="1.2"
+    >
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+        />
+    </svg>,
+    <svg
+        key="2"
+        width="24"
+        height="24"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth="1.2"
+    >
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M10 16l-4-4m0 0l4-4m-4 4h14m-10 8a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"
+        />
+    </svg>,
+    <svg
+        key="3"
+        width="24"
+        height="24"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth="1.2"
+    >
+        <rect
+            x="3"
+            y="5"
+            width="18"
+            height="14"
+            rx="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        <line x1="3" y1="10" x2="21" y2="10" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>,
+];
+
 export default function Home() {
     const { slides, categories, newProducts, instagramData } = useLoaderData<typeof loader>();
+    // Owner-editable home content (admin → Редактор сайту → Налаштування).
+    const { homeFeatures, homeStats, homeBrandWorld }: SiteSettings = useSiteSettings();
     const postsToRender = instagramData?.posts?.length
         ? instagramData.posts
         : FALLBACK_INSTAGRAM_POSTS;
@@ -674,132 +753,33 @@ export default function Home() {
             >
                 <HeroSlider slides={slides} />
             </EditorAffordance>
-            {/* Premium Features Bar */}
-            <section className="premium-features-bar" aria-labelledby="features-heading">
-                <h2 id="features-heading" className="visually-hidden">
-                    Переваги бренду
-                </h2>
-                <div className="container" style={{ maxWidth: "1440px" }}>
-                    <div className="features-bar__grid">
-                        <div className="feature-item group">
-                            <div className="feature-item__icon-wrapper">
-                                <svg
-                                    width="24"
-                                    height="24"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
-                                    ></path>
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"
-                                    ></path>
-                                </svg>
-                            </div>
-                            <div className="feature-item__text">
-                                <h3 className="feature-item__title">Українське виробництво</h3>
-                                <p className="feature-item__desc">
-                                    100% контроль якості у своєму цеху
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="feature-item group">
-                            <div className="feature-item__icon-wrapper">
-                                <svg
-                                    width="24"
-                                    height="24"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-                                    ></path>
-                                </svg>
-                            </div>
-                            <div className="feature-item__text">
-                                <h3 className="feature-item__title">Premium Supplex</h3>
-                                <p className="feature-item__desc">
-                                    Технологічні тканини, що дихають
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="feature-item group">
-                            <div className="feature-item__icon-wrapper">
-                                <svg
-                                    width="24"
-                                    height="24"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M10 16l-4-4m0 0l4-4m-4 4h14m-10 8a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"
-                                    />
-                                </svg>
-                            </div>
-                            <div className="feature-item__text">
-                                <h3 className="feature-item__title">Повернення 14 днів</h3>
-                                <p className="feature-item__desc">
-                                    Обмін та повернення без проблем
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="feature-item group">
-                            <div className="feature-item__icon-wrapper">
-                                <svg
-                                    width="24"
-                                    height="24"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth="1.2"
-                                >
-                                    <rect
-                                        x="3"
-                                        y="5"
-                                        width="18"
-                                        height="14"
-                                        rx="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    ></rect>
-                                    <line
-                                        x1="3"
-                                        y1="10"
-                                        x2="21"
-                                        y2="10"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    ></line>
-                                </svg>
-                            </div>
-                            <div className="feature-item__text">
-                                <h3 className="feature-item__title">Швидка оплата</h3>
-                                <p className="feature-item__desc">
-                                    Безпечно карткою або при отриманні
-                                </p>
-                            </div>
+            {/* Premium Features Bar — texts owner-editable (home_features);
+                the 4 icons are fixed in code, matched to items by index. */}
+            <EditorAffordance
+                label="Редагувати переваги"
+                message={{ type: "OPEN_SETTINGS_SECTION", section: "features" }}
+            >
+                <section className="premium-features-bar" aria-labelledby="features-heading">
+                    <h2 id="features-heading" className="visually-hidden">
+                        Переваги бренду
+                    </h2>
+                    <div className="container" style={{ maxWidth: "1440px" }}>
+                        <div className="features-bar__grid">
+                            {homeFeatures.items.map((item, i) => (
+                                <div className="feature-item group" key={i}>
+                                    <div className="feature-item__icon-wrapper">
+                                        {FEATURE_ICONS[i]}
+                                    </div>
+                                    <div className="feature-item__text">
+                                        <h3 className="feature-item__title">{item.title}</h3>
+                                        <p className="feature-item__desc">{item.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            </EditorAffordance>
 
             {/* Unified Collections Group (Categories + New Arrivals) */}
             <section className="section section--alt shop-collections-group">
@@ -1135,84 +1115,52 @@ export default function Home() {
                                 shown on mobile (only one visible at a time, tied
                                 to activeFeature state).  Desktop ignores
                                 data-active and shows all four. */}
-                            <div className="bw-v3-features bw-macro-features" ref={bwFeaturesRef}>
+                            <EditorAffordance
+                                label="Редагувати Brand World"
+                                message={{
+                                    type: "OPEN_SETTINGS_SECTION",
+                                    section: "brandWorld",
+                                }}
+                            >
                                 <div
-                                    id="bw-feat-item--1"
-                                    className="bw-feat-item bw-feat-item--1"
-                                    data-active={activeFeature === 0 ? "true" : "false"}
-                                    role="tabpanel"
-                                    aria-hidden={activeFeature !== 0}
+                                    className="bw-v3-features bw-macro-features"
+                                    ref={bwFeaturesRef}
                                 >
-                                    <div className="bw-macro-number" data-text="01">
-                                        01
-                                    </div>
-                                    <div className="bw-macro-content">
-                                        <h3 className="bw-feat-title">Дихаючі тканини</h3>
-                                        <p className="bw-feat-desc">
-                                            Преміальні матеріали, що забезпечують ідеальну
-                                            терморегуляцію.
-                                        </p>
-                                    </div>
+                                    {homeBrandWorld.items.map((feat, i) => {
+                                        const num = String(i + 1).padStart(2, "0");
+                                        return (
+                                            <div
+                                                id={`bw-feat-item--${i + 1}`}
+                                                className={`bw-feat-item bw-feat-item--${i + 1}`}
+                                                key={i}
+                                                data-active={activeFeature === i ? "true" : "false"}
+                                                role="tabpanel"
+                                                aria-hidden={activeFeature !== i}
+                                            >
+                                                <div className="bw-macro-number" data-text={num}>
+                                                    {num}
+                                                </div>
+                                                <div className="bw-macro-content">
+                                                    <h3 className="bw-feat-title">{feat.title}</h3>
+                                                    <p className="bw-feat-desc">{feat.desc}</p>
+                                                    {/* The catalog CTA lives on the last card. */}
+                                                    {i === homeBrandWorld.items.length - 1 && (
+                                                        <Link
+                                                            to="/shop/yoga"
+                                                            className="bw-feat-link"
+                                                        >
+                                                            Каталог{" "}
+                                                            <span className="bw-feat-link-arr">
+                                                                →
+                                                            </span>
+                                                        </Link>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-
-                                <div
-                                    id="bw-feat-item--2"
-                                    className="bw-feat-item bw-feat-item--2"
-                                    data-active={activeFeature === 1 ? "true" : "false"}
-                                    role="tabpanel"
-                                    aria-hidden={activeFeature !== 1}
-                                >
-                                    <div className="bw-macro-number" data-text="02">
-                                        02
-                                    </div>
-                                    <div className="bw-macro-content">
-                                        <h3 className="bw-feat-title">Ексклюзивний дизайн</h3>
-                                        <p className="bw-feat-desc">
-                                            Естетика, що надихає навіть під час найважчих тренувань.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div
-                                    id="bw-feat-item--3"
-                                    className="bw-feat-item bw-feat-item--3"
-                                    data-active={activeFeature === 2 ? "true" : "false"}
-                                    role="tabpanel"
-                                    aria-hidden={activeFeature !== 2}
-                                >
-                                    <div className="bw-macro-number" data-text="03">
-                                        03
-                                    </div>
-                                    <div className="bw-macro-content">
-                                        <h3 className="bw-feat-title">Ідеальна посадка</h3>
-                                        <p className="bw-feat-desc">
-                                            Анатомічний крій, що бездоганно підкреслює вашу фігуру.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div
-                                    id="bw-feat-item--4"
-                                    className="bw-feat-item bw-feat-item--4"
-                                    data-active={activeFeature === 3 ? "true" : "false"}
-                                    role="tabpanel"
-                                    aria-hidden={activeFeature !== 3}
-                                >
-                                    <div className="bw-macro-number" data-text="04">
-                                        04
-                                    </div>
-                                    <div className="bw-macro-content">
-                                        <h3 className="bw-feat-title">Сертифікована якість</h3>
-                                        <p className="bw-feat-desc">
-                                            100% контроль, створено з любов'ю та увагою до кожної
-                                            деталі.
-                                        </p>
-                                        <Link to="/shop/yoga" className="bw-feat-link">
-                                            Каталог <span className="bw-feat-link-arr">→</span>
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
+                            </EditorAffordance>
 
                             {/* Mobile dot navigation — desktop hides via CSS @media.
                                 4 dots = 4 fixed feature cards. Active dot updates
@@ -1241,34 +1189,33 @@ export default function Home() {
                     </div>
                 </section>
 
-                {/* ANIMATED COUNTERS */}
-                <section className="stats-section">
-                    <div className="container">
-                        <div className="stats-grid">
-                            <div
-                                className="stat-item"
-                                data-count="63900"
-                                data-suffix="+"
-                                data-format="social"
-                            >
-                                <span className="stat-number">63.9K</span>
-                                <span className="stat-label">Підписників в Instagram</span>
-                            </div>
-                            <div className="stat-item" data-count="2168" data-suffix="+">
-                                <span className="stat-number">2168</span>
-                                <span className="stat-label">Публікацій у соцмережах</span>
-                            </div>
-                            <div className="stat-item" data-count="10" data-suffix="+">
-                                <span className="stat-number">10+</span>
-                                <span className="stat-label">Років на ринку</span>
-                            </div>
-                            <div className="stat-item" data-count="5000" data-suffix="+">
-                                <span className="stat-number">5000+</span>
-                                <span className="stat-label">Задоволених клієнтів</span>
+                {/* ANIMATED COUNTERS — owner-editable (home_stats). The visible
+                    stat-number is the SSR/no-JS value; animateCounter (above)
+                    reads data-count/data-suffix and animates on scroll. */}
+                <EditorAffordance
+                    label="Редагувати статистику"
+                    message={{ type: "OPEN_SETTINGS_SECTION", section: "stats" }}
+                >
+                    <section className="stats-section">
+                        <div className="container">
+                            <div className="stats-grid">
+                                {homeStats.items.map((stat, i) => (
+                                    <div
+                                        className="stat-item"
+                                        key={i}
+                                        data-count={stat.count}
+                                        data-suffix={stat.suffix}
+                                    >
+                                        <span className="stat-number">
+                                            {formatStatDisplay(stat.count, stat.suffix)}
+                                        </span>
+                                        <span className="stat-label">{stat.label}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                </EditorAffordance>
 
                 {/* Instagram Premium Section (Merged visually into the About section logic) */}
                 <div className="ig-hyper" id="instagram">

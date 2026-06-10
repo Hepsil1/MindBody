@@ -21,10 +21,20 @@ import { useSearchParams } from "react-router";
 
 export const EDITOR_QUERY_PARAM = "editor";
 
+/** Settings sub-sections an in-iframe affordance can deep-link to. */
+export type EditorSettingsSection = "contacts" | "features" | "stats" | "brandWorld";
+export const EDITOR_SETTINGS_SECTIONS: EditorSettingsSection[] = [
+    "contacts",
+    "features",
+    "stats",
+    "brandWorld",
+];
+
 export type EditorBridgeMessage =
     | { type: "OPEN_SHOP_BG_EDITOR"; category: string }
     | { type: "OPEN_HOME_SLIDES_EDITOR" }
-    | { type: "OPEN_HOME_CATEGORIES_EDITOR" };
+    | { type: "OPEN_HOME_CATEGORIES_EDITOR" }
+    | { type: "OPEN_SETTINGS_SECTION"; section: EditorSettingsSection };
 
 /** True only inside the visual editor's preview iframe (see module doc). */
 export function useEditorMode(): boolean {

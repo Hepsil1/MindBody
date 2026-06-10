@@ -38,13 +38,62 @@ export const contactsSettingsSchema = z.object({
 
 export type ContactsSettings = z.infer<typeof contactsSettingsSchema>;
 
+/**
+ * Home "premium features" bar — exactly 4 items (the icons are hardcoded in
+ * home.tsx and matched to items by index, so the count is fixed at 4).
+ */
+export const homeFeaturesSchema = z.object({
+    items: z
+        .array(
+            z.object({
+                title: z.string().trim().min(1).max(60),
+                desc: z.string().trim().min(1).max(120),
+            }),
+        )
+        .length(4),
+});
+export type HomeFeaturesSettings = z.infer<typeof homeFeaturesSchema>;
+
+/** Home animated-counter stats — 4 items (count + suffix + label). */
+export const homeStatsSchema = z.object({
+    items: z
+        .array(
+            z.object({
+                count: z.number().int().min(0).max(100_000_000),
+                suffix: z.string().trim().max(8),
+                label: z.string().trim().min(1).max(60),
+            }),
+        )
+        .length(4),
+});
+export type HomeStatsSettings = z.infer<typeof homeStatsSchema>;
+
+/** Brand World feature list — 4 items (title + desc), numbered 01–04 in code. */
+export const homeBrandWorldSchema = z.object({
+    items: z
+        .array(
+            z.object({
+                title: z.string().trim().min(1).max(60),
+                desc: z.string().trim().min(1).max(160),
+            }),
+        )
+        .length(4),
+});
+export type HomeBrandWorldSettings = z.infer<typeof homeBrandWorldSchema>;
+
 export interface SiteSettings {
     contacts: ContactsSettings;
+    homeFeatures: HomeFeaturesSettings;
+    homeStats: HomeStatsSettings;
+    homeBrandWorld: HomeBrandWorldSettings;
 }
 
 /** Per-key Zod schema — the action validates value JSON against these. */
 export const SITE_SETTING_SCHEMAS = {
     contacts: contactsSettingsSchema,
+    homeFeatures: homeFeaturesSchema,
+    homeStats: homeStatsSchema,
+    homeBrandWorld: homeBrandWorldSchema,
 } as const;
 
 export type SiteSettingKey = keyof typeof SITE_SETTING_SCHEMAS;
@@ -66,7 +115,54 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
         viberPhone: "380509656737",
         whatsappPhone: "380973542848",
     },
+    homeFeatures: {
+        items: [
+            { title: "Українське виробництво", desc: "100% контроль якості у своєму цеху" },
+            { title: "Premium Supplex", desc: "Технологічні тканини, що дихають" },
+            { title: "Повернення 14 днів", desc: "Обмін та повернення без проблем" },
+            { title: "Швидка оплата", desc: "Безпечно карткою або при отриманні" },
+        ],
+    },
+    homeStats: {
+        items: [
+            { count: 63900, suffix: "+", label: "Підписників в Instagram" },
+            { count: 2168, suffix: "+", label: "Публікацій у соцмережах" },
+            { count: 10, suffix: "+", label: "Років на ринку" },
+            { count: 5000, suffix: "+", label: "Задоволених клієнтів" },
+        ],
+    },
+    homeBrandWorld: {
+        items: [
+            {
+                title: "Дихаючі тканини",
+                desc: "Преміальні матеріали, що забезпечують ідеальну терморегуляцію.",
+            },
+            {
+                title: "Ексклюзивний дизайн",
+                desc: "Естетика, що надихає навіть під час найважчих тренувань.",
+            },
+            {
+                title: "Ідеальна посадка",
+                desc: "Анатомічний крій, що бездоганно підкреслює вашу фігуру.",
+            },
+            {
+                title: "Сертифікована якість",
+                desc: "100% контроль, створено з любов'ю та увагою до кожної деталі.",
+            },
+        ],
+    },
 };
+
+/**
+ * Final/fallback display text for a stat counter — mirrors the animation's
+ * last frame (home.tsx animateCounter): ≥10000 renders as "63.9K", smaller
+ * numbers use uk-UA grouping; the suffix is appended either way. The animated
+ * JS overwrites this on scroll, but it's the SSR/no-JS value.
+ */
+export function formatStatDisplay(count: number, suffix: string): string {
+    if (count >= 10000) return (count / 1000).toFixed(1) + "K" + suffix;
+    return count.toLocaleString("uk-UA") + suffix;
+}
 
 /** viber:// deep link from the stored digits. */
 export function viberChatUrl(viberPhone: string): string {
@@ -85,13 +181,17 @@ export function whatsappUrl(whatsappPhone: string): string {
  */
 export function mergeSiteSettings(rows: Array<{ key: string; value: string }>): SiteSettings {
     const merged: SiteSettings = structuredClone(DEFAULT_SITE_SETTINGS);
+    // Heterogeneous key→group map: index through `unknown` so the per-key
+    // assignment doesn't trip the union-intersection check (the schema for
+    // `key` guarantees `parsed.data` matches `merged[key]` at runtime).
+    const mutable = merged as unknown as Record<string, unknown>;
     for (const row of rows) {
         const schema = SITE_SETTING_SCHEMAS[row.key as SiteSettingKey];
         if (!schema) continue;
         try {
             const parsed = schema.safeParse(JSON.parse(row.value));
             if (parsed.success) {
-                merged[row.key as SiteSettingKey] = parsed.data;
+                mutable[row.key] = parsed.data;
             }
         } catch {
             // broken JSON in the row — keep defaults
