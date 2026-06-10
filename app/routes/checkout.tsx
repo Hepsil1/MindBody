@@ -20,6 +20,8 @@ export function meta() {
             name: "description",
             content: "Оформіть замовлення спортивного одягу MIND BODY. Швидка доставка по Україні.",
         },
+        // Transient, session-specific page — keep it out of the index.
+        { name: "robots", content: "noindex, nofollow" },
     ];
 }
 
@@ -936,64 +938,43 @@ export default function Checkout() {
                                 <div className="form-section">
                                     <h3>Спосіб оплати</h3>
                                     <div className="payment-options">
-                                        <label
-                                            className={`payment-option ${customerInfo.payment === "apple_pay" ? "active" : ""}`}
-                                        >
+                                        {/* COD is the only working method right now. Online
+                                            payment (card/Apple/Google Pay) had selectable radios
+                                            that did NOTHING — the order saved as paymentStatus
+                                            "pending" with no charge and no error, so customers
+                                            thought they'd paid. Until an acquirer is wired, offer
+                                            only Cash-on-Delivery + an honest "coming soon" note. */}
+                                        <label className="payment-option active">
                                             <input
                                                 type="radio"
                                                 name="payment"
-                                                value="apple_pay"
-                                                checked={customerInfo.payment === "apple_pay"}
-                                                onChange={() => handlePaymentChange("apple_pay")}
+                                                value="cash"
+                                                checked={customerInfo.payment === "cash"}
+                                                onChange={() => handlePaymentChange("cash")}
                                             />
                                             <div className="payment-option__content">
                                                 <svg
-                                                    className="payment-icon apple-pay"
+                                                    className="payment-icon cash"
                                                     viewBox="0 0 24 24"
-                                                    fill="currentColor"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="1.5"
                                                     width="28"
                                                     height="28"
                                                 >
-                                                    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                                                    <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                                                 </svg>
-                                                <span>Apple Pay</span>
+                                                <span>
+                                                    Накладений платіж (оплата при отриманні)
+                                                </span>
                                             </div>
                                         </label>
 
-                                        <label
-                                            className={`payment-option ${customerInfo.payment === "google_pay" ? "active" : ""}`}
+                                        <div
+                                            className="payment-option payment-option--soon"
+                                            aria-disabled="true"
+                                            style={{ opacity: 0.55, cursor: "not-allowed" }}
                                         >
-                                            <input
-                                                type="radio"
-                                                name="payment"
-                                                value="google_pay"
-                                                checked={customerInfo.payment === "google_pay"}
-                                                onChange={() => handlePaymentChange("google_pay")}
-                                            />
-                                            <div className="payment-option__content">
-                                                <svg
-                                                    className="payment-icon google-pay"
-                                                    viewBox="0 0 24 24"
-                                                    fill="currentColor"
-                                                    width="28"
-                                                    height="28"
-                                                >
-                                                    <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
-                                                </svg>
-                                                <span>Google Pay</span>
-                                            </div>
-                                        </label>
-
-                                        <label
-                                            className={`payment-option ${customerInfo.payment === "card" ? "active" : ""}`}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="payment"
-                                                value="card"
-                                                checked={customerInfo.payment === "card"}
-                                                onChange={() => handlePaymentChange("card")}
-                                            />
                                             <div className="payment-option__content">
                                                 <svg
                                                     className="payment-icon card"
@@ -1014,35 +995,9 @@ export default function Checkout() {
                                                     />
                                                     <line x1="1" y1="10" x2="23" y2="10" />
                                                 </svg>
-                                                <span>Картка Visa / Mastercard</span>
+                                                <span>Оплата карткою онлайн — скоро</span>
                                             </div>
-                                        </label>
-
-                                        <label
-                                            className={`payment-option ${customerInfo.payment === "cash" ? "active" : ""}`}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="payment"
-                                                value="cash"
-                                                checked={customerInfo.payment === "cash"}
-                                                onChange={() => handlePaymentChange("cash")}
-                                            />
-                                            <div className="payment-option__content">
-                                                <svg
-                                                    className="payment-icon cash"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="1.5"
-                                                    width="28"
-                                                    height="28"
-                                                >
-                                                    <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                                                </svg>
-                                                <span>Накладений платіж</span>
-                                            </div>
-                                        </label>
+                                        </div>
                                     </div>
                                 </div>
 

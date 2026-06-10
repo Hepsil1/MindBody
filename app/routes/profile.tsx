@@ -3,6 +3,14 @@ import { useState, useEffect } from "react";
 import { AuthUtils, type User, type Address, type UserSettings } from "../utils/auth";
 import { StorageUtils } from "../utils/storage";
 
+export function meta() {
+    return [
+        { title: "Особистий кабінет | MIND BODY" },
+        // User-specific account page — must never be indexed.
+        { name: "robots", content: "noindex, nofollow" },
+    ];
+}
+
 type DashboardTab = "overview" | "orders" | "addresses" | "settings";
 
 interface Order {

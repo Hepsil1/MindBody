@@ -176,14 +176,17 @@ export default function Delivery() {
                                     borderRadius: "16px",
                                 }}
                             >
-                                <h3 style={{ marginBottom: "15px" }}>Оплата онлайн</h3>
+                                <h3 style={{ marginBottom: "15px" }}>
+                                    Оплата карткою при отриманні
+                                </h3>
                                 <p
                                     style={{
                                         color: "var(--color-text-secondary)",
                                         marginBottom: "15px",
                                     }}
                                 >
-                                    Visa, Mastercard, Apple Pay, Google Pay
+                                    Visa, Mastercard, Apple Pay, Google Pay — на терміналі у
+                                    відділенні Нової Пошти
                                 </p>
                                 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                                     <span
