@@ -3,10 +3,9 @@ import { useState, useEffect, useRef } from "react";
 import { StorageUtils } from "../utils/storage";
 import { AuthUtils, type User } from "../utils/auth";
 import { useDebounce } from "../hooks/useDebounce";
-import { buildWebpSrcset } from "../utils/responsive-image";
 import { pluralizeUA } from "../utils/plural";
 import CartDrawer from "./CartDrawer";
-import MegaMenu, { type MegaFeatured } from "./MegaMenu";
+import MegaMenu, { MegaPanel, type MegaFeatured } from "./MegaMenu";
 
 interface SearchResult {
     id: string;
@@ -75,6 +74,17 @@ export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     // Mobile-only: which category's subcategory accordion is expanded in the drawer.
     const [expandedShop, setExpandedShop] = useState<string | null>(null);
+    // Desktop mega-panel: the hovered category (null = closed) + the last
+    // non-null one so the panel keeps its content while fading out.
+    const [megaShop, setMegaShop] = useState<string | null>(null);
+    const [megaShown, setMegaShown] = useState<string>(NAV[0].shop);
+    // Hover-intent timers: a short open delay kills accidental fly-by opens;
+    // a close delay lets the pointer cross the gap between pill and panel.
+    const megaTimers = useRef<{ open: number | null; close: number | null }>({
+        open: null,
+        close: null,
+    });
+    const megaTriggerRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
     const [cartCount, setCartCount] = useState(0);
     const [wishlistCount, setWishlistCount] = useState(0);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -129,6 +139,110 @@ export function Header() {
         };
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    // ---- Desktop mega-panel state machine -------------------------------
+    const clearMegaTimers = () => {
+        const t = megaTimers.current;
+        if (t.open !== null) window.clearTimeout(t.open);
+        if (t.close !== null) window.clearTimeout(t.close);
+        t.open = null;
+        t.close = null;
+    };
+
+    const openMega = (shop: string) => {
+        clearMegaTimers();
+        setMegaShown(shop);
+        setMegaShop(shop);
+    };
+
+    const closeMega = () => {
+        clearMegaTimers();
+        setMegaShop(null);
+    };
+
+    /** Pointer entered a nav item: open after a short intent delay (or
+     *  switch instantly when the panel is already showing). Mouse only —
+     *  on touch, tapping the category link just navigates. */
+    const handleMegaItemEnter = (shop: string) => (e: React.PointerEvent) => {
+        if (e.pointerType !== "mouse") return;
+        const t = megaTimers.current;
+        if (t.close !== null) {
+            window.clearTimeout(t.close);
+            t.close = null;
+        }
+        if (megaShop !== null) {
+            openMega(shop);
+        } else {
+            if (t.open !== null) window.clearTimeout(t.open);
+            t.open = window.setTimeout(() => openMega(shop), 70);
+        }
+    };
+
+    /** Pointer left a nav item or the panel: close after a grace period so
+     *  crossing the pill→panel gap (or item→item) never flickers. */
+    const handleMegaLeave = (e: React.PointerEvent) => {
+        if (e.pointerType !== "mouse") return;
+        const t = megaTimers.current;
+        if (t.open !== null) {
+            window.clearTimeout(t.open);
+            t.open = null;
+        }
+        if (t.close !== null) window.clearTimeout(t.close);
+        t.close = window.setTimeout(() => setMegaShop(null), 180);
+    };
+
+    const handleMegaPanelEnter = () => {
+        const t = megaTimers.current;
+        if (t.close !== null) {
+            window.clearTimeout(t.close);
+            t.close = null;
+        }
+    };
+
+    /** ArrowDown on a category link drops focus into its panel (keyboard
+     *  path — hover never fires for keyboard users). */
+    const handleMegaKeyDown = (shop: string) => (e: React.KeyboardEvent) => {
+        if (e.key !== "ArrowDown") return;
+        e.preventDefault();
+        openMega(shop);
+        requestAnimationFrame(() => {
+            document
+                .querySelector<HTMLAnchorElement>(
+                    "#header-mega-panel .mega-panel__page.is-active a",
+                )
+                ?.focus();
+        });
+    };
+
+    // While open: ESC closes (restoring focus to the trigger) and any scroll
+    // closes — a dimmed page under a hover panel shouldn't scroll "through" it.
+    useEffect(() => {
+        if (megaShop === null) return;
+        const shop = megaShop;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                closeMega();
+                megaTriggerRefs.current[shop]?.focus();
+            }
+        };
+        const onScroll = () => closeMega();
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("scroll", onScroll);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [megaShop]);
+
+    // Unmount safety: never leave hover-intent timers running.
+    useEffect(() => {
+        const t = megaTimers.current;
+        return () => {
+            if (t.open !== null) window.clearTimeout(t.open);
+            if (t.close !== null) window.clearTimeout(t.close);
+        };
     }, []);
 
     // Debounce the search input so each keystroke doesn't fire a request.
@@ -254,6 +368,12 @@ export function Header() {
             <header
                 className={`header ${isScrolled ? "is-scrolled" : ""} ${isMenuOpen ? "is-menu-open" : ""}`}
                 id="header"
+                onBlur={(e) => {
+                    // Focus left the header entirely (tab-out or click on the
+                    // page) → close the mega-panel. relatedTarget is null for
+                    // clicks on non-focusable page content, which also closes.
+                    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) closeMega();
+                }}
             >
                 <div className="header__container">
                     {/* Burger — its own grid cell (left) on mobile; hidden
@@ -294,14 +414,26 @@ export function Header() {
                                     key={item.shop}
                                     className={`header__nav-item header__nav-item--mega${
                                         expandedShop === item.shop ? " is-expanded" : ""
-                                    }`}
+                                    }${megaShop === item.shop ? " is-mega-active" : ""}`}
+                                    onPointerEnter={handleMegaItemEnter(item.shop)}
+                                    onPointerLeave={handleMegaLeave}
                                 >
                                     <div className="header__nav-head">
                                         <NavLink
                                             to={`/shop/${item.shop}`}
                                             prefetch="intent"
                                             className="header__nav-link"
-                                            onClick={() => setIsMenuOpen(false)}
+                                            ref={(el) => {
+                                                megaTriggerRefs.current[item.shop] = el;
+                                            }}
+                                            aria-haspopup="true"
+                                            aria-expanded={megaShop === item.shop}
+                                            aria-controls="header-mega-panel"
+                                            onKeyDown={handleMegaKeyDown(item.shop)}
+                                            onClick={() => {
+                                                setIsMenuOpen(false);
+                                                closeMega();
+                                            }}
                                         >
                                             {item.label}
                                         </NavLink>
@@ -473,6 +605,23 @@ export function Header() {
                         </button>
                     </div>
                 </div>
+
+                {/* Desktop mega-menu: ONE shared panel under the header for
+                    all categories — hover swaps its content, so two panels
+                    can never overlap. Hidden on mobile (drawer accordion
+                    handles the taxonomy there). */}
+                <MegaPanel
+                    items={NAV}
+                    active={megaShop}
+                    shown={megaShown}
+                    id="header-mega-panel"
+                    onNavigate={() => {
+                        setIsMenuOpen(false);
+                        closeMega();
+                    }}
+                    onPanelEnter={handleMegaPanelEnter}
+                    onPanelLeave={handleMegaLeave}
+                />
             </header>
 
             {/* Search Overlay */}
