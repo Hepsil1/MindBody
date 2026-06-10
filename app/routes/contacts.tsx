@@ -1,9 +1,12 @@
 import { Link } from "react-router";
 import { useState } from "react";
 import { buildWebpSrcset } from "../utils/responsive-image";
+import { useSiteSettings } from "../utils/site-settings";
 import "../styles/contacts.css";
 
 export default function Contacts() {
+    // Owner-editable contacts (admin → Редактор сайту → Налаштування).
+    const { contacts } = useSiteSettings();
     const [form, setForm] = useState({ name: "", contact: "", message: "" });
     const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
@@ -51,7 +54,7 @@ export default function Contacts() {
                 <div className="container">
                     {/* Contact Cards Grid */}
                     <div className="contacts-grid">
-                        <a href="tel:+380966650855" className="contact-card">
+                        <a href={`tel:${contacts.phoneTel}`} className="contact-card">
                             <div className="contact-card__icon">
                                 <svg
                                     width="24"
@@ -65,7 +68,7 @@ export default function Contacts() {
                                 </svg>
                             </div>
                             <h3>Телефон</h3>
-                            <span className="contact-card__value">+380 (96) 665-08-55</span>
+                            <span className="contact-card__value">{contacts.phoneDisplay}</span>
                             <span className="contact-card__hint">Основний номер</span>
                         </a>
 
@@ -108,7 +111,7 @@ export default function Contacts() {
                         </div>
 
                         <a
-                            href="https://instagram.com/mindbody.sportwear"
+                            href={contacts.instagramUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="contact-card"

@@ -13,9 +13,11 @@ import {
     TOOLBAR_BUTTON_STYLE,
     TOOLBAR_BUTTON_PRIMARY_STYLE,
 } from "../../components/admin/editor/EditorToolbar";
+import { ContactsSettingsPanel } from "../../components/admin/editor/ContactsSettingsPanel";
 import { useActionToast } from "../../components/admin/useActionToast";
 import { SHOP_SLUGS } from "../../utils/taxonomy";
 import { SHOP_PAGE_OPTIONS, shopPageTitle } from "../../utils/shop-pages";
+import { SITE_SETTING_KEYS, type SiteSettingKey } from "../../utils/site-settings";
 
 export async function loader({ request }: Route.LoaderArgs) {
     // Defense-in-depth: the _layout loader already redirects unauthenticated
@@ -24,21 +26,29 @@ export async function loader({ request }: Route.LoaderArgs) {
     if (denied) return denied;
     try {
         // Run all queries in parallel for speed
-        const [allSlides, categories, shopPages, filterConfigs] = await Promise.all([
+        const [allSlides, categories, shopPages, filterConfigs, siteSettings] = await Promise.all([
             prisma.slide.findMany({ orderBy: { order: "asc" } }),
             prisma.category.findMany({ orderBy: { order: "asc" } }),
             prisma.shopPage.findMany(),
             prisma.filterConfig.findMany(),
+            getSiteSettings(),
         ]);
 
         // Slide.page is NOT NULL (default 'home'), so a simple equality split works.
         const slides = allSlides.filter((s) => s.page === "home");
         const aboutSlides = allSlides.filter((s) => s.page === "about");
 
-        return { slides, categories, shopPages, filterConfigs, aboutSlides };
+        return { slides, categories, shopPages, filterConfigs, aboutSlides, siteSettings };
     } catch (error) {
         console.error("Loader error:", error);
-        return { slides: [], categories: [], shopPages: [], filterConfigs: [], aboutSlides: [] };
+        return {
+            slides: [],
+            categories: [],
+            shopPages: [],
+            filterConfigs: [],
+            aboutSlides: [],
+            siteSettings: DEFAULT_SITE_SETTINGS,
+        };
     }
 }
 
@@ -46,6 +56,8 @@ import { uploadFileChecked } from "../../utils/upload.server";
 import { requireAdmin } from "../../utils/admin-guard.server";
 import { invalidateCache, invalidatePrefix } from "../../utils/cache.server";
 import { actionOk, actionError } from "../../utils/action-result.server";
+import { getSiteSettings, saveSiteSetting } from "../../utils/site-settings.server";
+import { DEFAULT_SITE_SETTINGS } from "../../utils/site-settings";
 
 export async function action({ request }: Route.ActionArgs) {
     const denied = await requireAdmin(request);
@@ -365,6 +377,20 @@ export async function action({ request }: Route.ActionArgs) {
             return saved();
         }
 
+        if (intent === "update_site_settings") {
+            const key = formData.get("key");
+            const raw = formData.get("value");
+            if (typeof key !== "string" || !SITE_SETTING_KEYS.includes(key as SiteSettingKey)) {
+                return actionError("Невідомий ключ налаштувань");
+            }
+            if (typeof raw !== "string" || !raw) {
+                return actionError("Порожнє значення налаштувань");
+            }
+            const result = await saveSiteSetting(key as SiteSettingKey, raw);
+            if (!result.ok) return actionError(result.error);
+            return saved();
+        }
+
         return actionError("Unknown intent");
     } catch (e) {
         console.error("Action error:", e);
@@ -394,7 +420,7 @@ type ActivePanel =
  * post bridge messages back here.
  */
 export default function AdminVisualEditor() {
-    const { slides, categories, shopPages, filterConfigs, aboutSlides } =
+    const { slides, categories, shopPages, filterConfigs, aboutSlides, siteSettings } =
         useLoaderData<typeof loader>();
     const fetcher = useFetcher<typeof action>();
 
@@ -403,9 +429,10 @@ export default function AdminVisualEditor() {
     // Editor state lives in the URL (refreshable / shareable). `tab` = which
     // section, `shop` = which shop page the Shop tab previews/edits.
     const [searchParams, setSearchParams] = useSearchParams();
-    const currentView = (searchParams.get("tab") as "home" | "shop" | "about") || "home";
+    const currentView =
+        (searchParams.get("tab") as "home" | "shop" | "about" | "settings") || "home";
     const activeShop = searchParams.get("shop") || SHOP_SLUGS[0];
-    const setCurrentView = (view: "home" | "shop" | "about") => {
+    const setCurrentView = (view: "home" | "shop" | "about" | "settings") => {
         setSearchParams(
             (prev) => {
                 const p = new URLSearchParams(prev);
@@ -688,6 +715,45 @@ export default function AdminVisualEditor() {
                         Про бренд
                     </button>
                     <button
+                        onClick={() => setCurrentView("settings")}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            padding: "12px 16px",
+                            background:
+                                currentView === "settings"
+                                    ? "rgba(94, 234, 212, 0.1)"
+                                    : "transparent",
+                            border: "1px solid",
+                            borderColor:
+                                currentView === "settings"
+                                    ? "rgba(94, 234, 212, 0.2)"
+                                    : "transparent",
+                            borderRadius: "8px",
+                            color: currentView === "settings" ? "var(--accent-primary)" : "#94a3b8",
+                            cursor: "pointer",
+                            textAlign: "left",
+                            fontSize: "13px",
+                            fontWeight: 500,
+                            transition: "all 0.2s",
+                            outline: "none",
+                        }}
+                    >
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                        >
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                        </svg>
+                        Налаштування
+                    </button>
+                    <button
                         onClick={() => window.open("/", "_blank")}
                         style={{
                             marginTop: "auto",
@@ -724,7 +790,8 @@ export default function AdminVisualEditor() {
                 </div>
             </div>
 
-            {/* Main area: persistent toolbar + the live storefront preview */}
+            {/* Main area: persistent toolbar + the live storefront preview
+                (or the settings form for the "settings" view). */}
             <div
                 style={{
                     position: "fixed",
@@ -732,112 +799,121 @@ export default function AdminVisualEditor() {
                     left: "240px",
                     right: 0,
                     bottom: 0,
-                    background: "#fff",
+                    background: currentView === "settings" ? "#0a0c10" : "#fff",
                     overflow: "hidden",
                     display: "flex",
                     flexDirection: "column",
                 }}
             >
-                <EditorToolbar
-                    siteUrl={openSiteHref}
-                    onRefresh={() => setPreviewNonce((n) => n + 1)}
-                >
-                    {currentView === "home" && (
-                        <>
-                            <button
-                                type="button"
-                                style={TOOLBAR_BUTTON_PRIMARY_STYLE}
-                                onClick={() => setActivePanel({ kind: "slides" })}
-                            >
-                                Слайди
-                            </button>
-                            <button
-                                type="button"
-                                style={TOOLBAR_BUTTON_STYLE}
-                                onClick={() => setActivePanel({ kind: "categories" })}
-                            >
-                                Категорії
-                            </button>
-                        </>
-                    )}
-                    {currentView === "shop" && (
-                        <>
-                            <div
-                                style={{
-                                    display: "flex",
-                                    gap: "4px",
-                                    background: "rgba(255,255,255,0.04)",
-                                    padding: "4px",
-                                    borderRadius: "20px",
-                                    border: "1px solid rgba(148, 163, 184, 0.2)",
-                                }}
-                            >
-                                {SHOP_PAGE_OPTIONS.map((o) => (
+                {currentView === "settings" ? (
+                    <ContactsSettingsPanel contacts={siteSettings.contacts} fetcher={fetcher} />
+                ) : (
+                    <>
+                        <EditorToolbar
+                            siteUrl={openSiteHref}
+                            onRefresh={() => setPreviewNonce((n) => n + 1)}
+                        >
+                            {currentView === "home" && (
+                                <>
                                     <button
-                                        key={o.slug}
                                         type="button"
-                                        onClick={() => setActiveShop(o.slug)}
+                                        style={TOOLBAR_BUTTON_PRIMARY_STYLE}
+                                        onClick={() => setActivePanel({ kind: "slides" })}
+                                    >
+                                        Слайди
+                                    </button>
+                                    <button
+                                        type="button"
+                                        style={TOOLBAR_BUTTON_STYLE}
+                                        onClick={() => setActivePanel({ kind: "categories" })}
+                                    >
+                                        Категорії
+                                    </button>
+                                </>
+                            )}
+                            {currentView === "shop" && (
+                                <>
+                                    <div
                                         style={{
-                                            padding: "5px 12px",
-                                            borderRadius: "16px",
-                                            border: "none",
-                                            cursor: "pointer",
-                                            fontSize: "12px",
-                                            fontWeight: 700,
-                                            letterSpacing: "0.03em",
-                                            background:
-                                                o.slug === activeShop
-                                                    ? "var(--accent-primary)"
-                                                    : "transparent",
-                                            color: o.slug === activeShop ? "#000" : "#cbd5e1",
-                                            transition: "all 0.15s",
-                                            whiteSpace: "nowrap",
+                                            display: "flex",
+                                            gap: "4px",
+                                            background: "rgba(255,255,255,0.04)",
+                                            padding: "4px",
+                                            borderRadius: "20px",
+                                            border: "1px solid rgba(148, 163, 184, 0.2)",
                                         }}
                                     >
-                                        {o.title}
+                                        {SHOP_PAGE_OPTIONS.map((o) => (
+                                            <button
+                                                key={o.slug}
+                                                type="button"
+                                                onClick={() => setActiveShop(o.slug)}
+                                                style={{
+                                                    padding: "5px 12px",
+                                                    borderRadius: "16px",
+                                                    border: "none",
+                                                    cursor: "pointer",
+                                                    fontSize: "12px",
+                                                    fontWeight: 700,
+                                                    letterSpacing: "0.03em",
+                                                    background:
+                                                        o.slug === activeShop
+                                                            ? "var(--accent-primary)"
+                                                            : "transparent",
+                                                    color:
+                                                        o.slug === activeShop ? "#000" : "#cbd5e1",
+                                                    transition: "all 0.15s",
+                                                    whiteSpace: "nowrap",
+                                                }}
+                                            >
+                                                {o.title}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        style={TOOLBAR_BUTTON_PRIMARY_STYLE}
+                                        onClick={() =>
+                                            setActivePanel({ kind: "shopBg", slug: activeShop })
+                                        }
+                                    >
+                                        Змінити фон
                                     </button>
-                                ))}
-                            </div>
-                            <button
-                                type="button"
-                                style={TOOLBAR_BUTTON_PRIMARY_STYLE}
-                                onClick={() => setActivePanel({ kind: "shopBg", slug: activeShop })}
-                            >
-                                Змінити фон
-                            </button>
-                            <button
-                                type="button"
-                                style={TOOLBAR_BUTTON_STYLE}
-                                onClick={() => setActivePanel({ kind: "filters" })}
-                            >
-                                Фільтри
-                            </button>
-                        </>
-                    )}
-                    {currentView === "about" && (
-                        <button
-                            type="button"
-                            style={TOOLBAR_BUTTON_PRIMARY_STYLE}
-                            onClick={() => setActivePanel({ kind: "about" })}
-                        >
-                            Редагувати слайди
-                        </button>
-                    )}
-                </EditorToolbar>
+                                    <button
+                                        type="button"
+                                        style={TOOLBAR_BUTTON_STYLE}
+                                        onClick={() => setActivePanel({ kind: "filters" })}
+                                    >
+                                        Фільтри
+                                    </button>
+                                </>
+                            )}
+                            {currentView === "about" && (
+                                <button
+                                    type="button"
+                                    style={TOOLBAR_BUTTON_PRIMARY_STYLE}
+                                    onClick={() => setActivePanel({ kind: "about" })}
+                                >
+                                    Редагувати слайди
+                                </button>
+                            )}
+                        </EditorToolbar>
 
-                <iframe
-                    ref={iframeRef}
-                    key={`${currentView}-${activeShop}-${previewNonce}`}
-                    src={previewSrc}
-                    onLoad={restorePreviewScroll}
-                    style={{ flex: 1, width: "100%", border: "none", background: "#fff" }}
-                    title="Перегляд сайту"
-                    // Same-origin storefront preview: allow its scripts +
-                    // same-origin (hydration + the postMessage bridge) but block
-                    // top-navigation, popups and forms so a storefront bug can't
-                    // drive the admin UI.
-                    sandbox="allow-scripts allow-same-origin"
-                />
+                        <iframe
+                            ref={iframeRef}
+                            key={`${currentView}-${activeShop}-${previewNonce}`}
+                            src={previewSrc}
+                            onLoad={restorePreviewScroll}
+                            style={{ flex: 1, width: "100%", border: "none", background: "#fff" }}
+                            title="Перегляд сайту"
+                            // Same-origin storefront preview: allow its scripts +
+                            // same-origin (hydration + the postMessage bridge) but block
+                            // top-navigation, popups and forms so a storefront bug can't
+                            // drive the admin UI.
+                            sandbox="allow-scripts allow-same-origin"
+                        />
+                    </>
+                )}
             </div>
 
             {/* --- Panels / modals (exactly one open — activePanel union) --- */}

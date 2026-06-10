@@ -232,6 +232,82 @@ async function main() {
         `status=${homeEditorRes.status}`,
     );
 
+    // --- SE4: SiteSetting (contacts) -----------------------------------------
+    const CONTACTS = {
+        phoneDisplay: "+38 (011) 111-22-33",
+        phoneTel: "+380111112233",
+        hoursLabel: "Пн–Нд · 8:00–20:00",
+        instagramUrl: "https://instagram.com/e2e.test",
+        telegramUrl: "https://t.me/e2etest",
+        viberPhone: "380111112233",
+        whatsappPhone: "380111112233",
+    };
+    await prisma.$executeRaw`DELETE FROM "SiteSetting" WHERE "key" = 'contacts'`;
+
+    await post(cookie, {
+        intent: "update_site_settings",
+        key: "contacts",
+        value: JSON.stringify(CONTACTS),
+    });
+    const savedRow =
+        await prisma.$queryRaw`SELECT "value" FROM "SiteSetting" WHERE "key" = 'contacts'`;
+    ok(
+        "valid contacts settings are saved",
+        savedRow.length === 1 && JSON.parse(savedRow[0].value).phoneTel === CONTACTS.phoneTel,
+    );
+
+    // Saved contacts must actually render on the storefront (footer phone).
+    const homeAfterSave = await (
+        await fetch(`${BASE}/`, { headers: { "x-forwarded-for": nextIp() } })
+    ).text();
+    ok("saved contacts render on the storefront", homeAfterSave.includes(CONTACTS.phoneDisplay));
+
+    // Invalid phone must be rejected and the row left unchanged.
+    await post(cookie, {
+        intent: "update_site_settings",
+        key: "contacts",
+        value: JSON.stringify({ ...CONTACTS, phoneTel: "not-a-phone" }),
+    });
+    const afterBadPhone =
+        await prisma.$queryRaw`SELECT "value" FROM "SiteSetting" WHERE "key" = 'contacts'`;
+    ok(
+        "invalid contacts phone is rejected (row unchanged)",
+        afterBadPhone.length === 1 &&
+            JSON.parse(afterBadPhone[0].value).phoneTel === CONTACTS.phoneTel,
+    );
+
+    // Unknown key must not create a row.
+    await post(cookie, { intent: "update_site_settings", key: "h4cker", value: "{}" });
+    const phantomSetting =
+        await prisma.$queryRaw`SELECT 1 FROM "SiteSetting" WHERE "key" = 'h4cker'`;
+    ok("unknown settings key is rejected (no row)", phantomSetting.length === 0);
+
+    // Restore the default contacts through the intent (also proves the
+    // save → cache-invalidate → render loop end-to-end), then clean up the
+    // row — mergeSiteSettings guarantees a missing row = defaults.
+    const DEFAULT_CONTACTS = {
+        phoneDisplay: "+38 (096) 665-08-55",
+        phoneTel: "+380966650855",
+        hoursLabel: "Пн–Пт · 9:00–18:00",
+        instagramUrl: "https://instagram.com/mindbody.sportwear",
+        telegramUrl: "https://t.me/Juliamindbody",
+        viberPhone: "380509656737",
+        whatsappPhone: "380973542848",
+    };
+    await post(cookie, {
+        intent: "update_site_settings",
+        key: "contacts",
+        value: JSON.stringify(DEFAULT_CONTACTS),
+    });
+    const homeRestored = await (
+        await fetch(`${BASE}/`, { headers: { "x-forwarded-for": nextIp() } })
+    ).text();
+    ok(
+        "restoring default contacts renders the default phone again",
+        homeRestored.includes("+38 (096) 665-08-55"),
+    );
+    await prisma.$executeRaw`DELETE FROM "SiteSetting" WHERE "key" = 'contacts'`;
+
     console.log(`\n=== RESULT: ${pass} passed, ${fail} failed ===\n`);
     await prisma.$disconnect();
     process.exit(fail === 0 ? 0 : 1);

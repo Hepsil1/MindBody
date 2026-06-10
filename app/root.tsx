@@ -10,6 +10,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { getSiteSettings } from "./utils/site-settings.server";
 import appCss from "./app.css?url";
 import loadingScreenCss from "./styles/loading-screen.css?url";
 import { Header } from "./components/Header";
@@ -57,6 +58,15 @@ export const links: Route.LinksFunction = () => [
     { rel: "stylesheet", href: cartStyles },
     { rel: "stylesheet", href: loadingScreenCss },
 ];
+
+// Owner-editable site content (contacts etc.) for Header/Footer/
+// FloatingContact. getSiteSettings never throws (it degrades to hardcoded
+// defaults), and the result is server-cached for 5 minutes — one cheap read
+// per navigation. Root loaders revalidate after actions, so an admin save
+// shows up on the next render.
+export async function loader() {
+    return { siteSettings: await getSiteSettings() };
+}
 
 // Wrapper component that can use hooks
 function AppContent({ children }: { children: React.ReactNode }) {

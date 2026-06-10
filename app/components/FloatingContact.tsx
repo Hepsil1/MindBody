@@ -1,11 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router";
-
-// Business contact numbers
-const PHONE = "380509656737";
-const VIBER_URL = `viber://chat?number=%2B${PHONE}`;
-const WHATSAPP_URL = `https://wa.me/380973542848`;
-const TELEGRAM_URL = `https://t.me/+${PHONE}`;
+import { useSiteSettings, viberChatUrl, whatsappUrl } from "../utils/site-settings";
 
 // localStorage key for the user's expanded/collapsed preference.
 // Sticks across page loads so a user who minimised once doesn't have
@@ -25,6 +20,13 @@ const STORAGE_KEY = "mb-floating-contact-collapsed";
  * stays available regardless of collapse state.
  */
 export default function FloatingContact() {
+    // Owner-editable contacts (admin → Редактор сайту → Налаштування). The
+    // Telegram button previously built a t.me/+<phone> link while the footer
+    // used the brand username — both now share contacts.telegramUrl.
+    const { contacts } = useSiteSettings();
+    const VIBER_URL = viberChatUrl(contacts.viberPhone);
+    const WHATSAPP_URL = whatsappUrl(contacts.whatsappPhone);
+    const TELEGRAM_URL = contacts.telegramUrl;
     const [showBackToTop, setShowBackToTop] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
     const location = useLocation();

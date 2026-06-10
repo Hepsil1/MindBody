@@ -21,6 +21,15 @@
 # If step 2 fails, PM2 keeps the previous process — no downtime.
 # If step 3 fails, you'll see it immediately in `pm2 logs mindbody`.
 
+# -Migrate: run `prisma migrate deploy` before the build. Safe while PM2 is
+# running — migrate deploy uses the schema engine, NOT the query-engine DLL
+# that PM2 locks (the EPERM gotcha applies only to `prisma generate`). App
+# code that needs new tables before a clean generate uses raw SQL (the
+# moodType / SiteSetting pattern).
+param(
+    [switch]$Migrate
+)
+
 # Don't use $ErrorActionPreference = "Stop" — it turns every native
 # command's stderr line (like Vite's harmless build warnings) into a
 # fatal exception. We check $LASTEXITCODE explicitly after each call.
@@ -48,6 +57,15 @@ if ($gitStatus) {
     Write-Warning "Working tree has uncommitted MODIFIED files:"
     Write-Host ($gitStatus -join "`n")
     Write-Host "Continuing anyway. Re-run after committing if this wasn't intentional." -ForegroundColor Yellow
+}
+
+if ($Migrate) {
+    Write-Host "==> [1b/4] Applying pending DB migrations (prisma migrate deploy)" -ForegroundColor Cyan
+    & npx prisma migrate deploy 2>&1 | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Migration FAILED. PM2 process untouched, build skipped." -ForegroundColor Red
+        exit 1
+    }
 }
 
 Write-Host "==> [2a/4] Generating image variants (responsive srcset)" -ForegroundColor Cyan

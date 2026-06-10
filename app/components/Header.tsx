@@ -4,6 +4,7 @@ import { StorageUtils } from "../utils/storage";
 import { AuthUtils, type User } from "../utils/auth";
 import { useDebounce } from "../hooks/useDebounce";
 import { pluralizeUA } from "../utils/plural";
+import { useSiteSettings } from "../utils/site-settings";
 import CartDrawer from "./CartDrawer";
 import MegaMenu, { MegaPanel, type MegaFeatured } from "./MegaMenu";
 
@@ -71,6 +72,8 @@ const NAV: Array<{ shop: string; label: string; featured: MegaFeatured }> = [
 ];
 
 export function Header() {
+    // Owner-editable contacts (admin → Редактор сайту → Налаштування).
+    const { contacts } = useSiteSettings();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     // Mobile-only: which category's subcategory accordion is expanded in the drawer.
     const [expandedShop, setExpandedShop] = useState<string | null>(null);
@@ -324,7 +327,7 @@ export function Header() {
             <div className="top-bar">
                 <div className="top-bar__container">
                     <div className="top-bar__left">
-                        <a href="tel:+380671234567" className="top-bar__phone">
+                        <a href={`tel:${contacts.phoneTel}`} className="top-bar__phone">
                             <svg
                                 className="top-bar__phone-icon"
                                 viewBox="0 0 18 18"
@@ -339,7 +342,7 @@ export function Header() {
                                     strokeLinejoin="round"
                                 />
                             </svg>
-                            <span>+380 67 123 45 67</span>
+                            <span>{contacts.phoneDisplay}</span>
                         </a>
                     </div>
 
@@ -509,10 +512,10 @@ export function Header() {
                                 Контакти
                             </NavLink>
                             <a
-                                href="tel:+380671234567"
+                                href={`tel:${contacts.phoneTel}`}
                                 className="header__nav-extra-link header__nav-extra-link--phone"
                             >
-                                +380 67 123 45 67
+                                {contacts.phoneDisplay}
                             </a>
                         </div>
                     </nav>

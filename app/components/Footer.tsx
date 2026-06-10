@@ -1,9 +1,12 @@
 import { Link } from "react-router";
 import { useState } from "react";
 import { useToast } from "./Toast";
+import { useSiteSettings, viberChatUrl, whatsappUrl } from "../utils/site-settings";
 
 export default function Footer() {
     const { showToast } = useToast();
+    // Owner-editable contacts (admin → Редактор сайту → Налаштування).
+    const { contacts } = useSiteSettings();
     const [contact, setContact] = useState("");
     const [sending, setSending] = useState(false);
 
@@ -113,9 +116,9 @@ export default function Footer() {
                             <div className="footer-puma__nav-col footer-puma__nav-col--contact">
                                 <h3 className="footer-puma__col-header">Зв'язатись</h3>
                                 <a
-                                    href="tel:+380966650855"
+                                    href={`tel:${contacts.phoneTel}`}
                                     className="footer-puma__phone-cta"
-                                    aria-label="Подзвонити: +38 (096) 665-08-55"
+                                    aria-label={`Подзвонити: ${contacts.phoneDisplay}`}
                                 >
                                     <svg
                                         aria-hidden="true"
@@ -130,19 +133,19 @@ export default function Footer() {
                                     >
                                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                                     </svg>
-                                    +38 (096) 665-08-55
+                                    {contacts.phoneDisplay}
                                 </a>
                                 {/* Sprint 1 D1.2 #45 TRUST-006 — explicit support
                                     hours sets response expectation. Baymard:
                                     reduces "когда мне ответят?" anxiety. */}
-                                <p className="footer-puma__hours">Пн–Пт · 9:00–18:00</p>
+                                <p className="footer-puma__hours">{contacts.hoursLabel}</p>
                                 <ul
                                     className="footer-puma__social-icons"
                                     aria-label="Месенджери та соцмережі"
                                 >
                                     <li>
                                         <a
-                                            href="https://instagram.com/mindbody.sportwear"
+                                            href={contacts.instagramUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label="Instagram MindBody"
@@ -161,7 +164,7 @@ export default function Footer() {
                                     </li>
                                     <li>
                                         <a
-                                            href="https://t.me/Juliamindbody"
+                                            href={contacts.telegramUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label="Telegram MindBody"
@@ -180,7 +183,7 @@ export default function Footer() {
                                     </li>
                                     <li>
                                         <a
-                                            href="viber://chat?number=%2B380509656737"
+                                            href={viberChatUrl(contacts.viberPhone)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label="Viber MindBody"
@@ -199,7 +202,7 @@ export default function Footer() {
                                     </li>
                                     <li>
                                         <a
-                                            href="https://wa.me/380973542848"
+                                            href={whatsappUrl(contacts.whatsappPhone)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label="WhatsApp MindBody"

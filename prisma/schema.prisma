@@ -235,3 +235,14 @@ model NewsletterSubscriber {
   @@index([email])
   @@index([createdAt])
 }
+
+// Generic key-value store for owner-editable site content (contacts, home
+// texts, mega-menu featured images...). `value` is a JSON blob validated
+// per-key by Zod before write (app/utils/site-settings.ts). Read/written via
+// raw SQL (the moodType pattern) so the feature works even while the
+// generated client on prod predates this model.
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
