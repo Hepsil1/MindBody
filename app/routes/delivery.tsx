@@ -29,6 +29,33 @@ export default function Delivery() {
                             Доставка
                         </h2>
 
+                        {/* F-043 — concrete shipping economics. Premium meta-description
+                            promises "free shipping over 2000₴" but the page didn't
+                            actually state the threshold or the price below it. Putting
+                            both numbers up-front lets the buyer plan the cart total
+                            instead of guessing at checkout. */}
+                        <div
+                            style={{
+                                marginBottom: "30px",
+                                padding: "24px 30px",
+                                background:
+                                    "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)",
+                                borderRadius: "16px",
+                                color: "#fff",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "8px",
+                            }}
+                        >
+                            <strong style={{ fontSize: "1.1rem" }}>
+                                Безкоштовна доставка від 2 000 ₴
+                            </strong>
+                            <span style={{ opacity: 0.92 }}>
+                                До 2 000 ₴ — за тарифами Нової Пошти, зазвичай ≈70–120 ₴ залежно від
+                                ваги та маршруту.
+                            </span>
+                        </div>
+
                         <div
                             style={{
                                 marginBottom: "30px",

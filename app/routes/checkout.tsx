@@ -1072,9 +1072,16 @@ export default function Checkout() {
                                             <span>Товари</span>
                                             <span>{subtotal.toLocaleString()} ₴</span>
                                         </div>
+                                        {/* F-036 — same shipping logic as the cart-step
+                                            summary; the buyer is past the cart but still
+                                            needs the threshold reminder + concrete range. */}
                                         <div className="order-row">
                                             <span>Доставка</span>
-                                            <span>За тарифами перевізника</span>
+                                            <span>
+                                                {subtotal >= 2000
+                                                    ? "Безкоштовно ✓"
+                                                    : "≈70–120 ₴ (Нова Пошта)"}
+                                            </span>
                                         </div>
                                         <div className="order-row total">
                                             <span>Разом</span>
@@ -1283,9 +1290,20 @@ export default function Checkout() {
                                             </div>
                                         );
                                     })()}
+                                    {/* F-036 — single source of truth for shipping line.
+                                        Above-threshold: matches the green nudge above ("free");
+                                        below: names a concrete UAH range so the buyer knows what
+                                        they will pay (Baymard: unexpected shipping cost = #1
+                                        cart-abandonment driver). The number is Nova Poshta's
+                                        typical city→city box price, not a fixed promise — see
+                                        /delivery for context. */}
                                     <div className="summary-line">
                                         <span>Доставка</span>
-                                        <span>За тарифами перевізника</span>
+                                        <span>
+                                            {subtotal >= 2000
+                                                ? "Безкоштовно ✓"
+                                                : "≈70–120 ₴ (Нова Пошта)"}
+                                        </span>
                                     </div>
                                     {promoApplied && (
                                         <div className="summary-line" style={{ color: "#10b981" }}>
