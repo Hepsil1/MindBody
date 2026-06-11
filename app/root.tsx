@@ -11,6 +11,7 @@ import {
 
 import type { Route } from "./+types/root";
 import { getSiteSettings } from "./utils/site-settings.server";
+import { getMegaCounts } from "./utils/mega-counts.server";
 import appCss from "./app.css?url";
 import loadingScreenCss from "./styles/loading-screen.css?url";
 import { Header } from "./components/Header";
@@ -67,7 +68,11 @@ export const links: Route.LinksFunction = () => [
 // per navigation. Root loaders revalidate after actions, so an admin save
 // shows up on the next render.
 export async function loader() {
-    return { siteSettings: await getSiteSettings() };
+    // F-024 — load alongside siteSettings so the Header sees both as a
+    // single root loaderData object. Parallelised because the two
+    // queries are independent.
+    const [siteSettings, megaCounts] = await Promise.all([getSiteSettings(), getMegaCounts()]);
+    return { siteSettings, megaCounts };
 }
 
 // Wrapper component that can use hooks

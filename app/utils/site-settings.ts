@@ -261,3 +261,13 @@ export function useSiteSettings(): SiteSettings {
     const data = useRouteLoaderData("root") as { siteSettings?: SiteSettings } | undefined;
     return data?.siteSettings ?? DEFAULT_SITE_SETTINGS;
 }
+
+/**
+ * Mega-menu inventory coverage. Empty object means "fall open" — render
+ * everything from the static taxonomy, the same behaviour the site had
+ * before the F-024 fix.
+ */
+export function useMegaCounts(): Record<string, number> {
+    const data = useRouteLoaderData("root") as { megaCounts?: Record<string, number> } | undefined;
+    return data?.megaCounts ?? {};
+}

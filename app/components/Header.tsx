@@ -4,7 +4,7 @@ import { StorageUtils } from "../utils/storage";
 import { AuthUtils, type User } from "../utils/auth";
 import { useDebounce } from "../hooks/useDebounce";
 import { pluralizeUA } from "../utils/plural";
-import { useSiteSettings } from "../utils/site-settings";
+import { useSiteSettings, useMegaCounts } from "../utils/site-settings";
 import CartDrawer from "./CartDrawer";
 import MegaMenu, { MegaPanel, type MegaFeatured } from "./MegaMenu";
 
@@ -77,6 +77,9 @@ export function Header() {
     // mega-panel is overridden from settings when present; NAV stays the
     // structural source (slugs, labels, fallback featured).
     const { contacts, navFeatured } = useSiteSettings();
+    // F-024 — counts loaded by root.tsx; empty map (loading/error) just
+    // means MegaMenu renders everything, never less.
+    const megaCounts = useMegaCounts();
     const navItems = NAV.map((item) => ({
         ...item,
         featured: navFeatured.items[item.shop] ?? item.featured,
@@ -482,6 +485,7 @@ export function Header() {
                                         shop={item.shop}
                                         featured={item.featured}
                                         onNavigate={() => setIsMenuOpen(false)}
+                                        counts={megaCounts}
                                     />
                                 </li>
                             ))}
@@ -637,6 +641,7 @@ export function Header() {
                     }}
                     onPanelEnter={handleMegaPanelEnter}
                     onPanelLeave={handleMegaLeave}
+                    counts={megaCounts}
                 />
             </header>
 

@@ -36,6 +36,13 @@ interface MegaMenuContentProps {
     featured: MegaFeatured;
     /** Called on any link click (closes the panel / the mobile drawer). */
     onNavigate?: () => void;
+    /**
+     * F-024 inventory map. Keys: "shop", "shop/sub", "shop/sub/fabric",
+     * "shop/sub/fabric/sleeve", or "shop/sub/_/sleeve" (when the sub has
+     * no fabric axis). Missing key OR 0 → hide that branch. Empty map →
+     * render everything (degrade open, never closed).
+     */
+    counts?: Record<string, number>;
 }
 
 /**
@@ -46,8 +53,17 @@ interface MegaMenuContentProps {
  * so they land on a pre-filtered shop page, e.g.
  * /shop/yoga/jumpsuit?fabric=sport&sleeve=long.
  */
-export function MegaMenuContent({ shop, featured, onNavigate }: MegaMenuContentProps) {
-    const subs = subcategoriesFor(shop);
+export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenuContentProps) {
+    // F-024 — when counts are loaded, hide branches with no products.
+    // No counts (yet) → behave as before (no filtering), so a slow DB
+    // never blanks out the navigation.
+    const hasCounts = counts && Object.keys(counts).length > 0;
+    const has = (...parts: string[]) => {
+        if (!hasCounts) return true;
+        const key = parts.join("/");
+        return (counts![key] ?? 0) > 0;
+    };
+    const subs = subcategoriesFor(shop).filter(([sub]) => has(shop, sub));
 
     return (
         <div className="mega-menu__inner">
@@ -66,6 +82,11 @@ export function MegaMenuContent({ shop, featured, onNavigate }: MegaMenuContentP
 
                 {subs.map(([sub, def]) => {
                     const base = `/shop/${shop}/${sub}`;
+                    const fabrics = (def.fabrics ?? []).filter((f) => has(shop, sub, f));
+                    const subSleeves = (def.sleeves ?? []).filter((s) =>
+                        // Subs with no fabric axis use the "_"-placeholder key.
+                        has(shop, sub, "_", s),
+                    );
                     return (
                         <div key={sub} className="mega-menu__group">
                             <Link
@@ -78,31 +99,36 @@ export function MegaMenuContent({ shop, featured, onNavigate }: MegaMenuContentP
                             </Link>
 
                             {/* Level 3/4: fabric → sleeve (if any). */}
-                            {def.fabrics && def.fabrics.length > 0
-                                ? def.fabrics.map((f) => (
-                                      <div key={f} className="mega-menu__fabric">
-                                          <Link
-                                              to={`${base}?fabric=${f}`}
-                                              prefetch="intent"
-                                              className="mega-menu__sublink mega-menu__sublink--fabric"
-                                              onClick={onNavigate}
-                                          >
-                                              {fabricLabel(f)}
-                                          </Link>
-                                          {def.sleeves?.map((s) => (
+                            {fabrics.length > 0
+                                ? fabrics.map((f) => {
+                                      const sleevesForFabric = (def.sleeves ?? []).filter((s) =>
+                                          has(shop, sub, f, s),
+                                      );
+                                      return (
+                                          <div key={f} className="mega-menu__fabric">
                                               <Link
-                                                  key={s}
-                                                  to={`${base}?fabric=${f}&sleeve=${s}`}
+                                                  to={`${base}?fabric=${f}`}
                                                   prefetch="intent"
-                                                  className="mega-menu__sublink mega-menu__sublink--sleeve"
+                                                  className="mega-menu__sublink mega-menu__sublink--fabric"
                                                   onClick={onNavigate}
                                               >
-                                                  {sleeveLabel(s)}
+                                                  {fabricLabel(f)}
                                               </Link>
-                                          ))}
-                                      </div>
-                                  ))
-                                : def.sleeves?.map((s) => (
+                                              {sleevesForFabric.map((s) => (
+                                                  <Link
+                                                      key={s}
+                                                      to={`${base}?fabric=${f}&sleeve=${s}`}
+                                                      prefetch="intent"
+                                                      className="mega-menu__sublink mega-menu__sublink--sleeve"
+                                                      onClick={onNavigate}
+                                                  >
+                                                      {sleeveLabel(s)}
+                                                  </Link>
+                                              ))}
+                                          </div>
+                                      );
+                                  })
+                                : subSleeves.map((s) => (
                                       <Link
                                           key={s}
                                           to={`${base}?sleeve=${s}`}
@@ -157,6 +183,7 @@ interface MegaMenuProps {
     shop: string;
     featured: MegaFeatured;
     onNavigate?: () => void;
+    counts?: Record<string, number>;
 }
 
 /**
@@ -166,10 +193,15 @@ interface MegaMenuProps {
  * per-item :hover/:focus-within panels pinned open after SPA clicks —
  * focus stayed on the link — and crossfaded over each other in transit.)
  */
-export default function MegaMenu({ shop, featured, onNavigate }: MegaMenuProps) {
+export default function MegaMenu({ shop, featured, onNavigate, counts }: MegaMenuProps) {
     return (
         <div className="mega-menu">
-            <MegaMenuContent shop={shop} featured={featured} onNavigate={onNavigate} />
+            <MegaMenuContent
+                shop={shop}
+                featured={featured}
+                onNavigate={onNavigate}
+                counts={counts}
+            />
         </div>
     );
 }
@@ -188,6 +220,7 @@ interface MegaPanelProps {
     onNavigate?: () => void;
     onPanelEnter?: (e: React.PointerEvent) => void;
     onPanelLeave?: (e: React.PointerEvent) => void;
+    counts?: Record<string, number>;
 }
 
 /**
@@ -206,6 +239,7 @@ export function MegaPanel({
     onNavigate,
     onPanelEnter,
     onPanelLeave,
+    counts,
 }: MegaPanelProps) {
     const cols = megaColsFor(shown);
     const open = active !== null;
@@ -231,6 +265,7 @@ export function MegaPanel({
                             shop={item.shop}
                             featured={item.featured}
                             onNavigate={onNavigate}
+                            counts={counts}
                         />
                     </div>
                 ))}
