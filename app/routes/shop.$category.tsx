@@ -1,5 +1,6 @@
 import { type LoaderFunctionArgs, type MetaFunction, redirect } from "react-router";
 import { useLoaderData, Link } from "react-router";
+import { localeFromParam, localizePath } from "../i18n/config";
 import ProductCard from "../components/ProductCard";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { type MergedFilterConfig, type PriceRange } from "../utils/filters";
@@ -18,7 +19,6 @@ import {
 } from "../utils/shopProducts.server";
 import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
 import { getLqipStyle } from "../utils/lqip";
-import { cachedFetch } from "../utils/cache.server";
 import { useEditorMode, postToEditor } from "../utils/editor-bridge";
 
 // Product card shape used by the render side (filtering, sorting). The
@@ -132,6 +132,7 @@ function parseJson<T>(str: string | null | undefined, fallback: T): T {
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
+    const locale = localeFromParam(params.lang);
     const categorySlug = params.category || "yoga";
 
     // 301 redirect legacy query-string filters to the new nested path form.
@@ -148,7 +149,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     if (raw && !raw.includes(",")) {
         const slug = ALLOWED_CATEGORY_SLUGS.has(raw) ? raw : labelToSlug(raw);
         if (slug && isValidSubcategory(categorySlug, slug)) {
-            throw redirect(`/shop/${categorySlug}/${slug}`, 301);
+            throw redirect(localizePath(`/shop/${categorySlug}/${slug}`, locale), 301);
         }
     }
 
@@ -161,7 +162,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     // first visitor in the window but greatly helps everyone else.  Cache
     // key includes the category slug so /shop/yoga and /shop/sport stay
     // independent.  Admin product writes should call invalidateCache.
-    return cachedFetch(`shop:${categorySlug}`, 60_000, () => loadShopData(categorySlug));
+    // (loadShopData caches internally with the same key family and applies
+    // the locale OUTSIDE the cache, so en/ru can't poison the uk cache.)
+    return loadShopData(categorySlug, {}, locale);
 }
 import { useSearchParams, useParams, useNavigate } from "react-router";
 import "../styles/shop.css";

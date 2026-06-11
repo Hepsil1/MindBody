@@ -1,0 +1,322 @@
+{
+  "_comment": "Generated 2026-06-11 from source.json. Keyed by entity id. Applied by apply-translations.mjs into the <table>.translations JSON column.",
+  "boilerplate": {
+    "uk": "Преміальна якість від українського бренду MIND BODY. Створено з любов'ю в Україні. Тканина Supplex® + Lycra® забезпечує ідеальну посадку та 4-way stretch.",
+    "en": "Premium quality from the Ukrainian brand MIND BODY. Made with love in Ukraine. Supplex® + Lycra® fabric delivers a perfect fit and four-way stretch.",
+    "ru": "Премиальное качество от украинского бренда MIND BODY. Создано с любовью в Украине. Ткань Supplex® + Lycra® обеспечивает идеальную посадку и 4-way stretch."
+  },
+  "products": {
+    "331460d8-b6f9-4068-9c7a-bb89c5cbe786": {
+      "en": { "name": "Yoga Sport Long-Sleeve Jumpsuit" },
+      "ru": { "name": "Комбинезон Yoga Sport с рукавом" }
+    },
+    "1645fad9-b132-4e5d-9702-b651ef4cb39e": {
+      "en": { "name": "Yoga Cotton Long-Sleeve Jumpsuit" },
+      "ru": { "name": "Комбинезон Yoga Cotton с рукавом" }
+    },
+    "f7820e86-1489-4159-bb28-0af5b8027831": {
+      "en": { "name": "Yoga Sport Leggings" },
+      "ru": { "name": "Леггинсы Yoga Sport" }
+    },
+    "f7725d08-2fe9-482d-ab38-89d5cf5e138f": {
+      "en": { "name": "Yoga Cotton Leggings" },
+      "ru": { "name": "Леггинсы Yoga Cotton" }
+    },
+    "914fbb73-e070-414b-a686-1e0fbed383cb": {
+      "en": { "name": "VELO Yoga Sport Bike Shorts" },
+      "ru": { "name": "VELO Yoga Sport" }
+    },
+    "23d7e883-ced4-4b4e-b623-598c9c37c2d3": {
+      "en": { "name": "Yoga Sport Top" },
+      "ru": { "name": "Топ Yoga Sport" }
+    },
+    "dd7d7a5f-c596-4544-ac35-c996b4c39cab": {
+      "en": { "name": "Yoga Cotton Shorts" },
+      "ru": { "name": "Шорты Yoga Cotton" }
+    },
+    "46247dd3-85ee-4910-b19f-6e3422cad201": {
+      "en": { "name": "Yoga Sport Long Sleeve" },
+      "ru": { "name": "Лонгслив Yoga Sport" }
+    },
+    "2ffc13ee-f20a-49e4-90b3-da81a7729037": {
+      "en": { "name": "Yoga T-Shirt" },
+      "ru": { "name": "Футболка Yoga" }
+    },
+    "3c331aa3-4679-4bb9-b25a-e02726db0693": {
+      "en": { "name": "Sport Long-Sleeve Jumpsuit" },
+      "ru": { "name": "Комбинезон Sport с рукавом" }
+    },
+    "77d8cc14-b6a4-4f97-9849-8f56f0cec2ca": {
+      "en": { "name": "Sport Sleeveless Jumpsuit" },
+      "ru": { "name": "Комбинезон Sport без рукавов" }
+    },
+    "e503a777-d79b-4993-8072-9aabb3fe853b": {
+      "en": { "name": "Sport Leggings" },
+      "ru": { "name": "Леггинсы Sport" }
+    },
+    "6d8e4aa4-276d-4a23-ae36-b59d639b6969": {
+      "en": { "name": "VELO Sport Bike Shorts" },
+      "ru": { "name": "VELO Sport" }
+    },
+    "6df5a023-f455-4b66-8f63-6b23d8a98c14": {
+      "en": { "name": "Sport Top" },
+      "ru": { "name": "Топ Sport" }
+    },
+    "5bb5d269-8da4-425a-b0a3-b6cd8e507b2e": {
+      "en": { "name": "Sport Shorts" },
+      "ru": { "name": "Шорты Sport" }
+    },
+    "025e269f-32d9-4318-954f-697fcb592da5": {
+      "en": { "name": "Sport Long Sleeve" },
+      "ru": { "name": "Лонгслив Sport" }
+    },
+    "7c851f56-7f3d-4609-b737-c33488f51541": {
+      "en": { "name": "Dance Sport Set" },
+      "ru": { "name": "Комплект Dance Sport" }
+    },
+    "5f861fad-9a74-4865-bfdd-b5361490458c": {
+      "en": { "name": "Dance Jumpsuit" },
+      "ru": { "name": "Комбинезон Dance" }
+    },
+    "5fcfb26d-85ca-46f0-979d-574a4ecb58df": {
+      "en": { "name": "Dance Mesh Style" },
+      "ru": { "name": "Модель из сетки Dance" }
+    },
+    "0b30dce3-a93b-4bfb-aa05-d21630bf541c": {
+      "en": { "name": "Pole Dance Set" },
+      "ru": { "name": "Комплект для пилона" }
+    },
+    "202b8553-83a9-4d6a-82c7-49eb34143b95": {
+      "en": { "name": "Casual Co-ord Set" },
+      "ru": { "name": "Костюм Casual" }
+    },
+    "b1195a9d-9e0e-4904-83c4-f16aba9b7073": {
+      "en": { "name": "Casual Shirt" },
+      "ru": { "name": "Рубашка Casual" }
+    },
+    "c1cf48e8-c827-470b-b708-e55e9a09903e": {
+      "en": { "name": "Casual T-Shirt" },
+      "ru": { "name": "Футболка Casual" }
+    },
+    "2813810a-5d56-4370-a4f8-7814fc04db8d": {
+      "en": { "name": "Casual Tank Top" },
+      "ru": { "name": "Майка Casual" }
+    },
+    "d89d5b8b-bda7-4113-80a4-54ab5892dca0": {
+      "en": { "name": "Casual Shorts" },
+      "ru": { "name": "Шорты Casual" }
+    },
+    "b14eb015-1712-43fc-9261-820f0f2fd3f5": {
+      "en": { "name": "Thermal Underwear" },
+      "ru": { "name": "Термобельё" }
+    },
+    "e7705808-394f-4476-b483-445178b7a821": {
+      "en": { "name": "Casual Hoodie" },
+      "ru": { "name": "Худи Casual" }
+    },
+    "4805cfbd-f078-43c9-801f-56ddddcb6258": {
+      "en": { "name": "Casual Joggers" },
+      "ru": { "name": "Джоггеры Casual" }
+    },
+    "48b433b5-49e0-4e0f-8dcd-d9805f70e5fb": {
+      "en": { "name": "Kids Long-Sleeve Jumpsuit" },
+      "ru": { "name": "Детский комбинезон с рукавом" }
+    },
+    "5760b9bb-c766-4410-a22c-9b66b5b07114": {
+      "en": { "name": "Kids Sleeveless Jumpsuit" },
+      "ru": { "name": "Детский комбинезон без рукавов" }
+    },
+    "e1234c0f-fa6c-41b2-8717-44ab41bacb9a": {
+      "en": { "name": "Kids VELO Bike Shorts" },
+      "ru": { "name": "Детские VELO" }
+    },
+    "b59f5431-5f1e-4dea-ba19-441c5fa2b1fb": {
+      "en": { "name": "PRO Yoga Mat" },
+      "ru": { "name": "Коврик для йоги PRO" }
+    },
+    "a60d4791-2136-4a2b-9cfb-7b83a0ad7527": {
+      "en": { "name": "Cork Yoga Block" },
+      "ru": { "name": "Пробковый блок для йоги" }
+    },
+    "3fc9f1e8-018b-46eb-9ed3-275c5854fb95": {
+      "en": { "name": "Stretching Strap" },
+      "ru": { "name": "Ремень для растяжки" }
+    },
+    "fd7558f2-071e-42ac-a76b-f4f411f458c2": {
+      "en": {
+        "name": "PRO Leggings",
+        "description": "High-rise leggings in Premium Supplex. They hold their shape, wick moisture and let your skin breathe. Built for yoga, acrobatics and long practices."
+      },
+      "ru": {
+        "name": "Леггинсы PRO",
+        "description": "Высокие леггинсы из Premium Supplex. Держат форму, отводят влагу и позволяют телу дышать. Созданы для йоги, акробатики и долгих практик."
+      }
+    },
+    "41fcb08d-a73a-485d-a8fb-894e1da66fe7": {
+      "en": {
+        "name": "MIRA Top",
+        "description": "A minimalist top with built-in support. Soft fabric that never restricts movement; a perfect fit thanks to the elastic underbust band."
+      },
+      "ru": {
+        "name": "Топ MIRA",
+        "description": "Лаконичный топ со встроенной поддержкой. Мягкая ткань не сковывает движения, идеальная посадка благодаря эластичной ленте под грудью."
+      }
+    },
+    "74258da1-a417-492d-9184-7790b79a007e": {
+      "en": {
+        "name": "SOLAR Jumpsuit",
+        "description": "A thin-strap jumpsuit that fits like a second skin. Deep open back and a soft waistband that never digs in. Made for inversion practice."
+      },
+      "ru": {
+        "name": "Комбинезон SOLAR",
+        "description": "Комбинезон на тонких бретелях — как вторая кожа. Глубокий вырез на спине, мягкий пояс, который не врезается. Создан для перевёрнутых асан."
+      }
+    },
+    "203a389c-96cb-425d-b646-2a8273c41fd7": {
+      "en": {
+        "name": "FLEX Shorts",
+        "description": "Shorts for hot yoga and Pilates. Breathable fabric, high rise — they never ride up in poses. Great for everyday wear too."
+      },
+      "ru": {
+        "name": "Шорты FLEX",
+        "description": "Шорты для горячих практик и пилатеса. Дышащая ткань, высокая посадка, не задираются в позах. Подходят и на каждый день."
+      }
+    },
+    "38b651f2-e1ac-4d58-b7f1-ff10598db201": {
+      "en": {
+        "name": "CALM Long Sleeve",
+        "description": "A light long sleeve for yoga in a cool studio or a slow morning practice at home. Relaxed through the shoulders, fitted at the waist."
+      },
+      "ru": {
+        "name": "Лонгслив CALM",
+        "description": "Лёгкий лонгслив для йоги в прохладном зале или утренних практик дома. Свободный в плечах, прилегает по талии."
+      }
+    },
+    "108fce85-1dbc-4c00-9782-b1078e38538c": {
+      "en": {
+        "name": "SPORT Leggings",
+        "description": "For running, the gym and intense cardio. Compression fit with a hidden pocket for a key or a card."
+      },
+      "ru": {
+        "name": "Леггинсы SPORT",
+        "description": "Для бега, тренажёрного зала и интенсивного кардио. Компрессионная посадка, потайной карман для ключа или карты."
+      }
+    },
+    "5d705a49-90c0-432d-889e-08e93832dcbe": {
+      "en": {
+        "name": "VELO AERA Bike Shorts",
+        "description": "Mid-length bike shorts. Anatomical cut with a silicone grip band at the hem — they never slide up."
+      },
+      "ru": {
+        "name": "VELO AERA",
+        "description": "Велосипедки средней длины. Анатомический крой, силиконовая лента снизу — не сползают."
+      }
+    },
+    "3319f55b-7c22-4070-ad57-3c3df86fdfc6": {
+      "en": {
+        "name": "MESH Set",
+        "description": "A pole-dance and contemporary set: top + leggings with breathable mesh panels. Move freely and look striking on stage."
+      },
+      "ru": {
+        "name": "Комплект MESH",
+        "description": "Комплект для пилона и контемпорари: топ + леггинсы со вставками из дышащей сетки. Свобода движений и эффектный вид на сцене."
+      }
+    },
+    "797ff454-4e3c-441a-ac40-6860a4b36187": {
+      "en": {
+        "name": "Pole Dance Set",
+        "description": "High-rise shorts + cropped top. Second-skin fabric that stays put through inverted moves."
+      },
+      "ru": {
+        "name": "Комплект для пилона",
+        "description": "Высокие шорты + укороченный топ. Ткань с эффектом «второй кожи», не сползает на перевёрнутых элементах."
+      }
+    },
+    "0efa4b6d-34d0-48af-8ed8-3dbcf8da02b4": {
+      "en": {
+        "name": "EASE Hoodie",
+        "description": "A soft loop-knit hoodie for long mornings and slow days. Softstretch outside, brushed knit inside."
+      },
+      "ru": {
+        "name": "Худи EASE",
+        "description": "Мягкое худи для долгих утр и медленных дней. Снаружи softstretch — внутри начёсанный трикотаж."
+      }
+    },
+    "0903f132-6cd2-4823-926b-d96ac0e2b17b": {
+      "en": {
+        "name": "FLOW Joggers",
+        "description": "Comfortable joggers with an elastic waistband and cuffs. High rise, soft knit — for home, walks and travel."
+      },
+      "ru": {
+        "name": "Джоггеры FLOW",
+        "description": "Удобные джоггеры с эластичным поясом и манжетами. Высокая посадка, мягкий трикотаж — для дома, прогулок и путешествий."
+      }
+    },
+    "8b607aac-7d84-4513-81ca-9e410afcbd96": {
+      "en": {
+        "name": "MINI Kids Jumpsuit",
+        "description": "For little gymnasts and dancers. Four-way stretch fabric that never digs into shoulders or chafes."
+      },
+      "ru": {
+        "name": "Детский комбинезон MINI",
+        "description": "Для маленьких гимнасток и танцовщиц. Ткань тянется в четырёх направлениях, не врезается в плечи и не натирает."
+      }
+    },
+    "d3c4f0cf-ece9-4573-b884-78445f2220c5": {
+      "en": { "name": "Dance Jumpsuit" },
+      "ru": { "name": "Комбинезон Dance" }
+    }
+  },
+  "categories": {
+    "290b92e2-ba4b-44bc-8cbf-f502096889a9": {
+      "en": { "subtitle": "For harmony of body and mind", "buttonText": "View" },
+      "ru": { "subtitle": "Для гармонии тела и духа", "buttonText": "Смотреть" }
+    },
+    "6c457464-8a51-4d1d-bbc3-56520e69a158": {
+      "en": { "subtitle": "For active training", "buttonText": "View" },
+      "ru": { "subtitle": "Для активных тренировок", "buttonText": "Смотреть" }
+    },
+    "751f47ba-c8cf-4b3a-a968-0a1f33b83a7d": {
+      "en": { "subtitle": "Freedom of movement", "buttonText": "View" },
+      "ru": { "subtitle": "Свобода движений", "buttonText": "Смотреть" }
+    },
+    "b88217a8-46b1-4406-ba30-d11bca16a7c7": {
+      "en": { "subtitle": "Everyday comfort", "buttonText": "View" },
+      "ru": { "subtitle": "Повседневный комфорт", "buttonText": "Смотреть" }
+    },
+    "9b37eefe-80c4-49b3-85ac-27bcafe70aa1": {
+      "en": { "subtitle": "For the little ones", "buttonText": "View" },
+      "ru": { "subtitle": "Для самых маленьких", "buttonText": "Смотреть" }
+    },
+    "25f69188-e681-4901-b65a-4417725a430c": {
+      "en": { "subtitle": "Accessories & props", "buttonText": "View" },
+      "ru": { "subtitle": "Аксессуары и инвентарь", "buttonText": "Смотреть" }
+    }
+  },
+  "shopPages": {
+    "968243ef-9715-4ba7-94be-be354421513e": {
+      "en": { "subtitle": "For harmony of body and mind" },
+      "ru": { "subtitle": "Для гармонии тела и духа" }
+    },
+    "75662de8-d0d9-4356-9910-2da2af2d2cc6": {
+      "en": { "subtitle": "For active training" },
+      "ru": { "subtitle": "Для активных тренировок" }
+    },
+    "8d55aa02-0c0f-45a4-b9da-707d9336e372": {
+      "en": { "subtitle": "For dance and freedom of movement" },
+      "ru": { "subtitle": "Для танцев и свободы движений" }
+    },
+    "7886d6e8-ed8a-46e5-8855-ec896da6ca91": {
+      "en": { "subtitle": "For everyday comfort" },
+      "ru": { "subtitle": "Для повседневного комфорта" }
+    },
+    "9f085f66-0a5e-4d70-a681-6b3dbaaea903": {
+      "en": { "subtitle": "For the youngest champions" },
+      "ru": { "subtitle": "Для самых маленьких чемпионов" }
+    },
+    "8d7393c2-cc91-40ea-8ba4-c0cecdccf833": {
+      "en": { "subtitle": "Your yoga props" },
+      "ru": { "subtitle": "Твой инвентарь" }
+    }
+  }
+}

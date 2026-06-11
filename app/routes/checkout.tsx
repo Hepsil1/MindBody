@@ -7,6 +7,7 @@ import { trackBeginCheckout, trackPurchase } from "../utils/analytics.client";
 import { formatPhoneUA, getPhoneDigits } from "../utils/phone";
 import { countLabel } from "../utils/plural";
 import { productImageSrc, IMAGE_FALLBACK } from "../utils/format";
+import { splitLocalePath } from "../i18n/config";
 import {
     useNovaPoshtaAutocomplete,
     type NovaPoshtaCity,
@@ -313,6 +314,9 @@ export default function Checkout() {
                     comment: customerInfo.comment,
                     promoCode: promoApplied?.code,
                     idempotencyKey: idempotencyKeyRef.current,
+                    // Storefront language → confirmation-email language.
+                    // Submit happens client-side only, so window is available.
+                    locale: splitLocalePath(window.location.pathname).locale,
                 }),
             });
 

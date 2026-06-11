@@ -9,6 +9,8 @@ import { buildWebpSrcset } from "../utils/responsive-image";
 import { shopPageTitle, isRealShopSlug } from "../utils/shop-pages";
 import { formatPrice } from "../utils/format";
 import { DEFAULT_SITE_URL, resolveSiteUrl } from "../utils/site-url";
+import { localeFromParam } from "../i18n/config";
+import { localizeEntities } from "../utils/translations.server";
 import type { InventoryVariant, RelatedProductCard, FilterConfigData } from "../types/product";
 import "../styles/product-page.css";
 
@@ -188,6 +190,7 @@ interface ProductDetailData {
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
+    const locale = localeFromParam(params.lang);
     const slug = params.slug;
     if (!slug) throw new Response("Not Found", { status: 404 });
 
@@ -318,10 +321,17 @@ export async function loader({ params }: LoaderFunctionArgs) {
         avg: reviewAgg._avg.rating ? Math.round(reviewAgg._avg.rating * 10) / 10 : 0,
     };
 
+    // en/ru: swap name/description for their translations (uk = no-op).
+    const [localizedProduct] = await localizeEntities("Product", [product], locale, [
+        "name",
+        "description",
+    ]);
+    const localizedRelated = await localizeEntities("Product", relatedProducts, locale, ["name"]);
+
     return {
-        product,
+        product: localizedProduct,
         filterConfig,
-        relatedProducts,
+        relatedProducts: localizedRelated,
         reviewStats,
         siteUrl: resolveSiteUrl(),
     };

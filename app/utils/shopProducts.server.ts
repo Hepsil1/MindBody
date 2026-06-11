@@ -2,6 +2,8 @@ import { prisma } from "../db.server";
 import { parseAndMergeFilterConfig, type MergedFilterConfig } from "./filters";
 import { cachedFetch } from "./cache.server";
 import { resolveSiteUrl } from "./site-url";
+import type { Locale } from "../i18n/config";
+import { localizeEntities } from "./translations.server";
 
 /** Shop listings only change via admin saves, and every such action calls
     invalidateAll() — so this TTL is just a backstop against unbounded staleness. */
@@ -73,13 +75,30 @@ function parseJson<T>(str: string | null | undefined, fallback: T): T {
 export async function loadShopData(
     categorySlug: string,
     opts: LoadShopOptions = {},
+    locale: Locale = "uk",
 ): Promise<ShopData> {
     // Cache the 3-query fan-out per shop/subcategory. Every admin mutation
     // (product / shop-page / slide save) calls invalidateAll(), so edits
     // surface immediately; the 60s TTL is only a backstop. Serves both
     // /shop/:category and /shop/:category/:subcategory.
     const cacheKey = `shop:${categorySlug}:${opts.subcategoryFilter ?? "all"}`;
-    return cachedFetch(cacheKey, SHOP_CACHE_TTL, () => loadShopDataUncached(categorySlug, opts));
+    const data = await cachedFetch(cacheKey, SHOP_CACHE_TTL, () =>
+        loadShopDataUncached(categorySlug, opts),
+    );
+    if (locale === "uk") return data;
+    // Localize OUTSIDE the cache (key is locale-agnostic; cached arrays are
+    // never mutated — localizeEntities maps to fresh objects).
+    const [products, shopPage] = await Promise.all([
+        localizeEntities("Product", data.products, locale, ["name", "description"]),
+        data.shopPage
+            ? localizeEntities("ShopPage", [data.shopPage], locale, [
+                  "title",
+                  "subtitle",
+                  "prefixLabel",
+              ]).then((r) => r[0])
+            : Promise.resolve(data.shopPage),
+    ]);
+    return { ...data, products, shopPage };
 }
 
 async function loadShopDataUncached(

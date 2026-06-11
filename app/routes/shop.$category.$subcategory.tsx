@@ -1,4 +1,5 @@
 import { type LoaderFunctionArgs, type MetaFunction, redirect } from "react-router";
+import { localeFromParam, localizePath } from "../i18n/config";
 import { isValidSubcategory, slugToLabel } from "../utils/categoryMap";
 import { loadShopData } from "../utils/shopProducts.server";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
@@ -15,20 +16,21 @@ import ShopCategory from "./shop.$category";
  * app/utils/categoryMap.ts → CATEGORY_BY_SHOP_PAGE.
  */
 export async function loader(args: LoaderFunctionArgs) {
+    const locale = localeFromParam(args.params.lang);
     const { category, subcategory } = args.params;
     if (!category || !subcategory) {
-        throw redirect("/shop/yoga", 301);
+        throw redirect(localizePath("/shop/yoga", locale), 301);
     }
     if (!isValidSubcategory(category, subcategory)) {
         // Unknown sub for this shop: send the user (and search bots) back to
         // the parent listing. 301 preserves any existing link equity.
-        throw redirect(`/shop/${category}`, 301);
+        throw redirect(localizePath(`/shop/${category}`, locale), 301);
     }
 
     // Filter at the SQL level — Product.category has an index so this is a
     // free narrowing. Previously we called the parent loader (fetching the
     // entire category) and filtered in JS, wasting a query trip.
-    const data = await loadShopData(category, { subcategoryFilter: subcategory });
+    const data = await loadShopData(category, { subcategoryFilter: subcategory }, locale);
     return { ...data, subcategory };
 }
 

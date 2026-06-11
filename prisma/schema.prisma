@@ -31,6 +31,9 @@ model Product {
   slug            String?     @unique
   metaTitle       String?
   metaDescription String?
+  // i18n: JSON {"en":{"name":...,"description":...},"ru":{...}} — read/written
+  // via raw SQL (the moodType pattern) until a clean `prisma generate`.
+  translations    String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   orderItems      OrderItem[]
@@ -74,6 +77,9 @@ model Order {
   idempotencyKey   String?              @unique
   // Best-effort confirmation email outcome: "sent" | "failed" | null (not attempted).
   emailStatus      String?
+  // Storefront language the order was placed from (uk | en | ru) — picks the
+  // confirmation-email language. Raw-SQL written until a clean generate.
+  locale           String               @default("uk")
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   customer         Customer             @relation(fields: [customerId], references: [id])
@@ -152,23 +158,25 @@ model Slide {
 }
 
 model Category {
-  id         String   @id @default(uuid())
-  title      String
-  subtitle   String?
-  image      String
-  imagePos   String   @default("center center")
-  link       String
-  buttonText String   @default("Переглянути все")
-  order      Int      @default(0)
+  id           String   @id @default(uuid())
+  title        String
+  subtitle     String?
+  image        String
+  imagePos     String   @default("center center")
+  link         String
+  buttonText   String   @default("Переглянути все")
+  order        Int      @default(0)
   // Batch 41: mood metadata for theme-appropriate card styling.
   // Values: 'yoga' | 'sport' | 'dance' | 'casual' | 'kids' | null.
   // When null the card renders in the existing neutral style. When set,
   // app/utils/moods.ts provides a preset (tint overlay + Cormorant
   // weight + letter-spacing) so /shop/yoga reads visually distinct from
   // /shop/sport without changing brand language.
-  moodType   String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  moodType     String?
+  // i18n JSON {"en":{"title":...,"subtitle":...,"buttonText":...},"ru":{...}}
+  translations String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model ShopPage {
@@ -179,6 +187,8 @@ model ShopPage {
   prefixLabel  String?
   heroImage    String
   heroImagePos String   @default("50% 50% 1")
+  // i18n JSON {"en":{"title":...,"subtitle":...,"prefixLabel":...},"ru":{...}}
+  translations String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

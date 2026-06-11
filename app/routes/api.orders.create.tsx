@@ -5,6 +5,7 @@ import { sendEmail, renderOrderConfirmation } from "../utils/email.server";
 import { env } from "../utils/env.server";
 import { logger } from "../utils/logger.server";
 import { createOrder, recordEmailStatus } from "../services/order.server";
+import { prisma } from "../db.server";
 
 // Telegram Configuration — from environment variables
 const TELEGRAM_BOT_TOKEN = env.TELEGRAM_BOT_TOKEN ?? "";
@@ -33,8 +34,16 @@ export async function action({ request }: ActionFunctionArgs) {
             return json({ success: false, error: formatZodErrors(parsed.error) }, 400);
         }
 
-        const { customer, items, total, paymentMethod, deliveryMethod, promoCode, idempotencyKey } =
-            parsed.data;
+        const {
+            customer,
+            items,
+            total,
+            paymentMethod,
+            deliveryMethod,
+            promoCode,
+            idempotencyKey,
+            locale,
+        } = parsed.data;
 
         // All the integrity-critical work (price/status/stock recompute, atomic
         // create, idempotency, oversell-safe decrement, promo snapshot) lives in
@@ -63,6 +72,22 @@ export async function action({ request }: ActionFunctionArgs) {
 
         const email = result.email!;
         const orderNumberInt = result.orderNumber;
+
+        // Remember the storefront language on the order (raw SQL — the column
+        // is outside the generated client until a clean prisma generate).
+        // Best-effort: a pre-migration DB must not fail the placed order.
+        if (locale !== "uk") {
+            try {
+                await prisma.$executeRaw`
+                    UPDATE "Order" SET "locale" = ${locale} WHERE "id" = ${result.orderId}
+                `;
+            } catch (e) {
+                logger.error(
+                    { err: e, orderNumber: orderNumberInt },
+                    "[orders] locale save failed",
+                );
+            }
+        }
 
         // Telegram notification (admin) — best-effort.
         if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {

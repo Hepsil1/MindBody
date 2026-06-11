@@ -28,6 +28,7 @@ import {
 import { slugify } from "../../../utils/slugify";
 import { getColorHex, getColorLabel } from "../../../utils/colors";
 import { publishChecklist, publishBlockers } from "../../../utils/productQuality";
+import { fetchTranslationsMap, saveTranslations } from "../../../utils/translations.server";
 import productEditStyles from "../../../styles/admin-product-edit.css?url";
 
 export function links() {
@@ -44,6 +45,12 @@ interface FilterConfigData {
 interface ProductForm {
     name: string;
     description: string;
+    // i18n — stored in Product.translations JSON ({"en":{...},"ru":{...}});
+    // empty string = "no translation, show Ukrainian".
+    nameEn: string;
+    descriptionEn: string;
+    nameRu: string;
+    descriptionRu: string;
     price: string;
     comparePrice: string;
     sku: string;
@@ -62,6 +69,10 @@ interface ProductForm {
 const emptyForm: ProductForm = {
     name: "",
     description: "",
+    nameEn: "",
+    descriptionEn: "",
+    nameRu: "",
+    descriptionRu: "",
     price: "",
     comparePrice: "",
     sku: "",
@@ -121,6 +132,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
         // 3. Fetch Product if not new
         if (!isNew && params.id) {
             const p = await prisma.product.findUnique({ where: { id: params.id } });
+            // translations live outside the generated client (raw SQL) — a
+            // missing column / failed read degrades to empty fields.
+            const trMap = await fetchTranslationsMap("Product", p ? [p.id] : []);
+            const tr = p ? (trMap[p.id] ?? {}) : {};
             if (p) {
                 const inventoryList = parseJsonAdmin<InventoryEntry[]>(p.inventory, []);
                 // Convert list back to map
@@ -143,6 +158,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
                     ...p,
                     name: p.name,
                     description: p.description ?? "",
+                    nameEn: tr.en?.name ?? "",
+                    descriptionEn: tr.en?.description ?? "",
+                    nameRu: tr.ru?.name ?? "",
+                    descriptionRu: tr.ru?.description ?? "",
                     sku: p.sku ?? "",
                     category: p.category ?? "",
                     fabric: p.fabric ?? "",
@@ -362,6 +381,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
                     create: { id, ...fields, slug },
                     update: { ...fields, slug: existing?.slug ?? slug },
                 });
+
+                // i18n: persist EN/RU name+description into the raw-SQL
+                // translations column. Best-effort — a pre-migration DB (no
+                // column yet) must not fail the whole save.
+                try {
+                    const trVal = (k: string) =>
+                        ((formData.get(k) as string) || "").trim() || undefined;
+                    await saveTranslations("Product", id, {
+                        en: { name: trVal("nameEn"), description: trVal("descriptionEn") },
+                        ru: { name: trVal("nameRu"), description: trVal("descriptionRu") },
+                    });
+                } catch (e) {
+                    console.error("Product translations save failed (non-fatal):", e);
+                }
 
                 return { success: true };
             } catch (e) {
@@ -947,6 +980,61 @@ export default function AdminProductEdit() {
                                     value={formData.description}
                                     onChange={(e) =>
                                         setFormData((p) => ({ ...p, description: e.target.value }))
+                                    }
+                                />
+                            </div>
+
+                            {/* i18n: EN/RU варіанти. Порожнє поле = на сайті
+                                показується українська версія. */}
+                            <div className="form-group">
+                                <label className="form-label">Назва (EN)</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="Product name in English"
+                                    value={formData.nameEn}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({ ...p, nameEn: e.target.value }))
+                                    }
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Опис (EN)</label>
+                                <textarea
+                                    className="form-textarea"
+                                    placeholder="Description in English"
+                                    value={formData.descriptionEn}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({
+                                            ...p,
+                                            descriptionEn: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Назва (RU)</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="Название на русском"
+                                    value={formData.nameRu}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({ ...p, nameRu: e.target.value }))
+                                    }
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Опис (RU)</label>
+                                <textarea
+                                    className="form-textarea"
+                                    placeholder="Описание на русском"
+                                    value={formData.descriptionRu}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({
+                                            ...p,
+                                            descriptionRu: e.target.value,
+                                        }))
                                     }
                                 />
                             </div>

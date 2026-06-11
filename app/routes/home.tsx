@@ -13,6 +13,7 @@ import { buildWebpSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
 import { localeFromParam } from "../i18n/config";
+import { localizeEntities } from "../utils/translations.server";
 
 // One Instagram post tile rendered in the social proof section.
 interface InstagramPost {
@@ -166,7 +167,7 @@ export function headers() {
 export async function loader({ request, params }: Route.LoaderArgs) {
     // ":lang?" makes home a catch-all for unknown single-segment URLs
     // ("/garbage") — reject anything that isn't a real locale with a 404.
-    localeFromParam(params.lang);
+    const locale = localeFromParam(params.lang);
     try {
         // Cache TTL: 60 seconds — slides/categories rarely change
         const CACHE_TTL = 60_000;
@@ -332,10 +333,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
             },
         ];
 
+        // en/ru: translated DB content (fresh objects — cached arrays stay uk).
+        const [categories, newProducts] = await Promise.all([
+            localizeEntities(
+                "Category",
+                categoriesFromDb.length > 0 ? categoriesFromDb : FALLBACK_CATEGORIES,
+                locale,
+                ["title", "subtitle", "buttonText"],
+            ),
+            localizeEntities("Product", rawProducts.map(mapProduct), locale, ["name"]),
+        ]);
+
         return {
             slides: slidesPayload,
-            categories: categoriesFromDb.length > 0 ? categoriesFromDb : FALLBACK_CATEGORIES,
-            newProducts: rawProducts.map(mapProduct),
+            categories,
+            newProducts,
             // Instagram preview tiles. The previous Behold CDN URLs
             // (behold.pictures/...) are dead — every tile rendered as a
             // broken-image icon. Use local product photography from

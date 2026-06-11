@@ -1,9 +1,13 @@
 import { prisma } from "../db.server";
 import { expandSearchTerms } from "../utils/search-synonyms";
+import { isLocale, type Locale } from "../i18n/config";
+import { localizeEntities } from "../utils/translations.server";
 
 export async function loader({ request }: { request: Request }) {
     const url = new URL(request.url);
     const query = url.searchParams.get("q");
+    const langParam = url.searchParams.get("lang");
+    const locale: Locale = isLocale(langParam) ? langParam : "uk";
 
     if (!query || query.trim().length < 2) {
         return Response.json({ products: [] });
@@ -39,7 +43,11 @@ export async function loader({ request }: { request: Request }) {
             },
         });
 
-        const results = products.map((p) => {
+        // en/ru: show translated names (search itself matches uk text — the
+        // synonym expansion maps en/ru queries onto uk terms).
+        const localized = await localizeEntities("Product", products, locale, ["name"]);
+
+        const results = localized.map((p) => {
             let image = "/pics1cloths/IMG_6201.JPG";
             try {
                 const imgs = JSON.parse(p.images || "[]");

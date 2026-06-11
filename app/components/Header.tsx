@@ -281,7 +281,9 @@ export function Header() {
         setIsSearching(true);
         (async () => {
             try {
-                const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const res = await fetch(
+                    `/api/search?q=${encodeURIComponent(query)}&lang=${locale}`,
+                );
                 const data = await res.json();
                 if (!cancelled) setSearchResults(data.products || []);
             } catch {

@@ -64,6 +64,9 @@ export const OrderCreateSchema = z.object({
     // attempt. A retry with the same key returns the existing order instead of
     // creating a duplicate. Optional so older clients still work.
     idempotencyKey: z.string().trim().min(8).max(100).optional().nullable(),
+    // Storefront language the order was placed from — drives the language of
+    // the confirmation email. Optional: older clients imply Ukrainian.
+    locale: z.enum(["uk", "en", "ru"]).optional().default("uk"),
 });
 
 // ===== Contact API =====
