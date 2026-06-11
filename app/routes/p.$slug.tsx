@@ -346,6 +346,13 @@ export default function ProductDetail() {
        fake a brief "✓ Додано" lock instead. Double-purpose: visual
        feedback + 1.2s guard against accidental double-add. */
     const [justAdded, setJustAdded] = useState(false);
+    // F-029 — when the CTA is clicked without a size picked, we keep
+    // the button active (so it's not visually dead), scroll the size
+    // selector into view, and pulse it for ~900 ms so the eye lands
+    // on the next required action instead of the buyer wondering why
+    // "Додати в кошик" didn't do anything.
+    const sizesGroupRef = useRef<HTMLDivElement | null>(null);
+    const [sizeFlash, setSizeFlash] = useState(false);
 
     // F-002 — funnel-step #1. Fire view_item exactly once per product
     // visit; the [product.id] dep covers PDP→PDP client navigations
@@ -425,7 +432,17 @@ export default function ProductDetail() {
 
     const addToCart = () => {
         if (product.sizes.length > 0 && !selectedSize) {
-            showToast("Будь ласка, оберіть розмір", "warning");
+            // F-029 — instead of just toasting and leaving the buyer to
+            // hunt for the size selector, take them there. Smooth-scroll
+            // with extra room above (so the section header is in view,
+            // not flush against the sticky header), flash for ~900 ms.
+            const node = sizesGroupRef.current;
+            if (node) {
+                node.scrollIntoView({ behavior: "smooth", block: "center" });
+                setSizeFlash(true);
+                setTimeout(() => setSizeFlash(false), 900);
+            }
+            showToast("Спершу оберіть розмір", "warning");
             return;
         }
 
@@ -763,7 +780,18 @@ export default function ProductDetail() {
                                 )}
 
                                 {product.sizes.length > 0 && (
-                                    <div className="selector-group">
+                                    <div
+                                        className={`selector-group${sizeFlash ? " is-pulse" : ""}`}
+                                        ref={sizesGroupRef}
+                                        style={{
+                                            transition:
+                                                "box-shadow 0.3s ease, background 0.3s ease",
+                                            boxShadow: sizeFlash
+                                                ? "0 0 0 3px var(--color-primary)"
+                                                : undefined,
+                                            borderRadius: sizeFlash ? "12px" : undefined,
+                                        }}
+                                    >
                                         <div className="group-head">
                                             <span className="selector-label">Розмір</span>
                                             <Link to="/size-guide" className="size-guide">
@@ -934,21 +962,22 @@ export default function ProductDetail() {
                             </div>
 
                             <div className="actions-row">
+                                {/* F-029 — keep the primary CTA visually
+                                    alive even when a size hasn't been picked.
+                                    The click handler intercepts that state and
+                                    pulses the size selector instead of looking
+                                    broken. Disabled only persists for out-of-
+                                    stock + just-added (handler-driven). */}
                                 <button
                                     className="btn-primary-add"
                                     onClick={addToCart}
                                     disabled={
-                                        justAdded ||
-                                        (product.sizes.length > 0 && !selectedSize) ||
-                                        (!isInStock && product.inventory?.length > 0)
+                                        justAdded || (!isInStock && product.inventory?.length > 0)
                                     }
                                     aria-live="polite"
                                     style={{
                                         opacity:
-                                            (product.sizes.length > 0 && !selectedSize) ||
-                                            (!isInStock && product.inventory?.length > 0)
-                                                ? 0.5
-                                                : 1,
+                                            !isInStock && product.inventory?.length > 0 ? 0.5 : 1,
                                     }}
                                 >
                                     <span>
@@ -956,9 +985,7 @@ export default function ProductDetail() {
                                             ? "✓ Додано"
                                             : !isInStock && product.inventory?.length > 0
                                               ? "Немає в наявності"
-                                              : product.sizes.length > 0 && !selectedSize
-                                                ? "Оберіть розмір"
-                                                : "Додати в кошик"}
+                                              : "Додати в кошик"}
                                     </span>
                                 </button>
                                 <button
@@ -1207,27 +1234,24 @@ export default function ProductDetail() {
 
             {/* CSS moved to app/styles/product-page.css */}
 
-            {/* Mobile Sticky CTA */}
+            {/* Mobile Sticky CTA — F-029: matches the desktop button. The
+                only disabled state is genuinely-blocked (OOS / just-added);
+                an unset size routes through the handler so the size selector
+                pulses + the toast nudges. */}
             <div className="mobile-sticky-cta">
                 <div className="mobile-sticky-cta__price">{formatPrice(product.price)} ₴</div>
                 <button
                     type="button"
                     className="mobile-sticky-cta__btn"
                     onClick={addToCart}
-                    disabled={
-                        justAdded ||
-                        (product.sizes.length > 0 && !selectedSize) ||
-                        (!isInStock && product.inventory?.length > 0)
-                    }
+                    disabled={justAdded || (!isInStock && product.inventory?.length > 0)}
                     aria-live="polite"
                 >
                     {justAdded
                         ? "✓ Додано"
                         : !isInStock && product.inventory?.length > 0
                           ? "Немає в наявності"
-                          : product.sizes.length > 0 && !selectedSize
-                            ? "Оберіть розмір"
-                            : "Додати в кошик"}
+                          : "Додати в кошик"}
                 </button>
             </div>
         </main>
