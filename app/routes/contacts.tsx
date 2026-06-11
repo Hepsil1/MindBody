@@ -108,7 +108,9 @@ export default function Contacts() {
                                 </svg>
                             </div>
                             <h3>Адреса</h3>
-                            <span className="contact-card__value">Одеса, Україна</span>
+                            <span className="contact-card__value">
+                                Україна · Доставка по всій країні
+                            </span>
                             <span className="contact-card__hint">Онлайн-магазин</span>
                         </div>
 
@@ -133,7 +135,7 @@ export default function Contacts() {
                                 </svg>
                             </div>
                             <h3>Instagram</h3>
-                            <span className="contact-card__value">@mindbody.sportwear</span>
+                            <span className="contact-card__value">@mindbody_sportwear</span>
                             <span className="contact-card__hint">Слідкуйте за нами</span>
                         </a>
                     </div>

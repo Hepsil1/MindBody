@@ -235,7 +235,7 @@ export default function Footer() {
                                     </span>
                                 </div>
                                 <a
-                                    href="https://instagram.com/mindbody.sportwear"
+                                    href="https://instagram.com/mindbody_sportwear"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="mind-feedback__social-link"
@@ -402,7 +402,7 @@ export default function Footer() {
                             hello@mindbody-sportwear.com
                         </a>
                         <span aria-hidden="true"> · </span>
-                        м. Київ, Україна
+                        Україна · Доставка по всій країні
                     </address>
 
                     <div className="footer-puma__copyright-text">

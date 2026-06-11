@@ -128,7 +128,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
         phoneDisplay: "+38 (096) 665-08-55",
         phoneTel: "+380966650855",
         hoursLabel: "Пн–Пт · 9:00–18:00",
-        instagramUrl: "https://instagram.com/mindbody.sportwear",
+        instagramUrl: "https://instagram.com/mindbody_sportwear",
         telegramUrl: "https://t.me/Juliamindbody",
         viberPhone: "380509656737",
         whatsappPhone: "380973542848",
@@ -141,12 +141,20 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
             { title: "Швидка оплата", desc: "Безпечно карткою або при отриманні" },
         ],
     },
+    // F-009 — honest, verifiable defaults. "10+ років на ринку" and
+    // "5 000+ задоволених клієнтів" got dropped: the brand launched in
+    // 2020 (not 10+ years) and there is currently zero customer-facing
+    // proof of a 5K-customer count (every product still shows zero
+    // reviews). The remaining four are either directly verifiable
+    // (Instagram counts) or are commitments the site actually keeps
+    // (return window). The owner can still override every cell from
+    // /admin/editor → Налаштування → Stats.
     homeStats: {
         items: [
             { count: 63900, suffix: "+", label: "Підписників в Instagram" },
             { count: 2168, suffix: "+", label: "Публікацій у соцмережах" },
-            { count: 10, suffix: "+", label: "Років на ринку" },
-            { count: 5000, suffix: "+", label: "Задоволених клієнтів" },
+            { count: 2020, suffix: "", label: "Бренд з року" },
+            { count: 14, suffix: "", label: "Днів на повернення" },
         ],
     },
     homeBrandWorld: {
