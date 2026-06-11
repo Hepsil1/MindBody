@@ -292,12 +292,13 @@ export default function Footer() {
                 </div>
             </div>
 
-            {/* Sprint 1 D1.4 — #4 TRUST-001 payment + security badges.
-                Critical first-time-visitor trust signal. SVGs from
-                simple-icons.org (MIT). currentColor inherits parent text
-                tint so they read as quiet supporting info, not loud
-                logos. NP shipping note kept text-only since simple-icons
-                has no Ukrainian carrier marks. */}
+            {/* F-004 — payment badges now match what the checkout actually
+                offers. Visa/Mastercard stay because the courier-terminal
+                option uses them (see /delivery), but Apple Pay / Google Pay
+                are dropped: they had been advertising an online flow we
+                don't have, which collides with the «only cash on delivery»
+                radio at checkout. They come back when card acquiring goes
+                live. */}
             <div className="footer-puma__trust-row">
                 <ul className="footer-puma__pay-icons" aria-label="Способи оплати">
                     <li>
@@ -320,27 +321,7 @@ export default function Footer() {
                             decoding="async"
                         />
                     </li>
-                    <li>
-                        <img
-                            src="/icons/payment/applepay.svg"
-                            alt="Apple Pay"
-                            width="40"
-                            height="20"
-                            loading="lazy"
-                            decoding="async"
-                        />
-                    </li>
-                    <li>
-                        <img
-                            src="/icons/payment/googlepay.svg"
-                            alt="Google Pay"
-                            width="40"
-                            height="20"
-                            loading="lazy"
-                            decoding="async"
-                        />
-                    </li>
-                    <li className="footer-puma__pay-text">Готівка при отриманні</li>
+                    <li className="footer-puma__pay-text">Готівка або картка при отриманні</li>
                 </ul>
                 <p className="footer-puma__ssl-badge">
                     <svg

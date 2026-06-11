@@ -212,8 +212,8 @@ export default function Delivery() {
                                         marginBottom: "15px",
                                     }}
                                 >
-                                    Visa, Mastercard, Apple Pay, Google Pay — на терміналі у
-                                    відділенні Нової Пошти
+                                    Visa або Mastercard — на терміналі у відділенні Нової Пошти при
+                                    отриманні замовлення.
                                 </p>
                                 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                                     <span
@@ -233,15 +233,6 @@ export default function Delivery() {
                                         }}
                                     >
                                         Mastercard
-                                    </span>
-                                    <span
-                                        className="payment-badge"
-                                        style={{
-                                            background: "var(--color-primary)",
-                                            color: "#fff",
-                                        }}
-                                    >
-                                        Apple Pay
                                     </span>
                                 </div>
                             </div>

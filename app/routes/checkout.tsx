@@ -1009,34 +1009,13 @@ export default function Checkout() {
                                             </div>
                                         </label>
 
-                                        <div
-                                            className="payment-option payment-option--soon"
-                                            aria-disabled="true"
-                                            style={{ opacity: 0.55, cursor: "not-allowed" }}
-                                        >
-                                            <div className="payment-option__content">
-                                                <svg
-                                                    className="payment-icon card"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="1.5"
-                                                    width="28"
-                                                    height="28"
-                                                >
-                                                    <rect
-                                                        x="1"
-                                                        y="4"
-                                                        width="22"
-                                                        height="16"
-                                                        rx="2"
-                                                        ry="2"
-                                                    />
-                                                    <line x1="1" y1="10" x2="23" y2="10" />
-                                                </svg>
-                                                <span>Оплата карткою онлайн — скоро</span>
-                                            </div>
-                                        </div>
+                                        {/* F-039 — removed the «Оплата карткою онлайн —
+                                            скоро» disabled placeholder. Showing a payment
+                                            method that doesn't work at the most trust-
+                                            sensitive point of the funnel reads as
+                                            "site under construction" right before the
+                                            money decision. It comes back the day acquiring
+                                            actually goes live. */}
                                     </div>
                                 </div>
 
