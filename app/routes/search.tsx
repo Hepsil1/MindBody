@@ -6,6 +6,7 @@ import ProductCard, { type Product } from "../components/ProductCard";
 import { pluralizeUA } from "../utils/plural";
 import { DEFAULT_SITE_URL as SITE_URL } from "../utils/site-url";
 import { trackSearch } from "../utils/analytics.client";
+import { expandSearchTerms } from "../utils/search-synonyms";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const q = data?.q || "";
@@ -35,19 +36,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const q = (url.searchParams.get("q") || "").trim();
 
     if (q.length < 2) {
-        return { q, products: [] as Product[] };
+        return { q, products: [] as Product[], fallback: [] as Product[] };
     }
 
     try {
-        const term = q.replace(/[%_]/g, "");
+        // F-014 — synonym-expand the query so "легінси" finds "Лосини",
+        // "комплект" finds "костюм", etc. See utils/search-synonyms.ts.
+        const terms = expandSearchTerms(q);
         const products = await prisma.product.findMany({
             where: {
                 status: "active",
-                OR: [
-                    { name: { contains: term, mode: "insensitive" } },
-                    { description: { contains: term, mode: "insensitive" } },
-                    { category: { contains: term, mode: "insensitive" } },
-                ],
+                OR: terms.flatMap((t) => [
+                    { name: { contains: t, mode: "insensitive" as const } },
+                    { description: { contains: t, mode: "insensitive" as const } },
+                    { category: { contains: t, mode: "insensitive" as const } },
+                ]),
             },
             orderBy: { createdAt: "desc" },
             take: 60,
@@ -107,15 +110,69 @@ export async function loader({ request }: LoaderFunctionArgs) {
             };
         });
 
-        return { q, products: mapped };
+        // F-014 — empty results stay a dead-end without something to do
+        // next. Load 6 popular fallbacks (newest in-stock products) so
+        // the buyer leaves the page with a place to click instead of
+        // bouncing. Single extra query, only when needed.
+        let fallback: Product[] = [];
+        if (mapped.length === 0) {
+            const top = await prisma.product.findMany({
+                where: { status: "active" },
+                orderBy: { createdAt: "desc" },
+                take: 6,
+                select: {
+                    id: true,
+                    slug: true,
+                    name: true,
+                    price: true,
+                    comparePrice: true,
+                    category: true,
+                    images: true,
+                    inventory: true,
+                    createdAt: true,
+                },
+            });
+            fallback = top.map((p) => {
+                let imgs: string[] = [];
+                try {
+                    imgs = JSON.parse(p.images || "[]");
+                } catch {}
+                let inv: Record<string, number> = {};
+                try {
+                    inv = JSON.parse(p.inventory || "{}");
+                } catch {}
+                const invValues = Object.values(inv);
+                const inStock = invValues.length === 0 || invValues.some((v) => Number(v) > 0);
+                const price = Number(p.price);
+                const comparePrice = Number(p.comparePrice) || 0;
+                const isSale = comparePrice > price && price > 0;
+                const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+                return {
+                    id: p.id,
+                    slug: p.slug ?? undefined,
+                    name: p.name,
+                    category: p.category ?? undefined,
+                    price: isSale ? comparePrice : price,
+                    image: imgs[0] || "/brand-sun.png",
+                    image2: imgs[1] || null,
+                    is_new: NOW - createdAt < NEW_THRESHOLD,
+                    is_sale: isSale,
+                    sale_price: isSale ? price : undefined,
+                    discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
+                    inStock,
+                };
+            });
+        }
+
+        return { q, products: mapped, fallback };
     } catch (e) {
         console.error("Search loader error", e);
-        return { q, products: [] as Product[] };
+        return { q, products: [] as Product[], fallback: [] as Product[] };
     }
 }
 
 export default function Search() {
-    const { q: initialQ, products } = useLoaderData<typeof loader>();
+    const { q: initialQ, products, fallback } = useLoaderData<typeof loader>();
     const [params, setParams] = useSearchParams();
     const [query, setQuery] = useState(initialQ || "");
 
@@ -311,6 +368,32 @@ export default function Search() {
                                     Kids
                                 </Link>
                             </div>
+
+                            {/* F-014 — keep the visitor on-site: even when
+                                their query didn't match, show six recent
+                                products. The loader already populated
+                                `fallback` only for the no-results branch
+                                so there's no extra cost on the happy path. */}
+                            {fallback.length > 0 && (
+                                <div style={{ marginTop: "64px" }}>
+                                    <h3
+                                        style={{
+                                            marginBottom: "24px",
+                                            fontFamily:
+                                                "var(--font-display, 'Cormorant Garamond', serif)",
+                                        }}
+                                    >
+                                        Можливо, вам сподобається
+                                    </h3>
+                                    <div className="luxe-product-grid">
+                                        {fallback.map((p) => (
+                                            <div key={p.id} className="luxe-card-wrapper">
+                                                <ProductCard product={p} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

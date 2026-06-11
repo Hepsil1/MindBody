@@ -1,4 +1,5 @@
 import { prisma } from "../db.server";
+import { expandSearchTerms } from "../utils/search-synonyms";
 
 export async function loader({ request }: { request: Request }) {
     const url = new URL(request.url);
@@ -9,15 +10,20 @@ export async function loader({ request }: { request: Request }) {
     }
 
     try {
-        const term = query.trim().replace(/[%_]/g, "");
+        // F-014 — expand "легінси" → ["легінси", "лосини", ...] so the
+        // top buyer query in the niche stops returning zero hits.
+        const terms = expandSearchTerms(query);
+        if (terms.length === 0) {
+            return Response.json({ products: [] });
+        }
         const products = await prisma.product.findMany({
             where: {
                 status: "active",
-                OR: [
-                    { name: { contains: term, mode: "insensitive" } },
-                    { description: { contains: term, mode: "insensitive" } },
-                    { category: { contains: term, mode: "insensitive" } },
-                ],
+                OR: terms.flatMap((t) => [
+                    { name: { contains: t, mode: "insensitive" as const } },
+                    { description: { contains: t, mode: "insensitive" as const } },
+                    { category: { contains: t, mode: "insensitive" as const } },
+                ]),
             },
             orderBy: { name: "asc" },
             take: 8,
