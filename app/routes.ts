@@ -1,26 +1,33 @@
-import { type RouteConfig, index, route, layout } from "@react-router/dev/routes";
+import { type RouteConfig, route, layout } from "@react-router/dev/routes";
 
+/**
+ * Public storefront routes carry an optional locale prefix (`:lang?`):
+ *   /shop/yoga      → Ukrainian (default, no prefix)
+ *   /en/shop/yoga   → English   /ru/shop/yoga → Russian
+ * Loaders validate the param via localeFromParam() (garbage prefix → 404).
+ * /api and /admin are intentionally NOT localized.
+ */
 export default [
-    index("routes/home.tsx"),
-    route("shop/:category", "routes/shop.$category.tsx"),
-    route("shop/:category/:subcategory", "routes/shop.$category.$subcategory.tsx"),
-    route("product/:id", "routes/product.$id.tsx"),
-    route("p/:slug", "routes/p.$slug.tsx"),
-    route("wishlist", "routes/wishlist.tsx"),
-    route("checkout", "routes/checkout.tsx"),
-    route("about", "routes/about.tsx"),
-    route("contacts", "routes/contacts.tsx"),
-    route("delivery", "routes/delivery.tsx"),
-    route("size-guide", "routes/size-guide.tsx"),
-    route("privacy", "routes/privacy.tsx"),
-    route("terms", "routes/terms.tsx"),
-    route("return-policy", "routes/return-policy.tsx"),
-    route("faq", "routes/faq.tsx"),
-    route("care-guide", "routes/care-guide.tsx"),
-    route("search", "routes/search.tsx"),
-    route("profile", "routes/profile.tsx"),
-    route("auth", "routes/auth.tsx"),
-    route("auth/callback", "routes/auth.callback.tsx"),
+    route(":lang?", "routes/home.tsx"),
+    route(":lang?/shop/:category", "routes/shop.$category.tsx"),
+    route(":lang?/shop/:category/:subcategory", "routes/shop.$category.$subcategory.tsx"),
+    route(":lang?/product/:id", "routes/product.$id.tsx"),
+    route(":lang?/p/:slug", "routes/p.$slug.tsx"),
+    route(":lang?/wishlist", "routes/wishlist.tsx"),
+    route(":lang?/checkout", "routes/checkout.tsx"),
+    route(":lang?/about", "routes/about.tsx"),
+    route(":lang?/contacts", "routes/contacts.tsx"),
+    route(":lang?/delivery", "routes/delivery.tsx"),
+    route(":lang?/size-guide", "routes/size-guide.tsx"),
+    route(":lang?/privacy", "routes/privacy.tsx"),
+    route(":lang?/terms", "routes/terms.tsx"),
+    route(":lang?/return-policy", "routes/return-policy.tsx"),
+    route(":lang?/faq", "routes/faq.tsx"),
+    route(":lang?/care-guide", "routes/care-guide.tsx"),
+    route(":lang?/search", "routes/search.tsx"),
+    route(":lang?/profile", "routes/profile.tsx"),
+    route(":lang?/auth", "routes/auth.tsx"),
+    route(":lang?/auth/callback", "routes/auth.callback.tsx"),
     route("api/novaposhta", "routes/api.novaposhta.tsx"),
     route("api/register", "routes/api.register.tsx"),
     route("api/orders/create", "routes/api.orders.create.tsx"),

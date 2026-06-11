@@ -177,7 +177,7 @@ export default function Checkout() {
         if (items.length === 0) return;
         trackBeginCheckout(
             items.map((it) => ({
-                id: it.id,
+                id: String(it.id),
                 name: it.name,
                 price: it.price,
                 quantity: it.quantity,
@@ -332,7 +332,7 @@ export default function Checkout() {
                     orderId: String(result.orderId),
                     total,
                     items: items.map((it) => ({
-                        id: it.id,
+                        id: String(it.id),
                         name: it.name,
                         price: it.price,
                         quantity: it.quantity,

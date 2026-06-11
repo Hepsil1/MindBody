@@ -4,14 +4,29 @@ import {
     Links,
     Meta,
     Outlet,
+    redirect,
     Scripts,
     ScrollRestoration,
     useLocation,
+    useRouteLoaderData,
 } from "react-router";
+import { isbot } from "isbot";
 
 import type { Route } from "./+types/root";
 import { getSiteSettings } from "./utils/site-settings.server";
 import { getMegaCounts } from "./utils/mega-counts.server";
+import { getUsdRate } from "./utils/currency.server";
+import {
+    HTML_LANG,
+    LOCALES,
+    localeFromCookieHeader,
+    localizePath,
+    splitLocalePath,
+    translate,
+    useI18n,
+} from "./i18n";
+import { DEFAULT_SITE_URL } from "./utils/site-url";
+import { LanguageGate } from "./components/LanguageGate";
 import appCss from "./app.css?url";
 import loadingScreenCss from "./styles/loading-screen.css?url";
 import { Header } from "./components/Header";
@@ -67,23 +82,45 @@ export const links: Route.LinksFunction = () => [
 // defaults), and the result is server-cached for 5 minutes — one cheap read
 // per navigation. Root loaders revalidate after actions, so an admin save
 // shows up on the next render.
-export async function loader() {
+export async function loader({ request }: Route.LoaderArgs) {
+    const url = new URL(request.url);
+    const cookieLocale = localeFromCookieHeader(request.headers.get("cookie"));
+
+    // Returning visitor lands on bare "/" but previously chose en/ru →
+    // send them to their language home. Only the exact root path redirects
+    // (deep links stay as-typed), and bots never carry the cookie, so SEO
+    // sees the canonical trees untouched.
+    if (url.pathname === "/" && cookieLocale && cookieLocale !== "uk") {
+        throw redirect(`/${cookieLocale}`);
+    }
+
     // F-024 — load alongside siteSettings so the Header sees both as a
-    // single root loaderData object. Parallelised because the two
-    // queries are independent.
-    const [siteSettings, megaCounts] = await Promise.all([getSiteSettings(), getMegaCounts()]);
-    return { siteSettings, megaCounts };
+    // single root loaderData object. Parallelised because the queries are
+    // independent. usdRate powers the $ prices on /en and /ru.
+    const [siteSettings, megaCounts, usdRate] = await Promise.all([
+        getSiteSettings(),
+        getMegaCounts(),
+        getUsdRate(),
+    ]);
+
+    // First visit (no remembered language) → offer the language gate once.
+    const showLanguageGate =
+        cookieLocale === null && !isbot(request.headers.get("user-agent") ?? "");
+
+    return { siteSettings, megaCounts, usdRate, showLanguageGate };
 }
 
 // Wrapper component that can use hooks
 function AppContent({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const isAdminRoute = location.pathname.startsWith("/admin");
+    const rootData = useRouteLoaderData("root") as { showLanguageGate?: boolean } | undefined;
 
     return (
         <ToastProvider>
             {!isAdminRoute && <SmartSunParticles />}
             <LoadingScreen />
+            {!isAdminRoute && rootData?.showLanguageGate && <LanguageGate />}
             {!isAdminRoute && <Header />}
             {/* tabIndex=-1 so the skip link actually moves focus into the
                 content (a bare div isn't focusable, so focus would stay on the
@@ -103,8 +140,12 @@ function AppContent({ children }: { children: React.ReactNode }) {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
+    const location = useLocation();
+    const { locale, path: barePath } = splitLocalePath(location.pathname);
+    const isPublicPage = !barePath.startsWith("/admin") && !barePath.startsWith("/api");
+
     return (
-        <html lang="uk">
+        <html lang={HTML_LANG[locale]}>
             <head>
                 <meta charSet="utf-8" />
                 {/* viewport-fit=cover unlocks env(safe-area-inset-*) for
@@ -116,12 +157,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     content="width=device-width, initial-scale=1, viewport-fit=cover"
                 />
                 <meta name="theme-color" content="#2a5a68" />
+                {/* hreflang alternates — every public URL exists in all three
+                    language trees; x-default points at the Ukrainian original. */}
+                {isPublicPage &&
+                    LOCALES.map((l) => (
+                        <link
+                            key={l}
+                            rel="alternate"
+                            hrefLang={HTML_LANG[l]}
+                            href={DEFAULT_SITE_URL + localizePath(barePath, l)}
+                        />
+                    ))}
+                {isPublicPage && (
+                    <link rel="alternate" hrefLang="x-default" href={DEFAULT_SITE_URL + barePath} />
+                )}
                 <Meta />
                 <Links />
             </head>
             <body>
                 <a href="#main-content" className="skip-link">
-                    Перейти до контенту
+                    {translate(locale, "Перейти до контенту")}
                 </a>
                 {children}
                 <ScrollRestoration />
@@ -154,13 +209,14 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-    let message = "Помилка!";
-    let details = "Виникла неочікувана помилка.";
+    const { t, lp } = useI18n();
+    let message = t("Помилка!");
+    let details = t("Виникла неочікувана помилка.");
     let stack: string | undefined;
 
     if (isRouteErrorResponse(error)) {
-        message = error.status === 404 ? "404" : "Помилка";
-        details = error.status === 404 ? "Сторінку не знайдено." : error.statusText || details;
+        message = error.status === 404 ? "404" : t("Помилка");
+        details = error.status === 404 ? t("Сторінку не знайдено.") : error.statusText || details;
     } else if (error && error instanceof Error) {
         details = error.message;
         stack = import.meta.env.DEV ? error.stack : undefined;
@@ -206,7 +262,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
                                 CTA, no popular links, no search.  Now: search
                                 form (GET /search?q=) + popular-category chips. */}
                             <form
-                                action="/search"
+                                action={lp("/search")}
                                 method="get"
                                 style={{
                                     display: "flex",
@@ -218,8 +274,8 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
                                 <input
                                     type="search"
                                     name="q"
-                                    placeholder="Пошук товарів..."
-                                    aria-label="Пошук товарів"
+                                    placeholder={t("Пошук товарів...")}
+                                    aria-label={t("Пошук товарів")}
                                     style={{
                                         flex: 1,
                                         padding: "12px 16px",
@@ -238,7 +294,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
                                         color: "var(--color-primary)",
                                     }}
                                 >
-                                    Знайти
+                                    {t("Знайти")}
                                 </button>
                             </form>
 
@@ -262,7 +318,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
                                 ].map((c) => (
                                     <a
                                         key={c.to}
-                                        href={c.to}
+                                        href={lp(c.to)}
                                         style={{
                                             padding: "8px 14px",
                                             borderRadius: "999px",
@@ -279,7 +335,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
                             </div>
 
                             <a
-                                href="/"
+                                href={lp("/")}
                                 className="btn btn--primary"
                                 style={{
                                     display: "inline-block",
@@ -287,7 +343,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
                                     color: "var(--color-primary)",
                                 }}
                             >
-                                На головну
+                                {t("На головну")}
                             </a>
 
                             {stack && (

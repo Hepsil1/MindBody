@@ -12,6 +12,7 @@ import { cachedFetch } from "../utils/cache.server";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
+import { localeFromParam } from "../i18n/config";
 
 // One Instagram post tile rendered in the social proof section.
 interface InstagramPost {
@@ -162,7 +163,10 @@ export function headers() {
     };
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
+    // ":lang?" makes home a catch-all for unknown single-segment URLs
+    // ("/garbage") — reject anything that isn't a real locale with a 404.
+    localeFromParam(params.lang);
     try {
         // Cache TTL: 60 seconds — slides/categories rarely change
         const CACHE_TTL = 60_000;

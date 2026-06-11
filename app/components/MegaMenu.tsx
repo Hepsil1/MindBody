@@ -1,6 +1,6 @@
-import { Link } from "react-router";
 import { subcategoriesFor, fabricLabel, sleeveLabel } from "../utils/taxonomy";
 import { buildWebpSrcset } from "../utils/responsive-image";
+import { LLink, useI18n } from "../i18n";
 
 export interface MegaFeatured {
     image: string;
@@ -54,6 +54,7 @@ interface MegaMenuContentProps {
  * /shop/yoga/jumpsuit?fabric=sport&sleeve=long.
  */
 export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenuContentProps) {
+    const { t } = useI18n();
     // F-024 — when counts are loaded, hide branches with no products.
     // No counts (yet) → behave as before (no filtering), so a slow DB
     // never blanks out the navigation.
@@ -70,14 +71,14 @@ export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenu
             <div className="mega-menu__cols">
                 {/* Category root */}
                 <div className="mega-menu__group">
-                    <Link
+                    <LLink
                         to={`/shop/${shop}`}
                         prefetch="intent"
                         className="mega-menu__group-head mega-menu__group-head--all"
                         onClick={onNavigate}
                     >
-                        Всі товари
-                    </Link>
+                        {t("Всі товари")}
+                    </LLink>
                 </div>
 
                 {subs.map(([sub, def]) => {
@@ -89,14 +90,14 @@ export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenu
                     );
                     return (
                         <div key={sub} className="mega-menu__group">
-                            <Link
+                            <LLink
                                 to={base}
                                 prefetch="intent"
                                 className="mega-menu__group-head"
                                 onClick={onNavigate}
                             >
-                                {def.label}
-                            </Link>
+                                {t(def.label)}
+                            </LLink>
 
                             {/* Level 3/4: fabric → sleeve (if any). */}
                             {fabrics.length > 0
@@ -106,38 +107,38 @@ export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenu
                                       );
                                       return (
                                           <div key={f} className="mega-menu__fabric">
-                                              <Link
+                                              <LLink
                                                   to={`${base}?fabric=${f}`}
                                                   prefetch="intent"
                                                   className="mega-menu__sublink mega-menu__sublink--fabric"
                                                   onClick={onNavigate}
                                               >
-                                                  {fabricLabel(f)}
-                                              </Link>
+                                                  {t(fabricLabel(f))}
+                                              </LLink>
                                               {sleevesForFabric.map((s) => (
-                                                  <Link
+                                                  <LLink
                                                       key={s}
                                                       to={`${base}?fabric=${f}&sleeve=${s}`}
                                                       prefetch="intent"
                                                       className="mega-menu__sublink mega-menu__sublink--sleeve"
                                                       onClick={onNavigate}
                                                   >
-                                                      {sleeveLabel(s)}
-                                                  </Link>
+                                                      {t(sleeveLabel(s))}
+                                                  </LLink>
                                               ))}
                                           </div>
                                       );
                                   })
                                 : subSleeves.map((s) => (
-                                      <Link
+                                      <LLink
                                           key={s}
                                           to={`${base}?sleeve=${s}`}
                                           prefetch="intent"
                                           className="mega-menu__sublink mega-menu__sublink--sleeve"
                                           onClick={onNavigate}
                                       >
-                                          {sleeveLabel(s)}
-                                      </Link>
+                                          {t(sleeveLabel(s))}
+                                      </LLink>
                                   ))}
                         </div>
                     );
@@ -154,7 +155,7 @@ export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenu
                         />
                         <img
                             src={featured.image}
-                            alt={featured.title}
+                            alt={t(featured.title)}
                             loading="lazy"
                             decoding="async"
                         />
@@ -164,15 +165,15 @@ export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenu
                     )}
                 </div>
                 <div className="mega-menu__featured-content">
-                    <h5>{featured.title}</h5>
-                    <Link
+                    <h5>{t(featured.title)}</h5>
+                    <LLink
                         to={`/shop/${shop}`}
                         prefetch="intent"
                         className="mega-menu__featured-link"
                         onClick={onNavigate}
                     >
-                        Переглянути →
-                    </Link>
+                        {t("Переглянути")} →
+                    </LLink>
                 </div>
             </div>
         </div>

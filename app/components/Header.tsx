@@ -1,10 +1,11 @@
-import { Link, NavLink, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { StorageUtils } from "../utils/storage";
 import { AuthUtils, type User } from "../utils/auth";
 import { useDebounce } from "../hooks/useDebounce";
-import { pluralizeUA } from "../utils/plural";
 import { useSiteSettings, useMegaCounts } from "../utils/site-settings";
+import { LLink, LNavLink, plural, useI18n, useMoney } from "../i18n";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import CartDrawer from "./CartDrawer";
 import MegaMenu, { MegaPanel, type MegaFeatured } from "./MegaMenu";
 
@@ -80,6 +81,8 @@ export function Header() {
     // F-024 — counts loaded by root.tsx; empty map (loading/error) just
     // means MegaMenu renders everything, never less.
     const megaCounts = useMegaCounts();
+    const { t, lp, locale } = useI18n();
+    const money = useMoney();
     const navItems = NAV.map((item) => ({
         ...item,
         featured: navFeatured.items[item.shop] ?? item.featured,
@@ -320,7 +323,7 @@ export function Header() {
 
     const handleProfileClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        navigate(user ? "/profile" : "/auth");
+        navigate(lp(user ? "/profile" : "/auth"));
     };
 
     const getInitials = (name: string) => {
@@ -357,7 +360,7 @@ export function Header() {
                     </div>
 
                     <div className="top-bar__center">
-                        <Link to="/" className="top-bar__logo-link" prefetch="intent">
+                        <LLink to="/" className="top-bar__logo-link" prefetch="intent">
                             <picture>
                                 <source srcSet="/pics/mind_body_logo_sun.webp" type="image/webp" />
                                 <img
@@ -366,19 +369,20 @@ export function Header() {
                                     className="top-bar__logo-icon"
                                 />
                             </picture>
-                        </Link>
+                        </LLink>
                     </div>
 
                     <div className="top-bar__right">
-                        <NavLink to="/about" className="top-bar__link">
-                            Про бренд
-                        </NavLink>
-                        <NavLink to="/about#contact-premium" className="top-bar__link">
-                            Контакти
-                        </NavLink>
-                        <NavLink to={user ? "/profile" : "/auth"} className="top-bar__link">
-                            {user ? "Профіль" : "Увійти"}
-                        </NavLink>
+                        <LNavLink to="/about" className="top-bar__link">
+                            {t("Про бренд")}
+                        </LNavLink>
+                        <LNavLink to="/about#contact-premium" className="top-bar__link">
+                            {t("Контакти")}
+                        </LNavLink>
+                        <LNavLink to={user ? "/profile" : "/auth"} className="top-bar__link">
+                            {user ? t("Профіль") : t("Увійти")}
+                        </LNavLink>
+                        <LanguageSwitcher className="lang-switch--top-bar" />
                     </div>
                 </div>
             </div>
@@ -399,7 +403,7 @@ export function Header() {
                     <button
                         className={`header__burger ${isMenuOpen ? "header__burger--active" : ""}`}
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        aria-label={isMenuOpen ? "Закрити меню" : "Відкрити меню"}
+                        aria-label={isMenuOpen ? t("Закрити меню") : t("Відкрити меню")}
                         aria-expanded={isMenuOpen}
                         aria-controls="header-mobile-nav"
                     >
@@ -408,7 +412,7 @@ export function Header() {
                         <span></span>
                     </button>
 
-                    <Link to="/" prefetch="intent" className="header__logo">
+                    <LLink to="/" prefetch="intent" className="header__logo">
                         <picture>
                             <source srcSet="/pics/mind_body_1.webp" type="image/webp" />
                             <img
@@ -417,7 +421,7 @@ export function Header() {
                                 className="header__logo-img"
                             />
                         </picture>
-                    </Link>
+                    </LLink>
 
                     <nav
                         id="header-mobile-nav"
@@ -437,7 +441,7 @@ export function Header() {
                                     onPointerLeave={handleMegaLeave}
                                 >
                                     <div className="header__nav-head">
-                                        <NavLink
+                                        <LNavLink
                                             to={`/shop/${item.shop}`}
                                             prefetch="intent"
                                             className="header__nav-link"
@@ -454,14 +458,16 @@ export function Header() {
                                             }}
                                         >
                                             {item.label}
-                                        </NavLink>
+                                        </LNavLink>
                                         {/* Mobile-only: expand this section's
                                             subcategory → fabric → sleeve accordion. */}
                                         <button
                                             type="button"
                                             className="header__nav-toggle"
                                             aria-expanded={expandedShop === item.shop}
-                                            aria-label={`Підкатегорії ${item.label}`}
+                                            aria-label={t("Підкатегорії {label}", {
+                                                label: item.label,
+                                            })}
                                             onClick={() =>
                                                 setExpandedShop((s) =>
                                                     s === item.shop ? null : item.shop,
@@ -494,34 +500,36 @@ export function Header() {
                         {/* Secondary links — shown only inside the mobile
                             slide-out menu (hidden on desktop via CSS). */}
                         <div className="header__nav-extra">
-                            <NavLink
+                            <LNavLink
                                 to={user ? "/profile" : "/auth"}
                                 className="header__nav-extra-link"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                {user ? "Профіль" : "Увійти"}
-                            </NavLink>
-                            <Link
+                                {user ? t("Профіль") : t("Увійти")}
+                            </LNavLink>
+                            <LLink
                                 to="/wishlist"
                                 className="header__nav-extra-link"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                Обране{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
-                            </Link>
-                            <NavLink
+                                {t("Обране")}
+                                {wishlistCount > 0 ? ` (${wishlistCount})` : ""}
+                            </LLink>
+                            <LNavLink
                                 to="/about"
                                 className="header__nav-extra-link"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                Про бренд
-                            </NavLink>
-                            <NavLink
+                                {t("Про бренд")}
+                            </LNavLink>
+                            <LNavLink
                                 to="/about#contact-premium"
                                 className="header__nav-extra-link"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                Контакти
-                            </NavLink>
+                                {t("Контакти")}
+                            </LNavLink>
+                            <LanguageSwitcher />
                             <a
                                 href={`tel:${contacts.phoneTel}`}
                                 className="header__nav-extra-link header__nav-extra-link--phone"
@@ -535,7 +543,7 @@ export function Header() {
                         {/* Search Button */}
                         <button
                             className="header__action-btn header__action-btn--search"
-                            aria-label="Пошук"
+                            aria-label={t("Пошук")}
                             onClick={openSearch}
                         >
                             <svg
@@ -553,7 +561,7 @@ export function Header() {
 
                         <button
                             className={`header__action-btn header__action-btn--profile ${user ? "header__action-btn--avatar" : ""}`}
-                            aria-label="Профіль"
+                            aria-label={t("Профіль")}
                             onClick={handleProfileClick}
                         >
                             {user ? (
@@ -578,10 +586,10 @@ export function Header() {
                                 </svg>
                             )}
                         </button>
-                        <Link
+                        <LLink
                             to="/wishlist"
                             className="header__action-btn header__action-btn--wishlist"
-                            aria-label={`Улюблені${wishlistCount > 0 ? `: ${wishlistCount}` : ""}`}
+                            aria-label={`${t("Улюблені")}${wishlistCount > 0 ? `: ${wishlistCount}` : ""}`}
                         >
                             <svg
                                 width="22"
@@ -598,10 +606,10 @@ export function Header() {
                                     {wishlistCount}
                                 </span>
                             )}
-                        </Link>
+                        </LLink>
                         <button
                             className="header__action-btn header__action-btn--cart"
-                            aria-label={`Кошик${cartCount > 0 ? `: ${cartCount} ${pluralizeUA(cartCount, "товар", "товари", "товарів")}` : ""}`}
+                            aria-label={`${t("Кошик")}${cartCount > 0 ? `: ${cartCount} ${plural(locale, cartCount, "товар", "товари", "товарів")}` : ""}`}
                             onClick={() => setIsCartOpen(true)}
                         >
                             <svg
@@ -666,16 +674,16 @@ export function Header() {
                                 ref={searchInputRef}
                                 type="search"
                                 className="search-overlay__input"
-                                placeholder="Пошук товарів..."
+                                placeholder={t("Пошук товарів...")}
                                 value={searchQuery}
                                 onChange={handleSearchInput}
                                 autoComplete="off"
-                                aria-label="Пошук товарів"
+                                aria-label={t("Пошук товарів")}
                             />
                             <button
                                 className="search-overlay__close"
                                 onClick={closeSearch}
-                                aria-label="Закрити"
+                                aria-label={t("Закрити")}
                             >
                                 <svg
                                     width="20"
@@ -695,11 +703,11 @@ export function Header() {
                         {searchQuery.length >= 2 && (
                             <div className="search-overlay__results">
                                 {isSearching ? (
-                                    <div className="search-overlay__loading">Пошук...</div>
+                                    <div className="search-overlay__loading">{t("Пошук...")}</div>
                                 ) : searchResults.length > 0 ? (
                                     <div className="search-overlay__list">
                                         {searchResults.map((item) => (
-                                            <Link
+                                            <LLink
                                                 key={item.id}
                                                 to={
                                                     item.slug
@@ -719,15 +727,17 @@ export function Header() {
                                                         {item.name}
                                                     </span>
                                                     <span className="search-result-item__price">
-                                                        {item.price.toLocaleString()} ₴
+                                                        {money(item.price)}
                                                     </span>
                                                 </div>
-                                            </Link>
+                                            </LLink>
                                         ))}
                                     </div>
                                 ) : (
                                     <div className="search-overlay__empty">
-                                        Нічого не знайдено за запитом «{searchQuery}»
+                                        {t("Нічого не знайдено за запитом «{query}»", {
+                                            query: searchQuery,
+                                        })}
                                     </div>
                                 )}
                             </div>
