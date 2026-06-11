@@ -19,6 +19,8 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { ToastProvider } from "./components/Toast";
 import FloatingContact from "./components/FloatingContact";
 import SmartSunParticles from "./components/SmartSunParticles";
+import CookieBanner from "./components/CookieBanner";
+import Analytics from "./components/Analytics";
 
 export const links: Route.LinksFunction = () => [
     { rel: "icon", type: "image/png", href: "/logo-sun.png" },
@@ -86,6 +88,11 @@ function AppContent({ children }: { children: React.ReactNode }) {
             </div>
             {!isAdminRoute && <Footer />}
             {!isAdminRoute && <FloatingContact />}
+            {/* CookieBanner shows once per visitor; Analytics is a tiny
+                hook component that loads GA4/Pixel after consent. Both
+                stay out of the /admin bundle — admin doesn't need either. */}
+            {!isAdminRoute && <CookieBanner />}
+            {!isAdminRoute && <Analytics />}
         </ToastProvider>
     );
 }

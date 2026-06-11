@@ -1,10 +1,11 @@
 import { Link, useLoaderData, useSearchParams } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { prisma } from "../db.server";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProductCard, { type Product } from "../components/ProductCard";
 import { pluralizeUA } from "../utils/plural";
 import { DEFAULT_SITE_URL as SITE_URL } from "../utils/site-url";
+import { trackSearch } from "../utils/analytics.client";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const q = data?.q || "";
@@ -129,6 +130,13 @@ export default function Search() {
 
     const hasQuery = initialQ.length >= 2;
     const noResults = hasQuery && products.length === 0;
+
+    // F-002 — log the query the visitor actually ran (post-loader, so
+    // empty/<2-char inputs don't pollute the report). The helper bails
+    // server-side, so this is a no-op during SSR.
+    useEffect(() => {
+        if (hasQuery) trackSearch(initialQ);
+    }, [initialQ, hasQuery]);
 
     return (
         <main className="search-page">

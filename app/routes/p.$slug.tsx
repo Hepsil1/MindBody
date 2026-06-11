@@ -2,6 +2,7 @@ import { Link, useLoaderData, type LoaderFunctionArgs, type MetaFunction } from 
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "../components/Toast";
 import ReviewsSection from "../components/ReviewsSection";
+import { trackViewItem, trackAddToCart } from "../utils/analytics.client";
 import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
 import { buildWebpSrcset } from "../utils/responsive-image";
@@ -346,6 +347,20 @@ export default function ProductDetail() {
        feedback + 1.2s guard against accidental double-add. */
     const [justAdded, setJustAdded] = useState(false);
 
+    // F-002 — funnel-step #1. Fire view_item exactly once per product
+    // visit; the [product.id] dep covers PDP→PDP client navigations
+    // (different slug, same route file) without firing on size/colour
+    // re-renders. Body checks consent inside ensureAnalyticsLoaded, so
+    // no extra guard needed here.
+    useEffect(() => {
+        trackViewItem({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            category: product.category,
+        });
+    }, [product.id, product.name, product.price, product.category]);
+
     // Scroll lock for modals
     useEffect(() => {
         if (quickBuyOpen || zoomOpen) {
@@ -427,6 +442,17 @@ export default function ProductDetail() {
             image: product.images[0],
             size: selectedSize,
             color: selectedColor,
+            quantity: 1,
+        });
+        // F-002 — funnel-step #2. Per Meta/GA4 e-commerce schema:
+        // category lives in `item_category`, variant carries the picked
+        // size/colour combo so the report differentiates SKU variants.
+        trackAddToCart({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            category: product.category,
+            variant: [selectedSize, selectedColor].filter(Boolean).join("/") || undefined,
             quantity: 1,
         });
 

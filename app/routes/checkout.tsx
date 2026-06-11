@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { StorageUtils, type CartItem } from "../utils/storage";
 import { AuthUtils } from "../utils/auth";
 import { useToast } from "../components/Toast";
+import { trackBeginCheckout, trackPurchase } from "../utils/analytics.client";
 import { formatPhoneUA, getPhoneDigits } from "../utils/phone";
 import { countLabel } from "../utils/plural";
 import { productImageSrc, IMAGE_FALLBACK } from "../utils/format";
@@ -167,6 +168,28 @@ export default function Checkout() {
         : 0;
     const total = subtotal - promoDiscount;
 
+    // F-002 — funnel-step #3. Fire begin_checkout exactly once when the
+    // visitor advances from "cart" to "info" (regardless of route: the
+    // path is the same /checkout, only `step` changes). Putting the
+    // effect on [step] keeps the firing semantics clean and idempotent.
+    useEffect(() => {
+        if (step !== "info") return;
+        if (items.length === 0) return;
+        trackBeginCheckout(
+            items.map((it) => ({
+                id: it.id,
+                name: it.name,
+                price: it.price,
+                quantity: it.quantity,
+                variant: it.size || undefined,
+            })),
+            total,
+        );
+        // total derives from items + promo — depending on `items` alone
+        // is enough because moving to "info" re-runs once.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [step]);
+
     const handleApplyPromo = async () => {
         if (!promoCode.trim()) return;
         setPromoLoading(true);
@@ -300,6 +323,22 @@ export default function Checkout() {
                 // Order placed — drop the key so a brand-new checkout gets a fresh one.
                 idempotencyKeyRef.current = null;
                 setOrderNumber(result.orderId);
+                // F-002 — funnel-step #4. Fire BEFORE clearing the cart so
+                // we still have the items in `items` (they go straight into
+                // the GA4 e-commerce schema). Reading from the server's
+                // returned orderId keeps GA's transaction_id matched to
+                // what the customer sees on the confirmation screen.
+                trackPurchase({
+                    orderId: String(result.orderId),
+                    total,
+                    items: items.map((it) => ({
+                        id: it.id,
+                        name: it.name,
+                        price: it.price,
+                        quantity: it.quantity,
+                        variant: it.size || undefined,
+                    })),
+                });
                 StorageUtils.clearCart();
                 // Reset promo state so back-navigation to /checkout doesn't
                 // show stale "promo applied" UI on an empty cart.

@@ -19,6 +19,13 @@ export function CookieBanner() {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({ accepted: true, at: Date.now() }));
         } catch {}
+        // Notify <Analytics> in the same render so GA4/Pixel come up
+        // without a reload — the listener over there calls
+        // ensureAnalyticsLoaded() and reads the storage flag we just
+        // wrote. Keep the literal in sync with utils/analytics.client.ts.
+        try {
+            window.dispatchEvent(new CustomEvent("mb-cookies-accepted"));
+        } catch {}
         setVisible(false);
     };
 
