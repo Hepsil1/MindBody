@@ -1,7 +1,11 @@
 import type { ActionFunctionArgs } from "react-router";
 import { OrderCreateSchema, formatZodErrors } from "../utils/validation";
 import { checkRateLimit } from "../utils/rateLimit.server";
-import { sendEmail, renderOrderConfirmation } from "../utils/email.server";
+import {
+    sendEmail,
+    renderOrderConfirmation,
+    orderConfirmationSubject,
+} from "../utils/email.server";
 import { env } from "../utils/env.server";
 import { logger } from "../utils/logger.server";
 import { createOrder, recordEmailStatus } from "../services/order.server";
@@ -113,24 +117,50 @@ export async function action({ request }: ActionFunctionArgs) {
         // already-created order. The outcome is recorded on Order.emailStatus so
         // a failure is visible in the admin order page and logs.
         if (email.customerHasRealEmail) {
+            // Delivery/payment labels in the language of the order.
+            const L: Record<string, Record<string, string>> = {
+                uk: {
+                    nova_poshta: "Нова Пошта",
+                    ukrposhta: "Укрпошта",
+                    delivery: "Доставка",
+                    cash: "Накладений платіж",
+                    card: "Картка онлайн",
+                },
+                en: {
+                    nova_poshta: "Nova Poshta",
+                    ukrposhta: "Ukrposhta",
+                    delivery: "Delivery",
+                    cash: "Cash on delivery",
+                    card: "Card online",
+                },
+                ru: {
+                    nova_poshta: "Новая Почта",
+                    ukrposhta: "Укрпочта",
+                    delivery: "Доставка",
+                    cash: "Наложенный платёж",
+                    card: "Карта онлайн",
+                },
+            };
+            const lbl = L[locale] ?? L.uk;
             const deliveryLabel =
                 deliveryMethod === "nova_poshta"
-                    ? "Нова Пошта"
+                    ? lbl.nova_poshta
                     : deliveryMethod === "ukrposhta"
-                      ? "Укрпошта"
-                      : deliveryMethod || "Доставка";
+                      ? lbl.ukrposhta
+                      : deliveryMethod || lbl.delivery;
             const paymentLabel =
                 paymentMethod === "cash"
-                    ? "Накладений платіж"
+                    ? lbl.cash
                     : paymentMethod === "card"
-                      ? "Картка онлайн"
-                      : paymentMethod || "Накладений платіж";
+                      ? lbl.card
+                      : paymentMethod || lbl.cash;
             const deliveryAddress = [customer.city, customer.warehouse].filter(Boolean).join(", ");
 
             sendEmail({
                 to: email.customerEmail,
-                subject: `Замовлення №${orderNumberInt} прийнято · MIND BODY`,
+                subject: orderConfirmationSubject(orderNumberInt, locale),
                 html: renderOrderConfirmation({
+                    locale,
                     orderNumber: orderNumberInt,
                     customerName: customer.name || "",
                     customerEmail: email.customerEmail,

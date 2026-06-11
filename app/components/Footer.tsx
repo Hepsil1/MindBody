@@ -1,10 +1,11 @@
-import { Link } from "react-router";
 import { useState } from "react";
 import { useToast } from "./Toast";
+import { useI18n, LLink } from "../i18n";
 import { useSiteSettings, viberChatUrl, whatsappUrl } from "../utils/site-settings";
 
 export default function Footer() {
     const { showToast } = useToast();
+    const { t } = useI18n();
     // Owner-editable contacts (admin → Редактор сайту → Налаштування).
     const { contacts } = useSiteSettings();
     const [contact, setContact] = useState("");
@@ -14,14 +15,14 @@ export default function Footer() {
         e.preventDefault();
         const trimmed = contact.trim();
         if (!trimmed) {
-            showToast("Введіть номер телефону або email", "error");
+            showToast(t("Введіть номер телефону або email"), "error");
             return;
         }
         const phoneRegex = /^\+?(38)?0?\d{9}$/;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const phoneDigits = trimmed.replace(/[\s\-()]/g, "");
         if (!phoneRegex.test(phoneDigits) && !emailRegex.test(trimmed)) {
-            showToast("Введіть коректний номер телефону або email", "error");
+            showToast(t("Введіть коректний номер телефону або email"), "error");
             return;
         }
         setSending(true);
@@ -32,13 +33,13 @@ export default function Footer() {
                 body: JSON.stringify({ contact: trimmed }),
             });
             if (res.ok) {
-                showToast("Дякуємо! Ми зв'яжемось з вами найближчим часом ✨");
+                showToast(t("Дякуємо! Ми зв'яжемось з вами найближчим часом ✨"));
                 setContact("");
             } else {
-                showToast("Помилка при відправці", "error");
+                showToast(t("Помилка при відправці"), "error");
             }
         } catch {
-            showToast("Помилка з'єднання", "error");
+            showToast(t("Помилка з'єднання"), "error");
         }
         setSending(false);
     };
@@ -65,22 +66,22 @@ export default function Footer() {
                             {/* Допомога — 5 high-intent links. Dropped "Догляд за
                                 виробами" (folds into FAQ) per audit. */}
                             <div className="footer-puma__nav-col">
-                                <h3 className="footer-puma__col-header">Допомога</h3>
+                                <h3 className="footer-puma__col-header">{t("Допомога")}</h3>
                                 <ul className="footer-puma__nav-list">
                                     <li>
-                                        <Link to="/contacts">Контакти</Link>
+                                        <LLink to="/contacts">{t("Контакти")}</LLink>
                                     </li>
                                     <li>
-                                        <Link to="/size-guide">Таблиця розмірів</Link>
+                                        <LLink to="/size-guide">{t("Таблиця розмірів")}</LLink>
                                     </li>
                                     <li>
-                                        <Link to="/delivery">Доставка та оплата</Link>
+                                        <LLink to="/delivery">{t("Доставка та оплата")}</LLink>
                                     </li>
                                     <li>
-                                        <Link to="/return-policy">Повернення</Link>
+                                        <LLink to="/return-policy">{t("Повернення")}</LLink>
                                     </li>
                                     <li>
-                                        <Link to="/faq">Часті запитання</Link>
+                                        <LLink to="/faq">{t("Часті запитання")}</LLink>
                                     </li>
                                 </ul>
                             </div>
@@ -95,16 +96,18 @@ export default function Footer() {
                                 route) — using /terms (ToS) as the closest
                                 legal fit. */}
                             <div className="footer-puma__nav-col">
-                                <h3 className="footer-puma__col-header">Про компанію</h3>
+                                <h3 className="footer-puma__col-header">{t("Про компанію")}</h3>
                                 <ul className="footer-puma__nav-list">
                                     <li>
-                                        <Link to="/about">Про нас</Link>
+                                        <LLink to="/about">{t("Про нас")}</LLink>
                                     </li>
                                     <li>
-                                        <Link to="/terms">Умови користування</Link>
+                                        <LLink to="/terms">{t("Умови користування")}</LLink>
                                     </li>
                                     <li>
-                                        <Link to="/privacy">Політика конфіденційності</Link>
+                                        <LLink to="/privacy">
+                                            {t("Політика конфіденційності")}
+                                        </LLink>
                                     </li>
                                 </ul>
                             </div>
@@ -114,11 +117,13 @@ export default function Footer() {
                                 collapsed to icon row (text duplicates were eating
                                 5 rows × 44px). Aria-labels on each per a11y skill. */}
                             <div className="footer-puma__nav-col footer-puma__nav-col--contact">
-                                <h3 className="footer-puma__col-header">Зв'язатись</h3>
+                                <h3 className="footer-puma__col-header">{t("Зв'язатись")}</h3>
                                 <a
                                     href={`tel:${contacts.phoneTel}`}
                                     className="footer-puma__phone-cta"
-                                    aria-label={`Подзвонити: ${contacts.phoneDisplay}`}
+                                    aria-label={t("Подзвонити: {phone}", {
+                                        phone: contacts.phoneDisplay,
+                                    })}
                                 >
                                     <svg
                                         aria-hidden="true"
@@ -141,7 +146,7 @@ export default function Footer() {
                                 <p className="footer-puma__hours">{contacts.hoursLabel}</p>
                                 <ul
                                     className="footer-puma__social-icons"
-                                    aria-label="Месенджери та соцмережі"
+                                    aria-label={t("Месенджери та соцмережі")}
                                 >
                                     <li>
                                         <a
@@ -229,9 +234,11 @@ export default function Footer() {
                         <div className="mind-feedback">
                             <div className="mind-feedback__header">
                                 <div className="mind-feedback__title-wrap">
-                                    <h4 className="mind-feedback__title">Давай поговоримо</h4>
+                                    <h4 className="mind-feedback__title">
+                                        {t("Давай поговоримо")}
+                                    </h4>
                                     <span className="mind-feedback__subtitle">
-                                        маєш запитання — напиши
+                                        {t("маєш запитання — напиши")}
                                     </span>
                                 </div>
                                 <a
@@ -264,14 +271,14 @@ export default function Footer() {
                                     htmlFor="footer-feedback-contact"
                                     className="visually-hidden"
                                 >
-                                    Ваш номер телефону або email
+                                    {t("Ваш номер телефону або email")}
                                 </label>
                                 <input
                                     id="footer-feedback-contact"
                                     type="text"
                                     inputMode="email"
                                     autoComplete="email"
-                                    placeholder="Ваш номер телефону або email"
+                                    placeholder={t("Ваш номер телефону або email")}
                                     className="mind-feedback__input"
                                     value={contact}
                                     onChange={(e) => setContact(e.target.value)}
@@ -284,7 +291,7 @@ export default function Footer() {
                                     disabled={sending}
                                     aria-busy={sending}
                                 >
-                                    {sending ? "ВІДПРАВКА..." : "НАДIСЛАТИ"}
+                                    {sending ? t("ВІДПРАВКА...") : t("НАДIСЛАТИ")}
                                 </button>
                             </form>
                         </div>
@@ -300,7 +307,7 @@ export default function Footer() {
                 radio at checkout. They come back when card acquiring goes
                 live. */}
             <div className="footer-puma__trust-row">
-                <ul className="footer-puma__pay-icons" aria-label="Способи оплати">
+                <ul className="footer-puma__pay-icons" aria-label={t("Способи оплати")}>
                     <li>
                         <img
                             src="/icons/payment/visa.svg"
@@ -321,7 +328,9 @@ export default function Footer() {
                             decoding="async"
                         />
                     </li>
-                    <li className="footer-puma__pay-text">Готівка або картка при отриманні</li>
+                    <li className="footer-puma__pay-text">
+                        {t("Готівка або картка при отриманні")}
+                    </li>
                 </ul>
                 <p className="footer-puma__ssl-badge">
                     <svg
@@ -338,7 +347,7 @@ export default function Footer() {
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                         <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
-                    Безпечне з'єднання · SSL
+                    {t("Безпечне з'єднання · SSL")}
                 </p>
             </div>
 
@@ -364,12 +373,12 @@ export default function Footer() {
                     </div>
 
                     <div className="footer-puma__made-in">
-                        Зроблено в Україні
+                        {t("Зроблено в Україні")}
                         <span aria-hidden="true" className="footer-puma__dot">
                             {" "}
                             ·{" "}
                         </span>
-                        Доставка Новою Поштою
+                        {t("Доставка Новою Поштою")}
                     </div>
 
                     {/* Sprint 1 D1.3 — #33 TRUST-004 business info (placeholder).
@@ -383,7 +392,7 @@ export default function Footer() {
                             hello@mindbody-sportwear.com
                         </a>
                         <span aria-hidden="true"> · </span>
-                        Україна · Доставка по всій країні
+                        {t("Україна · Доставка по всій країні")}
                     </address>
 
                     <div className="footer-puma__copyright-text">

@@ -1,5 +1,5 @@
-import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
+import { useI18n, useMoney, LLink } from "../i18n";
 import { StorageUtils, type CartItem } from "../utils/storage";
 
 interface CartDrawerProps {
@@ -13,6 +13,8 @@ const FOCUSABLE_SELECTOR =
     'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
+    const { t } = useI18n();
+    const money = useMoney();
     const [cart, setCart] = useState<CartItem[]>([]);
     const drawerRef = useRef<HTMLElement>(null);
     const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -121,7 +123,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 {/* Header */}
                 <div className="cart-drawer__header">
                     <h3 className="cart-drawer__title" id="cart-drawer-title">
-                        Кошик
+                        {t("Кошик")}
                         {itemCount > 0 && (
                             <span className="cart-drawer__count" aria-live="polite">
                                 {itemCount}
@@ -131,7 +133,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     <button
                         className="cart-drawer__close"
                         onClick={onClose}
-                        aria-label="Закрити кошик"
+                        aria-label={t("Закрити кошик")}
                     >
                         <svg
                             aria-hidden="true"
@@ -164,9 +166,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             <line x1="3" y1="6" x2="21" y2="6" />
                             <path d="M16 10a4 4 0 0 1-8 0" />
                         </svg>
-                        <p>Кошик порожній</p>
+                        <p>{t("Кошик порожній")}</p>
                         <button className="cart-drawer__continue" onClick={onClose}>
-                            Продовжити покупки
+                            {t("Продовжити покупки")}
                         </button>
                     </div>
                 ) : (
@@ -192,14 +194,24 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                     <div className="cart-drawer__item-info">
                                         <h4 className="cart-drawer__item-name">{item.name}</h4>
                                         <div className="cart-drawer__item-meta">
-                                            {item.size && <span>Розмір: {item.size}</span>}
-                                            {item.color && <span>Колір: {item.color}</span>}
+                                            {item.size && (
+                                                <span>
+                                                    {t("Розмір: {size}", { size: item.size })}
+                                                </span>
+                                            )}
+                                            {item.color && (
+                                                <span>
+                                                    {t("Колір: {color}", { color: item.color })}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="cart-drawer__item-bottom">
                                             <div className="cart-drawer__qty">
                                                 <button
                                                     onClick={() => handleQuantity(item, -1)}
-                                                    aria-label={`Зменшити кількість ${item.name}`}
+                                                    aria-label={t("Зменшити кількість {name}", {
+                                                        name: item.name,
+                                                    })}
                                                 >
                                                     −
                                                 </button>
@@ -208,20 +220,22 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                                 </span>
                                                 <button
                                                     onClick={() => handleQuantity(item, 1)}
-                                                    aria-label={`Збільшити кількість ${item.name}`}
+                                                    aria-label={t("Збільшити кількість {name}", {
+                                                        name: item.name,
+                                                    })}
                                                 >
                                                     +
                                                 </button>
                                             </div>
                                             <span className="cart-drawer__item-price">
-                                                {(item.price * item.quantity).toLocaleString()} ₴
+                                                {money(item.price * item.quantity)}
                                             </span>
                                         </div>
                                     </div>
                                     <button
                                         className="cart-drawer__item-remove"
                                         onClick={() => handleRemove(item)}
-                                        aria-label="Видалити"
+                                        aria-label={t("Видалити")}
                                     >
                                         <svg
                                             aria-hidden="true"
@@ -256,32 +270,31 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                             />
                                         </div>
                                         <span className="cart-drawer__shipping-text">
-                                            До безкоштовної доставки ще{" "}
-                                            <strong>{remaining.toLocaleString()} ₴</strong>
+                                            {t("До безкоштовної доставки ще {amount}", {
+                                                amount: money(remaining),
+                                            })}
                                         </span>
                                     </div>
                                 ) : (
                                     <div className="cart-drawer__shipping-free">
-                                        🎉 Безкоштовна доставка!
+                                        {t("🎉 Безкоштовна доставка!")}
                                     </div>
                                 );
                             })()}
 
                             <div className="cart-drawer__total">
-                                <span>Разом:</span>
-                                <span className="cart-drawer__total-price">
-                                    {total.toLocaleString()} ₴
-                                </span>
+                                <span>{t("Разом:")}</span>
+                                <span className="cart-drawer__total-price">{money(total)}</span>
                             </div>
-                            <Link
+                            <LLink
                                 to="/checkout"
                                 className="cart-drawer__checkout-btn"
                                 onClick={onClose}
                             >
-                                Оформити замовлення
-                            </Link>
+                                {t("Оформити замовлення@@drawer")}
+                            </LLink>
                             <button className="cart-drawer__continue-btn" onClick={onClose}>
-                                Продовжити покупки
+                                {t("Продовжити покупки")}
                             </button>
                         </div>
                     </>

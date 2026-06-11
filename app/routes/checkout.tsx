@@ -1,13 +1,12 @@
-import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { StorageUtils, type CartItem } from "../utils/storage";
 import { AuthUtils } from "../utils/auth";
 import { useToast } from "../components/Toast";
 import { trackBeginCheckout, trackPurchase } from "../utils/analytics.client";
 import { formatPhoneUA, getPhoneDigits } from "../utils/phone";
-import { countLabel } from "../utils/plural";
-import { productImageSrc, IMAGE_FALLBACK } from "../utils/format";
+import { productImageSrc, IMAGE_FALLBACK, formatPrice } from "../utils/format";
 import { splitLocalePath } from "../i18n/config";
+import { useI18n, useMoney, getT, LLink, plural } from "../i18n";
 import {
     useNovaPoshtaAutocomplete,
     type NovaPoshtaCity,
@@ -15,12 +14,15 @@ import {
 } from "../hooks/useNovaPoshtaAutocomplete";
 import "../styles/checkout.css";
 
-export function meta() {
+export function meta({ location }: { location: { pathname: string } }) {
+    const t = getT(splitLocalePath(location.pathname).locale);
     return [
-        { title: "Кошик | MIND BODY" },
+        { title: `${t("Кошик")} | MIND BODY` },
         {
             name: "description",
-            content: "Оформіть замовлення спортивного одягу MIND BODY. Швидка доставка по Україні.",
+            content: t(
+                "Оформіть замовлення спортивного одягу MIND BODY. Швидка доставка по Україні.",
+            ),
         },
         // Transient, session-specific page — keep it out of the index.
         { name: "robots", content: "noindex, nofollow" },
@@ -53,6 +55,8 @@ export default function Checkout() {
     const [items, setItems] = useState<CartItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [step, setStep] = useState<CheckoutStep>("cart");
+    const { t, locale } = useI18n();
+    const money = useMoney();
     const { showToast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderNumber, setOrderNumber] = useState("");
@@ -200,16 +204,18 @@ export default function Checkout() {
             const data = await res.json();
             if (data.valid) {
                 if (data.minOrder > 0 && subtotal < data.minOrder) {
-                    setPromoError(`Мінімальне замовлення: ${data.minOrder} ₴`);
+                    setPromoError(
+                        t("Мінімальне замовлення: {amount}", { amount: money(data.minOrder) }),
+                    );
                 } else {
                     setPromoApplied(data);
                     setPromoError("");
                 }
             } else {
-                setPromoError(data.error || "Промокод невалідний");
+                setPromoError(data.error || t("Промокод невалідний"));
             }
         } catch {
-            setPromoError("Помилка перевірки");
+            setPromoError(t("Помилка перевірки"));
         } finally {
             setPromoLoading(false);
         }
@@ -250,26 +256,27 @@ export default function Checkout() {
         e.preventDefault();
 
         const newErrors: Partial<Record<keyof CustomerInfo, string>> = {};
-        if (!customerInfo.name.trim()) newErrors.name = "Введіть ваше ім'я";
+        if (!customerInfo.name.trim()) newErrors.name = t("Введіть ваше ім'я");
         if (!customerInfo.email.trim())
-            newErrors.email = "Введіть email для підтвердження замовлення";
+            newErrors.email = t("Введіть email для підтвердження замовлення");
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerInfo.email.trim()))
-            newErrors.email = "Введіть коректний email";
-        if (!customerInfo.phone) newErrors.phone = "Введіть номер телефону";
+            newErrors.email = t("Введіть коректний email");
+        if (!customerInfo.phone) newErrors.phone = t("Введіть номер телефону");
         else if (getPhoneDigits(customerInfo.phone).length < 12)
-            newErrors.phone = "Введіть коректний номер";
+            newErrors.phone = t("Введіть коректний номер");
 
         if (customerInfo.delivery === "nova_poshta") {
-            if (!customerInfo.cityRef) newErrors.city = "Оберіть місто зі списку";
-            if (!customerInfo.warehouseRef) newErrors.warehouse = "Оберіть відділення зі списку";
+            if (!customerInfo.cityRef) newErrors.city = t("Оберіть місто зі списку");
+            if (!customerInfo.warehouseRef) newErrors.warehouse = t("Оберіть відділення зі списку");
         } else {
-            if (!customerInfo.city.trim()) newErrors.city = "Введіть місто";
-            if (!customerInfo.warehouse.trim()) newErrors.warehouse = "Введіть адресу відділення";
+            if (!customerInfo.city.trim()) newErrors.city = t("Введіть місто");
+            if (!customerInfo.warehouse.trim())
+                newErrors.warehouse = t("Введіть адресу відділення");
         }
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
-            showToast("Будь ласка, перевірте правильність заповнення полів", "warning");
+            showToast(t("Будь ласка, перевірте правильність заповнення полів"), "warning");
             // After React paints the new error spans, scroll the first one
             // into view + focus the offending field so the user lands
             // directly on what to fix. requestAnimationFrame ensures the
@@ -351,12 +358,12 @@ export default function Checkout() {
                 setPromoError("");
                 setStep("success");
             } else {
-                showToast("Помилка при створенні замовлення. Спробуйте ще раз.", "error");
+                showToast(t("Помилка при створенні замовлення. Спробуйте ще раз."), "error");
                 console.error(result.error);
             }
         } catch (error) {
             console.error("Order submit error:", error);
-            showToast("Помилка з'єднання. Спробуйте ще раз.", "error");
+            showToast(t("Помилка з'єднання. Спробуйте ще раз."), "error");
         } finally {
             setIsSubmitting(false);
         }
@@ -384,7 +391,7 @@ export default function Checkout() {
                         "1"
                     )}
                 </div>
-                <span className="checkout-steps__label">Кошик</span>
+                <span className="checkout-steps__label">{t("Кошик")}</span>
             </div>
             <div className="checkout-steps__line" />
             <div
@@ -406,12 +413,12 @@ export default function Checkout() {
                         "2"
                     )}
                 </div>
-                <span className="checkout-steps__label">Оформлення</span>
+                <span className="checkout-steps__label">{t("Оформлення")}</span>
             </div>
             <div className="checkout-steps__line" />
             <div className={`checkout-steps__item ${step === "success" ? "active" : ""}`}>
                 <div className="checkout-steps__circle">3</div>
-                <span className="checkout-steps__label">Готово</span>
+                <span className="checkout-steps__label">{t("Готово")}</span>
             </div>
         </div>
     );
@@ -431,13 +438,17 @@ export default function Checkout() {
             <div className="container">
                 {showBreadcrumb && (
                     <nav className="breadcrumb">
-                        <Link to="/">Головна</Link>
+                        <LLink to="/">{t("Головна")}</LLink>
                         <span>/</span>
-                        <Link to="/shop/yoga">Каталог</Link>
+                        <LLink to="/shop/yoga">{t("Каталог")}</LLink>
                         <span>/</span>
                         {breadcrumbExtra}
                         <span className="active">
-                            {step === "cart" ? "Кошик" : step === "info" ? "Оформлення" : "Успішно"}
+                            {step === "cart"
+                                ? t("Кошик")
+                                : step === "info"
+                                  ? t("Оформлення")
+                                  : t("Успішно")}
                         </span>
                     </nav>
                 )}
@@ -455,7 +466,7 @@ export default function Checkout() {
             <main className="checkout-page">
                 <div className="cart-loading">
                     <div className="cart-loading__spinner"></div>
-                    <p>Завантаження...</p>
+                    <p>{t("Завантаження...")}</p>
                 </div>
             </main>
         );
@@ -468,10 +479,10 @@ export default function Checkout() {
                 <Hero
                     title={
                         <>
-                            Замовлення <em>оформлено</em>
+                            {t("Замовлення")} <em>{t("оформлено")}</em>
                         </>
                     }
-                    subtitle="Дякуємо, що обрали MIND BODY"
+                    subtitle={t("Дякуємо, що обрали MIND BODY")}
                 />
                 <div className="cart-page__content">
                     <div className="container">
@@ -489,12 +500,14 @@ export default function Checkout() {
                                     <polyline points="22 4 12 14.01 9 11.01" />
                                 </svg>
                             </div>
-                            <h2>Дякуємо за замовлення!</h2>
+                            <h2>{t("Дякуємо за замовлення!")}</h2>
                             {/* Atom O: order number + copy-to-clipboard.  Was just
                                 <strong> with no affordance — user had to manually
                                 select + copy on mobile, friction. */}
                             <div className="cart-success__order-row">
-                                <span className="cart-success__order-label">Номер замовлення</span>
+                                <span className="cart-success__order-label">
+                                    {t("Номер замовлення")}
+                                </span>
                                 <div className="cart-success__order-id">
                                     <strong>{orderNumber}</strong>
                                     <button
@@ -504,13 +517,16 @@ export default function Checkout() {
                                             navigator.clipboard
                                                 .writeText(orderNumber)
                                                 .then(() =>
-                                                    showToast("Номер скопійовано", "success"),
+                                                    showToast(t("Номер скопійовано"), "success"),
                                                 )
                                                 .catch(() =>
-                                                    showToast("Не вдалося скопіювати", "warning"),
+                                                    showToast(
+                                                        t("Не вдалося скопіювати"),
+                                                        "warning",
+                                                    ),
                                                 );
                                         }}
-                                        aria-label="Скопіювати номер замовлення"
+                                        aria-label={t("Скопіювати номер замовлення")}
                                     >
                                         <svg
                                             width="18"
@@ -535,7 +551,8 @@ export default function Checkout() {
                             </div>
                             {customerInfo.email && (
                                 <p className="cart-success__email">
-                                    Підтвердження надіслано на <strong>{customerInfo.email}</strong>
+                                    {t("Підтвердження надіслано на")}{" "}
+                                    <strong>{customerInfo.email}</strong>
                                 </p>
                             )}
                             <div className="cart-success__eta">
@@ -555,20 +572,22 @@ export default function Checkout() {
                                 </svg>
                                 <span>
                                     {customerInfo.delivery === "nova_poshta"
-                                        ? "Доставка Новою Поштою 1-3 дні"
-                                        : "Доставка Укрпоштою 3-7 днів"}
+                                        ? t("Доставка Новою Поштою 1-3 дні")
+                                        : t("Доставка Укрпоштою 3-7 днів")}
                                 </span>
                             </div>
                             <p className="cart-success__hint">
-                                Ми зв'яжемося з вами найближчим часом для підтвердження деталей.
+                                {t(
+                                    "Ми зв'яжемося з вами найближчим часом для підтвердження деталей.",
+                                )}
                             </p>
                             <div className="cart-success__ctas">
-                                <Link to="/shop/yoga" className="cart-btn cart-btn--primary">
-                                    До магазину
-                                </Link>
-                                <Link to="/" className="cart-btn cart-btn--ghost">
-                                    На головну
-                                </Link>
+                                <LLink to="/shop/yoga" className="cart-btn cart-btn--primary">
+                                    {t("До магазину")}
+                                </LLink>
+                                <LLink to="/" className="cart-btn cart-btn--ghost">
+                                    {t("На головну")}
+                                </LLink>
                             </div>
                         </div>
                     </div>
@@ -584,10 +603,10 @@ export default function Checkout() {
                 <Hero
                     title={
                         <>
-                            Мій <em>Кошик</em>
+                            {t("Мій")} <em>{t("Кошик")}</em>
                         </>
                     }
-                    subtitle="Ваш кошик порожній"
+                    subtitle={t("Ваш кошик порожній")}
                 />
                 <div className="cart-page__content">
                     <div className="container">
@@ -609,10 +628,12 @@ export default function Checkout() {
                                 </div>
                             </div>
                             <h2>
-                                Ваш кошик <em>порожній</em>
+                                {t("Ваш кошик")} <em>{t("порожній")}</em>
                             </h2>
-                            <p>Здається, ви ще нічого не додали. Наш каталог чекає на вас!</p>
-                            <Link
+                            <p>
+                                {t("Здається, ви ще нічого не додали. Наш каталог чекає на вас!")}
+                            </p>
+                            <LLink
                                 to="/shop/yoga"
                                 className="cart-btn cart-btn--primary"
                                 style={{ maxWidth: "300px", margin: "0 auto" }}
@@ -630,8 +651,8 @@ export default function Checkout() {
                                     <line x1="3" y1="6" x2="21" y2="6" />
                                     <path d="M16 10a4 4 0 0 1-8 0" />
                                 </svg>
-                                Перейти до каталогу
-                            </Link>
+                                {t("Перейти до каталогу")}
+                            </LLink>
                         </div>
                     </div>
                 </div>
@@ -646,12 +667,12 @@ export default function Checkout() {
                 <Hero
                     title={
                         <>
-                            Оформлення <em>замовлення</em>
+                            {t("Оформлення")} <em>{t("замовлення")}</em>
                         </>
                     }
                     breadcrumbExtra={
                         <>
-                            <button onClick={() => setStep("cart")}>Кошик</button>
+                            <button onClick={() => setStep("cart")}>{t("Кошик")}</button>
                             <span>/</span>
                         </>
                     }
@@ -662,16 +683,16 @@ export default function Checkout() {
                             <form className="checkout-form" onSubmit={handleSubmitOrder}>
                                 {/* Contact Info */}
                                 <div className="form-section">
-                                    <h3>Контактні дані</h3>
+                                    <h3>{t("Контактні дані")}</h3>
                                     <div className="form-group">
-                                        <label htmlFor="name">Ім'я та прізвище *</label>
+                                        <label htmlFor="name">{t("Ім'я та прізвище")} *</label>
                                         <input
                                             type="text"
                                             id="name"
                                             name="name"
                                             value={customerInfo.name}
                                             onChange={handleInputChange}
-                                            placeholder="Ваше повне ім'я"
+                                            placeholder={t("Ваше повне ім'я")}
                                             autoComplete="name"
                                             required
                                         />
@@ -709,7 +730,7 @@ export default function Checkout() {
                                         )}
                                     </div>
                                     <div className="form-group">
-                                        <label htmlFor="phone">Телефон *</label>
+                                        <label htmlFor="phone">{t("Телефон")} *</label>
                                         <input
                                             type="tel"
                                             id="phone"
@@ -737,7 +758,7 @@ export default function Checkout() {
 
                                 {/* Delivery Service Selection */}
                                 <div className="form-section">
-                                    <h3>Спосіб доставки</h3>
+                                    <h3>{t("Спосіб доставки")}</h3>
                                     <div className="delivery-options">
                                         <label
                                             className={`delivery-option ${customerInfo.delivery === "nova_poshta" ? "active" : ""}`}
@@ -762,10 +783,10 @@ export default function Checkout() {
                                                 </div>
                                                 <div className="delivery-option__info">
                                                     <span className="delivery-option__name">
-                                                        Нова Пошта
+                                                        {t("Нова Пошта")}
                                                     </span>
                                                     <span className="delivery-option__desc">
-                                                        1-3 дні • Відділення або поштомат
+                                                        {t("1-3 дні • Відділення або поштомат")}
                                                     </span>
                                                 </div>
                                             </div>
@@ -793,10 +814,10 @@ export default function Checkout() {
                                                 </div>
                                                 <div className="delivery-option__info">
                                                     <span className="delivery-option__name">
-                                                        Укрпошта
+                                                        {t("Укрпошта")}
                                                     </span>
                                                     <span className="delivery-option__desc">
-                                                        3-7 днів • Економ варіант
+                                                        {t("3-7 днів • Економ варіант")}
                                                     </span>
                                                 </div>
                                             </div>
@@ -806,7 +827,7 @@ export default function Checkout() {
 
                                 {/* Delivery Address */}
                                 <div className="form-section">
-                                    <h3>Адреса доставки</h3>
+                                    <h3>{t("Адреса доставки")}</h3>
 
                                     {customerInfo.delivery === "nova_poshta" ? (
                                         <>
@@ -815,7 +836,7 @@ export default function Checkout() {
                                                 className="form-group autocomplete-wrapper"
                                                 ref={cityAutocompleteRef}
                                             >
-                                                <label htmlFor="city">Місто *</label>
+                                                <label htmlFor="city">{t("Місто")} *</label>
                                                 <input
                                                     type="text"
                                                     id="city"
@@ -825,7 +846,9 @@ export default function Checkout() {
                                                         setShowCitiesDropdown(true);
                                                     }}
                                                     onFocus={() => setShowCitiesDropdown(true)}
-                                                    placeholder="Почніть вводити назву міста..."
+                                                    placeholder={t(
+                                                        "Почніть вводити назву міста...",
+                                                    )}
                                                     autoComplete="off"
                                                 />
                                                 {errors.city && (
@@ -838,7 +861,7 @@ export default function Checkout() {
                                                         <div className="autocomplete-dropdown">
                                                             {isLoadingCities ? (
                                                                 <div className="autocomplete-loading">
-                                                                    Пошук...
+                                                                    {t("Пошук...")}
                                                                 </div>
                                                             ) : (
                                                                 cities.map((city) => (
@@ -855,7 +878,7 @@ export default function Checkout() {
                                                                         </span>
                                                                         <span className="autocomplete-item__sub">
                                                                             {city.AreaDescription}{" "}
-                                                                            обл.
+                                                                            {t("обл.")}
                                                                         </span>
                                                                     </button>
                                                                 ))
@@ -870,7 +893,7 @@ export default function Checkout() {
                                                 ref={warehouseAutocompleteRef}
                                             >
                                                 <label htmlFor="warehouse">
-                                                    Відділення або поштомат *
+                                                    {t("Відділення або поштомат")} *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -883,8 +906,8 @@ export default function Checkout() {
                                                     onFocus={() => setShowWarehousesDropdown(true)}
                                                     placeholder={
                                                         customerInfo.cityRef
-                                                            ? "Оберіть відділення..."
-                                                            : "Спочатку оберіть місто"
+                                                            ? t("Оберіть відділення...")
+                                                            : t("Спочатку оберіть місто")
                                                     }
                                                     disabled={!customerInfo.cityRef}
                                                     autoComplete="off"
@@ -901,7 +924,7 @@ export default function Checkout() {
                                                         <div className="autocomplete-dropdown">
                                                             {isLoadingWarehouses ? (
                                                                 <div className="autocomplete-loading">
-                                                                    Пошук відділень...
+                                                                    {t("Пошук відділень...")}
                                                                 </div>
                                                             ) : (
                                                                 warehouses.map((warehouse) => (
@@ -932,7 +955,7 @@ export default function Checkout() {
                                         <>
                                             {/* Ukrposhta - Manual input */}
                                             <div className="form-group">
-                                                <label htmlFor="city-ukr">Місто *</label>
+                                                <label htmlFor="city-ukr">{t("Місто")} *</label>
                                                 <input
                                                     type="text"
                                                     id="city-ukr"
@@ -943,7 +966,7 @@ export default function Checkout() {
                                                             city: e.target.value,
                                                         }))
                                                     }
-                                                    placeholder="Введіть назву міста"
+                                                    placeholder={t("Введіть назву міста")}
                                                 />
                                                 {errors.city && (
                                                     <span className="field-error-text" role="alert">
@@ -953,7 +976,7 @@ export default function Checkout() {
                                             </div>
                                             <div className="form-group">
                                                 <label htmlFor="warehouse-ukr">
-                                                    Адреса відділення або індекс *
+                                                    {t("Адреса відділення або індекс")} *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -965,7 +988,7 @@ export default function Checkout() {
                                                             warehouse: e.target.value,
                                                         }))
                                                     }
-                                                    placeholder="вул. Хрещатик, 1 або 01001"
+                                                    placeholder={t("вул. Хрещатик, 1 або 01001")}
                                                 />
                                                 {errors.warehouse && (
                                                     <span className="field-error-text" role="alert">
@@ -979,7 +1002,7 @@ export default function Checkout() {
 
                                 {/* Payment Options */}
                                 <div className="form-section">
-                                    <h3>Спосіб оплати</h3>
+                                    <h3>{t("Спосіб оплати")}</h3>
                                     <div className="payment-options">
                                         {/* COD is the only working method right now. Online
                                             payment (card/Apple/Google Pay) had selectable radios
@@ -1008,7 +1031,7 @@ export default function Checkout() {
                                                     <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                                                 </svg>
                                                 <span>
-                                                    Накладений платіж (оплата при отриманні)
+                                                    {t("Накладений платіж (оплата при отриманні)")}
                                                 </span>
                                             </div>
                                         </label>
@@ -1025,17 +1048,17 @@ export default function Checkout() {
 
                                 {/* Comment */}
                                 <div className="form-section">
-                                    <h3>Коментар до замовлення</h3>
+                                    <h3>{t("Коментар до замовлення")}</h3>
                                     <div className="form-group">
                                         <label htmlFor="comment" className="visually-hidden">
-                                            Коментар до замовлення
+                                            {t("Коментар до замовлення")}
                                         </label>
                                         <textarea
                                             id="comment"
                                             name="comment"
                                             value={customerInfo.comment}
                                             onChange={handleInputChange}
-                                            placeholder="Додаткові побажання..."
+                                            placeholder={t("Додаткові побажання...")}
                                             rows={3}
                                         />
                                     </div>
@@ -1046,13 +1069,15 @@ export default function Checkout() {
                                     className="cart-btn cart-btn--primary cart-btn--full"
                                     disabled={isSubmitting}
                                 >
-                                    {isSubmitting ? "Відправляємо..." : "Підтвердити замовлення"}
+                                    {isSubmitting
+                                        ? t("Відправляємо...")
+                                        : t("Підтвердити замовлення")}
                                 </button>
                             </form>
 
                             <div className="checkout-sidebar checkout-sidebar--sticky">
                                 <div className="order-summary">
-                                    <h3>Ваше замовлення</h3>
+                                    <h3>{t("Ваше замовлення")}</h3>
                                     <div className="order-items">
                                         {items.map((item) => (
                                             <div
@@ -1079,36 +1104,49 @@ export default function Checkout() {
                                                         {item.name}
                                                     </span>
                                                     <span className="order-item__meta">
-                                                        {item.size} • {item.quantity} шт
+                                                        {item.size} • {item.quantity} {t("шт")}
                                                     </span>
                                                 </div>
                                                 <span className="order-item__price">
-                                                    {(item.price * item.quantity).toLocaleString()}{" "}
-                                                    ₴
+                                                    {money(item.price * item.quantity)}
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
                                     <div className="order-totals">
                                         <div className="order-row">
-                                            <span>Товари</span>
-                                            <span>{subtotal.toLocaleString()} ₴</span>
+                                            <span>{t("Товари")}</span>
+                                            <span>{money(subtotal)}</span>
                                         </div>
                                         {/* F-036 — same shipping logic as the cart-step
                                             summary; the buyer is past the cart but still
                                             needs the threshold reminder + concrete range. */}
                                         <div className="order-row">
-                                            <span>Доставка</span>
+                                            <span>{t("Доставка@@totals")}</span>
                                             <span>
                                                 {subtotal >= 2000
-                                                    ? "Безкоштовно ✓"
-                                                    : "≈70–120 ₴ (Нова Пошта)"}
+                                                    ? t("Безкоштовно ✓")
+                                                    : t("≈70–120 ₴ (Нова Пошта)")}
                                             </span>
                                         </div>
                                         <div className="order-row total">
-                                            <span>Разом</span>
-                                            <span>{total.toLocaleString()} ₴</span>
+                                            <span>{t("Разом")}</span>
+                                            <span>{money(total)}</span>
                                         </div>
+                                        {locale !== "uk" && (
+                                            <p
+                                                className="checkout-uah-note"
+                                                style={{
+                                                    fontSize: "12px",
+                                                    color: "var(--color-text-secondary, #777)",
+                                                    margin: "6px 0 0",
+                                                }}
+                                            >
+                                                {t("Оплата здійснюється у гривні — {amount}", {
+                                                    amount: `${formatPrice(total)} ₴`,
+                                                })}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -1120,20 +1158,16 @@ export default function Checkout() {
     }
 
     // CART STEP - Main Cart View
+    const cartQty = items.reduce((a, b) => a + b.quantity, 0);
     return (
         <main className="checkout-page">
             <Hero
                 title={
                     <>
-                        Мій <em>Кошик</em>
+                        {t("Мій")} <em>{t("Кошик")}</em>
                     </>
                 }
-                subtitle={`${countLabel(
-                    items.reduce((a, b) => a + b.quantity, 0),
-                    "товар",
-                    "товари",
-                    "товарів",
-                )} у списку`}
+                subtitle={`${cartQty} ${plural(locale, cartQty, "товар", "товари", "товарів")} ${t("у списку")}`}
             />
             <div className="cart-page__content">
                 <div className="container">
@@ -1177,12 +1211,12 @@ export default function Checkout() {
                                         <div className="cart-item__details">
                                             {item.size && (
                                                 <span>
-                                                    Розмір: <strong>{item.size}</strong>
+                                                    {t("Розмір:")} <strong>{item.size}</strong>
                                                 </span>
                                             )}
                                             {item.color && (
                                                 <span>
-                                                    Колір: <strong>{item.color}</strong>
+                                                    {t("Колір:")} <strong>{item.color}</strong>
                                                 </span>
                                             )}
                                         </div>
@@ -1215,7 +1249,7 @@ export default function Checkout() {
                                                 </button>
                                             </div>
                                             <div className="cart-item__price">
-                                                {(item.price * item.quantity).toLocaleString()} ₴
+                                                {money(item.price * item.quantity)}
                                             </div>
                                         </div>
                                     </div>
@@ -1236,7 +1270,7 @@ export default function Checkout() {
                                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                                         </svg>
                                     </div>
-                                    <span>Безпечна оплата</span>
+                                    <span>{t("Безпечна оплата")}</span>
                                 </div>
                                 <div className="trust-card-premium">
                                     <div className="trust-card-premium__icon">
@@ -1252,7 +1286,7 @@ export default function Checkout() {
                                             <circle cx="12" cy="10" r="3" />
                                         </svg>
                                     </div>
-                                    <span>Доставка по Україні</span>
+                                    <span>{t("Доставка по Україні")}</span>
                                 </div>
                                 <div className="trust-card-premium">
                                     <div className="trust-card-premium__icon">
@@ -1267,20 +1301,20 @@ export default function Checkout() {
                                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                                         </svg>
                                     </div>
-                                    <span>Підтримка у месенджерах</span>
+                                    <span>{t("Підтримка у месенджерах")}</span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="cart-summary">
                             <div className="cart-summary__card">
-                                <h3>Підсумок</h3>
+                                <h3>{t("Підсумок")}</h3>
                                 <div className="summary-lines">
                                     <div className="summary-line">
                                         <span>
-                                            Товари ({items.reduce((a, b) => a + b.quantity, 0)})
+                                            {t("Товари")} ({cartQty})
                                         </span>
-                                        <span>{subtotal.toLocaleString()} ₴</span>
+                                        <span>{money(subtotal)}</span>
                                     </div>
                                     {/* Phase 6 atom 4 — free-shipping nudge.
                                         Mirrors the cart-drawer pattern at
@@ -1302,13 +1336,13 @@ export default function Checkout() {
                                                     />
                                                 </div>
                                                 <span>
-                                                    До безкоштовної доставки ще{" "}
-                                                    <strong>{remaining.toLocaleString()} ₴</strong>
+                                                    {t("До безкоштовної доставки ще")}{" "}
+                                                    <strong>{money(remaining)}</strong>
                                                 </span>
                                             </div>
                                         ) : (
                                             <div className="shipping-progress shipping-progress--free">
-                                                <span>🎉 Безкоштовна доставка!</span>
+                                                <span>{t("🎉 Безкоштовна доставка!")}</span>
                                             </div>
                                         );
                                     })()}
@@ -1320,17 +1354,17 @@ export default function Checkout() {
                                         typical city→city box price, not a fixed promise — see
                                         /delivery for context. */}
                                     <div className="summary-line">
-                                        <span>Доставка</span>
+                                        <span>{t("Доставка@@totals")}</span>
                                         <span>
                                             {subtotal >= 2000
-                                                ? "Безкоштовно ✓"
-                                                : "≈70–120 ₴ (Нова Пошта)"}
+                                                ? t("Безкоштовно ✓")
+                                                : t("≈70–120 ₴ (Нова Пошта)")}
                                         </span>
                                     </div>
                                     {promoApplied && (
                                         <div className="summary-line" style={{ color: "#10b981" }}>
                                             <span>🏷️ {promoApplied.code}</span>
-                                            <span>-{promoDiscount.toLocaleString()} ₴</span>
+                                            <span>-{money(promoDiscount)}</span>
                                         </div>
                                     )}
                                     {!promoApplied && (
@@ -1347,7 +1381,7 @@ export default function Checkout() {
                                                 onChange={(e) =>
                                                     setPromoCode(e.target.value.toUpperCase())
                                                 }
-                                                placeholder="Промокод"
+                                                placeholder={t("Промокод")}
                                                 style={{
                                                     flex: 1,
                                                     padding: "8px 12px",
@@ -1374,7 +1408,7 @@ export default function Checkout() {
                                                         promoLoading || !promoCode.trim() ? 0.5 : 1,
                                                 }}
                                             >
-                                                {promoLoading ? "..." : "Застосувати"}
+                                                {promoLoading ? "..." : t("Застосувати")}
                                             </button>
                                         </div>
                                     )}
@@ -1391,7 +1425,7 @@ export default function Checkout() {
                                                 padding: "4px 0",
                                             }}
                                         >
-                                            ✕ Видалити промокод
+                                            {t("✕ Видалити промокод")}
                                         </button>
                                     )}
                                     {promoError && (
@@ -1407,21 +1441,35 @@ export default function Checkout() {
                                     )}
                                 </div>
                                 <div className="summary-total">
-                                    <span>Разом:</span>
-                                    <span>{total.toLocaleString()} ₴</span>
+                                    <span>{t("Разом:")}</span>
+                                    <span>{money(total)}</span>
                                 </div>
+                                {locale !== "uk" && (
+                                    <p
+                                        className="checkout-uah-note"
+                                        style={{
+                                            fontSize: "12px",
+                                            color: "var(--color-text-secondary, #777)",
+                                            margin: "6px 0 0",
+                                        }}
+                                    >
+                                        {t("Оплата здійснюється у гривні — {amount}", {
+                                            amount: `${formatPrice(total)} ₴`,
+                                        })}
+                                    </p>
+                                )}
                                 <button
                                     className="cart-btn cart-btn--primary cart-btn--full"
                                     onClick={() => setStep("info")}
                                 >
-                                    Оформити замовлення
+                                    {t("Оформити замовлення")}
                                 </button>
-                                <Link
+                                <LLink
                                     to="/shop/yoga"
                                     className="cart-btn cart-btn--ghost cart-btn--full"
                                 >
-                                    Продовжити покупки
-                                </Link>
+                                    {t("Продовжити покупки")}
+                                </LLink>
                             </div>
                         </div>
                     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { AuthUtils } from "../utils/auth";
+import { useI18n } from "../i18n";
 
 /**
  * OAuth Callback Route — handles redirect from Google OAuth.
@@ -8,6 +9,7 @@ import { AuthUtils } from "../utils/auth";
  */
 export default function AuthCallback() {
     const navigate = useNavigate();
+    const { t, lp } = useI18n();
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -16,15 +18,15 @@ export default function AuthCallback() {
                 const result = await AuthUtils.handleOAuthCallback();
 
                 if (result.success) {
-                    navigate("/profile", { replace: true });
+                    navigate(lp("/profile"), { replace: true });
                 } else {
                     setError("Помилка авторизації. Спробуйте ще раз.");
-                    setTimeout(() => navigate("/auth", { replace: true }), 3000);
+                    setTimeout(() => navigate(lp("/auth"), { replace: true }), 3000);
                 }
             } catch (e) {
                 console.error("OAuth callback error:", e);
                 setError("Несподівана помилка. Перенаправлення...");
-                setTimeout(() => navigate("/auth", { replace: true }), 3000);
+                setTimeout(() => navigate(lp("/auth"), { replace: true }), 3000);
             }
         };
 
@@ -57,7 +59,7 @@ export default function AuthCallback() {
                         <line x1="9" y1="9" x2="15" y2="15" />
                     </svg>
                     <p style={{ color: "var(--color-text-secondary)", fontSize: "1.1rem" }}>
-                        {error}
+                        {t(error)}
                     </p>
                 </>
             ) : (
@@ -74,7 +76,7 @@ export default function AuthCallback() {
                         }}
                     />
                     <p style={{ color: "var(--color-text-secondary)", fontSize: "1.1rem" }}>
-                        Завершуємо авторизацію...
+                        {t("Завершуємо авторизацію...")}
                     </p>
                     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </>

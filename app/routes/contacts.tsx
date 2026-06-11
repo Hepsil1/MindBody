@@ -1,12 +1,73 @@
-import { Link } from "react-router";
 import { useState } from "react";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import { useSiteSettings } from "../utils/site-settings";
+import { useI18n, LLink } from "../i18n";
 import "../styles/contacts.css";
+
+// Page prose lives inline per locale (not in the t() dictionary).
+// The `uk` variant is the canonical text — keep it byte-identical.
+const CONTENT = {
+    uk: {
+        breadcrumbHome: "Головна",
+        breadcrumbCurrent: "Контакти",
+        title: "Контакти",
+        subtitle: "Ми завжди раді допомогти вам та відповісти на будь-які ваші питання",
+        phoneTitle: "Телефон",
+        phoneHint: "Основний номер",
+        emailTitle: "Email",
+        emailHint: "Відповідь за 24 години",
+        addressTitle: "Адреса",
+        addressValue: "Україна · Доставка по всій країні",
+        addressHint: "Онлайн-магазин",
+        instagramTitle: "Instagram",
+        instagramHint: "Слідкуйте за нами",
+        formTitle: "Напишіть нам",
+        formIntro:
+            "Маєте питання? Заповніть форму, і наші консультанти зв'яжуться з вами якнайшвидше.",
+    },
+    en: {
+        breadcrumbHome: "Home",
+        breadcrumbCurrent: "Contacts",
+        title: "Contacts",
+        subtitle: "We are always happy to help you and answer any of your questions",
+        phoneTitle: "Phone",
+        phoneHint: "Main number",
+        emailTitle: "Email",
+        emailHint: "Reply within 24 hours",
+        addressTitle: "Address",
+        addressValue: "Ukraine · Nationwide delivery",
+        addressHint: "Online store",
+        instagramTitle: "Instagram",
+        instagramHint: "Follow us",
+        formTitle: "Write to us",
+        formIntro:
+            "Have a question? Fill in the form and our consultants will get back to you as soon as possible.",
+    },
+    ru: {
+        breadcrumbHome: "Главная",
+        breadcrumbCurrent: "Контакты",
+        title: "Контакты",
+        subtitle: "Мы всегда рады помочь вам и ответить на любые ваши вопросы",
+        phoneTitle: "Телефон",
+        phoneHint: "Основной номер",
+        emailTitle: "Email",
+        emailHint: "Ответ в течение 24 часов",
+        addressTitle: "Адрес",
+        addressValue: "Украина · Доставка по всей стране",
+        addressHint: "Онлайн-магазин",
+        instagramTitle: "Instagram",
+        instagramHint: "Следите за нами",
+        formTitle: "Напишите нам",
+        formIntro:
+            "Есть вопросы? Заполните форму, и наши консультанты свяжутся с вами как можно скорее.",
+    },
+} as const;
 
 export default function Contacts() {
     // Owner-editable contacts (admin → Редактор сайту → Налаштування).
     const { contacts } = useSiteSettings();
+    const { t, locale } = useI18n();
+    const c = CONTENT[locale];
     const [form, setForm] = useState({ name: "", contact: "", message: "" });
     const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
@@ -39,14 +100,12 @@ export default function Contacts() {
             <section className="contacts-hero">
                 <div className="container">
                     <nav className="breadcrumb" aria-label="Breadcrumb">
-                        <Link to="/">Головна</Link>
+                        <LLink to="/">{c.breadcrumbHome}</LLink>
                         <span> / </span>
-                        <span>Контакти</span>
+                        <span>{c.breadcrumbCurrent}</span>
                     </nav>
-                    <h1 className="contacts-hero__title">Контакти</h1>
-                    <p className="contacts-hero__subtitle">
-                        Ми завжди раді допомогти вам та відповісти на будь-які ваші питання
-                    </p>
+                    <h1 className="contacts-hero__title">{c.title}</h1>
+                    <p className="contacts-hero__subtitle">{c.subtitle}</p>
                 </div>
             </section>
 
@@ -67,9 +126,9 @@ export default function Contacts() {
                                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                                 </svg>
                             </div>
-                            <h3>Телефон</h3>
+                            <h3>{c.phoneTitle}</h3>
                             <span className="contact-card__value">{contacts.phoneDisplay}</span>
-                            <span className="contact-card__hint">Основний номер</span>
+                            <span className="contact-card__hint">{c.phoneHint}</span>
                         </a>
 
                         <a href="mailto:hello@mindbody-sportwear.com" className="contact-card">
@@ -86,11 +145,11 @@ export default function Contacts() {
                                     <polyline points="22,6 12,13 2,6" />
                                 </svg>
                             </div>
-                            <h3>Email</h3>
+                            <h3>{c.emailTitle}</h3>
                             <span className="contact-card__value">
                                 hello@mindbody-sportwear.com
                             </span>
-                            <span className="contact-card__hint">Відповідь за 24 години</span>
+                            <span className="contact-card__hint">{c.emailHint}</span>
                         </a>
 
                         <div className="contact-card">
@@ -107,11 +166,9 @@ export default function Contacts() {
                                     <circle cx="12" cy="10" r="3" />
                                 </svg>
                             </div>
-                            <h3>Адреса</h3>
-                            <span className="contact-card__value">
-                                Україна · Доставка по всій країні
-                            </span>
-                            <span className="contact-card__hint">Онлайн-магазин</span>
+                            <h3>{c.addressTitle}</h3>
+                            <span className="contact-card__value">{c.addressValue}</span>
+                            <span className="contact-card__hint">{c.addressHint}</span>
                         </div>
 
                         <a
@@ -134,20 +191,17 @@ export default function Contacts() {
                                     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
                                 </svg>
                             </div>
-                            <h3>Instagram</h3>
+                            <h3>{c.instagramTitle}</h3>
                             <span className="contact-card__value">@mindbody_sportwear</span>
-                            <span className="contact-card__hint">Слідкуйте за нами</span>
+                            <span className="contact-card__hint">{c.instagramHint}</span>
                         </a>
                     </div>
 
                     {/* Form Section */}
                     <div id="contact-form" className="contacts-form-section">
                         <div className="contacts-form-container">
-                            <h2>Напишіть нам</h2>
-                            <p>
-                                Маєте питання? Заповніть форму, і наші консультанти зв'яжуться з
-                                вами якнайшвидше.
-                            </p>
+                            <h2>{c.formTitle}</h2>
+                            <p>{c.formIntro}</p>
 
                             {status === "sent" ? (
                                 <div className="contacts-form-success">
@@ -162,40 +216,40 @@ export default function Contacts() {
                                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                                         <polyline points="22 4 12 14.01 9 11.01" />
                                     </svg>
-                                    <h3>Повідомлення надіслано!</h3>
-                                    <p>Ми зв'яжемося з вами найближчим часом.</p>
+                                    <h3>{t("Повідомлення надіслано!")}</h3>
+                                    <p>{t("Ми зв'яжемося з вами найближчим часом.")}</p>
                                     <button
                                         className="btn-submit"
                                         onClick={() => setStatus("idle")}
                                     >
-                                        Надіслати ще
+                                        {t("Надіслати ще")}
                                     </button>
                                 </div>
                             ) : (
                                 <form className="contacts-form" onSubmit={handleSubmit} noValidate>
                                     <div className="form-field">
-                                        <label htmlFor="name">Ім'я *</label>
+                                        <label htmlFor="name">{t("Ім'я *")}</label>
                                         <input
                                             type="text"
                                             id="name"
                                             name="name"
                                             value={form.name}
                                             onChange={handleChange}
-                                            placeholder="Ваше ім'я"
+                                            placeholder={t("Ваше ім'я")}
                                             autoComplete="name"
                                             required
                                         />
                                     </div>
 
                                     <div className="form-field">
-                                        <label htmlFor="contact">Email / Телефон *</label>
+                                        <label htmlFor="contact">{t("Email / Телефон *")}</label>
                                         <input
                                             type="text"
                                             id="contact"
                                             name="contact"
                                             value={form.contact}
                                             onChange={handleChange}
-                                            placeholder="email або +380..."
+                                            placeholder={t("email або +380...")}
                                             autoComplete="email"
                                             inputMode="email"
                                             required
@@ -203,14 +257,14 @@ export default function Contacts() {
                                     </div>
 
                                     <div className="form-field">
-                                        <label htmlFor="message">Повідомлення *</label>
+                                        <label htmlFor="message">{t("Повідомлення *")}</label>
                                         <textarea
                                             id="message"
                                             name="message"
                                             rows={4}
                                             value={form.message}
                                             onChange={handleChange}
-                                            placeholder="Ваше запитання або побажання..."
+                                            placeholder={t("Ваше запитання або побажання...")}
                                             autoComplete="off"
                                             required
                                         />
@@ -218,8 +272,9 @@ export default function Contacts() {
 
                                     {status === "error" && (
                                         <p className="contacts-form-error">
-                                            Помилка надсилання. Спробуйте ще раз або зателефонуйте
-                                            нам.
+                                            {t(
+                                                "Помилка надсилання. Спробуйте ще раз або зателефонуйте нам.",
+                                            )}
                                         </p>
                                     )}
 
@@ -229,8 +284,8 @@ export default function Contacts() {
                                         disabled={status === "sending"}
                                     >
                                         {status === "sending"
-                                            ? "Надсилання..."
-                                            : "Надіслати повідомлення"}
+                                            ? t("Надсилання...")
+                                            : t("Надіслати повідомлення")}
                                     </button>
                                 </form>
                             )}

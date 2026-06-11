@@ -99,9 +99,9 @@ if ($LASTEXITCODE -ne 0) {
 Start-Sleep -Seconds 3
 
 Write-Host "==> [4/4] Smoke checks" -ForegroundColor Cyan
-$root = (Invoke-WebRequest -Uri "https://saleid.icu" -UseBasicParsing -MaximumRedirection 5)
+$root = (Invoke-WebRequest -Uri "https://mindbody-sportwear.com" -UseBasicParsing -MaximumRedirection 5)
 if ($root.StatusCode -ne 200) {
-    Write-Error "saleid.icu returned $($root.StatusCode) - investigate before celebrating."
+    Write-Error "mindbody-sportwear.com returned $($root.StatusCode) - investigate before celebrating."
     exit 1
 }
 
@@ -110,7 +110,7 @@ $entryMatch = $root.Content | Select-String -Pattern '/assets/entry\.client-[A-Z
 if ($entryMatch.Matches.Count -eq 0) {
     Write-Warning "Could not find entry.client chunk in HTML - smoke check inconclusive."
 } else {
-    $entryUrl = "https://saleid.icu" + $entryMatch.Matches[0].Value
+    $entryUrl = "https://mindbody-sportwear.com" + $entryMatch.Matches[0].Value
     $entryRes = Invoke-WebRequest -Uri $entryUrl -UseBasicParsing -Method Head
     if ($entryRes.StatusCode -ne 200) {
         Write-Error "Entry chunk $entryUrl returned $($entryRes.StatusCode). HTML references a stale asset - try running deploy.ps1 again."

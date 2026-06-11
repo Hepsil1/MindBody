@@ -1,4 +1,4 @@
-import { Link, useLoaderData, type LoaderFunctionArgs, type MetaFunction } from "react-router";
+import { useLoaderData, type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "../components/Toast";
 import ReviewsSection from "../components/ReviewsSection";
@@ -7,9 +7,9 @@ import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import { shopPageTitle, isRealShopSlug } from "../utils/shop-pages";
-import { formatPrice } from "../utils/format";
 import { DEFAULT_SITE_URL, resolveSiteUrl } from "../utils/site-url";
-import { localeFromParam } from "../i18n/config";
+import { useI18n, useMoney, LLink, getT } from "../i18n";
+import { localeFromParam, localeFromParamSafe, localizePath, OG_LOCALE } from "../i18n/config";
 import { localizeEntities } from "../utils/translations.server";
 import type { InventoryVariant, RelatedProductCard, FilterConfigData } from "../types/product";
 import "../styles/product-page.css";
@@ -20,15 +20,22 @@ import "../styles/product-page.css";
 // will extract loader logic into a `.server.ts` companion so we can adopt
 // the pino logger and Zod-validated env across all routes.
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+/** JSON-LD inLanguage values per locale. */
+const JSONLD_LANG = { uk: "uk-UA", en: "en-US", ru: "ru-RU" } as const;
+
+export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
+    const locale = localeFromParamSafe(params.lang);
+    const t = getT(locale);
     const product = data?.product;
     if (!product) {
-        return [{ title: "Товар не знайдено | MIND BODY" }];
+        return [{ title: `${t("Товар не знайдено")} | MIND BODY` }];
     }
     const siteUrl = data?.siteUrl || DEFAULT_SITE_URL;
     const reviewStats = data?.reviewStats;
 
-    const desc = (product.description || `${product.name} — купити в MIND BODY`).substring(0, 160);
+    const desc = (
+        product.description || t("{name} — купити в MIND BODY", { name: product.name })
+    ).substring(0, 160);
     const image = product.images?.[0] || "/brand-sun.png";
     const fullImage = image.startsWith("http") ? image : `${siteUrl}${image}`;
     const price = Number(product.price) || 0;
@@ -36,9 +43,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     // "Немає в наявності" for all-zero-stock products); a hardcoded InStock
     // here is a Merchant mismatch that can suppress the result.
     const inStock = !product.inventory?.length || product.inventory.some((v) => (v.stock ?? 0) > 0);
-    const canonicalUrl = product.slug
-        ? `${siteUrl}/p/${product.slug}`
-        : `${siteUrl}/product/${product.id}`;
+    const canonicalPath = product.slug ? `/p/${product.slug}` : `/product/${product.id}`;
+    const canonicalUrl = `${siteUrl}${localizePath(canonicalPath, locale)}`;
     return [
         { title: `${product.name} | MIND BODY` },
         { name: "description", content: desc },
@@ -55,6 +61,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
         { property: "og:image:width", content: "2625" },
         { property: "og:image:height", content: "3500" },
         { property: "og:type", content: "product" },
+        { property: "og:locale", content: OG_LOCALE[locale] },
         { property: "product:price:amount", content: String(price) },
         { property: "product:price:currency", content: "UAH" },
         // Twitter Card
@@ -67,6 +74,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
             "script:ld+json": {
                 "@context": "https://schema.org",
                 "@type": "Product",
+                inLanguage: JSONLD_LANG[locale],
                 name: product.name,
                 description: desc,
                 image: fullImage,
@@ -98,15 +106,21 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
             "script:ld+json": {
                 "@context": "https://schema.org",
                 "@type": "BreadcrumbList",
+                inLanguage: JSONLD_LANG[locale],
                 itemListElement: [
-                    { "@type": "ListItem", position: 1, name: "Головна", item: siteUrl },
+                    {
+                        "@type": "ListItem",
+                        position: 1,
+                        name: t("Головна"),
+                        item: locale === "uk" ? siteUrl : `${siteUrl}/${locale}`,
+                    },
                     ...(product.shopPageSlug
                         ? [
                               {
                                   "@type": "ListItem",
                                   position: 2,
-                                  name: shopPageTitle(product.shopPageSlug),
-                                  item: `${siteUrl}/shop/${product.shopPageSlug}`,
+                                  name: t(shopPageTitle(product.shopPageSlug)),
+                                  item: `${siteUrl}${localizePath(`/shop/${product.shopPageSlug}`, locale)}`,
                               },
                           ]
                         : []),
@@ -339,6 +353,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function ProductDetail() {
     const { product, filterConfig, relatedProducts } = useLoaderData<typeof loader>();
+    const { t } = useI18n();
+    const money = useMoney();
 
     // State
     const { showToast } = useToast();
@@ -452,13 +468,13 @@ export default function ProductDetail() {
                 setSizeFlash(true);
                 setTimeout(() => setSizeFlash(false), 900);
             }
-            showToast("Спершу оберіть розмір", "warning");
+            showToast(t("Спершу оберіть розмір"), "warning");
             return;
         }
 
         // Check stock availability
         if (product.inventory?.length > 0 && !isInStock) {
-            showToast("Вибачте, цієї комбінації немає в наявності", "error");
+            showToast(t("Вибачте, цієї комбінації немає в наявності"), "error");
             return;
         }
 
@@ -492,7 +508,7 @@ export default function ProductDetail() {
 
         showToast(
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <span style={{ fontWeight: 600 }}>Додано у кошик! ✨</span>
+                <span style={{ fontWeight: 600 }}>{t("Додано у кошик! ✨")}</span>
                 <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
                     {product.name} {selectedSize ? `(${selectedSize})` : ""}
                 </span>
@@ -510,8 +526,8 @@ export default function ProductDetail() {
             image: product.images[0],
             category: product.category ?? "",
         });
-        if (added) showToast("Додано до улюбленого ❤️");
-        else showToast("Вже у списку", "info");
+        if (added) showToast(t("Додано до улюбленого ❤️"));
+        else showToast(t("Вже у списку"), "info");
     };
 
     const getColorLabel = (code: string) => filterConfig?.colors?.[code] || code;
@@ -526,15 +542,15 @@ export default function ProductDetail() {
                 <div className="shop-hero-luxe__drift" />
                 <div className="container hero-container">
                     <nav className="luxe-breadcrumb">
-                        <Link to="/">Головна</Link>
+                        <LLink to="/">{t("Головна")}</LLink>
                         <span className="sep">/</span>
-                        <Link
+                        <LLink
                             to={`/shop/${isRealShopSlug(product.shopPageSlug) ? product.shopPageSlug : "yoga"}`}
                         >
                             {isRealShopSlug(product.shopPageSlug)
-                                ? shopPageTitle(product.shopPageSlug)
-                                : "Магазин"}
-                        </Link>
+                                ? t(shopPageTitle(product.shopPageSlug))
+                                : t("Магазин")}
+                        </LLink>
                         <span className="sep">/</span>
                         <span className="current">{product.name}</span>
                     </nav>
@@ -572,7 +588,10 @@ export default function ProductDetail() {
                                             />
                                             <img
                                                 src={img}
-                                                alt={`${product.name} — фото ${idx + 1}`}
+                                                alt={t("{name} — фото {n}", {
+                                                    name: product.name,
+                                                    n: idx + 1,
+                                                })}
                                                 loading={idx === 0 ? "eager" : "lazy"}
                                                 decoding="async"
                                                 fetchPriority={idx === 0 ? "high" : "auto"}
@@ -600,7 +619,7 @@ export default function ProductDetail() {
                                         key={idx}
                                         className={`thumb-vertical ${activeImage === idx ? "active" : ""}`}
                                         onClick={() => setActiveImage(idx)}
-                                        aria-label={`View image ${idx + 1}`}
+                                        aria-label={t("Фото {n}", { n: idx + 1 })}
                                     >
                                         <div className="thumb-inner">
                                             {/* Square thumb container with CSS object-fit cover;
@@ -654,7 +673,7 @@ export default function ProductDetail() {
                                 <button
                                     className="zoom-overlay__close"
                                     onClick={() => setZoomOpen(false)}
-                                    aria-label="Close zoom"
+                                    aria-label={t("Закрити")}
                                 >
                                     <svg
                                         width="24"
@@ -677,7 +696,7 @@ export default function ProductDetail() {
                                 {product.images.length > 1 && (
                                     <div className="zoom-overlay__nav">
                                         <button
-                                            aria-label="Попереднє фото"
+                                            aria-label={t("Попереднє фото")}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setActiveImage(
@@ -702,7 +721,7 @@ export default function ProductDetail() {
                                             {activeImage + 1} / {product.images.length}
                                         </span>
                                         <button
-                                            aria-label="Наступне фото"
+                                            aria-label={t("Наступне фото")}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setActiveImage(
@@ -737,11 +756,11 @@ export default function ProductDetail() {
                                         className="current-price"
                                         style={product.is_sale ? { color: "#b91c1c" } : undefined}
                                     >
-                                        {formatPrice(product.price)} ₴
+                                        {money(product.price)}
                                     </span>
                                     {product.is_sale && product.comparePrice > 0 && (
                                         <span className="old-price">
-                                            {formatPrice(product.comparePrice)} ₴
+                                            {money(product.comparePrice)}
                                         </span>
                                     )}
                                 </div>
@@ -754,16 +773,16 @@ export default function ProductDetail() {
                                     <div className="selector-group">
                                         <div className="group-head">
                                             <span className="selector-label">
-                                                Колір:{" "}
+                                                {t("Колір")}:{" "}
                                                 <span className="val" aria-live="polite">
-                                                    {getColorLabel(selectedColor)}
+                                                    {t(getColorLabel(selectedColor))}
                                                 </span>
                                             </span>
                                         </div>
                                         <div
                                             className="color-options"
                                             role="radiogroup"
-                                            aria-label="Колір"
+                                            aria-label={t("Колір")}
                                         >
                                             {product.colors.map((color: string) => {
                                                 const available = isColorAvailable(color);
@@ -781,7 +800,7 @@ export default function ProductDetail() {
                                                         style={{
                                                             backgroundColor: getColorHex(color),
                                                         }}
-                                                        aria-label={`${getColorLabel(color)}${!available ? " — немає в наявності" : ""}`}
+                                                        aria-label={`${t(getColorLabel(color))}${!available ? ` — ${t("немає в наявності")}` : ""}`}
                                                     />
                                                 );
                                             })}
@@ -803,10 +822,10 @@ export default function ProductDetail() {
                                         }}
                                     >
                                         <div className="group-head">
-                                            <span className="selector-label">Розмір</span>
-                                            <Link to="/size-guide" className="size-guide">
-                                                Таблиця розмірів
-                                            </Link>
+                                            <span className="selector-label">{t("Розмір")}</span>
+                                            <LLink to="/size-guide" className="size-guide">
+                                                {t("Таблиця розмірів")}
+                                            </LLink>
                                         </div>
                                         {/* Sprint 1 D2.3 — #19/#14 PDP a11y: aria-label spells out
                                             sold-out so SR users hear "Розмір M, немає в наявності"
@@ -814,7 +833,7 @@ export default function ProductDetail() {
                                         <div
                                             className="size-options"
                                             role="radiogroup"
-                                            aria-label="Розмір"
+                                            aria-label={t("Розмір")}
                                         >
                                             {product.sizes.map((size: string) => {
                                                 const available = isSizeAvailable(size);
@@ -826,8 +845,11 @@ export default function ProductDetail() {
                                                         aria-checked={selectedSize === size}
                                                         aria-label={
                                                             available
-                                                                ? `Розмір ${size}`
-                                                                : `Розмір ${size}, немає в наявності`
+                                                                ? t("Розмір {size}", { size })
+                                                                : t(
+                                                                      "Розмір {size}, немає в наявності",
+                                                                      { size },
+                                                                  )
                                                         }
                                                         className={`size-chip ${selectedSize === size ? "selected" : ""} ${!available ? "unavailable" : ""}`}
                                                         onClick={() => {
@@ -895,16 +917,21 @@ export default function ProductDetail() {
                                                     <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
                                                 </svg>{" "}
                                                 {currentStock === 1
-                                                    ? "🔥 Останній — поспішіть!"
+                                                    ? t("🔥 Останній — поспішіть!")
                                                     : currentStock <= 2
-                                                      ? `🔥 Залишилось лише ${currentStock} шт — поспішіть!`
-                                                      : `Залишилось ${currentStock} шт`}
+                                                      ? t(
+                                                            "🔥 Залишилось лише {n} шт — поспішіть!",
+                                                            { n: currentStock },
+                                                        )
+                                                      : t("Залишилось {n} шт", {
+                                                            n: currentStock,
+                                                        })}
                                             </>
                                         ) : (
-                                            `✓ В наявності: ${currentStock} шт`
+                                            t("✓ В наявності: {n} шт", { n: currentStock })
                                         )
                                     ) : (
-                                        "✕ Немає в наявності"
+                                        t("✕ Немає в наявності")
                                     )}
                                 </div>
                             )}
@@ -929,7 +956,7 @@ export default function ProductDetail() {
                                         <circle cx="5.5" cy="18.5" r="2.5"></circle>
                                         <circle cx="18.5" cy="18.5" r="2.5"></circle>
                                     </svg>{" "}
-                                    Швидка доставка по Україні
+                                    {t("Швидка доставка по Україні")}
                                 </span>
                                 <span>
                                     <svg
@@ -949,7 +976,7 @@ export default function ProductDetail() {
                                         <polyline points="7 23 3 19 7 15"></polyline>
                                         <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
                                     </svg>{" "}
-                                    14 днів на повернення
+                                    {t("14 днів на повернення")}
                                 </span>
                                 <span>
                                     <svg
@@ -967,7 +994,7 @@ export default function ProductDetail() {
                                         <rect width="20" height="7" fill="#0057B7" />
                                         <rect y="7" width="20" height="7" fill="#FFD700" />
                                     </svg>{" "}
-                                    Українське виробництво
+                                    {t("Українське виробництво")}
                                 </span>
                             </div>
 
@@ -992,10 +1019,10 @@ export default function ProductDetail() {
                                 >
                                     <span>
                                         {justAdded
-                                            ? "✓ Додано"
+                                            ? t("✓ Додано")
                                             : !isInStock && product.inventory?.length > 0
-                                              ? "Немає в наявності"
-                                              : "Додати в кошик"}
+                                              ? t("Немає в наявності")
+                                              : t("Додати в кошик")}
                                     </span>
                                 </button>
                                 <button
@@ -1016,13 +1043,13 @@ export default function ProductDetail() {
                                     >
                                         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                                     </svg>{" "}
-                                    Купити в 1 клік
+                                    {t("Купити в 1 клік")}
                                 </button>
                                 <button
                                     className="btn-wishlist hover-scale"
                                     onClick={addToWishlist}
-                                    aria-label="Додати в обране"
-                                    title="Додати в обране"
+                                    aria-label={t("Додати в обране")}
+                                    title={t("Додати в обране")}
                                 >
                                     <svg
                                         width="20"
@@ -1067,17 +1094,17 @@ export default function ProductDetail() {
                                             >
                                                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                                             </svg>{" "}
-                                            Швидке замовлення
+                                            {t("Швидке замовлення")}
                                         </h3>
                                         <p className="quick-buy-modal__product">
-                                            {product.name} &mdash; {formatPrice(product.price)} ₴
+                                            {product.name} &mdash; {money(product.price)}
                                             {selectedSize ? ` · ${selectedSize}` : ""}
                                             {selectedColor ? ` · ${selectedColor}` : ""}
                                         </p>
                                         <input
                                             type="text"
-                                            aria-label="Ваше ім'я"
-                                            placeholder="Ваше ім'я"
+                                            aria-label={t("Ваше ім'я")}
+                                            placeholder={t("Ваше ім'я")}
                                             value={quickBuyName}
                                             onChange={(e) => setQuickBuyName(e.target.value)}
                                             className="quick-buy-modal__input"
@@ -1085,14 +1112,14 @@ export default function ProductDetail() {
                                         />
                                         <input
                                             type="tel"
-                                            aria-label="Ваш телефон"
+                                            aria-label={t("Ваш телефон")}
                                             placeholder="+380 __ ___ __ __"
                                             value={quickBuyPhone}
                                             onChange={(e) => setQuickBuyPhone(e.target.value)}
                                             className="quick-buy-modal__input"
                                         />
                                         <p className="quick-buy-modal__hint">
-                                            Ми зателефонуємо протягом 15 хвилин
+                                            {t("Ми зателефонуємо протягом 15 хвилин")}
                                         </p>
                                         <button
                                             disabled={quickBuySending || quickBuyPhone.length < 10}
@@ -1115,11 +1142,13 @@ export default function ProductDetail() {
                                                     setQuickBuyPhone("");
                                                     setQuickBuyName("");
                                                     showToast(
-                                                        "Замовлення прийнято! Ми зателефонуємо протягом 15 хвилин",
+                                                        t(
+                                                            "Замовлення прийнято! Ми зателефонуємо протягом 15 хвилин",
+                                                        ),
                                                     );
                                                 } catch {
                                                     showToast(
-                                                        "Помилка. Спробуйте ще раз.",
+                                                        t("Помилка. Спробуйте ще раз."),
                                                         "error",
                                                     );
                                                 } finally {
@@ -1134,13 +1163,13 @@ export default function ProductDetail() {
                                                         : 1,
                                             }}
                                         >
-                                            {quickBuySending ? "Відправка..." : "Замовити"}
+                                            {quickBuySending ? t("Відправка...") : t("Замовити")}
                                         </button>
                                         <button
                                             onClick={() => setQuickBuyOpen(false)}
                                             className="quick-buy-modal__cancel"
                                         >
-                                            Скасувати
+                                            {t("Скасувати")}
                                         </button>
                                     </div>
                                 </div>
@@ -1158,7 +1187,7 @@ export default function ProductDetail() {
                                         aria-expanded={openAccordion === "desc"}
                                         aria-controls="acc-body-desc"
                                     >
-                                        <span>Опис</span>
+                                        <span>{t("Опис")}</span>
                                         <span
                                             aria-hidden="true"
                                             className={`acc-icon ${openAccordion === "desc" ? "minus" : "plus"}`}
@@ -1180,7 +1209,7 @@ export default function ProductDetail() {
                                         aria-expanded={openAccordion === "delivery"}
                                         aria-controls="acc-body-delivery"
                                     >
-                                        <span>Доставка</span>
+                                        <span>{t("Доставка")}</span>
                                         <span
                                             aria-hidden="true"
                                             className={`acc-icon ${openAccordion === "delivery" ? "minus" : "plus"}`}
@@ -1188,16 +1217,20 @@ export default function ProductDetail() {
                                     </button>
                                     <div id="acc-body-delivery" className="acc-body" role="region">
                                         <div className="acc-inner">
-                                            <p>• Доставка Новою Поштою 1-3 дні</p>
+                                            <p>• {t("Доставка Новою Поштою 1-3 дні")}</p>
                                             <p>
-                                                • Безкоштовна доставка від 2 000 ₴; до 2 000 ₴ —
-                                                ≈70–120 ₴ за тарифами Нової Пошти
+                                                •{" "}
+                                                {t(
+                                                    "Безкоштовна доставка від 2 000 ₴; до 2 000 ₴ — ≈70–120 ₴ за тарифами Нової Пошти",
+                                                )}
                                             </p>
                                             <p>
-                                                • Оплата при отриманні: готівка або карткою на
-                                                терміналі Нової Пошти
+                                                •{" "}
+                                                {t(
+                                                    "Оплата при отриманні: готівка або карткою на терміналі Нової Пошти",
+                                                )}
                                             </p>
-                                            <p>• 14 днів на повернення</p>
+                                            <p>• {t("14 днів на повернення")}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1208,10 +1241,10 @@ export default function ProductDetail() {
 
                 {relatedProducts.length > 0 && (
                     <div className="related-section">
-                        <h3 className="related-title">Вам також може сподобатись</h3>
+                        <h3 className="related-title">{t("Вам також може сподобатись")}</h3>
                         <div className="related-grid">
                             {relatedProducts.map((rp) => (
-                                <Link
+                                <LLink
                                     to={rp.slug ? `/p/${rp.slug}` : `/product/${rp.id}`}
                                     key={rp.id}
                                     className="related-card"
@@ -1230,9 +1263,9 @@ export default function ProductDetail() {
                                     </div>
                                     <div className="related-info">
                                         <h4>{rp.name}</h4>
-                                        <span>{formatPrice(rp.price)} ₴</span>
+                                        <span>{money(rp.price)}</span>
                                     </div>
-                                </Link>
+                                </LLink>
                             ))}
                         </div>
                     </div>
@@ -1249,7 +1282,7 @@ export default function ProductDetail() {
                 an unset size routes through the handler so the size selector
                 pulses + the toast nudges. */}
             <div className="mobile-sticky-cta">
-                <div className="mobile-sticky-cta__price">{formatPrice(product.price)} ₴</div>
+                <div className="mobile-sticky-cta__price">{money(product.price)}</div>
                 <button
                     type="button"
                     className="mobile-sticky-cta__btn"
@@ -1258,10 +1291,10 @@ export default function ProductDetail() {
                     aria-live="polite"
                 >
                     {justAdded
-                        ? "✓ Додано"
+                        ? t("✓ Додано")
                         : !isInStock && product.inventory?.length > 0
-                          ? "Немає в наявності"
-                          : "Додати в кошик"}
+                          ? t("Немає в наявності")
+                          : t("Додати в кошик")}
                 </button>
             </div>
         </main>

@@ -1,8 +1,13 @@
 import type { ActionFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
-import { sendEmail, renderNewsletterWelcome } from "../utils/email.server";
+import {
+    sendEmail,
+    renderNewsletterWelcome,
+    newsletterWelcomeSubject,
+} from "../utils/email.server";
 import { env } from "../utils/env.server";
 import { logger } from "../utils/logger.server";
+import { isLocale, type Locale } from "../i18n/config";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -48,11 +53,13 @@ export async function action({ request }: ActionFunctionArgs) {
     const bodyObj = (typeof body === "object" && body !== null ? body : {}) as {
         email?: unknown;
         source?: unknown;
+        lang?: unknown;
     };
     const rawEmail = String(bodyObj.email ?? "")
         .trim()
         .toLowerCase();
     const source = String(bodyObj.source ?? "footer").slice(0, 32);
+    const locale: Locale = isLocale(bodyObj.lang) ? bodyObj.lang : "uk";
 
     if (!EMAIL_REGEX.test(rawEmail) || rawEmail.length > 200) {
         return Response.json({ success: false, error: "Введіть коректний email" }, { status: 400 });
@@ -70,8 +77,8 @@ export async function action({ request }: ActionFunctionArgs) {
         const unsubscribeUrl = `${env.SITE_URL}/api/newsletter?unsub=${sub.unsubKey}`;
         sendEmail({
             to: rawEmail,
-            subject: "Ласкаво просимо у MIND BODY",
-            html: renderNewsletterWelcome({ email: rawEmail, unsubKey: sub.unsubKey }),
+            subject: newsletterWelcomeSubject(locale),
+            html: renderNewsletterWelcome({ email: rawEmail, unsubKey: sub.unsubKey, locale }),
             unsubscribeUrl,
             tags: [{ name: "type", value: "newsletter-welcome" }],
         }).catch((e) =>

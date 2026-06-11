@@ -1,6 +1,7 @@
 import { type LoaderFunctionArgs, type MetaFunction, redirect } from "react-router";
-import { useLoaderData, Link } from "react-router";
-import { localeFromParam, localizePath } from "../i18n/config";
+import { useLoaderData } from "react-router";
+import { localeFromParam, localeFromParamSafe, localizePath, OG_LOCALE } from "../i18n/config";
+import { useI18n, useMoney, LLink, plural, getT } from "../i18n";
 import ProductCard from "../components/ProductCard";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { type MergedFilterConfig, type PriceRange } from "../utils/filters";
@@ -27,17 +28,19 @@ import { useEditorMode, postToEditor } from "../utils/editor-bridge";
 // keep compiling without changes.
 type ShopProductCard = SharedShopProductCard;
 
-export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
+export const meta: MetaFunction<typeof loader> = ({ data, location, params }) => {
+    const locale = localeFromParamSafe(params.lang);
+    const t = getT(locale);
     const shopPage = data?.shopPage;
     const slug = data?.category || "yoga";
     // Title: admin-set DB title wins; else the taxonomy label (all 6 real
     // slugs), not the legacy women/kids-only map.
-    const title = shopPage?.title || shopPageLabel(slug).title || "Каталог";
+    const title = shopPage?.title || t(shopPageLabel(slug).title) || t("Каталог");
     const heroImage = shopPage?.heroImage || "/brand-sun.png";
     const siteUrl = data?.siteUrl || DEFAULT_SITE_URL;
     const products = data?.products ?? [];
 
-    const canonicalUrl = `${siteUrl}/shop/${slug}`;
+    const canonicalUrl = `${siteUrl}${localizePath(`/shop/${slug}`, locale)}`;
     // Faceted/sorted/paginated variants (any ?query) are non-canonical
     // duplicates of the clean /shop/:slug page — keep them out of the index
     // while still following links so products keep getting crawled.
@@ -57,7 +60,10 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
         { title: `${title} | MIND BODY` },
         {
             name: "description",
-            content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика. Українське виробництво.`,
+            content: t(
+                "{title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика. Українське виробництво.",
+                { title },
+            ),
         },
         ...(isFiltered ? [{ name: "robots", content: "noindex, follow" }] : []),
         { tagName: "link", rel: "canonical", href: canonicalUrl },
@@ -65,14 +71,16 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
         { property: "og:title", content: `${title} | MIND BODY` },
         {
             property: "og:description",
-            content: `${title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика.`,
+            content: t("{title} спортивного одягу MIND BODY. Йога, гімнастика, акробатика.", {
+                title,
+            }),
         },
         { property: "og:type", content: "website" },
         {
             property: "og:image",
             content: heroImage.startsWith("http") ? heroImage : `${siteUrl}${heroImage}`,
         },
-        { property: "og:locale", content: "uk_UA" },
+        { property: "og:locale", content: OG_LOCALE[locale] },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: `${title} | MIND BODY` },
         {
@@ -84,7 +92,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
                 "@context": "https://schema.org",
                 "@type": "BreadcrumbList",
                 itemListElement: [
-                    { "@type": "ListItem", position: 1, name: "Головна", item: siteUrl },
+                    { "@type": "ListItem", position: 1, name: t("Головна"), item: siteUrl },
                     { "@type": "ListItem", position: 2, name: title, item: canonicalUrl },
                 ],
             },
@@ -102,7 +110,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
                 url: canonicalUrl,
                 description: shopPage?.subtitle ?? `${title} MIND BODY`,
                 isPartOf: { "@type": "WebSite", url: siteUrl, name: "MIND BODY" },
-                inLanguage: "uk-UA",
+                inLanguage: locale === "uk" ? "uk-UA" : locale === "en" ? "en-US" : "ru-RU",
                 mainEntity: {
                     "@type": "ItemList",
                     numberOfItems: products.length,
@@ -171,6 +179,8 @@ import "../styles/shop.css";
 
 export default function ShopCategory() {
     const { products, category, shopPage, filterConfig } = useLoaderData<typeof loader>();
+    const { t, lp, locale } = useI18n();
+    const money = useMoney();
     const [searchParams, setSearchParams] = useSearchParams();
     // When mounted via the /shop/:category/:subcategory nested route, the
     // sidebar should reflect the path-selected subcategory as a pre-checked
@@ -287,7 +297,7 @@ export default function ShopCategory() {
         // fetch the unfiltered set instead of leaving us on a 0-product
         // subcategory page.
         if (pathSubcategory && selectedCategories.length === 0) {
-            navigate(`/shop/${category}`, { replace: true, preventScrollReset: true });
+            navigate(lp(`/shop/${category}`), { replace: true, preventScrollReset: true });
             return;
         }
 
@@ -347,8 +357,8 @@ export default function ShopCategory() {
     // every real slug (yoga/sport/dance/casual/kids/yogatools) shows a correct
     // hero title — not the legacy women/kids "Жіноча" default.
     const fallbackLabels = shopPageLabel(category);
-    const prefixLabel = shopPage?.prefixLabel || fallbackLabels.tagline || "For active life";
-    const mainLabel = shopPage?.title || fallbackLabels.title;
+    const prefixLabel = shopPage?.prefixLabel || t(fallbackLabels.tagline) || "For active life";
+    const mainLabel = shopPage?.title || t(fallbackLabels.title);
     const layerLabel = "MIND BODY";
 
     // Parse Image Position. Default = "50% 30%" (face-safe crop for
@@ -503,6 +513,16 @@ export default function ShopCategory() {
     const fabricOptions = useMemo(() => fabricsForShop(category), [category]);
     const sleeveOptions = useMemo(() => sleevesForShop(category), [category]);
 
+    // Price-range radio labels: the admin-set Ukrainian label is canonical
+    // for uk; en/ru rebuild the bounds through money() so the displayed
+    // currency matches the locale. Filter math stays in UAH (range.min/max).
+    const priceRangeLabel = (range: PriceRange) => {
+        if (locale === "uk") return range.label;
+        if (range.min <= 0) return t("До {max}", { max: money(range.max) });
+        if (range.max >= 999999) return t("Від {min}", { min: money(range.min) });
+        return `${money(range.min)} - ${money(range.max)}`;
+    };
+
     // Single-select accordion for a deeper facet (fabric | sleeve), shared by
     // the sidebar and the mobile drawer. Options with zero matching products
     // are hidden; the whole section disappears when nothing matches — mirrors
@@ -549,7 +569,7 @@ export default function ShopCategory() {
                                 }}
                             />
                             <span className="checkbox-visual radio"></span>
-                            <span className="label-text">Усі</span>
+                            <span className="label-text">{t("Усі")}</span>
                         </label>
                         {withCounts.map(({ o, count }) => (
                             <label key={`${name}-${o}`} className="mb-checkbox-item">
@@ -564,7 +584,7 @@ export default function ShopCategory() {
                                 />
                                 <span className="checkbox-visual radio"></span>
                                 <span className="label-text">
-                                    {labelFn(o)}
+                                    {t(labelFn(o))}
                                     <span
                                         style={{
                                             marginLeft: "6px",
@@ -696,7 +716,7 @@ export default function ShopCategory() {
                                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                                 <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                             </svg>
-                            Змінити фон
+                            {t("Змінити фон")}
                         </button>
                     </div>
                 )}
@@ -711,9 +731,9 @@ export default function ShopCategory() {
                 <div className="container" style={{ position: "relative", zIndex: 1 }}>
                     <div className="shop-hero-luxe__content">
                         <nav className="luxe-breadcrumb">
-                            <Link to="/">Головна</Link>
+                            <LLink to="/">{t("Головна")}</LLink>
                             <span>/</span>
-                            <span>Магазин</span>
+                            <span>{t("Магазин")}</span>
                         </nav>
 
                         <div className="hero-composition">
@@ -721,7 +741,7 @@ export default function ShopCategory() {
                             <div className="hero-title-block">
                                 <h1 className="luxe-title">
                                     <span className="luxe-title__main">{mainLabel}</span>
-                                    <span className="luxe-title__sub">колекція</span>
+                                    <span className="luxe-title__sub">{t("колекція")}</span>
                                 </h1>
                                 <div className="luxe-signature">
                                     <span className="line"></span>
@@ -747,7 +767,7 @@ export default function ShopCategory() {
                 <button
                     className="mobile-filter-btn"
                     onClick={() => setIsFilterOpen(true)}
-                    aria-label="Відкрити фільтри"
+                    aria-label={t("Відкрити фільтри")}
                 >
                     <svg
                         width="18"
@@ -761,7 +781,7 @@ export default function ShopCategory() {
                         <line x1="8" y1="12" x2="16" y2="12" />
                         <line x1="10" y1="18" x2="14" y2="18" />
                     </svg>
-                    ФІЛЬТРИ
+                    {t("ФІЛЬТРИ")}
                     {selectedCategories.length +
                         selectedSizes.length +
                         selectedColors.length +
@@ -779,7 +799,10 @@ export default function ShopCategory() {
                         </span>
                     )}
                 </button>
-                <div className="mobile-product-count">{filteredProducts.length} товарів</div>
+                <div className="mobile-product-count">
+                    {filteredProducts.length}{" "}
+                    {plural(locale, filteredProducts.length, "товар", "товари", "товарів")}
+                </div>
             </div>
 
             {/* Mobile Filter Drawer Overlay */}
@@ -787,11 +810,11 @@ export default function ShopCategory() {
                 <div className="filter-drawer-overlay" onClick={() => setIsFilterOpen(false)}>
                     <div className="filter-drawer" onClick={(e) => e.stopPropagation()}>
                         <div className="filter-drawer__header">
-                            <span>ФІЛЬТРИ</span>
+                            <span>{t("ФІЛЬТРИ")}</span>
                             <button
                                 className="filter-drawer__close"
                                 onClick={() => setIsFilterOpen(false)}
-                                aria-label="Закрити"
+                                aria-label={t("Закрити")}
                             >
                                 <svg
                                     width="20"
@@ -815,7 +838,7 @@ export default function ShopCategory() {
                                     aria-expanded={openSections.category}
                                     onClick={() => toggleSection("category")}
                                 >
-                                    <span>КАТЕГОРІЯ</span>
+                                    <span>{t("КАТЕГОРІЯ")}</span>
                                     <span className="icon">
                                         {openSections.category ? "−" : "+"}
                                     </span>
@@ -841,7 +864,7 @@ export default function ShopCategory() {
                                                     />
                                                     <span className="checkbox-visual"></span>
                                                     <span className="label-text">
-                                                        {categoryLabels[cat] || cat}{" "}
+                                                        {t(categoryLabels[cat] || cat)}{" "}
                                                         <span
                                                             style={{
                                                                 marginLeft: "6px",
@@ -859,7 +882,7 @@ export default function ShopCategory() {
                                 </div>
                             </div>
                             {renderFacetFilter(
-                                "ТКАНИНА",
+                                t("ТКАНИНА"),
                                 "fabric",
                                 fabricOptions,
                                 selectedFabric,
@@ -868,7 +891,7 @@ export default function ShopCategory() {
                                 "d",
                             )}
                             {renderFacetFilter(
-                                "РУКАВ",
+                                t("РУКАВ"),
                                 "sleeve",
                                 sleeveOptions,
                                 selectedSleeve,
@@ -883,7 +906,7 @@ export default function ShopCategory() {
                                     aria-expanded={openSections.size}
                                     onClick={() => toggleSection("size")}
                                 >
-                                    <span>РОЗМІР</span>
+                                    <span>{t("РОЗМІР")}</span>
                                     <span className="icon">{openSections.size ? "−" : "+"}</span>
                                 </button>
                                 <div className="accordion-content">
@@ -913,7 +936,7 @@ export default function ShopCategory() {
                                     aria-expanded={openSections.color}
                                     onClick={() => toggleSection("color")}
                                 >
-                                    <span>КОЛІР</span>
+                                    <span>{t("КОЛІР")}</span>
                                     <span className="icon">{openSections.color ? "−" : "+"}</span>
                                 </button>
                                 <div className="accordion-content">
@@ -931,9 +954,9 @@ export default function ShopCategory() {
                                                     key={`dcol-${color}-${idx}`}
                                                     className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? "active" : ""}`}
                                                     onClick={() => toggleColor(color)}
-                                                    aria-label={colorLabels[color] || color}
+                                                    aria-label={t(colorLabels[color] || color)}
                                                     aria-pressed={selectedColors.includes(color)}
-                                                    title={colorLabels[color] || color}
+                                                    title={t(colorLabels[color] || color)}
                                                 >
                                                     <span className="swatch-check">✓</span>
                                                 </button>
@@ -949,7 +972,7 @@ export default function ShopCategory() {
                                     aria-expanded={openSections.price}
                                     onClick={() => toggleSection("price")}
                                 >
-                                    <span>ЦІНА</span>
+                                    <span>{t("ЦІНА")}</span>
                                     <span className="icon">{openSections.price ? "−" : "+"}</span>
                                 </button>
                                 <div className="accordion-content">
@@ -969,7 +992,9 @@ export default function ShopCategory() {
                                                     }}
                                                 />
                                                 <span className="checkbox-visual radio"></span>
-                                                <span className="label-text">{range.label}</span>
+                                                <span className="label-text">
+                                                    {priceRangeLabel(range)}
+                                                </span>
                                             </label>
                                         ))}
                                     </div>
@@ -989,14 +1014,21 @@ export default function ShopCategory() {
                                     }}
                                     className="filter-drawer__reset"
                                 >
-                                    Скинути фільтри
+                                    {t("Скинути фільтри")}
                                 </button>
                             )}
                             <button
                                 onClick={() => setIsFilterOpen(false)}
                                 className="filter-drawer__apply"
                             >
-                                Показати {filteredProducts.length} товарів
+                                {t("Показати")} {filteredProducts.length}{" "}
+                                {plural(
+                                    locale,
+                                    filteredProducts.length,
+                                    "товар",
+                                    "товари",
+                                    "товарів",
+                                )}
                             </button>
                         </div>
                     </div>
@@ -1009,7 +1041,7 @@ export default function ShopCategory() {
                         {/* MIND BODY x Puma Hybrid Sidebar */}
                         <aside className="mb-shop-sidebar">
                             <div className="sidebar-header">
-                                <h3>ФІЛЬТРИ</h3>
+                                <h3>{t("ФІЛЬТРИ")}</h3>
                             </div>
 
                             {/* Category Accordion */}
@@ -1022,7 +1054,7 @@ export default function ShopCategory() {
                                     aria-expanded={openSections.category}
                                     onClick={() => toggleSection("category")}
                                 >
-                                    <span>КАТЕГОРІЯ</span>
+                                    <span>{t("КАТЕГОРІЯ")}</span>
                                     <span className="icon">
                                         {openSections.category ? "−" : "+"}
                                     </span>
@@ -1048,7 +1080,7 @@ export default function ShopCategory() {
                                                     />
                                                     <span className="checkbox-visual"></span>
                                                     <span className="label-text">
-                                                        {categoryLabels[cat] || cat}
+                                                        {t(categoryLabels[cat] || cat)}
                                                         <span
                                                             style={{
                                                                 marginLeft: "6px",
@@ -1067,7 +1099,7 @@ export default function ShopCategory() {
                             </div>
 
                             {renderFacetFilter(
-                                "ТКАНИНА",
+                                t("ТКАНИНА"),
                                 "fabric",
                                 fabricOptions,
                                 selectedFabric,
@@ -1076,7 +1108,7 @@ export default function ShopCategory() {
                                 "s",
                             )}
                             {renderFacetFilter(
-                                "РУКАВ",
+                                t("РУКАВ"),
                                 "sleeve",
                                 sleeveOptions,
                                 selectedSleeve,
@@ -1095,7 +1127,7 @@ export default function ShopCategory() {
                                     aria-expanded={openSections.size}
                                     onClick={() => toggleSection("size")}
                                 >
-                                    <span>РОЗМІР</span>
+                                    <span>{t("РОЗМІР")}</span>
                                     <span className="icon">{openSections.size ? "−" : "+"}</span>
                                 </button>
                                 <div className="accordion-content">
@@ -1129,7 +1161,7 @@ export default function ShopCategory() {
                                     aria-expanded={openSections.color}
                                     onClick={() => toggleSection("color")}
                                 >
-                                    <span>КОЛІР</span>
+                                    <span>{t("КОЛІР")}</span>
                                     <span className="icon">{openSections.color ? "−" : "+"}</span>
                                 </button>
                                 <div className="accordion-content">
@@ -1147,9 +1179,9 @@ export default function ShopCategory() {
                                                     key={`color-${color}-${idx}`}
                                                     className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? "active" : ""}`}
                                                     onClick={() => toggleColor(color)}
-                                                    aria-label={colorLabels[color] || color}
+                                                    aria-label={t(colorLabels[color] || color)}
                                                     aria-pressed={selectedColors.includes(color)}
-                                                    title={colorLabels[color] || color}
+                                                    title={t(colorLabels[color] || color)}
                                                 >
                                                     <span className="swatch-check">✓</span>
                                                 </button>
@@ -1169,7 +1201,7 @@ export default function ShopCategory() {
                                     aria-expanded={openSections.price}
                                     onClick={() => toggleSection("price")}
                                 >
-                                    <span>ЦІНА</span>
+                                    <span>{t("ЦІНА")}</span>
                                     <span className="icon">{openSections.price ? "−" : "+"}</span>
                                 </button>
                                 <div className="accordion-content">
@@ -1189,7 +1221,9 @@ export default function ShopCategory() {
                                                     }}
                                                 />
                                                 <span className="checkbox-visual radio"></span>
-                                                <span className="label-text">{range.label}</span>
+                                                <span className="label-text">
+                                                    {priceRangeLabel(range)}
+                                                </span>
                                             </label>
                                         ))}
                                     </div>
@@ -1203,7 +1237,7 @@ export default function ShopCategory() {
                                 selectedSleeve ||
                                 selectedPriceRange) && (
                                 <button onClick={clearFilters} className="mb-reset-filters">
-                                    Скинути всі фільтри
+                                    {t("Скинути всі фільтри")}
                                 </button>
                             )}
                         </aside>
@@ -1213,7 +1247,7 @@ export default function ShopCategory() {
                             {/* MB sorting Toolbar */}
                             <div className="mb-toolbar">
                                 <div className="toolbar-top-row">
-                                    <div className="sort-label">СОРТУВАТИ ЗА:</div>
+                                    <div className="sort-label">{t("СОРТУВАТИ ЗА:")}</div>
                                     <div className="sort-chips">
                                         {[
                                             { id: "default", label: "За релевантністю" },
@@ -1226,7 +1260,7 @@ export default function ShopCategory() {
                                                 className={`sort-chip ${sortBy === option.id ? "active" : ""}`}
                                                 onClick={() => setSortBy(option.id)}
                                             >
-                                                {option.label}
+                                                {t(option.label)}
                                                 {sortBy === option.id && (
                                                     <span className="close-x">✕</span>
                                                 )}
@@ -1235,8 +1269,11 @@ export default function ShopCategory() {
                                     </div>
                                     <div className="product-count">
                                         {visibleProducts.length < filteredProducts.length
-                                            ? `${visibleProducts.length} з ${filteredProducts.length} ТОВАРІВ`
-                                            : `${filteredProducts.length} ТОВАРІВ`}
+                                            ? t("{shown} з {total} ТОВАРІВ", {
+                                                  shown: visibleProducts.length,
+                                                  total: filteredProducts.length,
+                                              })
+                                            : t("{n} ТОВАРІВ", { n: filteredProducts.length })}
                                     </div>
                                 </div>
                             </div>
@@ -1265,12 +1302,12 @@ export default function ShopCategory() {
                                                     )
                                                 }
                                             >
-                                                Показати ще (
-                                                {Math.min(
-                                                    LOAD_MORE_COUNT,
-                                                    filteredProducts.length - displayCount,
-                                                )}
-                                                )
+                                                {t("Показати ще ({n})", {
+                                                    n: Math.min(
+                                                        LOAD_MORE_COUNT,
+                                                        filteredProducts.length - displayCount,
+                                                    ),
+                                                })}
                                             </button>
                                             <span className="load-more-progress">
                                                 {visibleProducts.length} / {filteredProducts.length}
@@ -1282,13 +1319,14 @@ export default function ShopCategory() {
                                 <div className="luxe-empty">
                                     <div className="luxe-empty__content">
                                         <span className="empty-num">00</span>
-                                        <h2>Ми не знайшли збігів за вашим запитом</h2>
+                                        <h2>{t("Ми не знайшли збігів за вашим запитом")}</h2>
                                         <p>
-                                            Спробуйте змінити технічні параметри або скинути всі
-                                            фільтри.
+                                            {t(
+                                                "Спробуйте змінити технічні параметри або скинути всі фільтри.",
+                                            )}
                                         </p>
                                         <button onClick={clearFilters} className="luxe-btn-primary">
-                                            Скинути всі налаштування
+                                            {t("Скинути всі налаштування")}
                                         </button>
                                     </div>
                                 </div>

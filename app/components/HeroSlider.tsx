@@ -1,7 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react";
-import { Link } from "react-router";
 import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
 import { getLqipStyle } from "../utils/lqip";
+import { useI18n, LLink } from "../i18n";
 
 // Define the Slide type that matches the database model
 export interface SlideData {
@@ -94,6 +94,7 @@ export default function HeroSlider({
     interval = 5000,
     children,
 }: HeroSliderProps) {
+    const { t } = useI18n();
     const slides = propSlides && propSlides.length > 0 ? propSlides : defaultSlides;
     const [activeSlide, setActiveSlide] = useState(0);
 
@@ -123,7 +124,7 @@ export default function HeroSlider({
     };
 
     return (
-        <section className="hero-slider" id="hero" aria-label="Вітрина бренду MIND BODY">
+        <section className="hero-slider" id="hero" aria-label={t("Вітрина бренду MIND BODY")}>
             {/* Slides Container */}
             <div className="hero-slider__slides">
                 {slides.map((slide, index) => (
@@ -230,13 +231,13 @@ export default function HeroSlider({
                         {/* CTA Button */}
                         <div className="hero-slider__footer-cta">
                             <div className="hero-slider__cta">
-                                <Link
+                                <LLink
                                     to="/shop/yoga"
                                     className="btn btn--primary btn--glow hero-slider__cta-btn"
                                     id="cta-shop"
                                 >
-                                    Переглянути колекцію
-                                </Link>
+                                    {t("Переглянути колекцію")}
+                                </LLink>
                             </div>
                         </div>
                     </>
@@ -252,7 +253,7 @@ export default function HeroSlider({
                                 key={index}
                                 className={`hero-slider__dot ${index === activeSlide ? "is-active" : ""}`}
                                 data-slide={index}
-                                aria-label={`Слайд ${index + 1}`}
+                                aria-label={t("Слайд {n}", { n: index + 1 })}
                                 aria-current={index === activeSlide ? "true" : undefined}
                                 onClick={() => goToSlide(index)}
                             />

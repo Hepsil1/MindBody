@@ -1,20 +1,24 @@
-import { Link, useLoaderData, useSearchParams } from "react-router";
+import { useLoaderData, useSearchParams } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { prisma } from "../db.server";
 import { useState, useEffect } from "react";
 import ProductCard, { type Product } from "../components/ProductCard";
-import { pluralizeUA } from "../utils/plural";
+import { useI18n, LLink, plural, getT } from "../i18n";
+import { localeFromParam, localeFromParamSafe, OG_LOCALE } from "../i18n/config";
+import { localizeEntities } from "../utils/translations.server";
 import { DEFAULT_SITE_URL as SITE_URL } from "../utils/site-url";
 import { trackSearch } from "../utils/analytics.client";
 import { expandSearchTerms } from "../utils/search-synonyms";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
+    const locale = localeFromParamSafe(params.lang);
+    const t = getT(locale);
     const q = data?.q || "";
     const count = data?.products?.length || 0;
-    const title = q ? `Пошук: ${q} | MIND BODY` : "Пошук | MIND BODY";
+    const title = q ? t("Пошук: {q} | MIND BODY", { q }) : t("Пошук | MIND BODY");
     const desc = q
-        ? `Знайдено ${count} товарів за запитом «${q}» в MIND BODY.`
-        : "Знайди товари MIND BODY за назвою, категорією або кольором.";
+        ? t("Знайдено {count} товарів за запитом «{q}» в MIND BODY.", { count, q })
+        : t("Знайди товари MIND BODY за назвою, категорією або кольором.");
     return [
         { title },
         { name: "description", content: desc },
@@ -25,13 +29,15 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
         },
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
+        { property: "og:locale", content: OG_LOCALE[locale] },
         { property: "og:type", content: "website" },
         // Search-result pages shouldn't be indexed individually
         { name: "robots", content: "noindex, follow" },
     ];
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
+    const locale = localeFromParam(params.lang);
     const url = new URL(request.url);
     const q = (url.searchParams.get("q") || "").trim();
 
@@ -69,10 +75,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
             },
         });
 
+        // en/ru: show translated names (matching itself runs on the uk text —
+        // the synonym expansion maps en/ru queries onto uk terms).
+        const localized = await localizeEntities("Product", products, locale, [
+            "name",
+            "description",
+        ]);
+
         const NOW = Date.now();
         const NEW_THRESHOLD = 14 * 24 * 60 * 60 * 1000;
 
-        const mapped: Product[] = products.map((p) => {
+        const mapped: Product[] = localized.map((p) => {
             let imgs: string[] = [];
             try {
                 imgs = JSON.parse(p.images || "[]");
@@ -132,7 +145,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     createdAt: true,
                 },
             });
-            fallback = top.map((p) => {
+            const localizedTop = await localizeEntities("Product", top, locale, ["name"]);
+            fallback = localizedTop.map((p) => {
                 let imgs: string[] = [];
                 try {
                     imgs = JSON.parse(p.images || "[]");
@@ -173,6 +187,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Search() {
     const { q: initialQ, products, fallback } = useLoaderData<typeof loader>();
+    const { t, locale } = useI18n();
     const [params, setParams] = useSearchParams();
     const [query, setQuery] = useState(initialQ || "");
 
@@ -209,19 +224,19 @@ export default function Search() {
                 <div className="container" style={{ maxWidth: "720px" }}>
                     <nav
                         className="breadcrumb"
-                        aria-label="Хлібні крихти"
+                        aria-label={t("Хлібні крихти")}
                         style={{ marginBottom: "20px" }}
                     >
-                        <Link to="/">Головна</Link>
+                        <LLink to="/">{t("Головна")}</LLink>
                         <span aria-hidden="true"> / </span>
-                        <span>Пошук</span>
+                        <span>{t("Пошук")}</span>
                     </nav>
-                    <h1>Знайди свій рух</h1>
+                    <h1>{t("Знайди свій рух")}</h1>
 
                     <form
                         onSubmit={submit}
                         role="search"
-                        aria-label="Пошук товарів"
+                        aria-label={t("Пошук товарів")}
                         style={{
                             marginTop: "32px",
                             display: "flex",
@@ -233,14 +248,14 @@ export default function Search() {
                         }}
                     >
                         <label htmlFor="search-input" className="visually-hidden">
-                            Що шукаєш?
+                            {t("Що шукаєш?")}
                         </label>
                         <input
                             id="search-input"
                             type="search"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Лосини, топ, костюм…"
+                            placeholder={t("Лосини, топ, костюм…")}
                             autoComplete="off"
                             autoFocus
                             style={{
@@ -258,15 +273,27 @@ export default function Search() {
                             style={{ padding: "12px 28px", borderRadius: "999px" }}
                             disabled={query.trim().length < 2}
                         >
-                            Шукати
+                            {t("Шукати")}
                         </button>
                     </form>
 
                     {hasQuery && (
                         <p style={{ marginTop: "20px", color: "var(--color-text-secondary)" }}>
                             {products.length > 0
-                                ? `Знайдено ${products.length} ${pluralizeUA(products.length, "товар", "товари", "товарів")} за запитом «${initialQ}»`
-                                : `Нічого не знайдено за запитом «${initialQ}»`}
+                                ? t("Знайдено {n} {unit} за запитом «{query}»", {
+                                      n: products.length,
+                                      unit: plural(
+                                          locale,
+                                          products.length,
+                                          "товар",
+                                          "товари",
+                                          "товарів",
+                                      ),
+                                      query: initialQ,
+                                  })
+                                : t("Нічого не знайдено за запитом «{query}»", {
+                                      query: initialQ,
+                                  })}
                         </p>
                     )}
                 </div>
@@ -286,7 +313,7 @@ export default function Search() {
                             }}
                         >
                             <p style={{ marginBottom: "24px", fontSize: "16px" }}>
-                                Введи 2 або більше символів — і ми знайдемо.
+                                {t("Введи 2 або більше символів — і ми знайдемо.")}
                             </p>
                             <div
                                 style={{
@@ -316,7 +343,7 @@ export default function Search() {
                                             fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
                                         }}
                                     >
-                                        {tag}
+                                        {t(tag)}
                                     </button>
                                 ))}
                             </div>
@@ -335,7 +362,7 @@ export default function Search() {
 
                     {noResults && (
                         <div style={{ textAlign: "center", padding: "48px 20px" }}>
-                            <h2 style={{ marginBottom: "12px" }}>Спробуй інше</h2>
+                            <h2 style={{ marginBottom: "12px" }}>{t("Спробуй інше")}</h2>
                             <p
                                 style={{
                                     color: "var(--color-text-secondary)",
@@ -344,8 +371,9 @@ export default function Search() {
                                     margin: "0 auto 32px",
                                 }}
                             >
-                                Можливо, варто перевірити написання або скоротити запит. Або
-                                перегляньте наші колекції:
+                                {t(
+                                    "Можливо, варто перевірити написання або скоротити запит. Або перегляньте наші колекції:",
+                                )}
                             </p>
                             <div
                                 style={{
@@ -355,18 +383,18 @@ export default function Search() {
                                     flexWrap: "wrap",
                                 }}
                             >
-                                <Link to="/shop/yoga" className="btn btn--primary">
+                                <LLink to="/shop/yoga" className="btn btn--primary">
                                     Yoga
-                                </Link>
-                                <Link to="/shop/sport" className="btn btn--primary">
+                                </LLink>
+                                <LLink to="/shop/sport" className="btn btn--primary">
                                     Sport
-                                </Link>
-                                <Link to="/shop/casual" className="btn btn--primary">
+                                </LLink>
+                                <LLink to="/shop/casual" className="btn btn--primary">
                                     Casual
-                                </Link>
-                                <Link to="/shop/kids" className="btn btn--primary">
+                                </LLink>
+                                <LLink to="/shop/kids" className="btn btn--primary">
                                     Kids
-                                </Link>
+                                </LLink>
                             </div>
 
                             {/* F-014 — keep the visitor on-site: even when
@@ -383,7 +411,7 @@ export default function Search() {
                                                 "var(--font-display, 'Cormorant Garamond', serif)",
                                         }}
                                     >
-                                        Можливо, вам сподобається
+                                        {t("Можливо, вам сподобається")}
                                     </h3>
                                     <div className="luxe-product-grid">
                                         {fallback.map((p) => (

@@ -20,28 +20,36 @@
 
 const SYNONYM_GROUPS: string[][] = [
     // Leggings — the F-014 example. Site/menu uses one term, product
-    // names use the other; buyers type either.
-    ["легінси", "лосини", "leggings", "leg"],
+    // names use the other; buyers type either. + en/ru storefront terms
+    // (product names in the DB are Ukrainian, so en/ru queries must map
+    // onto the uk vocabulary to hit anything).
+    ["легінси", "лосини", "leggings", "leg", "леггинсы", "лосины", "tights"],
     // Apparel sets — "комплект" in catalogue, but buyers also reach
     // for "костюм", "сет".
-    ["комплект", "костюм", "сет", "set"],
+    ["комплект", "костюм", "сет", "set", "co-ord", "suit"],
     // Bike-shorts / "велосипедки" / our internal Velo line.
-    ["велосипедки", "velo", "велошорти", "велики"],
+    ["велосипедки", "velo", "велошорти", "велики", "bike shorts", "велосипедки"],
     // Long-sleeves — Cyrillic + the SKU prefix admins type.
-    ["лонгслів", "longsleeve", "лонгслив"],
+    ["лонгслів", "longsleeve", "лонгслив", "long sleeve"],
     // T-shirts / tops basics.
-    ["футболка", "tshirt", "майка", "tee"],
+    ["футболка", "tshirt", "майка", "tee", "t-shirt", "shirt", "tank"],
     // Tops (sport tops, brassieres).
-    ["топ", "top", "топік", "bra"],
+    ["топ", "top", "топік", "bra", "топик"],
     // Jumpsuit / one-piece in catalogue; buyers say "комбінезон" too.
-    ["комбінезон", "jumpsuit", "комбез", "ромпер"],
+    ["комбінезон", "jumpsuit", "комбез", "ромпер", "комбинезон", "romper", "one-piece"],
     // Hoodies & sweatshirts.
-    ["худі", "hoodie", "толстовка"],
+    ["худі", "hoodie", "толстовка", "худи", "свитшот", "світшот", "sweatshirt"],
     // Joggers / sweatpants.
-    ["джогери", "joggers", "штани", "брюки"],
+    ["джогери", "joggers", "штани", "брюки", "джоггеры", "штаны", "sweatpants", "pants"],
+    // Shorts.
+    ["шорти", "shorts", "шорты"],
     // Yoga props (mats, blocks).
-    ["килимок", "mat", "коврик"],
-    ["блок", "block", "цегла"],
+    ["килимок", "mat", "коврик", "yoga mat"],
+    ["блок", "block", "цегла", "блоки"],
+    // Kids line.
+    ["дитячий", "kids", "детский", "дитячі", "детские"],
+    // Thermal underwear.
+    ["термо", "thermal", "термобілизна", "термобельё", "термобелье"],
 ];
 
 // Build a one-shot map at module load (cold once, hot forever).

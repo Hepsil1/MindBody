@@ -1,6 +1,131 @@
-import { Link } from "react-router";
+import { LLink, useI18n, useMoney } from "../i18n";
+
+/** UAH threshold above which shipping is free (checkout charges in UAH). */
+const FREE_SHIPPING_FROM_UAH = 2000;
+
+const CONTENT = {
+    uk: {
+        breadcrumbHome: "Головна",
+        title: "Доставка та оплата",
+        deliveryHeading: "Доставка",
+        freeBanner: "Безкоштовна доставка від 2 000 ₴",
+        paidBanner:
+            "До 2 000 ₴ — за тарифами Нової Пошти, зазвичай ≈70–120 ₴ залежно від ваги та маршруту.",
+        carriers: [
+            {
+                name: "Нова Пошта",
+                items: [
+                    "Доставка у відділення — 1-3 дні",
+                    "Кур'єрська доставка за адресою",
+                    "Поштомат Нової Пошти",
+                ],
+            },
+            {
+                name: "Укрпошта",
+                items: ["Доставка у відділення — 3-7 днів"],
+            },
+        ],
+        coverage: "Ми доставляємо по всій Україні — Нова Пошта та Укрпошта",
+        paymentHeading: "Оплата",
+        cardTitle: "Оплата карткою при отриманні",
+        cardText:
+            "Visa або Mastercard — на терміналі у відділенні Нової Пошти при отриманні замовлення.",
+        codTitle: "Накладений платіж",
+        codText: "Оплата при отриманні у відділенні Нової Пошти",
+        returnsHeading: "Обмін та повернення",
+        returnsLead1: "Ви можете обміняти або повернути товар протягом",
+        returnsLeadStrong: "14 днів",
+        returnsLead2: "з моменту отримання.",
+        returnsList: [
+            "Товар повинен бути у первісному вигляді з бірками",
+            "Для обміну зв'яжіться з нами за телефоном або email",
+            "Повернення коштів протягом 3-5 робочих днів",
+        ],
+    },
+    en: {
+        breadcrumbHome: "Home",
+        title: "Delivery & Payment",
+        deliveryHeading: "Delivery",
+        freeBanner: "Free shipping on orders over {sum}",
+        paidBanner:
+            "Under {sum} — Nova Poshta rates apply, usually ≈UAH 70–120 depending on weight and route.",
+        carriers: [
+            {
+                name: "Nova Poshta",
+                items: [
+                    "Delivery to a branch — 1-3 days",
+                    "Courier delivery to your address",
+                    "Nova Poshta parcel locker",
+                ],
+            },
+            {
+                name: "Ukrposhta",
+                items: ["Delivery to a branch — 3-7 days"],
+            },
+        ],
+        coverage: "We deliver all over Ukraine — Nova Poshta and Ukrposhta",
+        paymentHeading: "Payment",
+        cardTitle: "Pay by card on delivery",
+        cardText:
+            "Visa or Mastercard — at the terminal of the Nova Poshta branch when you receive your order.",
+        codTitle: "Cash on delivery",
+        codText: "Payment upon receipt at the Nova Poshta branch",
+        returnsHeading: "Exchanges & Returns",
+        returnsLead1: "You can exchange or return an item within",
+        returnsLeadStrong: "14 days",
+        returnsLead2: "of receiving it.",
+        returnsList: [
+            "The item must be in its original condition with tags attached",
+            "To arrange an exchange, contact us by phone or email",
+            "Refunds are processed within 3-5 business days",
+        ],
+    },
+    ru: {
+        breadcrumbHome: "Главная",
+        title: "Доставка и оплата",
+        deliveryHeading: "Доставка",
+        freeBanner: "Бесплатная доставка от {sum}",
+        paidBanner:
+            "До {sum} — по тарифам Новой Почты, обычно ≈70–120 грн в зависимости от веса и маршрута.",
+        carriers: [
+            {
+                name: "Новая Почта",
+                items: [
+                    "Доставка в отделение — 1-3 дня",
+                    "Курьерская доставка по адресу",
+                    "Почтомат Новой Почты",
+                ],
+            },
+            {
+                name: "Укрпочта",
+                items: ["Доставка в отделение — 3-7 дней"],
+            },
+        ],
+        coverage: "Мы доставляем по всей Украине — Новая Почта и Укрпочта",
+        paymentHeading: "Оплата",
+        cardTitle: "Оплата картой при получении",
+        cardText:
+            "Visa или Mastercard — на терминале в отделении Новой Почты при получении заказа.",
+        codTitle: "Наложенный платёж",
+        codText: "Оплата при получении в отделении Новой Почты",
+        returnsHeading: "Обмен и возврат",
+        returnsLead1: "Вы можете обменять или вернуть товар в течение",
+        returnsLeadStrong: "14 дней",
+        returnsLead2: "с момента получения.",
+        returnsList: [
+            "Товар должен быть в первоначальном виде с бирками",
+            "Для обмена свяжитесь с нами по телефону или email",
+            "Возврат средств в течение 3-5 рабочих дней",
+        ],
+    },
+} as const;
 
 export default function Delivery() {
+    const { locale } = useI18n();
+    const money = useMoney();
+    const c = CONTENT[locale];
+    const freeFrom = money(FREE_SHIPPING_FROM_UAH);
+
     return (
         <main className="delivery-page">
             <section
@@ -14,11 +139,11 @@ export default function Delivery() {
             >
                 <div className="container">
                     <nav className="breadcrumb" style={{ marginBottom: "20px" }}>
-                        <Link to="/">Головна</Link>
+                        <LLink to="/">{c.breadcrumbHome}</LLink>
                         <span> / </span>
-                        <span>Доставка та оплата</span>
+                        <span>{c.title}</span>
                     </nav>
-                    <h1>Доставка та оплата</h1>
+                    <h1>{c.title}</h1>
                 </div>
             </section>
 
@@ -26,7 +151,7 @@ export default function Delivery() {
                 <div className="container" style={{ maxWidth: "900px" }}>
                     <div style={{ marginBottom: "60px" }}>
                         <h2 style={{ marginBottom: "30px", color: "var(--color-primary)" }}>
-                            Доставка
+                            {c.deliveryHeading}
                         </h2>
 
                         {/* F-043 — concrete shipping economics. Premium meta-description
@@ -48,111 +173,49 @@ export default function Delivery() {
                             }}
                         >
                             <strong style={{ fontSize: "1.1rem" }}>
-                                Безкоштовна доставка від 2 000 ₴
+                                {c.freeBanner.replace("{sum}", freeFrom)}
                             </strong>
                             <span style={{ opacity: 0.92 }}>
-                                До 2 000 ₴ — за тарифами Нової Пошти, зазвичай ≈70–120 ₴ залежно від
-                                ваги та маршруту.
+                                {c.paidBanner.replace("{sum}", freeFrom)}
                             </span>
                         </div>
 
-                        <div
-                            style={{
-                                marginBottom: "30px",
-                                padding: "30px",
-                                background: "var(--color-bg-cream)",
-                                borderRadius: "16px",
-                            }}
-                        >
-                            <h3 style={{ marginBottom: "15px" }}>Нова Пошта</h3>
-                            <ul style={{ listStyle: "none", padding: 0 }}>
-                                <li
-                                    style={{
-                                        marginBottom: "10px",
-                                        paddingLeft: "25px",
-                                        position: "relative",
-                                    }}
-                                >
-                                    <span
-                                        style={{
-                                            position: "absolute",
-                                            left: 0,
-                                            color: "var(--color-primary)",
-                                        }}
-                                    >
-                                        ✓
-                                    </span>
-                                    Доставка у відділення — 1-3 дні
-                                </li>
-                                <li
-                                    style={{
-                                        marginBottom: "10px",
-                                        paddingLeft: "25px",
-                                        position: "relative",
-                                    }}
-                                >
-                                    <span
-                                        style={{
-                                            position: "absolute",
-                                            left: 0,
-                                            color: "var(--color-primary)",
-                                        }}
-                                    >
-                                        ✓
-                                    </span>
-                                    Кур'єрська доставка за адресою
-                                </li>
-                                <li
-                                    style={{
-                                        marginBottom: "10px",
-                                        paddingLeft: "25px",
-                                        position: "relative",
-                                    }}
-                                >
-                                    <span
-                                        style={{
-                                            position: "absolute",
-                                            left: 0,
-                                            color: "var(--color-primary)",
-                                        }}
-                                    >
-                                        ✓
-                                    </span>
-                                    Поштомат Нової Пошти
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div
-                            style={{
-                                marginBottom: "30px",
-                                padding: "30px",
-                                background: "var(--color-bg-cream)",
-                                borderRadius: "16px",
-                            }}
-                        >
-                            <h3 style={{ marginBottom: "15px" }}>Укрпошта</h3>
-                            <ul style={{ listStyle: "none", padding: 0 }}>
-                                <li
-                                    style={{
-                                        marginBottom: "10px",
-                                        paddingLeft: "25px",
-                                        position: "relative",
-                                    }}
-                                >
-                                    <span
-                                        style={{
-                                            position: "absolute",
-                                            left: 0,
-                                            color: "var(--color-primary)",
-                                        }}
-                                    >
-                                        ✓
-                                    </span>
-                                    Доставка у відділення — 3-7 днів
-                                </li>
-                            </ul>
-                        </div>
+                        {c.carriers.map((carrier) => (
+                            <div
+                                key={carrier.name}
+                                style={{
+                                    marginBottom: "30px",
+                                    padding: "30px",
+                                    background: "var(--color-bg-cream)",
+                                    borderRadius: "16px",
+                                }}
+                            >
+                                <h3 style={{ marginBottom: "15px" }}>{carrier.name}</h3>
+                                <ul style={{ listStyle: "none", padding: 0 }}>
+                                    {carrier.items.map((item) => (
+                                        <li
+                                            key={item}
+                                            style={{
+                                                marginBottom: "10px",
+                                                paddingLeft: "25px",
+                                                position: "relative",
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    position: "absolute",
+                                                    left: 0,
+                                                    color: "var(--color-primary)",
+                                                }}
+                                            >
+                                                ✓
+                                            </span>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
 
                         <div
                             style={{
@@ -180,13 +243,13 @@ export default function Delivery() {
                                 <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
                                 <line x1="12" y1="22.08" x2="12" y2="12" />
                             </svg>
-                            <strong>Ми доставляємо по всій Україні — Нова Пошта та Укрпошта</strong>
+                            <strong>{c.coverage}</strong>
                         </div>
                     </div>
 
                     <div id="payment">
                         <h2 style={{ marginBottom: "30px", color: "var(--color-primary)" }}>
-                            Оплата
+                            {c.paymentHeading}
                         </h2>
 
                         <div
@@ -203,17 +266,14 @@ export default function Delivery() {
                                     borderRadius: "16px",
                                 }}
                             >
-                                <h3 style={{ marginBottom: "15px" }}>
-                                    Оплата карткою при отриманні
-                                </h3>
+                                <h3 style={{ marginBottom: "15px" }}>{c.cardTitle}</h3>
                                 <p
                                     style={{
                                         color: "var(--color-text-secondary)",
                                         marginBottom: "15px",
                                     }}
                                 >
-                                    Visa або Mastercard — на терміналі у відділенні Нової Пошти при
-                                    отриманні замовлення.
+                                    {c.cardText}
                                 </p>
                                 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                                     <span
@@ -243,17 +303,15 @@ export default function Delivery() {
                                     borderRadius: "16px",
                                 }}
                             >
-                                <h3 style={{ marginBottom: "15px" }}>Накладений платіж</h3>
-                                <p style={{ color: "var(--color-text-secondary)" }}>
-                                    Оплата при отриманні у відділенні Нової Пошти
-                                </p>
+                                <h3 style={{ marginBottom: "15px" }}>{c.codTitle}</h3>
+                                <p style={{ color: "var(--color-text-secondary)" }}>{c.codText}</p>
                             </div>
                         </div>
                     </div>
 
                     <div style={{ marginTop: "60px" }}>
                         <h2 style={{ marginBottom: "30px", color: "var(--color-primary)" }}>
-                            Обмін та повернення
+                            {c.returnsHeading}
                         </h2>
                         <div
                             style={{
@@ -263,8 +321,8 @@ export default function Delivery() {
                             }}
                         >
                             <p style={{ marginBottom: "15px" }}>
-                                Ви можете обміняти або повернути товар протягом{" "}
-                                <strong>14 днів</strong> з моменту отримання.
+                                {c.returnsLead1} <strong>{c.returnsLeadStrong}</strong>{" "}
+                                {c.returnsLead2}
                             </p>
                             <ul
                                 style={{
@@ -273,30 +331,20 @@ export default function Delivery() {
                                     color: "var(--color-text-secondary)",
                                 }}
                             >
-                                <li
-                                    style={{
-                                        marginBottom: "10px",
-                                        paddingLeft: "25px",
-                                        position: "relative",
-                                    }}
-                                >
-                                    <span style={{ position: "absolute", left: 0 }}>•</span>
-                                    Товар повинен бути у первісному вигляді з бірками
-                                </li>
-                                <li
-                                    style={{
-                                        marginBottom: "10px",
-                                        paddingLeft: "25px",
-                                        position: "relative",
-                                    }}
-                                >
-                                    <span style={{ position: "absolute", left: 0 }}>•</span>
-                                    Для обміну зв'яжіться з нами за телефоном або email
-                                </li>
-                                <li style={{ paddingLeft: "25px", position: "relative" }}>
-                                    <span style={{ position: "absolute", left: 0 }}>•</span>
-                                    Повернення коштів протягом 3-5 робочих днів
-                                </li>
+                                {c.returnsList.map((item, i) => (
+                                    <li
+                                        key={item}
+                                        style={{
+                                            marginBottom:
+                                                i < c.returnsList.length - 1 ? "10px" : undefined,
+                                            paddingLeft: "25px",
+                                            position: "relative",
+                                        }}
+                                    >
+                                        <span style={{ position: "absolute", left: 0 }}>•</span>
+                                        {item}
+                                    </li>
+                                ))}
                             </ul>
                         </div>
                     </div>

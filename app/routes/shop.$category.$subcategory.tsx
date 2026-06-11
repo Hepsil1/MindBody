@@ -1,5 +1,6 @@
 import { type LoaderFunctionArgs, type MetaFunction, redirect } from "react-router";
-import { localeFromParam, localizePath } from "../i18n/config";
+import { localeFromParam, localeFromParamSafe, localizePath, OG_LOCALE } from "../i18n/config";
+import { getT } from "../i18n";
 import { isValidSubcategory, slugToLabel } from "../utils/categoryMap";
 import { loadShopData } from "../utils/shopProducts.server";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
@@ -34,7 +35,9 @@ export async function loader(args: LoaderFunctionArgs) {
     return { ...data, subcategory };
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
+export const meta: MetaFunction<typeof loader> = ({ data, location, params }) => {
+    const locale = localeFromParamSafe(params.lang);
+    const t = getT(locale);
     const shopPage = data?.shopPage;
     const subcategory = data?.subcategory ?? "";
     const category = data?.category ?? "";
@@ -45,10 +48,13 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
     const isFiltered = Boolean(location?.search && location.search.length > 1);
 
     const shopLabel = shopPage?.title || category.toUpperCase();
-    const subLabel = slugToLabel(subcategory);
+    const subLabel = t(slugToLabel(subcategory));
     const title = `${subLabel} — ${shopLabel} | MIND BODY`;
-    const description = `${subLabel} у колекції ${shopLabel} MIND BODY. Спортивний одяг українського виробництва.`;
-    const canonicalUrl = `${siteUrl}/shop/${category}/${subcategory}`;
+    const description = t(
+        "{subLabel} у колекції {shopLabel} MIND BODY. Спортивний одяг українського виробництва.",
+        { subLabel, shopLabel },
+    );
+    const canonicalUrl = `${siteUrl}${localizePath(`/shop/${category}/${subcategory}`, locale)}`;
     const heroImage = shopPage?.heroImage || "/brand-sun.png";
     const ogImage = heroImage.startsWith("http") ? heroImage : `${siteUrl}${heroImage}`;
 
@@ -69,7 +75,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:image", content: ogImage },
-        { property: "og:locale", content: "uk_UA" },
+        { property: "og:locale", content: OG_LOCALE[locale] },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:image", content: ogImage },
@@ -79,7 +85,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
                 "@context": "https://schema.org",
                 "@type": "BreadcrumbList",
                 itemListElement: [
-                    { "@type": "ListItem", position: 1, name: "Головна", item: siteUrl },
+                    { "@type": "ListItem", position: 1, name: t("Головна"), item: siteUrl },
                     {
                         "@type": "ListItem",
                         position: 2,
@@ -100,7 +106,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
                 url: canonicalUrl,
                 description,
                 isPartOf: { "@type": "WebSite", url: siteUrl, name: "MIND BODY" },
-                inLanguage: "uk-UA",
+                inLanguage: locale === "uk" ? "uk-UA" : locale === "en" ? "en-US" : "ru-RU",
                 mainEntity: {
                     "@type": "ItemList",
                     numberOfItems: products.length,

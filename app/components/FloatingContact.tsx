@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router";
 import { useSiteSettings, viberChatUrl, whatsappUrl } from "../utils/site-settings";
+import { useI18n } from "../i18n";
 
 // localStorage key for the user's expanded/collapsed preference.
 // Sticks across page loads so a user who minimised once doesn't have
@@ -23,6 +24,7 @@ export default function FloatingContact() {
     // Owner-editable contacts (admin → Редактор сайту → Налаштування). The
     // Telegram button previously built a t.me/+<phone> link while the footer
     // used the brand username — both now share contacts.telegramUrl.
+    const { t } = useI18n();
     const { contacts } = useSiteSettings();
     const VIBER_URL = viberChatUrl(contacts.viberPhone);
     const WHATSAPP_URL = whatsappUrl(contacts.whatsappPhone);
@@ -91,7 +93,7 @@ export default function FloatingContact() {
                     type="button"
                     onClick={toggleCollapsed}
                     className="floating-contact__minimize"
-                    aria-label="Згорнути контакти"
+                    aria-label={t("Згорнути контакти")}
                 >
                     <svg
                         viewBox="0 0 24 24"
@@ -162,7 +164,7 @@ export default function FloatingContact() {
                     type="button"
                     onClick={toggleCollapsed}
                     className="floating-contact__peek"
-                    aria-label="Зв'язатись через месенджер"
+                    aria-label={t("Зв'язатись через месенджер")}
                 >
                     <svg
                         viewBox="0 0 24 24"
@@ -182,7 +184,7 @@ export default function FloatingContact() {
             <button
                 className={`floating-contact__scroll-top ${showBackToTop ? "is-visible" : ""}`}
                 onClick={scrollToTop}
-                aria-label="Нагору"
+                aria-label={t("Нагору")}
             >
                 <svg
                     viewBox="0 0 24 24"

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { LLink, useI18n } from "../i18n";
 
 /* ==================================================================
    BrandStories — mobile-only interactive "stories" viewer for the
@@ -49,6 +49,7 @@ const SWIPE_PX = 40; // horizontal travel that counts as a swipe
 const TAP_MOVE_PX = 12; // max travel still considered a tap
 
 export default function BrandStories({ videos }: BrandStoriesProps) {
+    const { t } = useI18n();
     const count = Math.min(videos.length, CHAPTERS.length);
 
     // Deterministic initial state (SSR === first client paint).
@@ -299,15 +300,15 @@ export default function BrandStories({ videos }: BrandStoriesProps) {
         <section
             ref={rootRef}
             className={`brand-stories${isHolding ? " is-holding" : ""}`}
-            aria-roledescription="Інтерактивна історія бренду"
-            aria-label="Рух що перетворює — бренд-фільм MIND BODY"
+            aria-roledescription={t("Інтерактивна історія бренду")}
+            aria-label={t("Рух що перетворює — бренд-фільм MIND BODY")}
             tabIndex={0}
             onKeyDown={onKeyDown}
         >
             <div className="brand-stories__intro">
                 <span className="brand-stories__kicker">MIND BODY®</span>
                 <h2 className="brand-stories__title">
-                    Рух що <em>перетворює</em>
+                    {t("Рух що")} <em>{t("перетворює")}</em>
                 </h2>
             </div>
 
@@ -339,7 +340,7 @@ export default function BrandStories({ videos }: BrandStoriesProps) {
                                 key={i}
                                 type="button"
                                 className="brand-stories__seg"
-                                aria-label={`Розділ ${i + 1} з ${count}`}
+                                aria-label={t("Розділ {n} з {count}", { n: i + 1, count })}
                                 aria-current={i === index ? "true" : undefined}
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onClick={() => goTo(i)}
@@ -358,8 +359,8 @@ export default function BrandStories({ videos }: BrandStoriesProps) {
 
                     {/* caption */}
                     <div className="brand-stories__caption" aria-hidden="true">
-                        <span className="brand-stories__chx">{chapter.eyebrow}</span>
-                        <p className="brand-stories__line">{chapter.line}</p>
+                        <span className="brand-stories__chx">{t(chapter.eyebrow)}</span>
+                        <p className="brand-stories__line">{t(chapter.line)}</p>
                     </div>
 
                     {/* play / pause — visible control for auto-moving media */}
@@ -367,7 +368,7 @@ export default function BrandStories({ videos }: BrandStoriesProps) {
                         type="button"
                         className="brand-stories__pp"
                         aria-pressed={playing}
-                        aria-label={playing ? "Призупинити відео" : "Відтворити відео"}
+                        aria-label={playing ? t("Призупинити відео") : t("Відтворити відео")}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={togglePlay}
                     >
@@ -400,7 +401,7 @@ export default function BrandStories({ videos }: BrandStoriesProps) {
                     {/* first-time hint */}
                     {showHint && (
                         <div className="brand-stories__hint" aria-hidden="true">
-                            Торкніться, щоб гортати
+                            {t("Торкніться, щоб гортати")}
                         </div>
                     )}
 
@@ -418,15 +419,15 @@ export default function BrandStories({ videos }: BrandStoriesProps) {
             </div>
 
             <div className="brand-stories__cta-row">
-                <Link to="/about" className="brand-stories__cta">
-                    Філософія бренду
+                <LLink to="/about" className="brand-stories__cta">
+                    {t("Філософія бренду")}
                     <span aria-hidden="true">→</span>
-                </Link>
+                </LLink>
             </div>
 
             {/* screen-reader announcement of chapter changes */}
             <span className="brand-stories__live visually-hidden" aria-live="polite">
-                {`Розділ ${index + 1} з ${count}. ${chapter.line}`}
+                {`${t("Розділ {n} з {count}", { n: index + 1, count })}. ${t(chapter.line)}`}
             </span>
         </section>
     );

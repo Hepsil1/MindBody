@@ -1,5 +1,5 @@
 import type { Route } from "./+types/home";
-import { Link, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
@@ -12,7 +12,8 @@ import { cachedFetch } from "../utils/cache.server";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
-import { localeFromParam } from "../i18n/config";
+import { useI18n, getT, LLink } from "../i18n";
+import { localeFromParam, localeFromParamSafe, OG_LOCALE, localizePath } from "../i18n/config";
 import { localizeEntities } from "../utils/translations.server";
 
 // One Instagram post tile rendered in the social proof section.
@@ -61,22 +62,28 @@ interface HomeProductCard {
     discount_percent: number;
 }
 
-export function meta({ data }: Route.MetaArgs) {
+export function meta({ data, params }: Route.MetaArgs) {
     const siteUrl = data?.siteUrl || DEFAULT_SITE_URL;
+    const locale = localeFromParamSafe(params.lang);
+    const t = getT(locale);
+    const homePath = localizePath("/", locale);
+    const canonicalUrl = homePath === "/" ? siteUrl : `${siteUrl}${homePath}`;
     return [
-        { title: "MIND BODY — Спортивний одяг для йоги та активного життя" },
+        { title: t("MIND BODY — Спортивний одяг для йоги та активного життя") },
         {
             name: "description",
-            content:
+            content: t(
                 "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика. Безкоштовна доставка від 2000₴.",
+            ),
         },
-        { tagName: "link", rel: "canonical", href: siteUrl },
-        { property: "og:url", content: siteUrl },
-        { property: "og:title", content: "MIND BODY — Спортивний одяг" },
+        { tagName: "link", rel: "canonical", href: canonicalUrl },
+        { property: "og:url", content: canonicalUrl },
+        { property: "og:title", content: t("MIND BODY — Спортивний одяг") },
         {
             property: "og:description",
-            content:
+            content: t(
                 "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика.",
+            ),
         },
         { property: "og:type", content: "website" },
         { property: "og:image", content: `${siteUrl}/brand-sun.png` },
@@ -87,13 +94,13 @@ export function meta({ data }: Route.MetaArgs) {
         // is square (504x503) and gets letterboxed in some clients.
         { property: "og:image:width", content: "504" },
         { property: "og:image:height", content: "503" },
-        { property: "og:locale", content: "uk_UA" },
+        { property: "og:locale", content: OG_LOCALE[locale] },
         { property: "og:site_name", content: "MIND BODY" },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: "MIND BODY — Спортивний одяг" },
+        { name: "twitter:title", content: t("MIND BODY — Спортивний одяг") },
         {
             name: "twitter:description",
-            content: "Український бренд спортивного одягу для жінок та дітей.",
+            content: t("Український бренд спортивного одягу для жінок та дітей."),
         },
         { name: "twitter:image", content: `${siteUrl}/brand-sun.png` },
         // Preload first hero slide triptych — critical for LCP.  Each
@@ -144,8 +151,10 @@ export function meta({ data }: Route.MetaArgs) {
                 name: "MIND BODY",
                 url: siteUrl,
                 logo: `${siteUrl}/brand-sun.png`,
-                description:
+                description: t(
                     "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика.",
+                ),
+                inLanguage: locale === "en" ? "en-US" : locale === "ru" ? "ru-RU" : "uk-UA",
                 address: { "@type": "PostalAddress", addressCountry: "UA" },
                 sameAs: ["https://www.instagram.com/mindbody_ua"],
             },
@@ -504,6 +513,7 @@ const FEATURE_ICONS = [
 
 export default function Home() {
     const { slides, categories, newProducts, instagramData } = useLoaderData<typeof loader>();
+    const { t, lp } = useI18n();
     // Owner-editable home content (admin → Редактор сайту → Налаштування).
     const { homeFeatures, homeStats, homeBrandWorld }: SiteSettings = useSiteSettings();
     const postsToRender = instagramData?.posts?.length
@@ -757,7 +767,9 @@ export default function Home() {
                 is a logo image, not text. WCAG 1.3.1 / Lighthouse
                 heading-order: every page needs a single H1. */}
             <h1 className="visually-hidden">
-                MIND BODY — преміум жіночий спортивний одяг для йоги, гімнастики та активного життя
+                {t(
+                    "MIND BODY — преміум жіночий спортивний одяг для йоги, гімнастики та активного життя",
+                )}
             </h1>
             {/* Inside the visual editor's iframe this section grows a
                 click-to-edit affordance; for real visitors it renders the
@@ -777,7 +789,7 @@ export default function Home() {
             >
                 <section className="premium-features-bar" aria-labelledby="features-heading">
                     <h2 id="features-heading" className="visually-hidden">
-                        Переваги бренду
+                        {t("Переваги бренду")}
                     </h2>
                     <div className="container" style={{ maxWidth: "1440px" }}>
                         <div className="features-bar__grid">
@@ -787,8 +799,8 @@ export default function Home() {
                                         {FEATURE_ICONS[i]}
                                     </div>
                                     <div className="feature-item__text">
-                                        <h3 className="feature-item__title">{item.title}</h3>
-                                        <p className="feature-item__desc">{item.desc}</p>
+                                        <h3 className="feature-item__title">{t(item.title)}</h3>
+                                        <p className="feature-item__desc">{t(item.desc)}</p>
                                     </div>
                                 </div>
                             ))}
@@ -809,11 +821,13 @@ export default function Home() {
                             <div className="collections-badge__line"></div>
                         </div>
 
-                        <h2 className="section__title collections-title">Обирайте свій стиль</h2>
+                        <h2 className="section__title collections-title">
+                            {t("Обирайте свій стиль")}
+                        </h2>
 
                         <p className="section__subtitle collections-subtitle">
-                            Втілення ідеального балансу між <br /> функціональністю та бездоганною
-                            естетикою
+                            {t("Втілення ідеального балансу між")} <br />{" "}
+                            {t("функціональністю та бездоганною естетикою")}
                         </p>
                     </div>
                     <EditorAffordance
@@ -843,16 +857,18 @@ export default function Home() {
                         <div className="new-arrivals-header__text">
                             <span className="new-arrivals-badge">
                                 <span className="new-arrivals-badge__dot" />
-                                Новинки{" "}
+                                {t("Новинки")}{" "}
                                 <span suppressHydrationWarning>{new Date().getFullYear()}</span>
                             </span>
-                            <h2 className="section__title">Нові надходження</h2>
-                            <p className="section__subtitle">Сезонні новинки з усіх колекцій</p>
+                            <h2 className="section__title">{t("Нові надходження")}</h2>
+                            <p className="section__subtitle">
+                                {t("Сезонні новинки з усіх колекцій")}
+                            </p>
                         </div>
                         <div className="new-arrivals-header__controls">
                             <button
                                 className="carousel-btn carousel-btn--prev"
-                                aria-label="Попередні товари"
+                                aria-label={t("Попередні товари")}
                                 onClick={() => scrollCarousel("prev")}
                             >
                                 <svg
@@ -868,7 +884,7 @@ export default function Home() {
                             </button>
                             <button
                                 className="carousel-btn carousel-btn--next"
-                                aria-label="Наступні товари"
+                                aria-label={t("Наступні товари")}
                                 onClick={() => scrollCarousel("next")}
                             >
                                 <svg
@@ -905,7 +921,10 @@ export default function Home() {
                         role="status"
                         aria-live="polite"
                         aria-atomic="true"
-                        aria-label={`Новинка ${activeArrival + 1} з ${newProducts.length}`}
+                        aria-label={t("Новинка {n} з {total}", {
+                            n: activeArrival + 1,
+                            total: newProducts.length,
+                        })}
                     >
                         <span className="arrival-counter__num">
                             {String(activeArrival + 1).padStart(2, "0")}
@@ -919,9 +938,9 @@ export default function Home() {
                     </div>
 
                     <div className="section__cta-center">
-                        <Link to="/shop/yoga" className="btn btn--outline">
-                            Переглянути всі новинки →
-                        </Link>
+                        <LLink to="/shop/yoga" className="btn btn--outline">
+                            {t("Переглянути всі новинки")} →
+                        </LLink>
                     </div>
                 </div>
                 <section className="bw-unified-section bw-v3" id="about">
@@ -972,22 +991,23 @@ export default function Home() {
                                     <div className="bw-manifesto-head">
                                         <span className="bw-eyebrow-minimal">MIND BODY®</span>
                                         <h2 className="bw-heading-elegant">
-                                            Рух що <em>перетворює</em>
+                                            {t("Рух що")} <em>{t("перетворює")}</em>
                                         </h2>
                                     </div>
                                     <div className="bw-manifesto-body">
                                         <p className="bw-body-minimal">
-                                            Ми не просто шиємо одяг — ми створюємо другу шкіру, що
-                                            слідує за кожним рухом. Кожна колекція народжується з
-                                            глибокою увагою до деталей та любов'ю до тіла.
+                                            {t(
+                                                "Ми не просто шиємо одяг — ми створюємо другу шкіру, що слідує за кожним рухом. Кожна колекція народжується з глибокою увагою до деталей та любов'ю до тіла.",
+                                            )}
                                         </p>
                                         <div className="bw-mission-elegant">
-                                            Подаруй собі <em>комфорт</em> — і ти подаруєш собі крила
+                                            {t("Подаруй собі")} <em>{t("комфорт")}</em>{" "}
+                                            {t("— і ти подаруєш собі крила")}
                                         </div>
-                                        <Link to="/about" className="bw-btn-elegant">
-                                            Філософія бренду
+                                        <LLink to="/about" className="bw-btn-elegant">
+                                            {t("Філософія бренду")}
                                             <span className="bw-btn-arr">→</span>
-                                        </Link>
+                                        </LLink>
                                     </div>
                                 </div>
                             </div>
@@ -1006,7 +1026,7 @@ export default function Home() {
                             <div
                                 className="bw-v3-chips"
                                 role="tablist"
-                                aria-label="Переваги бренду"
+                                aria-label={t("Переваги бренду")}
                             >
                                 {[0, 1, 2, 3].map((i) => (
                                     <button
@@ -1041,7 +1061,7 @@ export default function Home() {
                                     this via @media (title lives in left column
                                     of bw-v3-manifesto on desktop). */}
                                 <div className="bw-v3-video-title" aria-hidden="true">
-                                    Рух що <em>перетворює</em>
+                                    {t("Рух що")} <em>{t("перетворює")}</em>
                                 </div>
                                 {/* Batch 46: pull-quote overlay over video bottom.
                                     Mobile-only — desktop hides via @media.  Mission
@@ -1049,7 +1069,8 @@ export default function Home() {
                                     body section); CSS hides the body copy on
                                     mobile so user sees the quote only here. */}
                                 <div className="bw-v3-video-quote" aria-hidden="true">
-                                    Подаруй собі <em>комфорт</em> — і ти подаруєш собі крила
+                                    {t("Подаруй собі")} <em>{t("комфорт")}</em>{" "}
+                                    {t("— і ти подаруєш собі крила")}
                                 </div>
                                 <div className="bw-v3-frame">
                                     {/* 1. Sequential continuous playlist (3 videos) with smooth crossfade */}
@@ -1157,19 +1178,21 @@ export default function Home() {
                                                     {num}
                                                 </div>
                                                 <div className="bw-macro-content">
-                                                    <h3 className="bw-feat-title">{feat.title}</h3>
-                                                    <p className="bw-feat-desc">{feat.desc}</p>
+                                                    <h3 className="bw-feat-title">
+                                                        {t(feat.title)}
+                                                    </h3>
+                                                    <p className="bw-feat-desc">{t(feat.desc)}</p>
                                                     {/* The catalog CTA lives on the last card. */}
                                                     {i === homeBrandWorld.items.length - 1 && (
-                                                        <Link
+                                                        <LLink
                                                             to="/shop/yoga"
                                                             className="bw-feat-link"
                                                         >
-                                                            Каталог{" "}
+                                                            {t("Каталог")}{" "}
                                                             <span className="bw-feat-link-arr">
                                                                 →
                                                             </span>
-                                                        </Link>
+                                                        </LLink>
                                                     )}
                                                 </div>
                                             </div>
@@ -1186,7 +1209,7 @@ export default function Home() {
                                 <div
                                     className="bw-feat-dots"
                                     role="tablist"
-                                    aria-label="Перегляд переваг"
+                                    aria-label={t("Перегляд переваг")}
                                 >
                                     {[0, 1, 2, 3].map((i) => (
                                         <button
@@ -1195,7 +1218,10 @@ export default function Home() {
                                             role="tab"
                                             className={`bw-feat-dot ${activeFeature === i ? "is-active" : ""}`}
                                             aria-selected={activeFeature === i}
-                                            aria-label={`Перевага ${i + 1} з 4`}
+                                            aria-label={t("Перевага {n} з {total}", {
+                                                n: i + 1,
+                                                total: 4,
+                                            })}
                                             onClick={() => scrollFeatureToIndex(i)}
                                         />
                                     ))}
@@ -1225,7 +1251,7 @@ export default function Home() {
                                         <span className="stat-number">
                                             {formatStatDisplay(stat.count, stat.suffix)}
                                         </span>
-                                        <span className="stat-label">{stat.label}</span>
+                                        <span className="stat-label">{t(stat.label)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -1243,16 +1269,17 @@ export default function Home() {
                     {/* The center content container */}
                     <div className="ig-hyper__content container">
                         <div className="ig-hyper__header">
-                            <p className="ig-hyper__overline">Наш Instagram</p>
+                            <p className="ig-hyper__overline">{t("Наш Instagram")}</p>
                             <h2 className="ig-hyper__title">
-                                <span className="ig-hyper__title-world">Світ</span>
+                                <span className="ig-hyper__title-world">{t("Світ")}</span>
                                 <em>Mind Body</em>
                             </h2>
                             <p className="ig-hyper__subtitle">
-                                Більше, ніж просто одяг — це естетика, мотивація та щоденне
-                                натхнення.
+                                {t(
+                                    "Більше, ніж просто одяг — це естетика, мотивація та щоденне натхнення.",
+                                )}
                                 <br />
-                                Будь в курсі нових колекцій першою.
+                                {t("Будь в курсі нових колекцій першою.")}
                             </p>
                         </div>
 
@@ -1452,15 +1479,23 @@ export default function Home() {
                                                     <div className="ig-ui-stats">
                                                         <div className="ig-ui-stat">
                                                             <span className="num">2168</span>
-                                                            <span className="lbl">публікації</span>
+                                                            <span className="lbl">
+                                                                {t("публікації")}
+                                                            </span>
                                                         </div>
                                                         <div className="ig-ui-stat">
-                                                            <span className="num">63,9 тис.</span>
-                                                            <span className="lbl">підписники</span>
+                                                            <span className="num">
+                                                                {t("63,9 тис.")}
+                                                            </span>
+                                                            <span className="lbl">
+                                                                {t("підписники")}
+                                                            </span>
                                                         </div>
                                                         <div className="ig-ui-stat">
                                                             <span className="num">1257</span>
-                                                            <span className="lbl">підписки</span>
+                                                            <span className="lbl">
+                                                                {t("підписки")}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1470,31 +1505,33 @@ export default function Home() {
                                                     <div className="ig-ui-name">
                                                         MIND BODY sport wear{" "}
                                                         <span style={{ fontWeight: 400 }}>
-                                                            одяг для йоги та фітнесу
+                                                            {t("одяг для йоги та фітнесу")}
                                                         </span>
                                                     </div>
                                                     <div className="ig-ui-text">
-                                                        Комбінезон твоєї мрії!✨
+                                                        {t("Комбінезон твоєї мрії!✨")}
                                                         <br />
-                                                        Найбільший вибір,найкраща якість
+                                                        {t("Найбільший вибір,найкраща якість")}
                                                         <br />
-                                                        для маленьких 👸{" "}
+                                                        {t("для маленьких 👸")}{" "}
                                                         <span className="ig-ui-mention">
                                                             @mindbody_kidswear
                                                         </span>
                                                         <br />
-                                                        casual одяг{" "}
+                                                        {t("casual одяг")}{" "}
                                                         <span className="ig-ui-mention">
                                                             @fluid_feel_free
                                                         </span>{" "}
                                                         &nbsp;
-                                                        <span style={{ color: "#a8a8a8" }}>ще</span>
+                                                        <span style={{ color: "#a8a8a8" }}>
+                                                            {t("ще")}
+                                                        </span>
                                                         <br />
                                                         <span style={{ fontWeight: 600 }}>
-                                                            Показати переклад
+                                                            {t("Показати переклад")}
                                                         </span>
                                                     </div>
-                                                    <a href="/" className="ig-ui-link">
+                                                    <a href={lp("/")} className="ig-ui-link">
                                                         <svg
                                                             width="14"
                                                             height="14"
@@ -1517,7 +1554,7 @@ export default function Home() {
                                                 {/* Action Buttons */}
                                                 <div className="ig-ui-actions">
                                                     <div className="ig-ui-btn">
-                                                        Ви підписані
+                                                        {t("Ви підписані")}
                                                         <svg
                                                             width="12"
                                                             height="12"
@@ -1530,7 +1567,9 @@ export default function Home() {
                                                             <path d="M6 9l6 6 6-6" />
                                                         </svg>
                                                     </div>
-                                                    <div className="ig-ui-btn">Повідомлення</div>
+                                                    <div className="ig-ui-btn">
+                                                        {t("Повідомлення")}
+                                                    </div>
                                                     <div className="ig-ui-btn icon">
                                                         <svg
                                                             width="16"
@@ -1586,7 +1625,7 @@ export default function Home() {
                                                                         )}
                                                                     </div>
                                                                 </div>
-                                                                <span>{name}</span>
+                                                                <span>{t(name)}</span>
                                                             </div>
                                                         );
                                                     })}
@@ -1782,7 +1821,7 @@ export default function Home() {
                             >
                                 <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
                             </svg>
-                            Відкрити Instagram
+                            {t("Відкрити Instagram")}
                         </a>
                     </div>
                 </div>

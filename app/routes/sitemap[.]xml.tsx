@@ -1,6 +1,7 @@
 import { prisma } from "../db.server";
 import { isValidSubcategory } from "../utils/categoryMap";
 import { resolveSiteUrl } from "../utils/site-url";
+import { HTML_LANG, LOCALES, localizePath } from "../i18n/config";
 
 // Dynamic sitemap.xml — all canonical, indexable pages for Google.
 //
@@ -69,27 +70,37 @@ export async function loader() {
 
     const urls: string[] = [];
 
-    for (const page of staticPages) {
-        urls.push(
-            `  <url>
-    <loc>${baseUrl}${esc(page.url)}</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
+    // Every canonical path exists in three language trees (uk = no prefix,
+    // /en, /ru). Each tree gets its own <url> entry, and every entry carries
+    // the full hreflang alternate cluster (Google's recommended sitemap form).
+    const pushLocalized = (path: string, lastmod: string, changefreq: string, priority: string) => {
+        const alternates = [
+            ...LOCALES.map(
+                (l) =>
+                    `    <xhtml:link rel="alternate" hreflang="${HTML_LANG[l]}" href="${baseUrl}${localizePath(path, l)}"/>`,
+            ),
+            `    <xhtml:link rel="alternate" hreflang="x-default" href="${baseUrl}${path}"/>`,
+        ].join("\n");
+        for (const l of LOCALES) {
+            urls.push(
+                `  <url>
+    <loc>${baseUrl}${localizePath(path, l)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>${changefreq}</changefreq>
+    <priority>${priority}</priority>
+${alternates}
   </url>`,
-        );
+            );
+        }
+    };
+
+    for (const page of staticPages) {
+        pushLocalized(esc(page.url), now, page.changefreq, page.priority);
     }
 
     for (const sp of shopPages) {
         const lastmod = sp.updatedAt ? new Date(sp.updatedAt).toISOString().split("T")[0] : now;
-        urls.push(
-            `  <url>
-    <loc>${baseUrl}/shop/${esc(sp.slug)}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>`,
-        );
+        pushLocalized(`/shop/${esc(sp.slug)}`, lastmod, "daily", "0.8");
     }
 
     for (const pair of subcategoryPairs) {
@@ -99,31 +110,22 @@ export async function loader() {
         const lastmod = pair.maxUpdatedAt
             ? new Date(pair.maxUpdatedAt).toISOString().split("T")[0]
             : now;
-        urls.push(
-            `  <url>
-    <loc>${baseUrl}/shop/${esc(pair.shopPageSlug)}/${esc(pair.category)}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.75</priority>
-  </url>`,
+        pushLocalized(
+            `/shop/${esc(pair.shopPageSlug)}/${esc(pair.category)}`,
+            lastmod,
+            "daily",
+            "0.75",
         );
     }
 
     for (const p of products) {
         const lastmod = p.updatedAt ? new Date(p.updatedAt).toISOString().split("T")[0] : now;
         const path = p.slug ? `/p/${esc(p.slug)}` : `/product/${esc(p.id)}`;
-        urls.push(
-            `  <url>
-    <loc>${baseUrl}${path}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>`,
-        );
+        pushLocalized(path, lastmod, "weekly", "0.7");
     }
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urls.join("\n")}
 </urlset>`;
 

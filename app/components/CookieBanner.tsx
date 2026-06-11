@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { useI18n, LLink } from "../i18n";
 
 const STORAGE_KEY = "mb_cookies_consent_v1";
 
 export function CookieBanner() {
+    const { t } = useI18n();
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
@@ -48,10 +49,10 @@ export function CookieBanner() {
         >
             <div className="cookie-banner__inner">
                 <div className="cookie-banner__text">
-                    <strong id="cookie-banner-title">Ми використовуємо cookies</strong>
+                    <strong id="cookie-banner-title">{t("Ми використовуємо cookies")}</strong>
                     <p id="cookie-banner-desc">
-                        Щоб сайт працював коректно та ставав зручнішим. Деталі — у{" "}
-                        <Link to="/privacy">Політиці конфіденційності</Link>.
+                        {t("Щоб сайт працював коректно та ставав зручнішим. Деталі — у")}{" "}
+                        <LLink to="/privacy">{t("Політиці конфіденційності")}</LLink>.
                     </p>
                 </div>
                 <div className="cookie-banner__actions">
@@ -60,14 +61,14 @@ export function CookieBanner() {
                         className="cookie-banner__btn cookie-banner__btn--ghost"
                         onClick={decline}
                     >
-                        Лише необхідні
+                        {t("Лише необхідні")}
                     </button>
                     <button
                         type="button"
                         className="cookie-banner__btn cookie-banner__btn--primary"
                         onClick={accept}
                     >
-                        Прийняти
+                        {t("Прийняти")}
                     </button>
                 </div>
             </div>

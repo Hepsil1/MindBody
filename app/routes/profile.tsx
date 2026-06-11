@@ -1,7 +1,8 @@
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { AuthUtils, type User, type Address, type UserSettings } from "../utils/auth";
 import { StorageUtils } from "../utils/storage";
+import { useI18n, useMoney, LLink } from "../i18n";
 
 export function meta() {
     return [
@@ -30,6 +31,8 @@ interface Order {
 
 export default function Profile() {
     const navigate = useNavigate();
+    const { t, lp, locale } = useI18n();
+    const money = useMoney();
     const [user, setUser] = useState<User | null>(null);
     const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
     const [orders, setOrders] = useState<Order[]>([]);
@@ -68,7 +71,7 @@ export default function Profile() {
             if (!authState.isAuthenticated || !authState.user) {
                 // Atom C: preserve intent so /auth returns user to
                 // /profile after login.  /auth reads ?redirect param.
-                navigate("/auth?redirect=/profile");
+                navigate(lp("/auth?redirect=/profile"));
                 return;
             }
             setUser(authState.user);
@@ -100,7 +103,7 @@ export default function Profile() {
             if (!state.isAuthenticated) {
                 // Atom C: preserve intent so /auth returns user to
                 // /profile after login.  /auth reads ?redirect param.
-                navigate("/auth?redirect=/profile");
+                navigate(lp("/auth?redirect=/profile"));
             } else {
                 setUser(state.user);
             }
@@ -114,7 +117,10 @@ export default function Profile() {
             unsubAuth();
             unsubWishlist();
         };
-    }, [navigate]);
+        // `lp` is a per-render closure over `locale` — depending on `locale`
+        // keeps the effect stable while staying correct on locale switch.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [navigate, locale]);
 
     const showToast = (message: string, type: "success" | "error") => {
         setToast({ message, type });
@@ -123,7 +129,7 @@ export default function Profile() {
 
     const handleLogout = async () => {
         await AuthUtils.logout();
-        navigate("/");
+        navigate(lp("/"));
     };
 
     const handleSaveProfile = () => {
@@ -214,7 +220,7 @@ export default function Profile() {
             <main className="dashboard-page">
                 <div className="dashboard-loading">
                     <div className="spinner"></div>
-                    <p>Завантаження...</p>
+                    <p>{t("Завантаження...")}</p>
                 </div>
             </main>
         );
@@ -235,7 +241,7 @@ export default function Profile() {
                         </div>
                         <div className="dashboard-hero__info">
                             <h1>
-                                Привіт, <em>{user.name.split(" ")[0]}</em>!
+                                {t("Привіт,")} <em>{user.name.split(" ")[0]}</em>!
                             </h1>
                             <p>{user.email}</p>
                         </div>
@@ -252,7 +258,7 @@ export default function Profile() {
                                 <polyline points="16 17 21 12 16 7" />
                                 <line x1="21" y1="12" x2="9" y2="12" />
                             </svg>
-                            Вийти
+                            {t("Вийти")}
                         </button>
                     </div>
                 </div>
@@ -280,7 +286,7 @@ export default function Profile() {
                             </div>
                             <div className="stat-card__content">
                                 <span className="stat-card__value">{orders.length}</span>
-                                <span className="stat-card__label">Замовлень</span>
+                                <span className="stat-card__label">{t("Замовлень")}</span>
                             </div>
                         </div>
                         <div className="stat-card">
@@ -298,7 +304,7 @@ export default function Profile() {
                             </div>
                             <div className="stat-card__content">
                                 <span className="stat-card__value">{wishlistCount}</span>
-                                <span className="stat-card__label">В обраному</span>
+                                <span className="stat-card__label">{t("В обраному")}</span>
                             </div>
                         </div>
                     </div>
@@ -322,7 +328,7 @@ export default function Profile() {
                                 <rect x="14" y="14" width="7" height="7" />
                                 <rect x="3" y="14" width="7" height="7" />
                             </svg>
-                            Огляд
+                            {t("Огляд")}
                         </button>
                         <button
                             className={`dashboard-tab ${activeTab === "orders" ? "active" : ""}`}
@@ -340,7 +346,7 @@ export default function Profile() {
                                 <line x1="3" y1="6" x2="21" y2="6" />
                                 <path d="M16 10a4 4 0 0 1-8 0" />
                             </svg>
-                            Замовлення
+                            {t("Замовлення@@tab")}
                         </button>
                         <button
                             className={`dashboard-tab ${activeTab === "addresses" ? "active" : ""}`}
@@ -357,7 +363,7 @@ export default function Profile() {
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                                 <circle cx="12" cy="10" r="3" />
                             </svg>
-                            Адреси
+                            {t("Адреси")}
                         </button>
                         <button
                             className={`dashboard-tab ${activeTab === "settings" ? "active" : ""}`}
@@ -374,7 +380,7 @@ export default function Profile() {
                                 <circle cx="12" cy="12" r="3" />
                                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
                             </svg>
-                            Налаштування
+                            {t("Налаштування")}
                         </button>
                     </div>
 
@@ -385,9 +391,9 @@ export default function Profile() {
                             <div className="dashboard-overview">
                                 {/* Quick Actions */}
                                 <div className="quick-actions">
-                                    <h3 className="section-title">Швидкі дії</h3>
+                                    <h3 className="section-title">{t("Швидкі дії")}</h3>
                                     <div className="quick-actions__grid">
-                                        <Link to="/shop/yoga" className="action-card">
+                                        <LLink to="/shop/yoga" className="action-card">
                                             <div className="action-card__icon">
                                                 <svg
                                                     width="22"
@@ -402,9 +408,9 @@ export default function Profile() {
                                                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                                                 </svg>
                                             </div>
-                                            <span>Каталог</span>
-                                        </Link>
-                                        <Link to="/wishlist" className="action-card">
+                                            <span>{t("Каталог")}</span>
+                                        </LLink>
+                                        <LLink to="/wishlist" className="action-card">
                                             <div className="action-card__icon">
                                                 <svg
                                                     width="22"
@@ -417,14 +423,14 @@ export default function Profile() {
                                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                                 </svg>
                                             </div>
-                                            <span>Обране</span>
+                                            <span>{t("Обране")}</span>
                                             {wishlistCount > 0 && (
                                                 <span className="action-card__badge">
                                                     {wishlistCount}
                                                 </span>
                                             )}
-                                        </Link>
-                                        <Link to="/contacts" className="action-card">
+                                        </LLink>
+                                        <LLink to="/contacts" className="action-card">
                                             <div className="action-card__icon">
                                                 <svg
                                                     width="22"
@@ -437,8 +443,8 @@ export default function Profile() {
                                                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                                                 </svg>
                                             </div>
-                                            <span>Підтримка</span>
-                                        </Link>
+                                            <span>{t("Підтримка")}</span>
+                                        </LLink>
                                         <button
                                             className="action-card"
                                             onClick={() => setActiveTab("settings")}
@@ -456,7 +462,7 @@ export default function Profile() {
                                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
                                                 </svg>
                                             </div>
-                                            <span>Налаштування</span>
+                                            <span>{t("Налаштування")}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -476,7 +482,7 @@ export default function Profile() {
                                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                                 <circle cx="12" cy="7" r="4" />
                                             </svg>
-                                            Інформація профілю
+                                            {t("Інформація профілю")}
                                         </h3>
                                         {!isEditing ? (
                                             <button
@@ -494,7 +500,7 @@ export default function Profile() {
                                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                                                 </svg>
-                                                Редагувати
+                                                {t("Редагувати")}
                                             </button>
                                         ) : (
                                             <div className="profile-card__actions">
@@ -502,13 +508,13 @@ export default function Profile() {
                                                     className="btn-cancel"
                                                     onClick={() => setIsEditing(false)}
                                                 >
-                                                    Скасувати
+                                                    {t("Скасувати")}
                                                 </button>
                                                 <button
                                                     className="btn-save"
                                                     onClick={handleSaveProfile}
                                                 >
-                                                    Зберегти
+                                                    {t("Зберегти")}
                                                 </button>
                                             </div>
                                         )}
@@ -528,7 +534,7 @@ export default function Profile() {
                                                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                                         <circle cx="12" cy="7" r="4" />
                                                     </svg>
-                                                    Ім'я
+                                                    {t("Ім'я")}
                                                 </label>
                                                 {isEditing ? (
                                                     <input
@@ -571,7 +577,7 @@ export default function Profile() {
                                                     >
                                                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                                                     </svg>
-                                                    Телефон
+                                                    {t("Телефон")}
                                                 </label>
                                                 {isEditing ? (
                                                     <input
@@ -583,7 +589,7 @@ export default function Profile() {
                                                         placeholder="+380 XX XXX XX XX"
                                                     />
                                                 ) : (
-                                                    <span>{user.phone || "Не вказано"}</span>
+                                                    <span>{user.phone || t("Не вказано")}</span>
                                                 )}
                                             </div>
                                             <div className="profile-field">
@@ -599,7 +605,7 @@ export default function Profile() {
                                                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                                                         <polyline points="22 4 12 14.01 9 11.01" />
                                                     </svg>
-                                                    Метод реєстрації
+                                                    {t("Метод реєстрації")}
                                                 </label>
                                                 <span className="profile-provider">
                                                     {user.provider === "google" ? (
@@ -671,7 +677,7 @@ export default function Profile() {
                                                 />
                                                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                                             </svg>
-                                            Змінити пароль
+                                            {t("Змінити пароль")}
                                         </button>
                                     )}
                                 </div>
@@ -680,9 +686,9 @@ export default function Profile() {
                                 {orders.length > 0 && (
                                     <div className="recent-orders">
                                         <div className="recent-orders__header">
-                                            <h3>Останні замовлення</h3>
+                                            <h3>{t("Останні замовлення")}</h3>
                                             <button onClick={() => setActiveTab("orders")}>
-                                                Всі замовлення →
+                                                {t("Всі замовлення →")}
                                             </button>
                                         </div>
                                         <div className="recent-orders__list">
@@ -700,14 +706,14 @@ export default function Profile() {
                                                                 ).color,
                                                             }}
                                                         >
-                                                            {getStatusLabel(order.status).text}
+                                                            {t(getStatusLabel(order.status).text)}
                                                         </span>
                                                     </div>
                                                     <div className="order-card__date">
                                                         {order.date}
                                                     </div>
                                                     <div className="order-card__total">
-                                                        {order.total.toLocaleString()} ₴
+                                                        {money(order.total)}
                                                     </div>
                                                 </div>
                                             ))}
@@ -720,7 +726,7 @@ export default function Profile() {
                         {/* Orders Tab */}
                         {activeTab === "orders" && (
                             <div className="orders-section">
-                                <h3>Мої замовлення</h3>
+                                <h3>{t("Мої замовлення")}</h3>
                                 {orders.length === 0 ? (
                                     <div className="empty-state">
                                         <div className="empty-state__visual">
@@ -739,11 +745,15 @@ export default function Profile() {
                                                 </svg>
                                             </div>
                                         </div>
-                                        <h4>У вас ще немає замовлень</h4>
-                                        <p>Перейдіть до каталогу, щоб зробити перше замовлення</p>
-                                        <Link to="/shop/yoga" className="btn-primary">
-                                            Перейти до каталогу
-                                        </Link>
+                                        <h4>{t("У вас ще немає замовлень")}</h4>
+                                        <p>
+                                            {t(
+                                                "Перейдіть до каталогу, щоб зробити перше замовлення",
+                                            )}
+                                        </p>
+                                        <LLink to="/shop/yoga" className="btn-primary">
+                                            {t("Перейти до каталогу")}
+                                        </LLink>
                                     </div>
                                 ) : (
                                     <div className="orders-list">
@@ -752,7 +762,9 @@ export default function Profile() {
                                                 <div className="order-item-full__header">
                                                     <div className="order-item-full__info">
                                                         <span className="order-item-full__id">
-                                                            Замовлення #{order.id}
+                                                            {t("Замовлення #{id}", {
+                                                                id: order.id,
+                                                            })}
                                                         </span>
                                                         <span className="order-item-full__date">
                                                             {order.date}
@@ -765,7 +777,7 @@ export default function Profile() {
                                                                 .color,
                                                         }}
                                                     >
-                                                        {getStatusLabel(order.status).text}
+                                                        {t(getStatusLabel(order.status).text)}
                                                     </span>
                                                 </div>
                                                 <div className="order-item-full__products">
@@ -781,7 +793,9 @@ export default function Profile() {
                                                                                 marginRight: 8,
                                                                             }}
                                                                         >
-                                                                            Розмір: {item.size}
+                                                                            {t("Розмір: {size}", {
+                                                                                size: item.size,
+                                                                            })}
                                                                         </span>
                                                                     )}
                                                                     {item.color && (
@@ -790,25 +804,31 @@ export default function Profile() {
                                                                                 marginRight: 8,
                                                                             }}
                                                                         >
-                                                                            Колір: {item.color}
+                                                                            {t("Колір: {color}", {
+                                                                                color: item.color,
+                                                                            })}
                                                                         </span>
                                                                     )}
                                                                     <span
                                                                         style={{ fontWeight: 600 }}
                                                                     >
-                                                                        {item.quantity} шт
+                                                                        {t("{n} шт", {
+                                                                            n: item.quantity,
+                                                                        })}
                                                                     </span>
                                                                 </span>
                                                             </div>
                                                             <span className="order-product__price">
-                                                                {item.price} ₴
+                                                                {money(item.price)}
                                                             </span>
                                                         </div>
                                                     ))}
                                                 </div>
                                                 <div className="order-item-full__footer">
                                                     <span className="order-item-full__total">
-                                                        Разом: {order.total.toLocaleString()} ₴
+                                                        {t("Разом: {total}", {
+                                                            total: money(order.total),
+                                                        })}
                                                     </span>
                                                 </div>
                                             </div>
@@ -822,7 +842,7 @@ export default function Profile() {
                         {activeTab === "addresses" && (
                             <div className="addresses-section">
                                 <div className="addresses-section__header">
-                                    <h3>Мої адреси</h3>
+                                    <h3>{t("Мої адреси")}</h3>
                                     <button
                                         className="btn-add"
                                         onClick={() => setShowAddressModal(true)}
@@ -838,7 +858,7 @@ export default function Profile() {
                                             <line x1="12" y1="5" x2="12" y2="19" />
                                             <line x1="5" y1="12" x2="19" y2="12" />
                                         </svg>
-                                        Додати адресу
+                                        {t("Додати адресу")}
                                     </button>
                                 </div>
                                 {addresses.length === 0 ? (
@@ -858,10 +878,11 @@ export default function Profile() {
                                                 </svg>
                                             </div>
                                         </div>
-                                        <h4>Немає збережених адрес</h4>
+                                        <h4>{t("Немає збережених адрес")}</h4>
                                         <p>
-                                            Додайте адресу доставки для швидкого оформлення
-                                            замовлень
+                                            {t(
+                                                "Додайте адресу доставки для швидкого оформлення замовлень",
+                                            )}
                                         </p>
                                     </div>
                                 ) : (
@@ -873,7 +894,7 @@ export default function Profile() {
                                             >
                                                 {addr.isDefault && (
                                                     <span className="address-card__badge">
-                                                        За замовчуванням
+                                                        {t("За замовчуванням")}
                                                     </span>
                                                 )}
                                                 <h4>{addr.label}</h4>
@@ -905,12 +926,12 @@ export default function Profile() {
                         {/* Settings Tab */}
                         {activeTab === "settings" && settings && (
                             <div className="settings-section">
-                                <h3>Налаштування</h3>
+                                <h3>{t("Налаштування")}</h3>
 
                                 <div className="settings-group">
-                                    <h4>Сповіщення</h4>
+                                    <h4>{t("Сповіщення")}</h4>
                                     <label className="setting-toggle">
-                                        <span>Email сповіщення</span>
+                                        <span>{t("Email сповіщення")}</span>
                                         <input
                                             type="checkbox"
                                             checked={settings.notifications.email}
@@ -924,7 +945,7 @@ export default function Profile() {
                                         <span className="toggle-slider"></span>
                                     </label>
                                     <label className="setting-toggle">
-                                        <span>SMS сповіщення</span>
+                                        <span>{t("SMS сповіщення")}</span>
                                         <input
                                             type="checkbox"
                                             checked={settings.notifications.sms}
@@ -938,7 +959,7 @@ export default function Profile() {
                                         <span className="toggle-slider"></span>
                                     </label>
                                     <label className="setting-toggle">
-                                        <span>Промо-акції та знижки</span>
+                                        <span>{t("Промо-акції та знижки")}</span>
                                         <input
                                             type="checkbox"
                                             checked={settings.notifications.promotions}
@@ -954,7 +975,7 @@ export default function Profile() {
                                 </div>
 
                                 <div className="settings-group">
-                                    <h4>Мова</h4>
+                                    <h4>{t("Мова")}</h4>
                                     <div className="setting-select">
                                         <select
                                             value={settings.language}
@@ -981,7 +1002,7 @@ export default function Profile() {
                 <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal__header">
-                            <h3>Змінити пароль</h3>
+                            <h3>{t("Змінити пароль")}</h3>
                             <button
                                 className="modal__close"
                                 onClick={() => setShowPasswordModal(false)}
@@ -1000,12 +1021,14 @@ export default function Profile() {
                             </button>
                         </div>
                         <div className="modal__content">
-                            {passwordError && <div className="modal__error">{passwordError}</div>}
+                            {passwordError && (
+                                <div className="modal__error">{t(passwordError)}</div>
+                            )}
                             {passwordSuccess && (
-                                <div className="modal__success">{passwordSuccess}</div>
+                                <div className="modal__success">{t(passwordSuccess)}</div>
                             )}
                             <div className="form-group">
-                                <label>Поточний пароль</label>
+                                <label>{t("Поточний пароль")}</label>
                                 <input
                                     type="password"
                                     value={currentPassword}
@@ -1013,7 +1036,7 @@ export default function Profile() {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Новий пароль</label>
+                                <label>{t("Новий пароль")}</label>
                                 <input
                                     type="password"
                                     value={newPassword}
@@ -1021,7 +1044,7 @@ export default function Profile() {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Підтвердіть новий пароль</label>
+                                <label>{t("Підтвердіть новий пароль")}</label>
                                 <input
                                     type="password"
                                     value={confirmNewPassword}
@@ -1034,10 +1057,10 @@ export default function Profile() {
                                 className="btn-cancel"
                                 onClick={() => setShowPasswordModal(false)}
                             >
-                                Скасувати
+                                {t("Скасувати")}
                             </button>
                             <button className="btn-primary" onClick={handleChangePassword}>
-                                Змінити
+                                {t("Змінити")}
                             </button>
                         </div>
                     </div>
@@ -1049,7 +1072,7 @@ export default function Profile() {
                 <div className="modal-overlay" onClick={() => setShowAddressModal(false)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal__header">
-                            <h3>Додати адресу</h3>
+                            <h3>{t("Додати адресу")}</h3>
                             <button
                                 className="modal__close"
                                 onClick={() => setShowAddressModal(false)}
@@ -1069,36 +1092,36 @@ export default function Profile() {
                         </div>
                         <div className="modal__content">
                             <div className="form-group">
-                                <label>Назва (наприклад, "Дім", "Робота")</label>
+                                <label>{t('Назва (наприклад, "Дім", "Робота")')}</label>
                                 <input
                                     type="text"
                                     value={newAddress.label}
                                     onChange={(e) =>
                                         setNewAddress({ ...newAddress, label: e.target.value })
                                     }
-                                    placeholder="Дім"
+                                    placeholder={t("Дім")}
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Місто</label>
+                                <label>{t("Місто")}</label>
                                 <input
                                     type="text"
                                     value={newAddress.city}
                                     onChange={(e) =>
                                         setNewAddress({ ...newAddress, city: e.target.value })
                                     }
-                                    placeholder="Київ"
+                                    placeholder={t("Київ")}
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Відділення / Адреса</label>
+                                <label>{t("Відділення / Адреса")}</label>
                                 <input
                                     type="text"
                                     value={newAddress.warehouse}
                                     onChange={(e) =>
                                         setNewAddress({ ...newAddress, warehouse: e.target.value })
                                     }
-                                    placeholder="Відділення Нова Пошта №1"
+                                    placeholder={t("Відділення Нова Пошта №1")}
                                 />
                             </div>
                             <label className="auth-checkbox">
@@ -1113,7 +1136,7 @@ export default function Profile() {
                                     }
                                 />
                                 <span className="checkmark"></span>
-                                <span>Зробити адресою за замовчуванням</span>
+                                <span>{t("Зробити адресою за замовчуванням")}</span>
                             </label>
                         </div>
                         <div className="modal__footer">
@@ -1121,10 +1144,10 @@ export default function Profile() {
                                 className="btn-cancel"
                                 onClick={() => setShowAddressModal(false)}
                             >
-                                Скасувати
+                                {t("Скасувати")}
                             </button>
                             <button className="btn-primary" onClick={handleAddAddress}>
-                                Додати
+                                {t("Додати")}
                             </button>
                         </div>
                     </div>
@@ -1160,7 +1183,7 @@ export default function Profile() {
                             <line x1="9" y1="9" x2="15" y2="15" />
                         </svg>
                     )}
-                    {toast.message}
+                    {t(toast.message)}
                 </div>
             )}
         </main>

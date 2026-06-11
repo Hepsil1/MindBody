@@ -45,6 +45,21 @@ export const LOCALE_SHORT: Record<Locale, string> = {
     ru: "RU",
 };
 
+/** og:locale values for meta() functions. */
+export const OG_LOCALE: Record<Locale, string> = {
+    uk: "uk_UA",
+    en: "en_US",
+    ru: "ru_RU",
+};
+
+/**
+ * Non-throwing locale resolution for meta() functions (meta runs even for
+ * error responses, so it must never throw itself).
+ */
+export function localeFromParamSafe(lang: string | undefined): Locale {
+    return lang === "en" || lang === "ru" ? lang : "uk";
+}
+
 /**
  * Split a pathname into its locale and the locale-less path.
  * "/en/shop/yoga" → { locale: "en", path: "/shop/yoga" }

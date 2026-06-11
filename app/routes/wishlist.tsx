@@ -1,14 +1,15 @@
-import { Link } from "react-router";
 import { useState, useEffect } from "react";
 import { StorageUtils, type WishlistItem } from "../utils/storage";
 import { useToast } from "../components/Toast";
-import { pluralizeUA } from "../utils/plural";
+import { useI18n, useMoney, LLink, plural } from "../i18n";
 import { slugToLabel } from "../utils/categoryMap";
 import { useProductSlugs, productHref } from "../utils/useProductSlugs";
 import "../styles/wishlist.css";
 
 export default function Wishlist() {
     const { showToast } = useToast();
+    const { t, locale } = useI18n();
+    const money = useMoney();
     const [items, setItems] = useState<WishlistItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     // Build /p/<slug> links from the live DB slug (wishlist stores only the id).
@@ -36,7 +37,7 @@ export default function Wishlist() {
         if (!backup) return;
         showToast(
             <span style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span>Видалено з обраного</span>
+                <span>{t("Видалено з обраного")}</span>
                 <button
                     type="button"
                     onClick={() => StorageUtils.addToWishlist(backup)}
@@ -50,7 +51,7 @@ export default function Wishlist() {
                         cursor: "pointer",
                     }}
                 >
-                    Скасувати
+                    {t("Скасувати@@undo")}
                 </button>
             </span>,
             "info",
@@ -65,7 +66,7 @@ export default function Wishlist() {
             image: item.image,
             quantity: 1,
         });
-        showToast("Товар додано до кошика!");
+        showToast(t("Товар додано до кошика!"));
     };
 
     const addAllToCart = () => {
@@ -79,12 +80,15 @@ export default function Wishlist() {
             });
         });
         showToast(
-            `${items.length} ${pluralizeUA(items.length, "товар", "товари", "товарів")} додано до кошика!`,
+            t("{n} {unit} додано до кошика!", {
+                n: items.length,
+                unit: plural(locale, items.length, "товар", "товари", "товарів"),
+            }),
         );
     };
 
     const clearWishlist = () => {
-        if (confirm("Ви впевнені, що хочете очистити список улюбленого?")) {
+        if (confirm(t("Ви впевнені, що хочете очистити список улюбленого?"))) {
             items.forEach((item) => StorageUtils.removeFromWishlist(item.id));
         }
     };
@@ -96,7 +100,7 @@ export default function Wishlist() {
             <main className="wishlist-page">
                 <div className="wishlist-loading">
                     <div className="wishlist-loading__spinner"></div>
-                    <p>Завантаження...</p>
+                    <p>{t("Завантаження...")}</p>
                 </div>
             </main>
         );
@@ -108,17 +112,18 @@ export default function Wishlist() {
             <div className="wishlist-hero">
                 <div className="container">
                     <nav className="wishlist-breadcrumb">
-                        <Link to="/">Головна</Link>
+                        <LLink to="/">{t("Головна")}</LLink>
                         <span>/</span>
-                        <span className="active">Улюблене</span>
+                        <span className="active">{t("Улюблене")}</span>
                     </nav>
                     <div className="wishlist-hero__content">
                         <h1>
-                            Моє <em>Улюблене</em>
+                            {t("Моє")} <em>{t("Улюблене")}</em>
                         </h1>
                         <p className="wishlist-count">
-                            {items.length} {pluralizeUA(items.length, "товар", "товари", "товарів")}{" "}
-                            у списку
+                            {items.length}{" "}
+                            {plural(locale, items.length, "товар", "товари", "товарів")}{" "}
+                            {t("у списку@@wishlist")}
                         </p>
                     </div>
                 </div>
@@ -145,13 +150,14 @@ export default function Wishlist() {
                                 </div>
                             </div>
                             <h2>
-                                Список улюбленого <em>порожній</em>
+                                {t("Список улюбленого")} <em>{t("порожній@@wishlist")}</em>
                             </h2>
                             <p>
-                                Збережіть товари, які вам сподобалися, щоб повернутися до них
-                                пізніше
+                                {t(
+                                    "Збережіть товари, які вам сподобалися, щоб повернутися до них пізніше",
+                                )}
                             </p>
-                            <Link to="/shop/yoga" className="wishlist-btn wishlist-btn--primary">
+                            <LLink to="/shop/yoga" className="wishlist-btn wishlist-btn--primary">
                                 <svg
                                     width="20"
                                     height="20"
@@ -164,8 +170,8 @@ export default function Wishlist() {
                                     <line x1="3" y1="6" x2="21" y2="6" />
                                     <path d="M16 10a4 4 0 0 1-8 0" />
                                 </svg>
-                                Перейти до каталогу
-                            </Link>
+                                {t("Перейти до каталогу")}
+                            </LLink>
                         </div>
                     ) : (
                         /* Items Grid + Sidebar */
@@ -183,8 +189,8 @@ export default function Wishlist() {
                                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                         </svg>
                                         {items.length}{" "}
-                                        {pluralizeUA(items.length, "товар", "товари", "товарів")}{" "}
-                                        збережено
+                                        {plural(locale, items.length, "товар", "товари", "товарів")}{" "}
+                                        {t("збережено")}
                                     </span>
                                     <button
                                         className="wishlist-actions__clear"
@@ -200,7 +206,7 @@ export default function Wishlist() {
                                         >
                                             <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                                         </svg>
-                                        Очистити все
+                                        {t("Очистити все")}
                                     </button>
                                 </div>
 
@@ -209,18 +215,18 @@ export default function Wishlist() {
                                     {items.map((item) => (
                                         <div key={item.id} className="wishlist-card">
                                             <div className="wishlist-card__image">
-                                                <Link
+                                                <LLink
                                                     to={productHref(
                                                         item.id,
                                                         slugs[String(item.id)],
                                                     )}
                                                 >
                                                     <img src={item.image} alt={item.name} />
-                                                </Link>
+                                                </LLink>
                                                 <button
                                                     className="wishlist-card__remove"
                                                     onClick={() => removeItem(item.id)}
-                                                    aria-label="Видалити з улюбленого"
+                                                    aria-label={t("Видалити з улюбленого")}
                                                 >
                                                     <svg
                                                         width="18"
@@ -237,7 +243,7 @@ export default function Wishlist() {
                                                 <button
                                                     className="wishlist-card__cart"
                                                     onClick={() => addToCart(item)}
-                                                    aria-label="Додати до кошика"
+                                                    aria-label={t("Додати до кошика")}
                                                 >
                                                     <svg
                                                         width="18"
@@ -256,10 +262,10 @@ export default function Wishlist() {
                                             <div className="wishlist-card__info">
                                                 {item.category && (
                                                     <span className="wishlist-card__category">
-                                                        {slugToLabel(item.category)}
+                                                        {t(slugToLabel(item.category))}
                                                     </span>
                                                 )}
-                                                <Link
+                                                <LLink
                                                     to={productHref(
                                                         item.id,
                                                         slugs[String(item.id)],
@@ -267,9 +273,9 @@ export default function Wishlist() {
                                                     className="wishlist-card__name"
                                                 >
                                                     {item.name}
-                                                </Link>
+                                                </LLink>
                                                 <span className="wishlist-card__price">
-                                                    {item.price.toLocaleString()} ₴
+                                                    {money(item.price)}
                                                 </span>
                                             </div>
                                         </div>
@@ -299,17 +305,18 @@ export default function Wishlist() {
                                         </svg>
                                         <div className="wishlist-action-btn__text">
                                             <span className="wishlist-action-btn__title">
-                                                Додати все
+                                                {t("Додати все")}
                                             </span>
                                             <span className="wishlist-action-btn__subtitle">
                                                 {items.length}{" "}
-                                                {pluralizeUA(
+                                                {plural(
+                                                    locale,
                                                     items.length,
                                                     "товар",
                                                     "товари",
                                                     "товарів",
                                                 )}{" "}
-                                                • {totalValue.toLocaleString()} ₴
+                                                • {money(totalValue)}
                                             </span>
                                         </div>
                                     </button>
@@ -329,10 +336,11 @@ export default function Wishlist() {
                                             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
                                         </svg>
                                     </div>
-                                    <h4>Потрібна допомога?</h4>
+                                    <h4>{t("Потрібна допомога?")}</h4>
                                     <p>
-                                        Наші консультанти допоможуть з вибором розміру та
-                                        відповідять на будь-які питання
+                                        {t(
+                                            "Наші консультанти допоможуть з вибором розміру та відповідять на будь-які питання",
+                                        )}
                                     </p>
                                     <div className="wishlist-help-card__buttons">
                                         <a
@@ -351,7 +359,7 @@ export default function Wishlist() {
                                             </svg>
                                             Instagram
                                         </a>
-                                        <Link
+                                        <LLink
                                             to="/contacts"
                                             className="wishlist-help-card__link wishlist-help-card__link--contact"
                                         >
@@ -365,13 +373,13 @@ export default function Wishlist() {
                                             >
                                                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                                             </svg>
-                                            Швидке запитання
-                                        </Link>
+                                            {t("Швидке запитання")}
+                                        </LLink>
                                     </div>
                                 </div>
 
                                 {/* Continue Shopping */}
-                                <Link to="/shop/yoga" className="wishlist-continue-link">
+                                <LLink to="/shop/yoga" className="wishlist-continue-link">
                                     <svg
                                         width="16"
                                         height="16"
@@ -382,8 +390,8 @@ export default function Wishlist() {
                                     >
                                         <polyline points="15 18 9 12 15 6" />
                                     </svg>
-                                    Продовжити покупки
-                                </Link>
+                                    {t("Продовжити покупки")}
+                                </LLink>
                             </div>
                         </div>
                     )}

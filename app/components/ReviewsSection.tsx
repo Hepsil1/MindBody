@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "./Toast";
+import { useI18n } from "../i18n";
 import type { ReviewData } from "../types/product";
 
 // Product reviews block — fetches /api/reviews?productId, renders the list +
@@ -8,6 +9,7 @@ import type { ReviewData } from "../types/product";
 // which the PDP route imports globally.
 export default function ReviewsSection({ productId }: { productId: string }) {
     const { showToast } = useToast();
+    const { t, locale } = useI18n();
     const [reviews, setReviews] = useState<ReviewData[]>([]);
     const [avg, setAvg] = useState(0);
     const [count, setCount] = useState(0);
@@ -43,7 +45,7 @@ export default function ReviewsSection({ productId }: { productId: string }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formName.trim() || !formText.trim()) {
-            showToast("Будь ласка, заповніть всі поля", "error");
+            showToast(t("Будь ласка, заповніть всі поля"), "error");
             return;
         }
         setSubmitting(true);
@@ -60,7 +62,7 @@ export default function ReviewsSection({ productId }: { productId: string }) {
             });
             if (res.ok) {
                 const data = await res.json();
-                showToast(data.message || "Дякуємо за ваш відгук! ✨");
+                showToast(data.message || t("Дякуємо за ваш відгук! ✨"));
                 setFormName("");
                 setFormText("");
                 setFormRating(5);
@@ -68,10 +70,10 @@ export default function ReviewsSection({ productId }: { productId: string }) {
                 // Don't refetch — review is pending moderation and won't appear yet
             } else {
                 const data = await res.json().catch(() => null);
-                showToast(data?.error || "Помилка при збереженні", "error");
+                showToast(data?.error || t("Помилка при збереженні"), "error");
             }
         } catch {
-            showToast("Помилка з'єднання", "error");
+            showToast(t("Помилка з'єднання"), "error");
         }
         setSubmitting(false);
     };
@@ -88,7 +90,7 @@ export default function ReviewsSection({ productId }: { productId: string }) {
             .substring(0, 2) || "?";
     const formatDate = (dateStr: string) => {
         try {
-            return new Date(dateStr).toLocaleDateString("uk-UA", {
+            return new Date(dateStr).toLocaleDateString(locale, {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
@@ -101,18 +103,20 @@ export default function ReviewsSection({ productId }: { productId: string }) {
     return (
         <div className="reviews-section">
             <div className="reviews-header">
-                <h3>Відгуки {count > 0 && `(${count})`}</h3>
+                <h3>
+                    {t("Відгуки")} {count > 0 && `(${count})`}
+                </h3>
                 {count > 0 && (
                     <div className="avg-rating">
                         <span className="stars">{renderStars(Math.round(avg))}</span>
-                        <span>{avg} з 5</span>
+                        <span>{t("{avg} з 5", { avg })}</span>
                     </div>
                 )}
             </div>
 
             {!loaded ? (
                 <p className="reviews-empty" aria-busy="true">
-                    Завантаження відгуків…
+                    {t("Завантаження відгуків…")}
                 </p>
             ) : reviews.length > 0 ? (
                 <div className="reviews-list">
@@ -135,30 +139,30 @@ export default function ReviewsSection({ productId }: { productId: string }) {
                             <p className="review-card__text">{r.text}</p>
                             {r.isVerified && (
                                 <span className="review-card__verified">
-                                    ✓ Підтверджена покупка
+                                    {t("✓ Підтверджена покупка")}
                                 </span>
                             )}
                         </div>
                     ))}
                 </div>
             ) : (
-                <p className="reviews-empty">Поки що немає відгуків. Будьте першими! ✨</p>
+                <p className="reviews-empty">{t("Поки що немає відгуків. Будьте першими! ✨")}</p>
             )}
 
             {!showForm ? (
                 <button onClick={() => setShowForm(true)} className="review-write-btn">
-                    Написати відгук
+                    {t("Написати відгук")}
                 </button>
             ) : (
                 <form className="review-form" onSubmit={handleSubmit}>
-                    <h4>Залишити відгук</h4>
+                    <h4>{t("Залишити відгук")}</h4>
 
                     <div className="review-form__field">
-                        <label>Оцінка</label>
+                        <label>{t("Оцінка")}</label>
                         <div
                             className="review-form__stars-input"
                             role="radiogroup"
-                            aria-label="Оцінка товару"
+                            aria-label={t("Оцінка товару")}
                         >
                             {[1, 2, 3, 4, 5].map((n) => (
                                 <button
@@ -166,7 +170,7 @@ export default function ReviewsSection({ productId }: { productId: string }) {
                                     type="button"
                                     role="radio"
                                     aria-checked={n <= formRating}
-                                    aria-label={`Оцінка ${n} з 5`}
+                                    aria-label={t("Оцінка {n} з 5", { n })}
                                     className={n <= formRating ? "active" : ""}
                                     onClick={() => setFormRating(n)}
                                 >
@@ -177,30 +181,30 @@ export default function ReviewsSection({ productId }: { productId: string }) {
                     </div>
 
                     <div className="review-form__field">
-                        <label>Ваше ім'я</label>
+                        <label>{t("Ваше ім'я")}</label>
                         <input
                             type="text"
                             value={formName}
                             onChange={(e) => setFormName(e.target.value)}
-                            placeholder="Ольга"
+                            placeholder={t("Ольга")}
                             maxLength={50}
                         />
                     </div>
 
                     <div className="review-form__field">
-                        <label htmlFor="review-text">Ваш відгук</label>
+                        <label htmlFor="review-text">{t("Ваш відгук")}</label>
                         <textarea
                             id="review-text"
                             value={formText}
                             onChange={(e) => setFormText(e.target.value)}
-                            placeholder="Розкажіть про свій досвід із цим товаром..."
+                            placeholder={t("Розкажіть про свій досвід із цим товаром...")}
                             maxLength={1000}
                         />
                     </div>
 
                     <div className="review-form__actions">
                         <button type="submit" className="review-form__submit" disabled={submitting}>
-                            {submitting ? "Відправка..." : "Надіслати відгук"}
+                            {submitting ? t("Відправка...") : t("Надіслати відгук")}
                         </button>
                         <button
                             type="button"
@@ -213,7 +217,7 @@ export default function ReviewsSection({ productId }: { productId: string }) {
                                 fontSize: "0.85rem",
                             }}
                         >
-                            Скасувати
+                            {t("Скасувати")}
                         </button>
                     </div>
                 </form>

@@ -1,17 +1,22 @@
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useState, useEffect } from "react";
 import { AuthUtils, validateEmail, validatePassword } from "../utils/auth";
+import { useI18n, LLink, getT } from "../i18n";
+import { localeFromParamSafe } from "../i18n/config";
 
 // Tab title — without this, /auth shows blank in browser tab + history.
 // SEO + UX (audit P2).
-export function meta() {
-    return [{ title: "Вхід / Реєстрація | MIND BODY" }];
+export function meta({ params }: { params: { lang?: string } }) {
+    const locale = localeFromParamSafe(params.lang);
+    const t = getT(locale);
+    return [{ title: t("Вхід / Реєстрація | MIND BODY") }];
 }
 
 type AuthMode = "login" | "register";
 
 export default function Auth() {
     const navigate = useNavigate();
+    const { t, lp } = useI18n();
     const [searchParams] = useSearchParams();
     // Atom C: respect ?redirect=... so deep-linked pages (e.g.
     // /profile or /checkout) return the user there after login.
@@ -69,7 +74,7 @@ export default function Auth() {
         const checkAuth = async () => {
             const authState = await AuthUtils.getAuthStateAsync();
             if (authState.isAuthenticated) {
-                navigate(redirectTo);
+                navigate(lp(redirectTo));
             }
         };
         checkAuth();
@@ -86,7 +91,7 @@ export default function Auth() {
                 const result = await AuthUtils.login(email, password);
                 if (result.success) {
                     setSuccess(result.message);
-                    setTimeout(() => navigate(redirectTo), 1000);
+                    setTimeout(() => navigate(lp(redirectTo)), 1000);
                 } else {
                     setError(result.message);
                 }
@@ -126,7 +131,7 @@ export default function Auth() {
                 const result = await AuthUtils.register(name, email, password, phone);
                 if (result.success) {
                     setSuccess(result.message);
-                    setTimeout(() => navigate(redirectTo), 1500);
+                    setTimeout(() => navigate(lp(redirectTo)), 1500);
                 } else {
                     setError(result.message);
                 }
@@ -186,25 +191,27 @@ export default function Auth() {
             <section className="auth-hero">
                 <div className="container">
                     <nav className="breadcrumb">
-                        <Link to="/">Головна</Link>
+                        <LLink to="/">{t("Головна")}</LLink>
                         <span>/</span>
-                        <span className="active">{mode === "login" ? "Вхід" : "Реєстрація"}</span>
+                        <span className="active">
+                            {mode === "login" ? t("Вхід") : t("Реєстрація")}
+                        </span>
                     </nav>
                     <h1 className="auth-hero__title">
                         {mode === "login" ? (
                             <>
-                                Вхід в <em>акаунт</em>
+                                {t("Вхід в")} <em>{t("акаунт")}</em>
                             </>
                         ) : (
                             <>
-                                Створити <em>акаунт</em>
+                                {t("Створити")} <em>{t("акаунт")}</em>
                             </>
                         )}
                     </h1>
                     <p className="auth-hero__subtitle">
                         {mode === "login"
-                            ? "Увійдіть, щоб отримати доступ до вашого особистого кабінету"
-                            : "Приєднуйтесь до MIND BODY та отримуйте ексклюзивні пропозиції"}
+                            ? t("Увійдіть, щоб отримати доступ до вашого особистого кабінету")
+                            : t("Приєднуйтесь до MIND BODY та отримуйте ексклюзивні пропозиції")}
                     </p>
                 </div>
             </section>
@@ -214,7 +221,11 @@ export default function Auth() {
                 <div className="container">
                     <div className="auth-card">
                         {/* Mode Tabs */}
-                        <div className="auth-tabs" role="tablist" aria-label="Вхід або реєстрація">
+                        <div
+                            className="auth-tabs"
+                            role="tablist"
+                            aria-label={t("Вхід або реєстрація")}
+                        >
                             <button
                                 type="button"
                                 role="tab"
@@ -223,7 +234,7 @@ export default function Auth() {
                                 className={`auth-tab ${mode === "login" ? "active" : ""}`}
                                 onClick={() => switchMode("login")}
                             >
-                                Вхід
+                                {t("Вхід")}
                             </button>
                             <button
                                 type="button"
@@ -233,7 +244,7 @@ export default function Auth() {
                                 className={`auth-tab ${mode === "register" ? "active" : ""}`}
                                 onClick={() => switchMode("register")}
                             >
-                                Реєстрація
+                                {t("Реєстрація")}
                             </button>
                         </div>
 
@@ -252,7 +263,7 @@ export default function Auth() {
                                     <line x1="15" y1="9" x2="9" y2="15" />
                                     <line x1="9" y1="9" x2="15" y2="15" />
                                 </svg>
-                                {error}
+                                {t(error)}
                             </div>
                         )}
                         {success && (
@@ -268,7 +279,7 @@ export default function Auth() {
                                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                                     <polyline points="22 4 12 14.01 9 11.01" />
                                 </svg>
-                                {success}
+                                {t(success)}
                             </div>
                         )}
 
@@ -298,12 +309,12 @@ export default function Auth() {
                                 />
                             </svg>
                             {mode === "login"
-                                ? "Увійти через Google"
-                                : "Зареєструватися через Google"}
+                                ? t("Увійти через Google")
+                                : t("Зареєструватися через Google")}
                         </button>
 
                         <div className="auth-divider">
-                            <span>або</span>
+                            <span>{t("або")}</span>
                         </div>
 
                         {/* Form */}
@@ -315,14 +326,14 @@ export default function Auth() {
                         >
                             {mode === "register" && (
                                 <div className="form-group">
-                                    <label htmlFor="name">Ім'я та прізвище</label>
+                                    <label htmlFor="name">{t("Ім'я та прізвище")}</label>
                                     <input
                                         type="text"
                                         id="name"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         onBlur={handleBlur}
-                                        placeholder="Ваше повне ім'я"
+                                        placeholder={t("Ваше повне ім'я")}
                                         autoComplete="name"
                                         aria-invalid={!!fieldErrors.name}
                                         aria-describedby={
@@ -336,7 +347,7 @@ export default function Auth() {
                                             className="field-error-text"
                                             role="alert"
                                         >
-                                            {fieldErrors.name}
+                                            {t(fieldErrors.name)}
                                         </span>
                                     )}
                                 </div>
@@ -363,14 +374,14 @@ export default function Auth() {
                                         className="field-error-text"
                                         role="alert"
                                     >
-                                        {fieldErrors.email}
+                                        {t(fieldErrors.email)}
                                     </span>
                                 )}
                             </div>
 
                             {mode === "register" && (
                                 <div className="form-group">
-                                    <label htmlFor="phone">Телефон (необов'язково)</label>
+                                    <label htmlFor="phone">{t("Телефон (необов'язково)")}</label>
                                     <input
                                         type="tel"
                                         id="phone"
@@ -384,7 +395,7 @@ export default function Auth() {
                             )}
 
                             <div className="form-group">
-                                <label htmlFor="password">Пароль</label>
+                                <label htmlFor="password">{t("Пароль")}</label>
                                 <div className="password-input-wrap">
                                     <input
                                         type={showPassword ? "text" : "password"}
@@ -409,7 +420,9 @@ export default function Auth() {
                                         className="password-reveal-btn"
                                         onClick={() => setShowPassword((v) => !v)}
                                         aria-label={
-                                            showPassword ? "Приховати пароль" : "Показати пароль"
+                                            showPassword
+                                                ? t("Приховати пароль")
+                                                : t("Показати пароль")
                                         }
                                         aria-pressed={showPassword}
                                     >
@@ -448,12 +461,12 @@ export default function Auth() {
                                         className="field-error-text"
                                         role="alert"
                                     >
-                                        {fieldErrors.password}
+                                        {t(fieldErrors.password)}
                                     </span>
                                 )}
                                 {mode === "register" && !fieldErrors.password && (
                                     <span className="form-hint">
-                                        Мінімум 6 символів, включаючи цифру
+                                        {t("Мінімум 6 символів, включаючи цифру")}
                                     </span>
                                 )}
                             </div>
@@ -461,7 +474,9 @@ export default function Auth() {
                             {mode === "register" && (
                                 <>
                                     <div className="form-group">
-                                        <label htmlFor="confirmPassword">Підтвердіть пароль</label>
+                                        <label htmlFor="confirmPassword">
+                                            {t("Підтвердіть пароль")}
+                                        </label>
                                         <input
                                             type="password"
                                             id="confirmPassword"
@@ -484,7 +499,7 @@ export default function Auth() {
                                                 className="field-error-text"
                                                 role="alert"
                                             >
-                                                {fieldErrors.confirmPassword}
+                                                {t(fieldErrors.confirmPassword)}
                                             </span>
                                         )}
                                     </div>
@@ -497,14 +512,14 @@ export default function Auth() {
                                         />
                                         <span className="checkmark"></span>
                                         <span>
-                                            Я погоджуюся з{" "}
-                                            <Link to="/terms" target="_blank">
-                                                умовами використання
-                                            </Link>{" "}
-                                            та{" "}
-                                            <Link to="/privacy" target="_blank">
-                                                політикою конфіденційності
-                                            </Link>
+                                            {t("Я погоджуюся з")}{" "}
+                                            <LLink to="/terms" target="_blank">
+                                                {t("умовами використання")}
+                                            </LLink>{" "}
+                                            {t("та")}{" "}
+                                            <LLink to="/privacy" target="_blank">
+                                                {t("політикою конфіденційності")}
+                                            </LLink>
                                         </span>
                                     </label>
                                 </>
@@ -513,7 +528,7 @@ export default function Auth() {
                             {mode === "login" && (
                                 <div className="auth-forgot">
                                     <a href="#" onClick={handleForgotPassword}>
-                                        Забули пароль?
+                                        {t("Забули пароль?")}
                                     </a>
                                 </div>
                             )}
@@ -522,12 +537,12 @@ export default function Auth() {
                                 {isLoading ? (
                                     <span className="auth-loading">
                                         <span className="spinner"></span>
-                                        Зачекайте...
+                                        {t("Зачекайте...")}
                                     </span>
                                 ) : mode === "login" ? (
-                                    "Увійти"
+                                    t("Увійти")
                                 ) : (
-                                    "Зареєструватися"
+                                    t("Зареєструватися")
                                 )}
                             </button>
                         </form>
@@ -536,15 +551,17 @@ export default function Auth() {
                         <p className="auth-switch">
                             {mode === "login" ? (
                                 <>
-                                    Ще немає акаунту?{" "}
+                                    {t("Ще немає акаунту?")}{" "}
                                     <button onClick={() => switchMode("register")}>
-                                        Зареєструватися
+                                        {t("Зареєструватися")}
                                     </button>
                                 </>
                             ) : (
                                 <>
-                                    Вже маєте акаунт?{" "}
-                                    <button onClick={() => switchMode("login")}>Увійти</button>
+                                    {t("Вже маєте акаунт?")}{" "}
+                                    <button onClick={() => switchMode("login")}>
+                                        {t("Увійти")}
+                                    </button>
                                 </>
                             )}
                         </p>

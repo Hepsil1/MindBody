@@ -1,7 +1,7 @@
-import { Link } from "react-router";
 import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
 import { getLqipStyle } from "../utils/lqip";
 import { getMoodPreset, type MoodType } from "../utils/moods";
+import { LLink } from "../i18n";
 
 interface CategoryCardProps {
     title: string;
@@ -40,7 +40,7 @@ export default function CategoryCard({
     const { position, scale } = parseImagePos();
 
     return (
-        <Link to={link} prefetch="intent" className="category-card-editorial">
+        <LLink to={link} prefetch="intent" className="category-card-editorial">
             <div
                 className="category-card-editorial__image-wrapper"
                 /* Batch 40 atom 8: LQIP blur-up backdrop for instant
@@ -111,6 +111,6 @@ export default function CategoryCard({
                     </div>
                 </div>
             </div>
-        </Link>
+        </LLink>
     );
 }

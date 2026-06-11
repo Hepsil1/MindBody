@@ -1,11 +1,10 @@
-import { Link } from "react-router";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { StorageUtils } from "../utils/storage";
 import { useToast } from "./Toast";
 import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
 import { getLqipStyle } from "../utils/lqip";
-import { formatPrice } from "../utils/format";
+import { useI18n, useMoney, LLink } from "../i18n";
 
 export interface Product {
     id: string;
@@ -67,6 +66,8 @@ export default function ProductCard({
     imageSizes?: string;
 }) {
     const { showToast } = useToast();
+    const { t } = useI18n();
+    const money = useMoney();
     const {
         id,
         name,
@@ -102,7 +103,7 @@ export default function ProductCard({
         e.stopPropagation();
         if (StorageUtils.isInWishlist(id)) {
             StorageUtils.removeFromWishlist(id);
-            showToast("Прибрано з улюбленого", "info");
+            showToast(t("Прибрано з улюбленого"), "info");
             return;
         }
         StorageUtils.addToWishlist({
@@ -112,7 +113,7 @@ export default function ProductCard({
             image,
             category: product.category || "",
         });
-        showToast("Додано до улюбленого ✦");
+        showToast(t("Додано до улюбленого ✦"));
     };
 
     const handleSwatchClick = (e: React.MouseEvent, color: string) => {
@@ -150,7 +151,7 @@ export default function ProductCard({
                    When the <img> finishes loading it covers the blur. */
                 style={getLqipStyle(image)}
             >
-                <Link to={href} prefetch="intent" className="product-card__image-link">
+                <LLink to={href} prefetch="intent" className="product-card__image-link">
                     <picture>
                         {/* Batch 40 atom 6: AVIF first — browser picks if
                             supported (96%+ modern), falls back to WebP. */}
@@ -200,10 +201,10 @@ export default function ProductCard({
                     )}
                     {!is_stock && (
                         <div className="product-card__soldout-overlay" aria-hidden="true">
-                            <span>Немає в наявності</span>
+                            <span>{t("Немає в наявності")}</span>
                         </div>
                     )}
-                </Link>
+                </LLink>
 
                 {badge && (
                     <span className={`product-card__badge product-card__badge--${badge.type}`}>
@@ -213,7 +214,7 @@ export default function ProductCard({
 
                 <motion.button
                     className={`product-card__heart-btn${wished ? " is-active" : ""}`}
-                    aria-label={wished ? "Прибрати з обраного" : "Додати в обране"}
+                    aria-label={wished ? t("Прибрати з обраного") : t("Додати в обране")}
                     aria-pressed={wished}
                     onClick={handleAddToWishlist}
                     whileHover={{ scale: 1.08 }}
@@ -237,26 +238,26 @@ export default function ProductCard({
 
             <div className="product-card__details">
                 <h3 className="product-card__title">
-                    <Link to={href} prefetch="intent">
+                    <LLink to={href} prefetch="intent">
                         {name}
-                    </Link>
+                    </LLink>
                 </h3>
 
                 <div className="product-card__price-row">
                     {is_sale && sale_price ? (
                         <>
                             <span className="product-card__price product-card__price--sale">
-                                {formatPrice(sale_price)} ₴
+                                {money(sale_price)}
                             </span>
                             <s
                                 className="product-card__price-old"
-                                aria-label={`Попередня ціна ${formatPrice(price)} гривень`}
+                                aria-label={t("Попередня ціна {price}", { price: money(price) })}
                             >
-                                {formatPrice(price)} ₴
+                                {money(price)}
                             </s>
                         </>
                     ) : (
-                        <span className="product-card__price">{formatPrice(price)} ₴</span>
+                        <span className="product-card__price">{money(price)}</span>
                     )}
                 </div>
 
@@ -264,7 +265,7 @@ export default function ProductCard({
                     <div
                         className="product-card__colors"
                         role={onSelectColor ? "radiogroup" : undefined}
-                        aria-label={onSelectColor ? "Колір" : undefined}
+                        aria-label={onSelectColor ? t("Колір") : undefined}
                     >
                         {displayColors.slice(0, 5).map((color, i) => {
                             const isInteractive = !!onSelectColor;

@@ -24,11 +24,18 @@ import {
 } from "./config";
 import { en } from "./dictionaries/en";
 import { ru } from "./dictionaries/ru";
+import { enGenerated } from "./dictionaries/en.generated";
+import { ruGenerated } from "./dictionaries/ru.generated";
 import { formatPrice } from "../utils/format";
 
 export * from "./config";
 
-const DICTS: Record<Exclude<Locale, "uk">, Record<string, string>> = { en, ru };
+// Hand-written entries (en.ts/ru.ts) win over the generated bulk — they're
+// the place for deliberate fixes when a generated translation reads off.
+const DICTS: Record<Exclude<Locale, "uk">, Record<string, string>> = {
+    en: { ...enGenerated, ...en },
+    ru: { ...ruGenerated, ...ru },
+};
 
 /** Substitute {name} placeholders. Missing params are left visible. */
 function interpolate(s: string, params?: Record<string, string | number>): string {
@@ -38,13 +45,23 @@ function interpolate(s: string, params?: Record<string, string | number>): strin
     );
 }
 
+/**
+ * Context separator for ambiguous keys. One Ukrainian word can need different
+ * translations per context ("Замовлення" = Order | Orders). Call sites write
+ * t("Замовлення@@tab") — uk renders the part before "@@", en/ru look up the
+ * full contextual key first, then the base, then fall back to the base text.
+ */
+const CONTEXT_SEP = "@@";
+
 /** Core lookup: uk returns the key; en/ru fall back to uk when untranslated. */
 export function translate(
     locale: Locale,
     key: string,
     params?: Record<string, string | number>,
 ): string {
-    const s = locale === "uk" ? key : (DICTS[locale][key] ?? key);
+    const sepIdx = key.indexOf(CONTEXT_SEP);
+    const base = sepIdx === -1 ? key : key.slice(0, sepIdx);
+    const s = locale === "uk" ? base : (DICTS[locale][key] ?? DICTS[locale][base] ?? base);
     return interpolate(s, params);
 }
 
