@@ -1,6 +1,8 @@
 {
 	# Global options
-	email your_email@example.com
+	# Let's Encrypt контактный email — на него летят оповещения за 20/10 дней до
+	# истечения сертификата, если автообновление сорвалось. Должен быть реальным.
+	email i3331113@gmail.com
 
 	# Batch 40 atom 4: enable HTTP/3 (QUIC) on all origin sites.
 	# Cloudflare in front already advertises h3 via alt-svc, but if
@@ -13,17 +15,50 @@
 	}
 }
 
-saleid.icu {
+# ─────────────────────────────────────────────────────────────────────────────
+# Legacy origin — saleid.icu was the launch placeholder; the brand permanently
+# moved to mindbody-sportwear.com on 2026-06-11. Everything on this hostname
+# now 301-redirects to the canonical origin, preserving the path so external
+# links (old Instagram posts, indexed Google results) land on the right page.
+# 308 → permanent (cacheable by intermediaries, including Cloudflare in front).
+#
+# DNS for saleid.icu still resolves via Cloudflare to this VPS, so removing
+# the upstream DNS records later (or letting the .icu domain expire) is the
+# clean way to finally retire this block. Until then, keep this block to capture
+# any traffic from old links — it's effectively free SEO equity transfer.
+# ─────────────────────────────────────────────────────────────────────────────
+saleid.icu, www.saleid.icu {
+	redir https://mindbody-sportwear.com{uri} permanent
+
+	# Even on a pure-redirect host we still want HSTS so browsers upgrade
+	# subsequent direct visits to HTTPS without round-tripping through 301.
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+	log {
+		output file c:\mindbody\caddy_access.log
+		format json
+	}
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Permanent domain. Both apex and www are listed so Let's Encrypt issues a
+# single certificate covering both names. The www→apex redirect inside the
+# block enforces a single canonical hostname for SEO (otherwise crawlers see
+# two identical sites and split link equity).
+#
+# This origin sits DIRECTLY on the VPS — no Cloudflare in front (yet). Caddy
+# obtains and renews the cert via HTTP-01 challenge on :80; no DNS-side work
+# needed beyond the A records pointing at this server.
+# ─────────────────────────────────────────────────────────────────────────────
+mindbody-sportwear.com, www.mindbody-sportwear.com {
+	# Canonical host: www → apex (301)
+	@www host www.mindbody-sportwear.com
+	redir @www https://mindbody-sportwear.com{uri} permanent
+
 	reverse_proxy localhost:3000
 
-	# Gzip + Zstandard compression
 	encode zstd gzip
 
-	# Aggressive cache for static assets (images, fonts, JS, CSS).
-	# Batch 40: added *.avif (the format we now serve first via <picture>)
-	# so it lands on the same 1-year immutable cache as .webp.  Without
-	# this, AVIF requests were falling through to Cloudflare's default
-	# 4-hour TTL — defeating the long-term cache strategy.
 	@static {
 		path *.webp *.avif *.png *.jpg *.jpeg *.gif *.ico *.svg
 		path *.woff *.woff2 *.ttf *.otf
@@ -31,53 +66,23 @@ saleid.icu {
 	}
 	header @static Cache-Control "public, max-age=31536000, immutable"
 
-	# HTML — never cache the document. Hashed JS/CSS chunks are deleted on each
-	# deploy, so a stale cached HTML (browser or Cloudflare) would reference a
-	# 404'd chunk and fail to hydrate (the loading overlay would stick). Always
-	# revalidate so visitors get HTML pointing at the current chunk hashes.
-	# (Hashed static assets above stay immutable — only the document changes.)
 	@html {
 		path /
 		path *.html
 	}
 	header @html Cache-Control "no-cache"
 
-	# Security headers
-	#
-	# NOTE on Content-Security-Policy:
-	# CSP is intentionally NOT set here yet. The site uses inline JSON-LD
-	# script blocks and pulls images from cdn2.behold.pictures (Instagram
-	# widget); a strict CSP would silently break either. Plan: roll out
-	# Content-Security-Policy-Report-Only first with a report endpoint,
-	# gather violations for a week, then promote to enforcing mode.
 	header {
-		# Force HTTPS for a full year, including subdomains, and let the
-		# browser eligible for the HSTS preload list. `preload` only takes
-		# effect after submitting to https://hstspreload.org.
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "SAMEORIGIN"
 		Referrer-Policy "strict-origin-when-cross-origin"
-
-		# Lock down powerful browser APIs we don't use. Empty parens =
-		# disabled for all origins.
 		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()"
-
-		# Block legacy Flash / PDF reader cross-domain policy loading.
 		X-Permitted-Cross-Domain-Policies "none"
-
-		# Isolate the document so spectre-style cross-origin attacks fail.
-		# COOP is safe to add unconditionally; COEP is intentionally NOT
-		# set because it would block cross-origin <img>/<iframe> resources
-		# (we load Instagram images from cdn2.behold.pictures).
 		Cross-Origin-Opener-Policy "same-origin"
-
-		# Hide the server software banner.
 		-Server
 	}
 
-	# Log requests
 	log {
 		output file c:\mindbody\caddy_access.log
 		format json

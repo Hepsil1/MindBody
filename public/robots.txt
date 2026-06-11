@@ -17,4 +17,4 @@ Disallow: /wishlist
 Crawl-delay: 1
 
 # Sitemap (must be absolute URL per specification, must match the live domain)
-Sitemap: https://saleid.icu/sitemap.xml
+Sitemap: https://mindbody-sportwear.com/sitemap.xml

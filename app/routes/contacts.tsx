@@ -72,7 +72,7 @@ export default function Contacts() {
                             <span className="contact-card__hint">Основний номер</span>
                         </a>
 
-                        <a href="mailto:hello@mind-body.com.ua" className="contact-card">
+                        <a href="mailto:hello@mindbody-sportwear.com" className="contact-card">
                             <div className="contact-card__icon">
                                 <svg
                                     width="24"
@@ -87,7 +87,9 @@ export default function Contacts() {
                                 </svg>
                             </div>
                             <h3>Email</h3>
-                            <span className="contact-card__value">hello@mind-body.com.ua</span>
+                            <span className="contact-card__value">
+                                hello@mindbody-sportwear.com
+                            </span>
                             <span className="contact-card__hint">Відповідь за 24 години</span>
                         </a>
 

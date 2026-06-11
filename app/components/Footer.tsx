@@ -398,7 +398,9 @@ export default function Footer() {
                     <address className="footer-puma__legal">
                         MIND BODY
                         <span aria-hidden="true"> · </span>
-                        <a href="mailto:hello@mindbody.ua">hello@mindbody.ua</a>
+                        <a href="mailto:hello@mindbody-sportwear.com">
+                            hello@mindbody-sportwear.com
+                        </a>
                         <span aria-hidden="true"> · </span>
                         м. Київ, Україна
                     </address>
