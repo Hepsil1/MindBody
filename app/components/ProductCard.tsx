@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { StorageUtils } from "../utils/storage";
 import { useToast } from "./Toast";
 import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
@@ -135,12 +134,14 @@ export default function ProductCard({
             ? { label: "New", type: "new" as const }
             : null;
 
+    // framer-motion removed — the hover-lift / tap-shrink is now pure CSS
+    // (.product-card:hover/:active in app.css). That drops the 6 MB
+    // framer-motion dep out of the catalogue/home hydration bundle, where
+    // ProductCard renders dozens of times.
     return (
-        <motion.article
+        <article
             className={`product-card ${!is_stock ? "product-card--sold-out" : ""}`}
             data-product-id={id}
-            whileHover={{ y: -4, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } }}
-            whileTap={{ scale: 0.99 }}
         >
             <div
                 className="product-card__image-wrapper"
@@ -212,13 +213,12 @@ export default function ProductCard({
                     </span>
                 )}
 
-                <motion.button
+                <button
+                    type="button"
                     className={`product-card__heart-btn${wished ? " is-active" : ""}`}
                     aria-label={wished ? t("Прибрати з обраного") : t("Додати в обране")}
                     aria-pressed={wished}
                     onClick={handleAddToWishlist}
-                    whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.94 }}
                 >
                     <svg
                         width="20"
@@ -233,7 +233,7 @@ export default function ProductCard({
                     >
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
-                </motion.button>
+                </button>
             </div>
 
             <div className="product-card__details">
@@ -274,7 +274,7 @@ export default function ProductCard({
                             const style = { backgroundColor: resolveColor(color) };
                             const title = color.charAt(0).toUpperCase() + color.slice(1);
                             return isInteractive ? (
-                                <motion.button
+                                <button
                                     key={i}
                                     type="button"
                                     className={cls}
@@ -284,8 +284,6 @@ export default function ProductCard({
                                     aria-checked={isSelected}
                                     aria-label={title}
                                     onClick={(e) => handleSwatchClick(e, color)}
-                                    whileHover={{ scale: 1.15 }}
-                                    whileTap={{ scale: 0.92 }}
                                 />
                             ) : (
                                 <span
@@ -300,6 +298,6 @@ export default function ProductCard({
                     </div>
                 )}
             </div>
-        </motion.article>
+        </article>
     );
 }

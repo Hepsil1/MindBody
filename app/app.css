@@ -539,16 +539,24 @@ h3 {
     box-shadow: 0 2px 10px rgba(26, 26, 26, 0.05);
     transition:
         box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-        border-color 0.3s ease;
+        border-color 0.3s ease,
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (hover: hover) {
     .product-card:hover {
         border-color: var(--color-border);
-        /* Pairs with the framer-motion y:-4 lift — the card rises and
-           casts a deeper, softer shadow. */
+        /* CSS replacement for the old framer-motion y:-4 lift — the card
+           rises and casts a deeper, softer shadow. */
         box-shadow: 0 14px 30px rgba(26, 26, 26, 0.1);
+        transform: translateY(-4px);
     }
+}
+
+/* Tap feedback (CSS replacement for framer-motion whileTap). :active fires
+   on touch + mouse-down; the tiny shrink reads as a press. */
+.product-card:active {
+    transform: scale(0.99);
 }
 
 .product-card--sold-out {
@@ -732,6 +740,11 @@ h3 {
 .product-card__heart-btn:hover {
     background: var(--color-text-primary);
     color: var(--color-bg-white);
+    /* CSS replacement for framer-motion whileHover scale 1.08 */
+    transform: scale(1.08);
+}
+.product-card__heart-btn:active {
+    transform: scale(0.94);
 }
 .product-card__heart-btn svg {
     width: 18px;
@@ -864,7 +877,16 @@ h3 {
     display: inline-block;
     cursor: pointer;
     flex-shrink: 0;
-    transition: box-shadow 0.2s ease;
+    transition:
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+/* CSS replacement for framer-motion whileHover/whileTap on interactive swatches */
+button.product-card__swatch:hover {
+    transform: scale(1.15);
+}
+button.product-card__swatch:active {
+    transform: scale(0.92);
 }
 @media (min-width: 768px) {
     .product-card__swatch {
