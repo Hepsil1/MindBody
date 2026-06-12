@@ -135,14 +135,25 @@ export default function HeroSlider({
                     >
                         {(() => {
                             const items = getSlideItems(slide);
-                            // Dynamic `sizes` based on item count:
-                            // - single (1 item) → image fills 100vw on desktop
-                            // - triptych (3 items) → each takes 33vw
-                            // Previously hardcoded "33vw" → browser loaded the
-                            // 800w variant for single slides which CSS then
-                            // stretched to 100vw = ~3× upscale = mushy.
+                            // Dynamic `sizes`:
+                            // - desktop triptych → each item takes ~33vw (single → 100vw)
+                            // - MOBILE → 200vw, deliberately over-stated.
+                            //
+                            // Why 200vw on mobile: below 768px the CSS shows ONLY the
+                            // middle item, FULL-SCREEN, object-fit:cover in a PORTRAIT
+                            // box. A cover-crop is height-bound, but `sizes` only
+                            // describes width — so 100vw made the browser fetch the
+                            // 1200w variant (e.g. 1200×675 for a landscape slide) and
+                            // then CSS stretched its 675px height across a ~2532px-tall
+                            // DPR3 screen = ~3.7× upscale = the mush the owner reported.
+                            // 200vw forces the browser to pick the LARGEST available
+                            // variant (master / 2400w), i.e. maximum available
+                            // resolution on phones. (A truly portrait hero source then
+                            // renders pixel-perfect; a landscape source is still the
+                            // best it can be — see note for the owner: upload portrait
+                            // hero photos for flawless mobile.)
                             const desktopFrac = Math.floor(100 / items.length);
-                            const sizesAttr = `(max-width: 768px) 100vw, ${desktopFrac}vw`;
+                            const sizesAttr = `(max-width: 768px) 200vw, ${desktopFrac}vw`;
                             return (
                                 <div className="hero-slider__triptych">
                                     {items.map((item, imgIndex) => (

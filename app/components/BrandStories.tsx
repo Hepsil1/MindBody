@@ -29,6 +29,9 @@ import { LLink, useI18n } from "../i18n";
 
 interface BrandStoriesProps {
     videos: string[];
+    /** One poster still per video — shown instantly while the (multi-MB)
+     *  film buffers, so the stage is never a blank box on mobile data. */
+    posters?: string[];
 }
 
 interface Chapter {
@@ -48,7 +51,7 @@ const HOLD_MS = 220; // press duration that counts as "hold to pause"
 const SWIPE_PX = 40; // horizontal travel that counts as a swipe
 const TAP_MOVE_PX = 12; // max travel still considered a tap
 
-export default function BrandStories({ videos }: BrandStoriesProps) {
+export default function BrandStories({ videos, posters }: BrandStoriesProps) {
     const { t } = useI18n();
     const count = Math.min(videos.length, CHAPTERS.length);
 
@@ -322,6 +325,10 @@ export default function BrandStories({ videos }: BrandStoriesProps) {
                             }}
                             className={`brand-stories__video${i === index ? " is-active" : ""}`}
                             src={videos[i]}
+                            // Poster paints instantly (sharp brand still) so the
+                            // stage is never blank while the 4–7 MB film buffers
+                            // on mobile data; the video fades in over it.
+                            poster={posters?.[i]}
                             muted
                             playsInline
                             loop={false}

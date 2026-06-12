@@ -79,17 +79,44 @@ export function meta({ data, params }: Route.MetaArgs) {
               (x): x is string => typeof x === "string" && x.length > 0,
           )
         : [];
-    const sizesAttr = heroImgs.length > 1 ? "(max-width: 768px) 100vw, 33vw" : "100vw";
-    const heroPreloads = heroImgs.map((img, i) => ({
+    const isTriptych = heroImgs.length > 1;
+    const avif = (img: string) => img.replace(/\.(jpe?g|png|webp)$/i, ".avif");
+
+    // Viewport-split preload — the mobile and desktop heroes show DIFFERENT
+    // images, so a single preload set wastes bytes on whichever it's wrong
+    // for. Below 768px the CSS shows ONLY the middle triptych item, full-
+    // screen; above, all three at ~33vw each. `media` makes each browser act
+    // on just its set. Mobile preloads the one visible image at 200vw (max
+    // resolution, matching HeroSlider's mobile `sizes`); desktop preloads all
+    // three at their triptych fraction.
+    const middleIdx = isTriptych ? 1 : 0;
+    const mobileHeroPreload = heroImgs[middleIdx]
+        ? [
+              {
+                  tagName: "link" as const,
+                  rel: "preload" as const,
+                  as: "image" as const,
+                  type: "image/avif",
+                  media: "(max-width: 768px)",
+                  href: avif(heroImgs[middleIdx]),
+                  imageSrcSet: buildAvifSrcset(heroImgs[middleIdx]),
+                  imageSizes: "200vw",
+                  fetchPriority: "high" as const,
+              },
+          ]
+        : [];
+    const desktopHeroPreloads = heroImgs.map((img, i) => ({
         tagName: "link" as const,
         rel: "preload" as const,
         as: "image" as const,
         type: "image/avif",
-        href: img.replace(/\.(jpe?g|png|webp)$/i, ".avif"),
+        media: "(min-width: 769px)",
+        href: avif(img),
         imageSrcSet: buildAvifSrcset(img),
-        imageSizes: sizesAttr,
+        imageSizes: isTriptych ? "33vw" : "100vw",
         ...(i === 0 ? { fetchPriority: "high" as const } : {}),
     }));
+    const heroPreloads = [...mobileHeroPreload, ...desktopHeroPreloads];
 
     return [
         { title: t("MIND BODY — Спортивний одяг для йоги та активного життя") },
@@ -616,6 +643,18 @@ export default function Home() {
         "/uploads/brand-video-2.mp4",
         "/uploads/brand-video-3.mp4",
     ];
+    // Poster stills, one per film. The brand videos are 4.7–6.9 MB each — on
+    // mobile data the <video> box used to sit BLANK for seconds while the
+    // first byte arrived. A poster shows a sharp on-brand portrait photo
+    // instantly (these are 2000×3000 studio shots with variants + LQIP, the
+    // -1200w.webp is ~50–70 KB), so the section reads as premium immediately
+    // and the film fades in over it once buffered. Same posters feed the
+    // desktop frame and the mobile <BrandStories> player.
+    const videoPosters = [
+        "/generalpics/374_131123-1200w.webp",
+        "/generalpics/347_131123-1200w.webp",
+        "/generalpics/595_131123-1200w.webp",
+    ];
 
     /* ZENITH MAGNETIC LOGO LOGIC */
     const magneticRef = useRef<HTMLDivElement>(null);
@@ -1077,7 +1116,7 @@ export default function Home() {
                                 passive auto-advancing video below.  Tap / hold /
                                 swipe between the 3 brand films.  See
                                 app/components/BrandStories.tsx. */}
-                            <BrandStories videos={videoPlaylist} />
+                            <BrandStories videos={videoPlaylist} posters={videoPosters} />
 
                             {/* Batch 51: Story-Strip chips above video frame.
                                 Mobile-only — tap-to-jump between 4 features.
@@ -1139,6 +1178,7 @@ export default function Home() {
                                             key={`p-${i}`}
                                             className={`bw-frame-img bw-playlist-vid ${currentPlaylistIdx === i ? "is-default-active" : ""}`}
                                             src={src}
+                                            poster={videoPosters[i]}
                                             autoPlay={i === 0}
                                             loop={false}
                                             muted
@@ -1170,6 +1210,7 @@ export default function Home() {
                                         when a human can actually see it. */}
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--1"
+                                        poster={videoPosters[0]}
                                         loop
                                         muted
                                         playsInline
@@ -1179,6 +1220,7 @@ export default function Home() {
                                     </video>
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--2"
+                                        poster={videoPosters[1]}
                                         loop
                                         muted
                                         playsInline
@@ -1188,6 +1230,7 @@ export default function Home() {
                                     </video>
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--3"
+                                        poster={videoPosters[2]}
                                         loop
                                         muted
                                         playsInline
@@ -1197,6 +1240,7 @@ export default function Home() {
                                     </video>
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--4"
+                                        poster={videoPosters[1]}
                                         loop
                                         muted
                                         playsInline
