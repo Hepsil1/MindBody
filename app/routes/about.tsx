@@ -3,6 +3,7 @@ import { prisma } from "../db.server";
 import { useLoaderData } from "react-router";
 import { useState, useEffect } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
+import { EditorAffordance } from "../components/EditorAffordance";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import { useI18n, LLink } from "../i18n";
 import { localeFromParamSafe, OG_LOCALE } from "../i18n/config";
@@ -249,36 +250,44 @@ export default function About() {
             */}
             <h1 className="visually-hidden">{c.h1}</h1>
 
-            {/* Full-Screen Hero with Slides using HeroSlider */}
-            <HeroSlider slides={slides}>
-                <div className="about-hero-overlay">
-                    {/* Centered Brand Logo with Breathing Animation */}
-                    <div className="about-hero-logo-wrap">
-                        <picture>
-                            <source srcSet="/pics/mind_body_logo.webp" type="image/webp" />
-                            <img
-                                src="/pics/mind_body_logo.png"
-                                alt="MIND BODY"
-                                className="about-hero-logo"
-                            />
-                        </picture>
-                    </div>
+            {/* Full-Screen Hero with Slides using HeroSlider. EditorAffordance
+                renders ONLY inside the admin preview iframe (?editor=1) — the
+                «Про бренд» tab previously had no click-to-edit affordance at
+                all, forcing the operator to find the toolbar button. */}
+            <EditorAffordance
+                label="Редагувати слайди"
+                message={{ type: "OPEN_ABOUT_SLIDES_EDITOR" }}
+            >
+                <HeroSlider slides={slides}>
+                    <div className="about-hero-overlay">
+                        {/* Centered Brand Logo with Breathing Animation */}
+                        <div className="about-hero-logo-wrap">
+                            <picture>
+                                <source srcSet="/pics/mind_body_logo.webp" type="image/webp" />
+                                <img
+                                    src="/pics/mind_body_logo.png"
+                                    alt="MIND BODY"
+                                    className="about-hero-logo"
+                                />
+                            </picture>
+                        </div>
 
-                    {/* Bottom Left Subtitle */}
-                    <div className="about-hero-subtitle">
-                        <p className="about-hero-subtitle__text">{c.heroSubtitle}</p>
-                        <div className="about-hero-subtitle__line"></div>
-                    </div>
+                        {/* Bottom Left Subtitle */}
+                        <div className="about-hero-subtitle">
+                            <p className="about-hero-subtitle__text">{c.heroSubtitle}</p>
+                            <div className="about-hero-subtitle__line"></div>
+                        </div>
 
-                    {/* Right Side Scroll Indicator */}
-                    <div className="about-hero-scroll">
-                        <span className="about-hero-scroll__label">Scroll</span>
-                        <div className="about-hero-scroll__track">
-                            <div className="about-hero-scroll__thumb"></div>
+                        {/* Right Side Scroll Indicator */}
+                        <div className="about-hero-scroll">
+                            <span className="about-hero-scroll__label">Scroll</span>
+                            <div className="about-hero-scroll__track">
+                                <div className="about-hero-scroll__thumb"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </HeroSlider>
+                </HeroSlider>
+            </EditorAffordance>
 
             {/* Story Section - Premium Redesign */}
             <section className="story-premium">

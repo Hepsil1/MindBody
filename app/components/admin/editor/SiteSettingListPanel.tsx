@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FetcherWithComponents } from "react-router";
 import type { SiteSettingKey } from "../../../utils/site-settings";
 
@@ -42,6 +42,14 @@ export function SiteSettingListPanel({
     const [rows, setRows] = useState(items);
     const dirty = JSON.stringify(rows) !== JSON.stringify(items);
     const saving = fetcher.state !== "idle";
+
+    // Re-sync after a successful save (see ContactsSettingsPanel for the
+    // identical pattern + rationale). Content-keyed so loader revalidation
+    // with unchanged data never clobbers in-progress edits.
+    const itemsKey = JSON.stringify(items);
+    useEffect(() => {
+        setRows(JSON.parse(itemsKey));
+    }, [itemsKey]);
 
     const update = (i: number, name: string, value: string, type?: ListField["type"]) => {
         setRows((prev) =>

@@ -40,6 +40,7 @@ export type EditorBridgeMessage =
     | { type: "OPEN_SHOP_BG_EDITOR"; category: string }
     | { type: "OPEN_HOME_SLIDES_EDITOR" }
     | { type: "OPEN_HOME_CATEGORIES_EDITOR" }
+    | { type: "OPEN_ABOUT_SLIDES_EDITOR" }
     | { type: "OPEN_SETTINGS_SECTION"; section: EditorSettingsSection };
 
 /** True only inside the visual editor's preview iframe (see module doc). */

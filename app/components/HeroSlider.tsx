@@ -175,7 +175,19 @@ export default function HeroSlider({
                                                 />
                                                 <img
                                                     src={item.img}
-                                                    alt={`${slide.name} Image ${imgIndex + 1}`}
+                                                    // Slide names are admin-entered and often
+                                                    // placeholders («123», «Без назви») — a
+                                                    // meaningless alt fails WCAG and reads as
+                                                    // garbage in screen readers / image search.
+                                                    // Fall back to brand wording when the name
+                                                    // carries no semantics.
+                                                    alt={
+                                                        slide.name &&
+                                                        !/^[\d\s.,-]*$/.test(slide.name) &&
+                                                        slide.name !== "Без назви"
+                                                            ? `${slide.name} — фото ${imgIndex + 1}`
+                                                            : `Колекція MIND BODY — фото ${imgIndex + 1}`
+                                                    }
                                                     width={1080}
                                                     height={1920}
                                                     style={{ objectPosition: item.pos }}

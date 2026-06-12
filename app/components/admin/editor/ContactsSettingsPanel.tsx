@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FetcherWithComponents } from "react-router";
 import type { ContactsSettings } from "../../../utils/site-settings";
 
@@ -63,6 +63,17 @@ export function ContactsSettingsPanel({ contacts, fetcher }: ContactsSettingsPan
     const [form, setForm] = useState<ContactsSettings>(contacts);
     const dirty = JSON.stringify(form) !== JSON.stringify(contacts);
     const saving = fetcher.state !== "idle";
+
+    // Re-sync local state when the SAVED value changes (loader revalidates
+    // after a successful save). Keyed on content, not object identity — the
+    // loader returns a fresh object every render, so an identity dep would
+    // clobber in-progress typing. Without this, the server's canonical form
+    // (e.g. Zod-trimmed strings) diverges from local state and the «Є
+    // незбережені зміни» badge sticks after the first save.
+    const contactsKey = JSON.stringify(contacts);
+    useEffect(() => {
+        setForm(JSON.parse(contactsKey));
+    }, [contactsKey]);
 
     const save = () => {
         const fd = new FormData();

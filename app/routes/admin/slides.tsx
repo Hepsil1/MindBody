@@ -147,9 +147,12 @@ export async function action({ request }: Route.ActionArgs) {
 
         if (intent === "create" || intent === "update") {
             const id = formData.get("id") as string;
-            const name = (formData.get("name") as string) || "Без назви";
+            // trim(): a name of spaces or a link with a leading blank
+            // otherwise round-trips into the storefront (broken href, alt
+            // text of whitespace).
+            const name = ((formData.get("name") as string) || "").trim() || "Без назви";
             const type = (formData.get("type") as string) || "triptych";
-            const link = (formData.get("link") as string) || null;
+            const link = ((formData.get("link") as string) || "").trim() || null;
 
             const image1Pos = normalizePos(formData.get("image1Pos"), "center center");
             const image2Pos = normalizePos(formData.get("image2Pos"), "center center");
@@ -285,7 +288,7 @@ export async function action({ request }: Route.ActionArgs) {
 
         // About Slides actions - use Slide model with page: "about"
         if (intent === "create_about_slide") {
-            const name = (formData.get("name") as string) || "About Slide";
+            const name = ((formData.get("name") as string) || "").trim() || "About Slide";
             const type = (formData.get("type") as string) || "triptych";
 
             let image1 = (formData.get("image1_url") as string) || "/pics1cloths/IMG_6201.JPG";
@@ -334,7 +337,7 @@ export async function action({ request }: Route.ActionArgs) {
 
         if (intent === "update_about_slide") {
             const id = formData.get("id") as string;
-            const name = (formData.get("name") as string) || "About Slide";
+            const name = ((formData.get("name") as string) || "").trim() || "About Slide";
             const type = (formData.get("type") as string) || "triptych";
 
             const image1Pos = normalizePos(formData.get("image1Pos"), "center center");
@@ -456,14 +459,39 @@ export default function AdminVisualEditor() {
     const fetcher = useFetcher<typeof action>();
 
     const [activePanel, setActivePanel] = useState<ActivePanel>(null);
-    // Which settings sub-section is shown in the "settings" view.
-    const [settingsSection, setSettingsSection] = useState<EditorSettingsSection>("contacts");
+    // Which settings sub-section is shown in the "settings" view. Hydrated
+    // from ?section= so refresh / affordance deep-links survive tab hops
+    // (previously local-only state silently reset to "contacts").
+    const [settingsSection, setSettingsSectionState] = useState<EditorSettingsSection>("contacts");
     // Preview device width (desktop/tablet/mobile) for the iframe.
     const [device, setDevice] = useState<PreviewDevice>("desktop");
 
     // Editor state lives in the URL (refreshable / shareable). `tab` = which
-    // section, `shop` = which shop page the Shop tab previews/edits.
+    // section, `shop` = which shop page the Shop tab previews/edits,
+    // `section` = which settings sub-panel.
     const [searchParams, setSearchParams] = useSearchParams();
+
+    // One-time hydrate of the settings sub-section from the URL; afterwards
+    // setSettingsSection (below) keeps state + URL in lock-step.
+    useEffect(() => {
+        const fromUrl = searchParams.get("section");
+        if (fromUrl && EDITOR_SETTINGS_SECTIONS.includes(fromUrl as EditorSettingsSection)) {
+            setSettingsSectionState(fromUrl as EditorSettingsSection);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const setSettingsSection = (section: EditorSettingsSection) => {
+        setSettingsSectionState(section);
+        setSearchParams(
+            (prev) => {
+                const p = new URLSearchParams(prev);
+                p.set("section", section);
+                return p;
+            },
+            { preventScrollReset: true },
+        );
+    };
     const currentView =
         (searchParams.get("tab") as "home" | "shop" | "about" | "settings") || "home";
     const activeShop = searchParams.get("shop") || SHOP_SLUGS[0];
@@ -514,6 +542,19 @@ export default function AdminVisualEditor() {
                 setActivePanel({ kind: "slides" });
             } else if (msg.type === "OPEN_HOME_CATEGORIES_EDITOR") {
                 setActivePanel({ kind: "categories" });
+            } else if (msg.type === "OPEN_ABOUT_SLIDES_EDITOR") {
+                // Affordance on the /about hero — open the about-slides panel
+                // (and make sure the matching tab is active so the iframe
+                // behind the panel previews the page being edited).
+                setActivePanel({ kind: "about" });
+                setSearchParams(
+                    (prev) => {
+                        const p = new URLSearchParams(prev);
+                        p.set("tab", "about");
+                        return p;
+                    },
+                    { preventScrollReset: true },
+                );
             } else if (msg.type === "OPEN_SETTINGS_SECTION") {
                 const section = (msg as { section?: unknown }).section;
                 if (
@@ -522,15 +563,22 @@ export default function AdminVisualEditor() {
                 ) {
                     setSettingsSection(section as EditorSettingsSection);
                     // Stable setter (useSearchParams) — safe inside the mount-time listener.
+                    // `section` rides in the URL so a refresh / shared link keeps
+                    // the operator on the same sub-panel.
                     setSearchParams(
                         (prev) => {
                             const p = new URLSearchParams(prev);
                             p.set("tab", "settings");
+                            p.set("section", section);
                             return p;
                         },
                         { preventScrollReset: true },
                     );
                 }
+            } else {
+                // Unknown bridge message — silent ignore hides storefront-side
+                // typos forever; one warn makes the next debugging session short.
+                console.warn("[editor-bridge] Ignored unknown message type:", msg.type);
             }
         };
         window.addEventListener("message", handleMessage);
@@ -574,7 +622,10 @@ export default function AdminVisualEditor() {
         currentView === "shop"
             ? `/shop/${activeShop}?editor=1`
             : currentView === "about"
-              ? "/about"
+              ? // ?editor=1 was missing here — without it useEditorMode() is
+                // false inside the about preview, so its hero affordance never
+                // rendered and the page looked uneditable.
+                "/about?editor=1"
               : "/?editor=1";
     const openSiteHref =
         currentView === "shop" ? `/shop/${activeShop}` : currentView === "about" ? "/about" : "/";
