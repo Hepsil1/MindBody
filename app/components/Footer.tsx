@@ -242,7 +242,7 @@ export default function Footer() {
                                     </span>
                                 </div>
                                 <a
-                                    href="https://instagram.com/mindbody_sportwear"
+                                    href={contacts.instagramUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="mind-feedback__social-link"
@@ -291,7 +291,7 @@ export default function Footer() {
                                     disabled={sending}
                                     aria-busy={sending}
                                 >
-                                    {sending ? t("ВІДПРАВКА...") : t("НАДIСЛАТИ")}
+                                    {sending ? t("ВІДПРАВКА...") : t("НАДІСЛАТИ")}
                                 </button>
                             </form>
                         </div>
