@@ -5415,3 +5415,15 @@
     content-visibility: auto;
     contain-intrinsic-size: auto 220px;
 }
+/* The collections + new-arrivals block is the largest below-fold chunk
+   (6 category cards + a 12-product carousel = the bulk of the home DOM).
+   The mobile perf trace pinned the home LCP's render-delay on layout/
+   style recalc cost, not network — deferring this group's layout until
+   it nears the viewport cuts the initial layout passes directly. It
+   stays in the DOM for SEO/crawlers; only rendering work is deferred.
+   Big intrinsic reserve so the scrollbar/anchor math stays stable before
+   first render (the `auto` keyword then locks the real measured height). */
+.shop-collections-group {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 2600px;
+}
