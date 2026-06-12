@@ -195,6 +195,8 @@ interface ProductDetailData {
     category: string | null;
     shopPageSlug: string | null;
     colors: string[];
+    /** Per-colour gallery override; colours absent here fall back to `images`. */
+    colorImages: Record<string, string[]>;
     sizes: string[];
     inventory: InventoryVariant[];
     status: string;
@@ -245,6 +247,31 @@ export async function loader({ params }: LoaderFunctionArgs) {
             const images = parseJson<string[]>(p.images, []);
             if (images.length === 0) images.push("/brand-sun.png");
 
+            // Per-colour galleries — read via raw SQL with graceful fallback
+            // (the moodType/fabric pattern): the "colorImages" column ships
+            // in migration 20260612130000; until it's applied this SELECT
+            // throws, we swallow it, and the PDP behaves exactly as before
+            // (one shared gallery for all colours).
+            let colorImages: Record<string, string[]> = {};
+            try {
+                const rows = await prisma.$queryRaw<Array<{ colorImages: string | null }>>`
+                    SELECT "colorImages" FROM "Product" WHERE "slug" = ${slug} LIMIT 1
+                `;
+                const parsed = parseJson<Record<string, unknown>>(rows[0]?.colorImages, {});
+                // Keep only well-formed entries (string[] of non-empty URLs).
+                for (const [color, list] of Object.entries(parsed)) {
+                    if (
+                        Array.isArray(list) &&
+                        list.length > 0 &&
+                        list.every((u) => typeof u === "string" && u.length > 0)
+                    ) {
+                        colorImages[color] = list as string[];
+                    }
+                }
+            } catch {
+                colorImages = {};
+            }
+
             // Parse inventory to extract available variants
             const inventory = parseJson<InventoryVariant[]>(p.inventory, []);
 
@@ -277,6 +304,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
                     availableColors.size > 0
                         ? Array.from(availableColors)
                         : parseJson<string[]>(p.colors, []),
+                colorImages,
                 sizes:
                     availableSizes.size > 0
                         ? Array.from(availableSizes)
@@ -372,6 +400,23 @@ export default function ProductDetail() {
        fake a brief "✓ Додано" lock instead. Double-purpose: visual
        feedback + 1.2s guard against accidental double-add. */
     const [justAdded, setJustAdded] = useState(false);
+
+    // Per-colour gallery: when the picked colour has its own photo set,
+    // the whole gallery (mobile swiper, desktop thumbs+main, zoom) switches
+    // to it — "each colour is its own product" as far as the buyer can see.
+    // Colours without an entry use the shared images array, so partially
+    // tagged products degrade to the old behaviour rather than going blank.
+    const galleryImages =
+        (selectedColor && product.colorImages?.[selectedColor]?.length
+            ? product.colorImages[selectedColor]
+            : product.images) || product.images;
+
+    // Switching colour swaps the photo set — reset the cursor so the buyer
+    // lands on the new colour's cover instead of an out-of-range index.
+    useEffect(() => {
+        setActiveImage(0);
+    }, [selectedColor]);
+
     // F-029 — when the CTA is clicked without a size picked, we keep
     // the button active (so it's not visually dead), scroll the size
     // selector into view, and pulse it for ~900 ms so the eye lands
@@ -482,7 +527,9 @@ export default function ProductDetail() {
             id: product.id,
             name: product.name,
             price: product.price,
-            image: product.images[0],
+            // Cart shows the COLOUR the buyer picked — its gallery cover,
+            // not the generic product cover (per-colour variants feature).
+            image: galleryImages[0] || product.images[0],
             size: selectedSize,
             color: selectedColor,
             quantity: 1,
@@ -568,7 +615,7 @@ export default function ProductDetail() {
                         active slide via scroll-snap + IntersectionObserver
                         is overkill; we'll just show "{i+1} / N" via state
                         on scroll. */}
-                    {product.images.length > 0 && (
+                    {galleryImages.length > 0 && (
                         <div className="pdp-mobile-gallery-wrap">
                             <div
                                 className="pdp-mobile-gallery"
@@ -578,7 +625,7 @@ export default function ProductDetail() {
                                     if (idx !== activeImage) setActiveImage(idx);
                                 }}
                             >
-                                {product.images.map((img: string, idx: number) => (
+                                {galleryImages.map((img: string, idx: number) => (
                                     <div key={idx} className="pdp-mobile-gallery__slide">
                                         <picture>
                                             <source
@@ -601,9 +648,9 @@ export default function ProductDetail() {
                                     </div>
                                 ))}
                             </div>
-                            {product.images.length > 1 && (
+                            {galleryImages.length > 1 && (
                                 <div className="pdp-mobile-gallery__counter" aria-live="polite">
-                                    {activeImage + 1} / {product.images.length}
+                                    {activeImage + 1} / {galleryImages.length}
                                 </div>
                             )}
                         </div>
@@ -612,9 +659,9 @@ export default function ProductDetail() {
                     {/* Visuals: Puma Style (Vertical Thumbs Left + Main Right) */}
                     <div className="visuals-gallery-puma">
                         {/* Left Column: Vertical Thumbnails */}
-                        {product.images.length > 1 && (
+                        {galleryImages.length > 1 && (
                             <div className="thumbs-col-vertical">
-                                {product.images.map((img: string, idx: number) => (
+                                {galleryImages.map((img: string, idx: number) => (
                                     <button
                                         key={idx}
                                         className={`thumb-vertical ${activeImage === idx ? "active" : ""}`}
@@ -646,7 +693,7 @@ export default function ProductDetail() {
                                 style={{ cursor: "zoom-in" }}
                             >
                                 <img
-                                    src={product.images[activeImage] || product.images[0]}
+                                    src={galleryImages[activeImage] || galleryImages[0]}
                                     alt={product.name}
                                     className="main-img"
                                 />
@@ -688,12 +735,12 @@ export default function ProductDetail() {
                                     </svg>
                                 </button>
                                 <img
-                                    src={product.images[activeImage] || product.images[0]}
+                                    src={galleryImages[activeImage] || galleryImages[0]}
                                     alt={product.name}
                                     className="zoom-overlay__img"
                                     onClick={(e) => e.stopPropagation()}
                                 />
-                                {product.images.length > 1 && (
+                                {galleryImages.length > 1 && (
                                     <div className="zoom-overlay__nav">
                                         <button
                                             aria-label={t("Попереднє фото")}
@@ -701,8 +748,8 @@ export default function ProductDetail() {
                                                 e.stopPropagation();
                                                 setActiveImage(
                                                     (i) =>
-                                                        (i - 1 + product.images.length) %
-                                                        product.images.length,
+                                                        (i - 1 + galleryImages.length) %
+                                                        galleryImages.length,
                                                 );
                                             }}
                                         >
@@ -718,14 +765,14 @@ export default function ProductDetail() {
                                             </svg>
                                         </button>
                                         <span>
-                                            {activeImage + 1} / {product.images.length}
+                                            {activeImage + 1} / {galleryImages.length}
                                         </span>
                                         <button
                                             aria-label={t("Наступне фото")}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setActiveImage(
-                                                    (i) => (i + 1) % product.images.length,
+                                                    (i) => (i + 1) % galleryImages.length,
                                                 );
                                             }}
                                         >

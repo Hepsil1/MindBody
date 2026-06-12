@@ -64,6 +64,14 @@ interface ProductForm {
     colors: string[];
     sizes: string[];
     inventory: Record<string, number>; // "color_size" -> quantity
+    /**
+     * Per-image colour binding: imageUrl -> colour code ("" = shared/all
+     * colours). The buyer-facing shape is the inverse — Product.colorImages
+     * stores {color: [urls]} so the PDP can flip the gallery in O(1) — but
+     * "what colour is THIS photo" is the natural mental model when tagging,
+     * so the form keeps the per-image map and serialization inverts it.
+     */
+    imageColors: Record<string, string>;
 }
 
 const emptyForm: ProductForm = {
@@ -86,6 +94,7 @@ const emptyForm: ProductForm = {
     colors: [],
     sizes: [],
     inventory: {},
+    imageColors: {},
 };
 
 // Defensive JSON parser that preserves the fallback's type.
@@ -136,6 +145,31 @@ export async function loader({ params }: LoaderFunctionArgs) {
             // missing column / failed read degrades to empty fields.
             const trMap = await fetchTranslationsMap("Product", p ? [p.id] : []);
             const tr = p ? (trMap[p.id] ?? {}) : {};
+
+            // colorImages — same raw-SQL pattern (column ships in migration
+            // 20260612130000; until applied this read degrades to "no
+            // per-colour photos"). DB stores {color:[urls]}, the form wants
+            // {url:color} — invert here.
+            const imageColors: Record<string, string> = {};
+            if (p) {
+                try {
+                    const rows = await prisma.$queryRaw<Array<{ colorImages: string | null }>>`
+                        SELECT "colorImages" FROM "Product" WHERE "id" = ${p.id} LIMIT 1
+                    `;
+                    const byColor = parseJsonAdmin<Record<string, string[]>>(
+                        rows[0]?.colorImages,
+                        {},
+                    );
+                    for (const [color, urls] of Object.entries(byColor)) {
+                        if (!Array.isArray(urls)) continue;
+                        for (const url of urls) {
+                            if (typeof url === "string") imageColors[url] = color;
+                        }
+                    }
+                } catch {
+                    // pre-migration DB — leave the map empty
+                }
+            }
             if (p) {
                 const inventoryList = parseJsonAdmin<InventoryEntry[]>(p.inventory, []);
                 // Convert list back to map
@@ -175,6 +209,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
                     colors: parseJsonAdmin<string[]>(p.colors, []),
                     sizes: parseJsonAdmin<string[]>(p.sizes, []),
                     inventory: inventoryMap,
+                    imageColors,
                 };
             }
         }
@@ -394,6 +429,32 @@ export async function action({ request, params }: ActionFunctionArgs) {
                     });
                 } catch (e) {
                     console.error("Product translations save failed (non-fatal):", e);
+                }
+
+                // Per-colour galleries — invert the form's {url: color} map to
+                // the storefront's {color: [urls]} shape, keeping the images'
+                // display order and dropping anything that references a
+                // removed image/colour. Raw-SQL + best-effort: the column
+                // ships in migration 20260612130000; a pre-migration DB must
+                // not fail the whole product save.
+                try {
+                    const imageColorsMap = parseJsonAdmin<Record<string, string>>(
+                        formData.get("imageColors") as string,
+                        {},
+                    );
+                    const byColor: Record<string, string[]> = {};
+                    for (const img of cleanImages) {
+                        const color = imageColorsMap[img];
+                        if (color && cleanColors.includes(color)) {
+                            (byColor[color] ??= []).push(img);
+                        }
+                    }
+                    const colorImagesJson = JSON.stringify(byColor);
+                    await prisma.$executeRaw`
+                        UPDATE "Product" SET "colorImages" = ${colorImagesJson} WHERE "id" = ${id}
+                    `;
+                } catch (e) {
+                    console.error("Product colorImages save failed (non-fatal):", e);
                 }
 
                 return { success: true };
@@ -671,6 +732,9 @@ export default function AdminProductEdit() {
                     return { color, size, stock };
                 });
                 data.append(key, JSON.stringify(inventoryList));
+            } else if (key === "imageColors") {
+                // Plain object — String(value) would send "[object Object]".
+                data.append(key, JSON.stringify(value));
             } else if (Array.isArray(value)) {
                 data.append(key, JSON.stringify(value));
             } else {
@@ -1474,6 +1538,47 @@ export default function AdminProductEdit() {
                                         >
                                             <TrashIcon />
                                         </button>
+                                        {/* Colour binding: each photo can belong to ONE
+                                            colour (its gallery on the PDP) or stay shared.
+                                            Options follow the product's selected colours,
+                                            so untagged products show only «Всі кольори». */}
+                                        {formData.colors.length > 0 && (
+                                            <select
+                                                aria-label="Колір цього фото"
+                                                value={formData.imageColors[img] ?? ""}
+                                                onChange={(e) =>
+                                                    setFormData((p) => {
+                                                        const next = { ...p.imageColors };
+                                                        if (e.target.value) {
+                                                            next[img] = e.target.value;
+                                                        } else {
+                                                            delete next[img];
+                                                        }
+                                                        return { ...p, imageColors: next };
+                                                    })
+                                                }
+                                                style={{
+                                                    position: "absolute",
+                                                    bottom: 6,
+                                                    left: 6,
+                                                    right: 6,
+                                                    width: "calc(100% - 12px)",
+                                                    background: "rgba(0,0,0,0.72)",
+                                                    color: "#fff",
+                                                    border: "1px solid rgba(255,255,255,0.25)",
+                                                    borderRadius: 6,
+                                                    fontSize: 11,
+                                                    padding: "3px 6px",
+                                                }}
+                                            >
+                                                <option value="">Всі кольори</option>
+                                                {formData.colors.map((c) => (
+                                                    <option key={c} value={c}>
+                                                        {getColorLabel(c)}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
                                     </div>
                                 ))}
 

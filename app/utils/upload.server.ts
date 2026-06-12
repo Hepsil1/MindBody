@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import sharp from "sharp";
+import { generateUploadVariants } from "./image-variants.server";
 
 // Raster formats we accept, by Sharp's detected `metadata().format`. SVG is
 // deliberately excluded: an uploaded SVG served as a document executes embedded
@@ -60,10 +61,21 @@ export async function uploadFile(file: FormDataEntryValue | null): Promise<strin
             .webp({ quality: 95, effort: 4 }) // Ultra-high HQ
             .toFile(filePath);
 
-        const sizeKB = (buffer.length / 1024).toFixed(0);
-        console.log(`✅ Uploaded: /uploads/${filename} (${sizeKB} KB)`);
+        const publicUrl = `/uploads/${filename}`;
 
-        return `/uploads/${filename}`;
+        // Responsive variants + LQIP, synchronously before returning the
+        // URL: srcset helpers (buildWebpSrcset/buildAvifSrcset) emit
+        // -400w/-800w/… URLs the moment this image lands in a product, so
+        // the variants must exist before anything can render it. Costs
+        // ~1-3 s of admin upload time per photo — the buyers' bandwidth
+        // is worth more than the admin's wait. Failure inside is logged
+        // and non-fatal (master alone still works).
+        await generateUploadVariants(filePath, publicUrl);
+
+        const sizeKB = (buffer.length / 1024).toFixed(0);
+        console.log(`✅ Uploaded: ${publicUrl} (${sizeKB} KB)`);
+
+        return publicUrl;
     } catch (e) {
         console.error("❌ Upload failed:", e);
         // DO NOT fall back to base64! Return null instead.

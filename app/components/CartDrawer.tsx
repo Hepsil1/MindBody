@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useI18n, useMoney, LLink } from "../i18n";
 import { StorageUtils, type CartItem } from "../utils/storage";
+import { getColorLabel } from "../utils/colors";
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -201,7 +202,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                             )}
                                             {item.color && (
                                                 <span>
-                                                    {t("Колір: {color}", { color: item.color })}
+                                                    {/* getColorLabel: «black» из БД → «Чорний»
+                                                        (аудит F-032 — англ. код тёк в UI) */}
+                                                    {t("Колір: {color}", {
+                                                        color: getColorLabel(item.color),
+                                                    })}
                                                 </span>
                                             )}
                                         </div>

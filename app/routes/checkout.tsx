@@ -5,6 +5,7 @@ import { useToast } from "../components/Toast";
 import { trackBeginCheckout, trackPurchase } from "../utils/analytics.client";
 import { formatPhoneUA, getPhoneDigits } from "../utils/phone";
 import { productImageSrc, IMAGE_FALLBACK, formatPrice } from "../utils/format";
+import { getColorLabel } from "../utils/colors";
 import { splitLocalePath } from "../i18n/config";
 import { useI18n, useMoney, getT, LLink, plural } from "../i18n";
 import {
@@ -1216,7 +1217,8 @@ export default function Checkout() {
                                             )}
                                             {item.color && (
                                                 <span>
-                                                    {t("Колір:")} <strong>{item.color}</strong>
+                                                    {t("Колір:")}{" "}
+                                                    <strong>{getColorLabel(item.color)}</strong>
                                                 </span>
                                             )}
                                         </div>

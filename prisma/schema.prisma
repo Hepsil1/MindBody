@@ -24,6 +24,12 @@ model Product {
   sleeve          String? // long | short | sleeveless | velo
   images          String?
   colors          String?
+  // Per-colour gallery override: JSON {"black":["/uploads/a.webp",...],
+  // "white":[...]}. When the buyer picks a colour on the PDP the gallery
+  // switches to that colour's photos; colours without an entry fall back
+  // to the shared `images` array, so partially-tagged products degrade
+  // gracefully instead of going blank.
+  colorImages     String?
   sizes           String?
   inventory       String?
   shopPageSlug    String?
