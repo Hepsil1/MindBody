@@ -722,6 +722,10 @@ export default function Home() {
             const numEl = el.querySelector(".stat-number") as HTMLElement;
             if (!numEl) return;
 
+            // A suffix-less value in the year range is a YEAR, not a count —
+            // skip the thousands separator so «2020» doesn't animate into the
+            // broken-looking «2 020» (mirror of formatStatDisplay's SSR rule).
+            const isYear = !suffix && target >= 1900 && target <= 2100;
             const tick = (now: number) => {
                 const elapsed = Math.min((now - start) / duration, 1);
                 // ease-out cubic
@@ -729,6 +733,8 @@ export default function Home() {
                 const value = Math.round(eased * target);
                 if (isLarge && target >= 10000) {
                     numEl.textContent = (value / 1000).toFixed(1) + "K" + suffix;
+                } else if (isYear) {
+                    numEl.textContent = String(value);
                 } else {
                     numEl.textContent = value.toLocaleString("uk-UA") + suffix;
                 }

@@ -213,6 +213,11 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
  */
 export function formatStatDisplay(count: number, suffix: string): string {
     if (count >= 10000) return (count / 1000).toFixed(1) + "K" + suffix;
+    // A suffix-less 4-digit value in the year range is a YEAR (e.g. «Бренд
+    // з року: 2020»), not a count — the thousands separator would render it
+    // as «2 020», which reads as a broken number. Counts always carry a
+    // suffix («2 168+»), so the no-suffix gate keeps the separator for them.
+    if (!suffix && count >= 1900 && count <= 2100) return String(count);
     return count.toLocaleString("uk-UA") + suffix;
 }
 

@@ -1,4 +1,8 @@
 import { prisma } from "../db.server";
+import { cachedFetch } from "./cache.server";
+
+const CACHE_KEY = "mega:counts";
+const CACHE_TTL = 5 * 60_000;
 
 /**
  * Mega-menu coverage map — answers "does the deep link `/shop/{shop}/
@@ -19,13 +23,20 @@ import { prisma } from "../db.server";
  *   "yoga/jumpsuit/cotton/long"             → cotton long-sleeve jumpsuits
  *
  * Built with one groupBy and roll-ups in memory — single round-trip,
- * cached by the same 5-minute getSiteSettings cache in root.tsx (we
- * piggy-back on its revalidate-after-admin-action behaviour).
+ * Cached for 5 minutes (CACHE_KEY "mega:counts"). The root loader runs on
+ * EVERY navigation, so the groupBy must not — without this cache it was an
+ * extra aggregate query on every page load site-wide. The product editor
+ * already calls invalidateAll() after saving, which clears this key, so a
+ * newly-tagged product shows in the menu within one save (or 5 min).
  */
 
 export type MegaCounts = Record<string, number>;
 
 export async function getMegaCounts(): Promise<MegaCounts> {
+    return cachedFetch(CACHE_KEY, CACHE_TTL, computeMegaCounts);
+}
+
+async function computeMegaCounts(): Promise<MegaCounts> {
     try {
         const groups = await prisma.product.groupBy({
             by: ["shopPageSlug", "category", "fabric", "sleeve"],

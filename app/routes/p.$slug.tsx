@@ -221,8 +221,14 @@ export async function loader({ params }: LoaderFunctionArgs) {
     let relatedProducts: RelatedProductCard[] = [];
 
     try {
-        // Run product + filterConfig queries in parallel
-        const [p, globalConfig] = await Promise.all([
+        // Run product + filterConfig + colorImages queries in parallel. The
+        // colorImages read is raw SQL with graceful fallback (the moodType/
+        // fabric pattern): the column ships in migration 20260612130000; a
+        // pre-migration DB throws and `.catch` degrades to "no per-colour
+        // galleries" (the PDP behaves exactly as before). Running it inside
+        // Promise.all keeps it OFF the critical path of the hottest page —
+        // it used to be a sequential third round-trip.
+        const [p, globalConfig, colorImagesRows] = await Promise.all([
             prisma.product.findUnique({
                 where: { slug },
                 select: {
@@ -243,6 +249,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
                 },
             }),
             prisma.filterConfig.findUnique({ where: { id: "global" } }),
+            prisma.$queryRaw<Array<{ colorImages: string | null }>>`
+                    SELECT "colorImages" FROM "Product" WHERE "slug" = ${slug} LIMIT 1
+                `.catch(() => [] as Array<{ colorImages: string | null }>),
         ]);
 
         // Status gate: only "active" products are publicly viewable. A draft or
@@ -253,29 +262,20 @@ export async function loader({ params }: LoaderFunctionArgs) {
             const images = parseJson<string[]>(p.images, []);
             if (images.length === 0) images.push("/brand-sun.png");
 
-            // Per-colour galleries — read via raw SQL with graceful fallback
-            // (the moodType/fabric pattern): the "colorImages" column ships
-            // in migration 20260612130000; until it's applied this SELECT
-            // throws, we swallow it, and the PDP behaves exactly as before
-            // (one shared gallery for all colours).
-            let colorImages: Record<string, string[]> = {};
-            try {
-                const rows = await prisma.$queryRaw<Array<{ colorImages: string | null }>>`
-                    SELECT "colorImages" FROM "Product" WHERE "slug" = ${slug} LIMIT 1
-                `;
-                const parsed = parseJson<Record<string, unknown>>(rows[0]?.colorImages, {});
-                // Keep only well-formed entries (string[] of non-empty URLs).
-                for (const [color, list] of Object.entries(parsed)) {
-                    if (
-                        Array.isArray(list) &&
-                        list.length > 0 &&
-                        list.every((u) => typeof u === "string" && u.length > 0)
-                    ) {
-                        colorImages[color] = list as string[];
-                    }
+            // Keep only well-formed per-colour entries (string[] of non-empty URLs).
+            const colorImages: Record<string, string[]> = {};
+            const parsedColorImages = parseJson<Record<string, unknown>>(
+                colorImagesRows[0]?.colorImages,
+                {},
+            );
+            for (const [color, list] of Object.entries(parsedColorImages)) {
+                if (
+                    Array.isArray(list) &&
+                    list.length > 0 &&
+                    list.every((u) => typeof u === "string" && u.length > 0)
+                ) {
+                    colorImages[color] = list as string[];
                 }
-            } catch {
-                colorImages = {};
             }
 
             // Parse inventory to extract available variants
