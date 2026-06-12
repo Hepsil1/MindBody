@@ -9,7 +9,7 @@ import ProductCard from "../components/ProductCard";
 import BrandStories from "../components/BrandStories";
 import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
-import { buildWebpSrcset } from "../utils/responsive-image";
+import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
 import { useI18n, getT, LLink } from "../i18n";
@@ -68,6 +68,29 @@ export function meta({ data, params }: Route.MetaArgs) {
     const t = getT(locale);
     const homePath = localizePath("/", locale);
     const canonicalUrl = homePath === "/" ? siteUrl : `${siteUrl}${homePath}`;
+
+    // AVIF preloads for the REAL first slide (loader data, not the code
+    // defaults). The <picture> in HeroSlider lists AVIF first, so AVIF is
+    // what the browser will actually request — preloading WebP was a
+    // guaranteed cache miss. `type` lets non-AVIF browsers skip the hint.
+    const firstSlide = data?.slides?.[0];
+    const heroImgs = firstSlide
+        ? [firstSlide.image1, firstSlide.image2, firstSlide.image3].filter(
+              (x): x is string => typeof x === "string" && x.length > 0,
+          )
+        : [];
+    const sizesAttr = heroImgs.length > 1 ? "(max-width: 768px) 100vw, 33vw" : "100vw";
+    const heroPreloads = heroImgs.map((img, i) => ({
+        tagName: "link" as const,
+        rel: "preload" as const,
+        as: "image" as const,
+        type: "image/avif",
+        href: img.replace(/\.(jpe?g|png|webp)$/i, ".avif"),
+        imageSrcSet: buildAvifSrcset(img),
+        imageSizes: sizesAttr,
+        ...(i === 0 ? { fetchPriority: "high" as const } : {}),
+    }));
+
     return [
         { title: t("MIND BODY — Спортивний одяг для йоги та активного життя") },
         {
@@ -103,47 +126,28 @@ export function meta({ data, params }: Route.MetaArgs) {
             content: t("Український бренд спортивного одягу для жінок та дітей."),
         },
         { name: "twitter:image", content: `${siteUrl}/brand-sun.png` },
-        // Preload first hero slide triptych — critical for LCP.  Each
-        // preload includes imagesrcset + imagesizes so the browser picks
-        // the responsive variant matching the viewport instead of pre-
-        // fetching the full master and then using src-fallback (which
-        // defeats Atoms R+S srcset entirely).  Mobile gets ~400/800w
-        // (~80-150KB each), desktop gets 1200w (~250KB).
-        /* Hero triptych preload — must match buildWebpSrcset() output
-           (400/800/1200/1600/2000w + master). Previously capped at
-           1200w which meant retina desktop (1920×2 = 1266 phys px or
-           4K 3840 phys px) preloaded the 1200w → cached → used even
-           though the <picture> offered larger variants = soft slides.
-           Now preload offers all variants so browser picks the right
-           one at preload time and uses the same cached entry. */
+        // The white brand logo OVERLAYS the hero and is the page's measured
+        // LCP element. It goes FIRST among image preloads: on HTTP/1.1 the
+        // browser queues same-host requests, and a tiny logo stuck behind a
+        // multi-hundred-KB slide is exactly the 500 ms+ queue delay the
+        // trace measured. (Prod h2/h3 multiplexes anyway — order is then
+        // just a priority hint.)
         {
             tagName: "link",
             rel: "preload",
             as: "image",
-            href: "/generalpics/333_131123.webp",
-            imageSrcSet:
-                "/generalpics/333_131123-400w.webp 400w, /generalpics/333_131123-800w.webp 800w, /generalpics/333_131123-1200w.webp 1200w, /generalpics/333_131123-1600w.webp 1600w, /generalpics/333_131123.webp 2400w",
-            imageSizes: "(max-width: 768px) 100vw, 33vw",
+            href: "/pics/mind_body_logo_white.webp",
             fetchPriority: "high",
         },
-        {
-            tagName: "link",
-            rel: "preload",
-            as: "image",
-            href: "/generalpics/374_131123.webp",
-            imageSrcSet:
-                "/generalpics/374_131123-400w.webp 400w, /generalpics/374_131123-800w.webp 800w, /generalpics/374_131123-1200w.webp 1200w, /generalpics/374_131123-1600w.webp 1600w, /generalpics/374_131123.webp 2400w",
-            imageSizes: "(max-width: 768px) 100vw, 33vw",
-        },
-        {
-            tagName: "link",
-            rel: "preload",
-            as: "image",
-            href: "/generalpics/338_131123.webp",
-            imageSrcSet:
-                "/generalpics/338_131123-400w.webp 400w, /generalpics/338_131123-800w.webp 800w, /generalpics/338_131123-1200w.webp 1200w, /generalpics/338_131123-1600w.webp 1600w, /generalpics/338_131123.webp 2400w",
-            imageSizes: "(max-width: 768px) 100vw, 33vw",
-        },
+        // Hero preload — the perf trace caught TWO bugs in the old version:
+        // (1) it preloaded the hardcoded DEFAULT slides while the live hero
+        // comes from the DB (admin-managed /uploads/…), so on a real deploy
+        // the preloads fetched images the page never used — pure wasted
+        // bandwidth on the critical path; (2) it preloaded WebP while the
+        // <picture> lists AVIF first, so even a correct URL would be a cache
+        // miss (double download). Now: dynamic from the loader's actual
+        // first slide, in AVIF with type so unsupporting browsers skip it.
+        ...heroPreloads,
         {
             "script:ld+json": {
                 "@context": "https://schema.org",
@@ -156,7 +160,9 @@ export function meta({ data, params }: Route.MetaArgs) {
                 ),
                 inLanguage: locale === "en" ? "en-US" : locale === "ru" ? "ru-RU" : "uk-UA",
                 address: { "@type": "PostalAddress", addressCountry: "UA" },
-                sameAs: ["https://www.instagram.com/mindbody_ua"],
+                // Verified brand handle (underscore) — the third distinct IG
+                // handle the identity audit found on the site; one truth now.
+                sameAs: ["https://www.instagram.com/mindbody_sportwear"],
             },
         },
     ];

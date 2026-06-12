@@ -5,7 +5,7 @@ import ReviewsSection from "../components/ReviewsSection";
 import { trackViewItem, trackAddToCart } from "../utils/analytics.client";
 import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
-import { buildWebpSrcset } from "../utils/responsive-image";
+import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
 import { shopPageTitle, isRealShopSlug } from "../utils/shop-pages";
 import { DEFAULT_SITE_URL, resolveSiteUrl } from "../utils/site-url";
 import { useI18n, useMoney, LLink, getT } from "../i18n";
@@ -134,14 +134,20 @@ export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
             },
         },
         // Preload the first product image so it starts fetching before React
-        // hydrates. Cuts LCP by 200-400ms on slow networks. imagesrcset hints
-        // the browser to pick a variant matching the viewport.
+        // hydrates. AVIF, not WebP: the gallery's <picture> lists AVIF first,
+        // so a WebP preload was a guaranteed cache miss (double download of
+        // the LCP image — caught by the perf trace). `type` lets non-AVIF
+        // browsers skip the hint and fetch via <picture> fallback as before.
         {
             tagName: "link",
             rel: "preload",
             as: "image",
-            href: product.images?.[0] || "/brand-sun.png",
-            imageSrcSet: product.images?.[0] ? buildWebpSrcset(product.images[0]) : undefined,
+            type: "image/avif",
+            href: (product.images?.[0] || "/brand-sun.png").replace(
+                /\.(jpe?g|png|webp)$/i,
+                ".avif",
+            ),
+            imageSrcSet: product.images?.[0] ? buildAvifSrcset(product.images[0]) : undefined,
             imageSizes: "(max-width: 768px) 100vw, 50vw",
             fetchpriority: "high",
         },
@@ -1298,15 +1304,31 @@ export default function ProductDetail() {
                                 >
                                     <div className="related-img-box">
                                         {/* 3:4 portrait matches our actual product photos
-                                            (2625x3500). Below the fold => lazy. */}
-                                        <img
-                                            src={rp.image}
-                                            alt={rp.name}
-                                            width="300"
-                                            height="400"
-                                            loading="lazy"
-                                            decoding="async"
-                                        />
+                                            (2625x3500). Below the fold => lazy. Previously a
+                                            raw <img src> with no srcset — related cards
+                                            fetched the full master (sometimes a raw .JPG)
+                                            for a 300px slot. Same <picture> pattern as
+                                            ProductCard: AVIF → WebP → original fallback. */}
+                                        <picture>
+                                            <source
+                                                srcSet={buildAvifSrcset(rp.image)}
+                                                sizes="(max-width: 768px) 50vw, 300px"
+                                                type="image/avif"
+                                            />
+                                            <source
+                                                srcSet={buildWebpSrcset(rp.image)}
+                                                sizes="(max-width: 768px) 50vw, 300px"
+                                                type="image/webp"
+                                            />
+                                            <img
+                                                src={rp.image}
+                                                alt={rp.name}
+                                                width="300"
+                                                height="400"
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
+                                        </picture>
                                     </div>
                                     <div className="related-info">
                                         <h4>{rp.name}</h4>

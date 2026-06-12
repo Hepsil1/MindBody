@@ -37,7 +37,6 @@
     "framer-motion": "^12.40.0",
     "isbot": "^5.1.31",
     "lucide-react": "^1.16.0",
-    "motion": "^12.38.0",
     "pino": "10.3.1",
     "plaiceholder": "^3.0.0",
     "prisma": "^5.22.0",
