@@ -529,6 +529,13 @@ export default function Home() {
     const igProfilePic = instagramData?.profilePictureUrl || "/logo-sun.png";
 
     const [currentPlaylistIdx, setCurrentPlaylistIdx] = useState(0);
+    // Ref mirror for the section IntersectionObserver (mounted once) — it
+    // must read the CURRENT playlist position when the section re-enters
+    // the viewport, not the index captured at mount.
+    const currentPlaylistIdxRef = useRef(0);
+    useEffect(() => {
+        currentPlaylistIdxRef.current = currentPlaylistIdx;
+    }, [currentPlaylistIdx]);
 
     /* NEW ARRIVALS INFINITE CAROUSEL */
     const carouselRef = useRef<HTMLDivElement>(null);
@@ -662,6 +669,47 @@ export default function Home() {
         mq.addEventListener("change", apply);
         return () => mq.removeEventListener("change", apply);
     }, []);
+
+    // Desktop content-jank guard: a <video> keeps its decoder hot for as
+    // long as it plays, regardless of visibility — and this section sits
+    // several screens below the fold. Pause EVERY brand video while the
+    // section is offscreen; when it scrolls back in, resume only the
+    // playlist's current clip (the hover clips restart from the hover
+    // handlers). Cuts idle decode from up-to-5 parallel streams to 0/1.
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const frame = document.querySelector(".bw-v3-frame");
+        if (!frame) return;
+        const io = new IntersectionObserver(
+            ([entry]) => {
+                const vids = frame.querySelectorAll<HTMLVideoElement>("video");
+                if (!entry.isIntersecting) {
+                    vids.forEach((v) => v.pause());
+                } else {
+                    const current =
+                        frame.querySelectorAll<HTMLVideoElement>(".bw-playlist-vid")[
+                            currentPlaylistIdxRef.current
+                        ];
+                    current?.play().catch(() => {});
+                }
+            },
+            { threshold: 0.15 },
+        );
+        io.observe(frame);
+        return () => io.disconnect();
+    }, []);
+
+    // Hover-video playback control (paired with the CSS :hover visibility
+    // rules): play clip N while feature N is hovered, pause on leave.
+    const hoverVid = (n: number, play: boolean) => {
+        const v = document.querySelector<HTMLVideoElement>(`.bw-frame-hover-vid--${n}`);
+        if (!v) return;
+        if (play) {
+            v.play().catch(() => {});
+        } else {
+            v.pause();
+        }
+    };
 
     // Animated counters — trigger when section enters viewport
     useEffect(() => {
@@ -1104,15 +1152,18 @@ export default function Home() {
                                         />
                                     ))}
 
-                                    {/* 2. Hover-target videos (4 static repeating clips overlaid on
-                                        the playlist). All have muted+playsInline to satisfy iOS
-                                        no-sound policy and stay inline. Mobile hides them entirely
-                                        via @media display:none. preload="metadata" cuts initial
-                                        fetch (only first frame + codec metadata) — full stream
-                                        only fetches when autoPlay kicks in on desktop. */}
+                                    {/* 2. Hover-target videos (4 static repeating clips overlaid
+                                        on the playlist). Visibility is CSS-driven (the
+                                        .bw-feat-item--N:hover rules), but the old autoPlay+loop
+                                        kept all four decoding 24/7 even at opacity:0 / mobile
+                                        display:none — the single biggest content-jank source on
+                                        the page (5 simultaneous video decodes). They now start on
+                                        the matching feature's hover (onMouseEnter below) and
+                                        pause on leave; the section observer pauses everything
+                                        offscreen. Visuals are identical — playback just begins
+                                        when a human can actually see it. */}
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--1"
-                                        autoPlay
                                         loop
                                         muted
                                         playsInline
@@ -1122,7 +1173,6 @@ export default function Home() {
                                     </video>
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--2"
-                                        autoPlay
                                         loop
                                         muted
                                         playsInline
@@ -1132,7 +1182,6 @@ export default function Home() {
                                     </video>
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--3"
-                                        autoPlay
                                         loop
                                         muted
                                         playsInline
@@ -1142,7 +1191,6 @@ export default function Home() {
                                     </video>
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--4"
-                                        autoPlay
                                         loop
                                         muted
                                         playsInline
@@ -1179,6 +1227,11 @@ export default function Home() {
                                                 data-active={activeFeature === i ? "true" : "false"}
                                                 role="tabpanel"
                                                 aria-hidden={activeFeature !== i}
+                                                // CSS already reveals hover-clip N on :hover;
+                                                // these start/stop its DECODER to match (the
+                                                // old always-on autoplay was the jank source).
+                                                onMouseEnter={() => hoverVid(i + 1, true)}
+                                                onMouseLeave={() => hoverVid(i + 1, false)}
                                             >
                                                 <div className="bw-macro-number" data-text={num}>
                                                     {num}

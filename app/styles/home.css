@@ -5393,3 +5393,25 @@
         }
     }
 }
+
+/* ============================================================
+   Content-jank batch (2026-06-12): skip rendering of the heavy
+   below-fold sections until they approach the viewport.
+   content-visibility:auto lets the engine skip layout+paint for
+   offscreen subtrees — on a 6000px-tall home with an Instagram
+   wall and an animated stats band this is the single cheapest
+   scroll-smoothness win, with zero visual change (the intrinsic
+   sizes below reserve approximate space so the scrollbar doesn't
+   jump; exact height takes over the moment the section renders).
+   The brand-video section is intentionally NOT included — its
+   playback is governed by its own IntersectionObserver and the
+   interplay would be needlessly subtle.
+   ============================================================ */
+.ig-hyper {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 1200px;
+}
+.stats-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 220px;
+}

@@ -6,12 +6,22 @@
     z-index: 9998;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    /* visibility flips AFTER the fade-out so the closed backdrop is truly
+       gone from compositing — opacity:0 alone kept a permanent full-screen
+       backdrop-filter layer alive on every page (mobile-GPU jank + the
+       audit's aria-hidden-but-focusable finding). Same pattern as
+       .mega-panel-backdrop. */
+    visibility: hidden;
+    transition:
+        opacity 0.3s ease,
+        visibility 0s linear 0.3s;
 }
 
 .cart-drawer__backdrop--open {
     opacity: 1;
     pointer-events: auto;
+    visibility: visible;
+    transition: opacity 0.3s ease;
 }
 
 .cart-drawer {
@@ -27,12 +37,20 @@
     display: flex;
     flex-direction: column;
     transform: translateX(100%);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Closed drawer: same visibility treatment — it slid off-screen but
+       stayed visible+focusable (Tab landed inside an invisible cart) and
+       its box-shadow still cost composite time. */
+    visibility: hidden;
+    transition:
+        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        visibility 0s linear 0.35s;
     box-shadow: -8px 0 30px rgba(0, 0, 0, 0.15);
 }
 
 .cart-drawer--open {
     transform: translateX(0);
+    visibility: visible;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cart-drawer__header {
