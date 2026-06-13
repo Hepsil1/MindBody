@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AuthUtils, type User, type Address, type UserSettings } from "../utils/auth";
 import { StorageUtils } from "../utils/storage";
+import { useModalA11y } from "../components/admin/useModalA11y";
 import { useI18n, useMoney, LLink } from "../i18n";
 
 export function meta() {
@@ -44,6 +45,9 @@ export default function Profile() {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState("");
     const [editPhone, setEditPhone] = useState("");
+    // True when the logged-in customer has no phone yet (e.g. fresh Google
+    // sign-in) — drives a prompt + auto-opens the editor to capture it.
+    const [needsPhone, setNeedsPhone] = useState(false);
 
     // Change password state
     const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -65,6 +69,13 @@ export default function Profile() {
     // Toast state
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+    // Accessible modals (shared hook): Escape closes, Tab trapped inside, focus
+    // moves in on open and returns to the trigger on close.
+    const passwordModalRef = useRef<HTMLDivElement>(null);
+    const addressModalRef = useRef<HTMLDivElement>(null);
+    useModalA11y(passwordModalRef, () => setShowPasswordModal(false), showPasswordModal);
+    useModalA11y(addressModalRef, () => setShowAddressModal(false), showAddressModal);
+
     useEffect(() => {
         const initProfile = async () => {
             const authState = await AuthUtils.getAuthStateAsync();
@@ -77,6 +88,13 @@ export default function Profile() {
             setUser(authState.user);
             setEditName(authState.user.name);
             setEditPhone(authState.user.phone || "");
+            // Phone is required for COD, and Google sign-ins arrive without one.
+            // Open the editor + show a prompt so the customer completes it.
+            if (!authState.user.phone) {
+                setActiveTab("overview");
+                setIsEditing(true);
+                setNeedsPhone(true);
+            }
 
             // Load data
             setAddresses(AuthUtils.getAddresses());
@@ -133,12 +151,28 @@ export default function Profile() {
         navigate(lp("/"));
     };
 
-    const handleSaveProfile = () => {
-        const result = AuthUtils.updateProfile({ name: editName, phone: editPhone });
-        if (result.success) {
-            setUser(result.user!);
+    const handleSaveProfile = async () => {
+        const trimmedName = editName.trim();
+        if (trimmedName.length < 2) {
+            showToast("Вкажіть ім'я", "error");
+            return;
+        }
+        // Phone is required for a COD store — validate before saving.
+        if (editPhone.replace(/\D/g, "").length < 10) {
+            showToast("Вкажіть коректний номер телефону", "error");
+            return;
+        }
+        const result = await AuthUtils.updateProfile({
+            name: trimmedName,
+            phone: editPhone.trim(),
+        });
+        if (result.success && result.user) {
+            setUser(result.user);
             setIsEditing(false);
+            setNeedsPhone(false);
             showToast("Профіль оновлено!", "success");
+        } else {
+            showToast(result.message || "Не вдалося зберегти", "error");
         }
     };
 
@@ -521,6 +555,16 @@ export default function Profile() {
                                         )}
                                     </div>
                                     <div className="profile-card__content">
+                                        {needsPhone && !user.phone && (
+                                            <div className="profile-complete-prompt" role="status">
+                                                <strong>{t("Завершіть профіль")}</strong>
+                                                <span>
+                                                    {t(
+                                                        "Додайте номер телефону — він потрібен, щоб ми підтвердили та доставили замовлення.",
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
                                         <div className="profile-grid">
                                             <div className="profile-field">
                                                 <label>
@@ -1001,11 +1045,20 @@ export default function Profile() {
             {/* Password Modal */}
             {showPasswordModal && (
                 <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="modal"
+                        onClick={(e) => e.stopPropagation()}
+                        ref={passwordModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="password-modal-title"
+                    >
                         <div className="modal__header">
-                            <h3>{t("Змінити пароль")}</h3>
+                            <h3 id="password-modal-title">{t("Змінити пароль")}</h3>
                             <button
+                                type="button"
                                 className="modal__close"
+                                aria-label={t("Закрити")}
                                 onClick={() => setShowPasswordModal(false)}
                             >
                                 <svg
@@ -1071,11 +1124,20 @@ export default function Profile() {
             {/* Address Modal */}
             {showAddressModal && (
                 <div className="modal-overlay" onClick={() => setShowAddressModal(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="modal"
+                        onClick={(e) => e.stopPropagation()}
+                        ref={addressModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="address-modal-title"
+                    >
                         <div className="modal__header">
-                            <h3>{t("Додати адресу")}</h3>
+                            <h3 id="address-modal-title">{t("Додати адресу")}</h3>
                             <button
+                                type="button"
                                 className="modal__close"
+                                aria-label={t("Закрити")}
                                 onClick={() => setShowAddressModal(false)}
                             >
                                 <svg

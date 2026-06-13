@@ -74,6 +74,28 @@ export const ContactSchema = z.object({
     contact: z.string().min(3, "Введіть номер телефону або email").max(100).trim(),
 });
 
+// ===== Profile update (self-service, session-authed) =====
+// Phone is required and validated: a COD store relies on a reachable number, and
+// this is the form that captures it for Google-OAuth users (who arrive without one).
+export const ProfileUpdateSchema = z.object({
+    name: z.string().trim().min(2, "Вкажіть ім'я").max(100),
+    phone: z
+        .string()
+        .trim()
+        .max(20)
+        .refine((v) => v.replace(/\D/g, "").length >= 10, "Вкажіть коректний номер телефону"),
+});
+
+// ===== Change password (session-authed) =====
+export const ChangePasswordSchema = z.object({
+    currentPassword: z.string().min(1, "Введіть поточний пароль").max(100),
+    newPassword: z
+        .string()
+        .min(6, "Новий пароль має бути мінімум 6 символів")
+        .max(100)
+        .refine((v) => /\d/.test(v), "Пароль має містити хоча б одну цифру"),
+});
+
 // Helper: format Zod errors for response
 export function formatZodErrors(error: z.ZodError): string {
     return error.issues.map((e) => e.message).join("; ");

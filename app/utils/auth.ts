@@ -233,19 +233,40 @@ export const AuthUtils = {
         }
     },
 
-    // Update user profile
-    updateProfile: (updates: Partial<User>): { success: boolean; user?: User } => {
+    // Update user profile (name + phone). Persists to the DB via /api/profile
+    // (identity comes from the session cookie), then syncs sessionStorage from the
+    // server response. Previously this only wrote sessionStorage, so edits silently
+    // vanished on next login — see the profile audit.
+    updateProfile: async (updates: {
+        name: string;
+        phone: string;
+    }): Promise<{ success: boolean; message?: string; user?: User }> => {
         try {
+            const res = await fetch("/api/profile", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: updates.name, phone: updates.phone }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                return { success: false, message: data.error || "Помилка збереження" };
+            }
             const cached = sessionStorage.getItem(STORAGE_KEYS.AUTH_USER);
-            if (!cached) return { success: false };
-
-            const currentUser = JSON.parse(cached);
-            const updatedUser = { ...currentUser, ...updates };
-            sessionStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(updatedUser));
+            const prev = cached ? (JSON.parse(cached) as User) : null;
+            const user: User = {
+                id: data.id ?? prev?.id ?? "",
+                name: `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim() || updates.name,
+                email: data.email ?? prev?.email ?? "",
+                phone: data.phone ?? updates.phone,
+                avatar: data.avatar ?? prev?.avatar,
+                createdAt: data.createdAt ?? prev?.createdAt ?? "",
+                provider: prev?.provider ?? "email",
+            };
+            sessionStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
             window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
-            return { success: true, user: updatedUser };
+            return { success: true, user };
         } catch {
-            return { success: false };
+            return { success: false, message: "Помилка з'єднання із сервером" };
         }
     },
 

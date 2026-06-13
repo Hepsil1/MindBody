@@ -34,6 +34,10 @@ export interface ShopProductCard {
     is_sale: boolean;
     discount_percent: number;
     status: string;
+    /** False when every inventory variant is out of stock — drives the catalog
+        "Sold out" badge/overlay (ProductCard reads this). Empty inventory means
+        "not tracked" → treated as available, never falsely sold-out. */
+    is_stock: boolean;
 }
 
 export interface ShopData {
@@ -140,6 +144,7 @@ async function loadShopDataUncached(
                     images: true,
                     colors: true,
                     sizes: true,
+                    inventory: true,
                     shopPageSlug: true,
                     status: true,
                     createdAt: true,
@@ -167,6 +172,9 @@ async function loadShopDataUncached(
         const isSale = comparePrice > price && price > 0;
         const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : 0;
         const isNew = NOW - createdAt < NEW_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
+        // Out of stock only when inventory is tracked AND no variant has stock.
+        const inventory = parseJson<Array<{ stock?: number }>>(p.inventory, []);
+        const isStock = inventory.length === 0 ? true : inventory.some((v) => (v.stock ?? 0) > 0);
 
         return {
             id: p.id,
@@ -188,6 +196,7 @@ async function loadShopDataUncached(
             is_sale: isSale,
             discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
             status: p.status,
+            is_stock: isStock,
         };
     });
 
