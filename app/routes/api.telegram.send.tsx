@@ -1,8 +1,8 @@
 import { isAuthenticated } from "../utils/admin.server";
+import { sendTelegramMessage } from "../utils/telegram.server";
 
-// Server-side only — Telegram token from env, NEVER hardcoded
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
+// Internal server-to-server secret. Falls back to SESSION_SECRET so a dedicated
+// var is optional. Used by trusted callers that set the X-Internal-Token header.
 const INTERNAL_SECRET = process.env.TELEGRAM_INTERNAL_SECRET || process.env.SESSION_SECRET || "";
 
 export async function action({ request }: { request: Request }) {
@@ -10,54 +10,36 @@ export async function action({ request }: { request: Request }) {
         return Response.json({ error: "Method not allowed" }, { status: 405 });
     }
 
-    // Auth: internal token (server-to-server) OR admin cookie OR same-origin browser call
+    // Authorization: a server-to-server internal token OR an authenticated admin.
+    //
+    // The previous "same-origin browser POST is allowed" rule made this a public
+    // message-injection channel: any visitor — or any script running on the page —
+    // could relay arbitrary text (with Markdown) into the operators' Telegram,
+    // enabling spam and staff-targeted phishing. Every legitimate browser lead
+    // (registration, quick-order, contact form) now goes through a dedicated
+    // server-side endpoint that composes the message from validated fields, so no
+    // browser calls this route anymore.
     const internalToken = request.headers.get("X-Internal-Token") || "";
-    const isInternalCall = INTERNAL_SECRET && internalToken === INTERNAL_SECRET;
+    const isInternalCall = Boolean(INTERNAL_SECRET) && internalToken === INTERNAL_SECRET;
     const isAdmin = await isAuthenticated(request);
 
-    // Same-origin check: browsers enforce Origin header on POST — not spoofable from cross-site
-    const origin = request.headers.get("Origin") || "";
-    const requestHost = new URL(request.url).origin;
-    const isSameOrigin = origin && origin === requestHost;
-
-    if (!isInternalCall && !isAdmin && !isSameOrigin) {
+    if (!isInternalCall && !isAdmin) {
         return Response.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-        console.error("Telegram credentials not configured in env");
-        return Response.json({ success: false, error: "Telegram not configured" }, { status: 500 });
-    }
-
+    let message: unknown;
     try {
-        const { message } = await request.json();
-
-        if (!message || typeof message !== "string") {
-            return Response.json({ error: "Message is required" }, { status: 400 });
-        }
-
-        const response = await fetch(
-            `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: message,
-                    parse_mode: "Markdown",
-                }),
-            },
-        );
-
-        if (!response.ok) {
-            const errorData = await response.text();
-            console.error("Telegram API error:", errorData);
-            return Response.json({ success: false, error: "Failed to send" }, { status: 500 });
-        }
-
-        return Response.json({ success: true });
-    } catch (error) {
-        console.error("Telegram send error:", error);
-        return Response.json({ success: false, error: "Server error" }, { status: 500 });
+        ({ message } = await request.json());
+    } catch {
+        return Response.json({ error: "Invalid JSON" }, { status: 400 });
     }
+
+    if (!message || typeof message !== "string") {
+        return Response.json({ error: "Message is required" }, { status: 400 });
+    }
+
+    const ok = await sendTelegramMessage(message, { parseMode: "Markdown" });
+    return ok
+        ? Response.json({ success: true })
+        : Response.json({ success: false, error: "Failed to send" }, { status: 502 });
 }

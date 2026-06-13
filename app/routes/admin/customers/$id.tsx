@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { actionOk, actionError as actionErr } from "../../../utils/action-result.server";
 
 interface LoaderArgs {
+    request: Request;
     params: { id: string };
 }
 
@@ -14,7 +15,12 @@ interface ActionArgs {
     params: { id: string };
 }
 
-export async function loader({ params }: LoaderArgs) {
+export async function loader({ request, params }: LoaderArgs) {
+    // Defense-in-depth: this loader returns full customer PII + order history, so
+    // guard it directly rather than relying solely on the parent _layout loader.
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
+
     const customer = await prisma.customer.findUnique({
         where: { id: params.id },
         include: {

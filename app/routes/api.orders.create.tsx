@@ -1,19 +1,16 @@
 import type { ActionFunctionArgs } from "react-router";
 import { OrderCreateSchema, formatZodErrors } from "../utils/validation";
 import { checkRateLimit } from "../utils/rateLimit.server";
+import { rejectCrossOrigin } from "../utils/csrf.server";
 import {
     sendEmail,
     renderOrderConfirmation,
     orderConfirmationSubject,
 } from "../utils/email.server";
-import { env } from "../utils/env.server";
 import { logger } from "../utils/logger.server";
 import { createOrder, recordEmailStatus } from "../services/order.server";
+import { sendTelegramMessage } from "../utils/telegram.server";
 import { prisma } from "../db.server";
-
-// Telegram Configuration — from environment variables
-const TELEGRAM_BOT_TOKEN = env.TELEGRAM_BOT_TOKEN ?? "";
-const TELEGRAM_CHAT_ID = env.TELEGRAM_CHAT_ID ?? "";
 
 const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
@@ -25,6 +22,11 @@ export async function action({ request }: ActionFunctionArgs) {
     if (request.method !== "POST") {
         return new Response("Method not allowed", { status: 405 });
     }
+
+    // CSRF: reject demonstrably cross-origin POSTs — this places real COD orders
+    // and decrements stock, so it's the highest-value forgery target.
+    const csrf = rejectCrossOrigin(request);
+    if (csrf) return csrf;
 
     try {
         // Rate limit: 3 order creations per minute
@@ -93,24 +95,19 @@ export async function action({ request }: ActionFunctionArgs) {
             }
         }
 
-        // Telegram notification (admin) — best-effort.
-        if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-            try {
-                const itemsList = email.validItems
-                    .map(
-                        (item) =>
-                            `📦 ${item.name} (${item.size || "-"}/${item.color || "-"}) × ${item.quantity}`,
-                    )
-                    .join("\n");
-                const message = `🛍 НОВЕ ЗАМОВЛЕННЯ #${orderNumberInt}\n👤 ${customer.name}\n📧 ${customer.email}\n📱 ${customer.phone}\n🏙 ${customer.city} / ${customer.warehouse}\n\n${itemsList}\n\n💰 ${email.finalTotal} ₴`;
-                await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message }),
-                });
-            } catch (e) {
-                logger.error({ err: e, orderNumber: orderNumberInt }, "[orders] telegram failed");
-            }
+        // Telegram notification (admin) — fire-and-forget. The shared sender has a
+        // hard 3s timeout and never throws, so a slow/hanging Telegram API can no
+        // longer block this response (the order is already committed). We do NOT
+        // await it — the customer gets their confirmation immediately.
+        {
+            const itemsList = email.validItems
+                .map(
+                    (item) =>
+                        `📦 ${item.name} (${item.size || "-"}/${item.color || "-"}) × ${item.quantity}`,
+                )
+                .join("\n");
+            const message = `🛍 НОВЕ ЗАМОВЛЕННЯ #${orderNumberInt}\n👤 ${customer.name}\n📧 ${customer.email}\n📱 ${customer.phone}\n🏙 ${customer.city} / ${customer.warehouse}\n\n${itemsList}\n\n💰 ${email.finalTotal} ₴`;
+            void sendTelegramMessage(message);
         }
 
         // Order confirmation email — best-effort, never blocks/rolls back the
@@ -193,8 +190,12 @@ export async function action({ request }: ActionFunctionArgs) {
 
         return json({ success: true, orderId: orderNumberInt });
     } catch (error) {
+        // Log the real error server-side; return a generic message so internal
+        // detail (DB constraint text, third-party errors) never reaches the client.
         logger.error({ err: error }, "[orders] creation failed");
-        const message = error instanceof Error ? error.message : "Order creation failed";
-        return json({ success: false, error: message }, 500);
+        return json(
+            { success: false, error: "Не вдалося оформити замовлення. Спробуйте ще раз." },
+            500,
+        );
     }
 }

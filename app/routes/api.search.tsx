@@ -2,8 +2,12 @@ import { prisma } from "../db.server";
 import { expandSearchTerms } from "../utils/search-synonyms";
 import { isLocale, type Locale } from "../i18n/config";
 import { localizeEntities } from "../utils/translations.server";
+import { checkRateLimit } from "../utils/rateLimit.server";
 
 export async function loader({ request }: { request: Request }) {
+    const limited = checkRateLimit(request, "search", 30, 60_000);
+    if (limited) return limited;
+
     const url = new URL(request.url);
     const query = url.searchParams.get("q");
     const langParam = url.searchParams.get("lang");

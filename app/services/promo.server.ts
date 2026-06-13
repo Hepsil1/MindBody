@@ -61,13 +61,28 @@ export async function validateAndApplyPromo(
     return { code, discount, finalTotal: Math.max(0, subtotal - discount) };
 }
 
-/** Atomic usage increment — call inside the order transaction. */
+/**
+ * Atomically increment usage AND enforce the maxUses limit inside the order
+ * transaction. Raw SQL is required because Prisma can't express a
+ * column-to-column guard (`usedCount < maxUses`) in a where clause. If 0 rows
+ * are affected the code is exhausted (or vanished) under concurrency — we throw
+ * PromoError to abort the whole order transaction. This is what closes the
+ * "first N customers" overuse race: the pre-tx check in validateAndApplyPromo
+ * reads usedCount without a lock, so concurrent orders could all pass it; the
+ * conditional UPDATE here serializes the increment and rejects the overflow.
+ */
 export async function incrementPromoUsageTx(
     tx: Prisma.TransactionClient,
     code: string,
 ): Promise<void> {
-    await tx.promoCode.update({
-        where: { code: code.trim().toUpperCase() },
-        data: { usedCount: { increment: 1 } },
-    });
+    const norm = code.trim().toUpperCase();
+    const affected = await tx.$executeRaw`
+        UPDATE "PromoCode"
+        SET "usedCount" = "usedCount" + 1
+        WHERE "code" = ${norm}
+          AND ("maxUses" IS NULL OR "usedCount" < "maxUses")
+    `;
+    if (affected === 0) {
+        throw new PromoError("Промокод вичерпано");
+    }
 }

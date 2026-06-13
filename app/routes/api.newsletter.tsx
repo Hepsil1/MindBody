@@ -8,6 +8,7 @@ import {
 import { env } from "../utils/env.server";
 import { logger } from "../utils/logger.server";
 import { isLocale, type Locale } from "../i18n/config";
+import { rejectCrossOrigin } from "../utils/csrf.server";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,6 +30,10 @@ export async function action({ request }: ActionFunctionArgs) {
     if (request.method !== "POST") {
         return Response.json({ success: false, error: "Method not allowed" }, { status: 405 });
     }
+
+    // CSRF: reject demonstrably cross-origin POSTs.
+    const csrf = rejectCrossOrigin(request);
+    if (csrf) return csrf;
 
     const ip =
         request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||

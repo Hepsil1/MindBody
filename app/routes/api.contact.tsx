@@ -1,10 +1,16 @@
 import { prisma } from "../db.server";
 import { checkRateLimit } from "../utils/rateLimit.server";
+import { rejectCrossOrigin } from "../utils/csrf.server";
+import { sendTelegramMessage } from "../utils/telegram.server";
 
 export async function action({ request }: { request: Request }) {
     if (request.method !== "POST") {
         return Response.json({ error: "Method not allowed" }, { status: 405 });
     }
+
+    // CSRF: reject demonstrably cross-origin POSTs.
+    const csrf = rejectCrossOrigin(request);
+    if (csrf) return csrf;
 
     // Rate limit: 5 requests per minute
     const rateLimited = checkRateLimit(request, "contact", 5, 60_000);
@@ -12,32 +18,37 @@ export async function action({ request }: { request: Request }) {
 
     try {
         const body = await request.json();
-        const { contact } = body;
+        // Accepts both the Footer's simple { contact } and the Contacts page's
+        // richer { name, contact, message }. The client never supplies the
+        // Telegram message body — the server composes it from validated fields
+        // (that client-controlled body was the /api/telegram/send hole).
+        const pick = (v: unknown, max: number) =>
+            typeof v === "string" ? v.trim().slice(0, max) : "";
+        const contact = pick(body?.contact, 100);
+        const name = pick(body?.name, 100);
+        const message = pick(body?.message, 2000);
 
-        if (!contact || contact.trim().length < 3) {
+        if (contact.length < 3) {
             return Response.json({ error: "Введіть номер телефону або email" }, { status: 400 });
         }
 
-        const trimmed = contact.trim().substring(0, 100);
+        // Persist the contact so the lead survives even if Telegram is down.
         await prisma.contactRequest.create({
-            data: { contact: trimmed },
+            data: { contact },
         });
 
-        // Also send to Telegram
-        try {
-            const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-            const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-            if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
-                const msg = `📩 Нова заявка на зворотній зв'язок!\n\nКонтакт: ${trimmed}\nЧас: ${new Date().toLocaleString("uk-UA")}`;
-                await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg }),
-                });
-            }
-        } catch {
-            /* Telegram is optional */
-        }
+        // Notify via Telegram — fire-and-forget (3s timeout, never throws). Plain
+        // text (no parse_mode) so user-supplied name/message can't break Markdown.
+        const msg = [
+            "📩 Нова заявка з сайту",
+            name ? `👤 Ім'я: ${name}` : null,
+            `📞 Контакт: ${contact}`,
+            message ? `💬 Повідомлення: ${message}` : null,
+            `🕒 ${new Date().toLocaleString("uk-UA")}`,
+        ]
+            .filter(Boolean)
+            .join("\n");
+        void sendTelegramMessage(msg);
 
         return Response.json({ success: true });
     } catch (e) {

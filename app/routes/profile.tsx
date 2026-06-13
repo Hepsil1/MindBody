@@ -83,12 +83,13 @@ export default function Profile() {
             setSettings(AuthUtils.getSettings());
             setWishlistCount(StorageUtils.getWishlist().length);
 
-            // Load orders. Guard against non-OK responses (the endpoint returns
-            // a 403 { error } object when the server session email ≠ requested
-            // email); without this, that object lands in `orders` and the later
-            // orders.slice()/orders.map() throw, blanking the whole tab.
+            // Load orders. The server reads identity from the HttpOnly session
+            // cookie (sent automatically on this same-origin request) and returns
+            // 401 { error } when there's no session — guard against non-array
+            // bodies so a non-OK response can't land in `orders` and break
+            // the later orders.slice()/orders.map().
             if (authState.user) {
-                fetch(`/api/orders/list?email=${authState.user.email}`)
+                fetch("/api/orders/list")
                     .then((res) => (res.ok ? res.json() : []))
                     .then((data) => setOrders(Array.isArray(data) ? data : []))
                     .catch((err) => console.error("Failed to fetch orders:", err));

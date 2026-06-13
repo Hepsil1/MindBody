@@ -1,5 +1,11 @@
 .DS_Store
 .env
+# Any env variant (e.g. .env.bak, .env.local) — but keep the committed template.
+.env.*
+!.env.example
+# Stray backup files must never be committed (they often carry secrets/config).
+*.bak
+*.bak.*
 /node_modules/
 
 # React Router

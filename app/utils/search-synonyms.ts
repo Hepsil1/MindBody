@@ -66,16 +66,30 @@ const SYNONYM_INDEX: Map<string, string[]> = (() => {
 
 /**
  * Returns the set of terms to search for, given the raw user input.
- * Always includes the original (trimmed/lowercased) so a non-synonym
- * query still works. Maxed at 8 terms to keep the Prisma OR-tree sane.
+ *
+ * Tokenized so multi-word queries expand too: the old version only looked up
+ * the WHOLE trimmed string, so "легінси" hit the synonym map but "легінси чорні"
+ * fell back to a literal `ILIKE '%легінси чорні%'` → zero hits again. Now we keep
+ * the full phrase first (highest-priority exact match), then expand each word
+ * through the synonym index. Capped at 10 terms to keep the Prisma OR-tree sane.
  */
 export function expandSearchTerms(raw: string): string[] {
     const cleaned = raw.trim().replace(/[%_]/g, "").toLowerCase();
     if (!cleaned) return [];
-    const group = SYNONYM_INDEX.get(cleaned);
-    if (!group) return [cleaned];
-    // Original first so the highest-priority hit (exact what the user
-    // typed) stays at the front of the OR-tree.
-    const dedup = Array.from(new Set([cleaned, ...group]));
-    return dedup.slice(0, 8);
+
+    // Full phrase first — if the entire query is itself a known term, its group
+    // stays at the front of the OR-tree.
+    const ordered: string[] = [cleaned];
+    const phraseGroup = SYNONYM_INDEX.get(cleaned);
+    if (phraseGroup) ordered.push(...phraseGroup);
+
+    // Then per-token expansion (words of length ≥ 2; drops 1-char noise).
+    for (const token of cleaned.split(/\s+/).filter((t) => t.length >= 2)) {
+        ordered.push(token);
+        const group = SYNONYM_INDEX.get(token);
+        if (group) ordered.push(...group);
+    }
+
+    // Dedupe preserving priority order; cap the OR-tree.
+    return Array.from(new Set(ordered)).slice(0, 10);
 }

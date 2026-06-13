@@ -114,7 +114,11 @@ interface InventoryEntry {
 }
 
 // --- Loader ---
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params, request }: LoaderFunctionArgs) {
+    // Defense-in-depth: guard the loader directly, not just via the parent _layout.
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
+
     const isNew = params.id === "new" || !params.id;
     let product = null;
     const filterConfigs: Record<string, FilterConfigData> = {};

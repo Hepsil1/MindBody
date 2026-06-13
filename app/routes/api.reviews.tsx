@@ -1,6 +1,7 @@
 import { prisma } from "../db.server";
 import { ReviewSchema, formatZodErrors } from "../utils/validation";
 import { checkRateLimit } from "../utils/rateLimit.server";
+import { rejectCrossOrigin } from "../utils/csrf.server";
 
 // GET — fetch reviews for a product (only approved ones for public)
 export async function loader({ request }: { request: Request }) {
@@ -44,6 +45,10 @@ export async function action({ request }: { request: Request }) {
     if (request.method !== "POST") {
         return Response.json({ error: "Method not allowed" }, { status: 405 });
     }
+
+    // CSRF: reject demonstrably cross-origin POSTs.
+    const csrf = rejectCrossOrigin(request);
+    if (csrf) return csrf;
 
     try {
         // Rate limit: 5 reviews per minute
