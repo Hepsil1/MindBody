@@ -40,6 +40,8 @@ export default [
     route("api/quick-order", "routes/api.quick-order.tsx"),
     route("api/auth/login", "routes/api.auth.login.tsx"),
     route("api/auth/logout", "routes/api.auth.logout.tsx"),
+    route("api/auth/google", "routes/api.auth.google.tsx"),
+    route("api/auth/google/callback", "routes/api.auth.google.callback.tsx"),
     route("api/promo", "routes/api/promo.tsx"),
     route("api/newsletter", "routes/api.newsletter.tsx"),
     route("api/health", "routes/api.health.tsx"),
