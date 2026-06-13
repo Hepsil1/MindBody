@@ -116,106 +116,129 @@
     }
 }
 
-/* --- Header language switcher (UA | EN | RU pill) ---------------------- */
-/* Lives in header__actions — inherits currentColor so it works on both
-   the transparent hero header (white text) and the scrolled white header
-   (dark text). State is shown by an underline on the active locale — NOT by
-   dimming with opacity, which dropped inactive locales below the WCAG AA
-   contrast ratio (this was the lone Lighthouse a11y contrast failure). */
+/* --- Header language dropdown (single button → menu) ------------------- */
+/* Trigger inherits currentColor so it reads on the transparent hero header
+   (white) and the scrolled white header (dark). The menu is a white card of
+   real <Link>s — in the DOM at all times (crawlable / hreflang), revealed on
+   open. State uses colour + weight, never opacity-dimming (WCAG AA). */
 
 .lang-switch {
+    position: relative;
     display: inline-flex;
-    align-items: center;
-    border: 1px solid currentColor;
-    border-radius: 20px;
-    padding: 2px;
     flex-shrink: 0;
 }
 
-.lang-switch__item {
-    padding: 2px 7px;
+.lang-switch__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-family: inherit;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.1em;
     color: inherit;
-    text-decoration: none;
-    transition: text-decoration-color 0.2s ease;
-    line-height: 1.5;
+    background: transparent;
+    border: 1px solid currentColor;
     border-radius: 20px;
+    cursor: pointer;
+    line-height: 1.4;
 }
 
-.lang-switch__item:not(:last-child) {
-    border-right: 1px solid currentColor;
+.lang-switch__chevron {
+    transition: transform 0.2s ease;
+}
+.lang-switch__chevron.is-open {
+    transform: rotate(180deg);
 }
 
-.lang-switch__item:hover,
-.lang-switch__item:focus-visible {
-    text-decoration: underline;
-    text-underline-offset: 3px;
+.lang-switch__menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 168px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    background: var(--color-bg-white, #fff);
+    border: 1px solid var(--color-border, rgba(0, 0, 0, 0.1));
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+    z-index: 1200;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition:
+        opacity 0.18s ease,
+        transform 0.18s ease,
+        visibility 0.18s;
+}
+.lang-switch__menu.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
-.lang-switch__item--active {
-    font-weight: 800;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+.lang-switch__option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--color-text-secondary, #4a6464);
+    font-size: 13px;
+    line-height: 1.2;
+}
+.lang-switch__option:hover,
+.lang-switch__option:focus-visible {
+    background: rgba(42, 90, 104, 0.07);
+    color: var(--color-primary, #2a5a5a);
+    outline: none;
+}
+.lang-switch__option-code {
+    min-width: 26px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--color-primary, #2a5a5a);
+}
+.lang-switch__option.is-active {
+    background: rgba(42, 90, 104, 0.08);
+    font-weight: 700;
+    color: var(--color-primary, #2a5a5a);
 }
 
-/* In the top bar — the .top-bar__link::after pseudo already adds a | after
-   "Sign In", so no extra border-left needed here. */
+/* Top bar: borderless trigger to match the utility links beside it. */
 .lang-switch--topbar {
     margin-left: 4px;
-    border: none;
-    border-radius: 0;
-    opacity: 1;
 }
-
-.lang-switch--topbar .lang-switch__item {
-    padding: 2px 6px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+.lang-switch--topbar .lang-switch__trigger {
+    border: none;
+    padding: 4px 6px;
     color: var(--color-text-secondary, #4a6464);
-    border-right: 1px solid rgba(42, 90, 90, 0.2);
-    border-radius: 0;
 }
-
-.lang-switch--topbar .lang-switch__item:last-child {
-    border-right: none;
-}
-
-.lang-switch--topbar .lang-switch__item:hover,
-.lang-switch--topbar .lang-switch__item:focus-visible {
-    opacity: 1;
+.lang-switch--topbar .lang-switch__trigger:hover {
     color: var(--color-primary, #2a5a5a);
 }
 
-.lang-switch--topbar .lang-switch__item--active {
-    opacity: 1;
-    color: var(--color-primary, #2a5a5a);
-}
-
-/* Mobile drawer: no pill border, big tap targets, brand colours */
+/* Mobile drawer: full-width trigger, menu drops full-width beneath it. */
 .header__nav-extra .lang-switch {
-    border: none;
-    border-radius: 0;
-    opacity: 1;
-    padding: 0;
-    gap: 6px;
+    display: block;
+    width: 100%;
 }
-
-.header__nav-extra .lang-switch__item {
-    padding: 8px 16px;
+.header__nav-extra .lang-switch__trigger {
+    width: 100%;
+    justify-content: space-between;
+    padding: 12px 16px;
     font-size: 13px;
-    letter-spacing: 0.07em;
-    border-right: none;
-    border: 1px solid rgba(42, 90, 104, 0.18);
-    border-radius: 8px;
-    opacity: 0.65;
     color: var(--color-primary, #2a5a68);
+    border-color: rgba(42, 90, 104, 0.18);
+    border-radius: 8px;
 }
-
-.header__nav-extra .lang-switch__item--active {
-    opacity: 1;
-    background: rgba(42, 90, 104, 0.08);
-    border-color: var(--color-primary, #2a5a68);
+.header__nav-extra .lang-switch__menu {
+    right: auto;
+    left: 0;
+    width: 100%;
 }
