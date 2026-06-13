@@ -40,7 +40,7 @@ const CONTENT: Record<Locale, FaqContent> = {
             },
             {
                 q: "Як довго триває доставка?",
-                a: "Нова Пошта — 1-3 дні по Україні, Укрпошта — 3-7 днів. Безкоштовна доставка від 2000₴.",
+                a: "Нова Пошта — 1-3 дні по Україні, Укрпошта — 3-7 днів. Доставка завжди за тарифами перевізника, оплата при отриманні.",
             },
             {
                 q: "Чи можна повернути товар?",
@@ -94,7 +94,7 @@ const CONTENT: Record<Locale, FaqContent> = {
             },
             {
                 q: "How long does delivery take?",
-                a: "Nova Poshta — 1-3 days across Ukraine, Ukrposhta — 3-7 days. Free delivery on orders from 2000₴.",
+                a: "Nova Poshta — 1-3 days across Ukraine, Ukrposhta — 3-7 days. Delivery is always at the carrier's rates, paid on receipt.",
             },
             {
                 q: "Can I return an item?",
@@ -148,7 +148,7 @@ const CONTENT: Record<Locale, FaqContent> = {
             },
             {
                 q: "Как долго длится доставка?",
-                a: "Новая Почта — 1-3 дня по Украине, Укрпочта — 3-7 дней. Бесплатная доставка от 2000₴.",
+                a: "Новая Почта — 1-3 дня по Украине, Укрпочта — 3-7 дней. Доставка всегда по тарифам перевозчика, оплата при получении.",
             },
             {
                 q: "Можно ли вернуть товар?",
