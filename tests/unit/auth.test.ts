@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
     validateEmail,
     validatePassword,
@@ -106,7 +106,11 @@ describe("AuthUtils.logout", () => {
 });
 
 describe("AuthUtils.updateProfile", () => {
-    it("merges updates into the cached user", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it("persists name+phone via the server and syncs sessionStorage", async () => {
         const initial = {
             id: "u-1",
             name: "Old Name",
@@ -116,16 +120,44 @@ describe("AuthUtils.updateProfile", () => {
         };
         sessionStorage.setItem("auth_user", JSON.stringify(initial));
 
-        const result = AuthUtils.updateProfile({ name: "New Name", phone: "+380501112233" });
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => ({
+                ok: true,
+                json: async () => ({
+                    id: "u-1",
+                    firstName: "New",
+                    lastName: "Name",
+                    email: "u@x.com",
+                    phone: "+380501112233",
+                }),
+            })),
+        );
+
+        const result = await AuthUtils.updateProfile({
+            name: "New Name",
+            phone: "+380501112233",
+        });
         expect(result.success).toBe(true);
         expect(result.user?.name).toBe("New Name");
         expect(result.user?.phone).toBe("+380501112233");
         expect(result.user?.email).toBe("u@x.com"); // unchanged
+        // Persisted to sessionStorage from the server response.
+        const stored = JSON.parse(sessionStorage.getItem("auth_user") || "{}");
+        expect(stored.phone).toBe("+380501112233");
     });
 
-    it("returns success=false when no user is logged in", () => {
-        const result = AuthUtils.updateProfile({ name: "Whatever" });
+    it("returns success=false with a message when the server rejects", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => ({
+                ok: false,
+                json: async () => ({ error: "Вкажіть коректний номер телефону" }),
+            })),
+        );
+        const result = await AuthUtils.updateProfile({ name: "X", phone: "123" });
         expect(result.success).toBe(false);
+        expect(result.message).toContain("телефон");
     });
 });
 

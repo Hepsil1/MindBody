@@ -44,6 +44,9 @@ export default function Profile() {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState("");
     const [editPhone, setEditPhone] = useState("");
+    // True when the logged-in customer has no phone yet (e.g. fresh Google
+    // sign-in) — drives a prompt + auto-opens the editor to capture it.
+    const [needsPhone, setNeedsPhone] = useState(false);
 
     // Change password state
     const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -77,6 +80,13 @@ export default function Profile() {
             setUser(authState.user);
             setEditName(authState.user.name);
             setEditPhone(authState.user.phone || "");
+            // Phone is required for COD, and Google sign-ins arrive without one.
+            // Open the editor + show a prompt so the customer completes it.
+            if (!authState.user.phone) {
+                setActiveTab("overview");
+                setIsEditing(true);
+                setNeedsPhone(true);
+            }
 
             // Load data
             setAddresses(AuthUtils.getAddresses());
@@ -133,12 +143,28 @@ export default function Profile() {
         navigate(lp("/"));
     };
 
-    const handleSaveProfile = () => {
-        const result = AuthUtils.updateProfile({ name: editName, phone: editPhone });
-        if (result.success) {
-            setUser(result.user!);
+    const handleSaveProfile = async () => {
+        const trimmedName = editName.trim();
+        if (trimmedName.length < 2) {
+            showToast("Вкажіть ім'я", "error");
+            return;
+        }
+        // Phone is required for a COD store — validate before saving.
+        if (editPhone.replace(/\D/g, "").length < 10) {
+            showToast("Вкажіть коректний номер телефону", "error");
+            return;
+        }
+        const result = await AuthUtils.updateProfile({
+            name: trimmedName,
+            phone: editPhone.trim(),
+        });
+        if (result.success && result.user) {
+            setUser(result.user);
             setIsEditing(false);
+            setNeedsPhone(false);
             showToast("Профіль оновлено!", "success");
+        } else {
+            showToast(result.message || "Не вдалося зберегти", "error");
         }
     };
 
@@ -521,6 +547,16 @@ export default function Profile() {
                                         )}
                                     </div>
                                     <div className="profile-card__content">
+                                        {needsPhone && !user.phone && (
+                                            <div className="profile-complete-prompt" role="status">
+                                                <strong>{t("Завершіть профіль")}</strong>
+                                                <span>
+                                                    {t(
+                                                        "Додайте номер телефону — він потрібен, щоб ми підтвердили та доставили замовлення.",
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
                                         <div className="profile-grid">
                                             <div className="profile-field">
                                                 <label>

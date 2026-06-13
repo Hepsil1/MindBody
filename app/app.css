@@ -16589,3 +16589,27 @@ select {
         }
     }
 }
+
+/* Profile completion prompt — shown when a logged-in customer has no phone yet
+   (e.g. a fresh Google sign-in). Uses brand tokens; soft tinted notice, no new
+   buttons. */
+.profile-complete-prompt {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 20px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: rgba(31, 122, 113, 0.08);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+}
+.profile-complete-prompt strong {
+    font-size: 0.95rem;
+    color: var(--color-primary);
+}
+.profile-complete-prompt span {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}
