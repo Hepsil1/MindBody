@@ -1119,16 +1119,12 @@ export default function Checkout() {
                                             <span>{t("Товари")}</span>
                                             <span>{money(subtotal)}</span>
                                         </div>
-                                        {/* F-036 — same shipping logic as the cart-step
-                                            summary; the buyer is past the cart but still
-                                            needs the threshold reminder + concrete range. */}
+                                        {/* Shipping is always paid to the carrier on receipt
+                                            (Nova Poshta tariff) — there is no free-shipping
+                                            threshold, so the total never includes it. */}
                                         <div className="order-row">
                                             <span>{t("Доставка@@totals")}</span>
-                                            <span>
-                                                {subtotal >= 2000
-                                                    ? t("Безкоштовно ✓")
-                                                    : t("≈70–120 ₴ (Нова Пошта)")}
-                                            </span>
+                                            <span>{t("За тарифами перевізника")}</span>
                                         </div>
                                         <div className="order-row total">
                                             <span>{t("Разом")}</span>
@@ -1318,50 +1314,12 @@ export default function Checkout() {
                                         </span>
                                         <span>{money(subtotal)}</span>
                                     </div>
-                                    {/* Phase 6 atom 4 — free-shipping nudge.
-                                        Mirrors the cart-drawer pattern at
-                                        FREE_SHIPPING=2000.  Disappears once
-                                        the threshold is met. */}
-                                    {(() => {
-                                        const FREE_SHIPPING = 2000;
-                                        const remaining = Math.max(0, FREE_SHIPPING - subtotal);
-                                        const progress = Math.min(
-                                            100,
-                                            (subtotal / FREE_SHIPPING) * 100,
-                                        );
-                                        return remaining > 0 ? (
-                                            <div className="shipping-progress">
-                                                <div className="shipping-progress__bar">
-                                                    <div
-                                                        className="shipping-progress__fill"
-                                                        style={{ width: `${progress}%` }}
-                                                    />
-                                                </div>
-                                                <span>
-                                                    {t("До безкоштовної доставки ще")}{" "}
-                                                    <strong>{money(remaining)}</strong>
-                                                </span>
-                                            </div>
-                                        ) : (
-                                            <div className="shipping-progress shipping-progress--free">
-                                                <span>{t("🎉 Безкоштовна доставка!")}</span>
-                                            </div>
-                                        );
-                                    })()}
-                                    {/* F-036 — single source of truth for shipping line.
-                                        Above-threshold: matches the green nudge above ("free");
-                                        below: names a concrete UAH range so the buyer knows what
-                                        they will pay (Baymard: unexpected shipping cost = #1
-                                        cart-abandonment driver). The number is Nova Poshta's
-                                        typical city→city box price, not a fixed promise — see
-                                        /delivery for context. */}
+                                    {/* Shipping is always paid to the carrier on receipt (Nova
+                                        Poshta tariff) — no free-shipping threshold, so no progress
+                                        nudge and the total never includes a shipping figure. */}
                                     <div className="summary-line">
                                         <span>{t("Доставка@@totals")}</span>
-                                        <span>
-                                            {subtotal >= 2000
-                                                ? t("Безкоштовно ✓")
-                                                : t("≈70–120 ₴ (Нова Пошта)")}
-                                        </span>
+                                        <span>{t("За тарифами перевізника")}</span>
                                     </div>
                                     {promoApplied && (
                                         <div className="summary-line" style={{ color: "#10b981" }}>

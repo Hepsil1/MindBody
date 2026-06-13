@@ -7,6 +7,13 @@
  * lives at the bottom.
  */
 export const en: Record<string, string> = {
+    // --- delivery (no free shipping — always carrier tariff) ---
+    "За тарифами перевізника": "At carrier's rates",
+    "Доставка за тарифами перевізника": "Delivery at the carrier's rates",
+    "Вартість доставки — за тарифами Нової Пошти": "Delivery cost — at Nova Poshta rates",
+    "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика. Доставка Новою Поштою по всій Україні.":
+        "Ukrainian sportswear brand for women and kids. Yoga, gymnastics, acrobatics. Nova Poshta delivery across Ukraine.",
+
     // --- root / global ---
     "Перейти до контенту": "Skip to content",
     "Помилка!": "Error!",

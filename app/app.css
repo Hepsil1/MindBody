@@ -16647,3 +16647,12 @@ select {
     text-decoration: underline;
     text-underline-offset: 3px;
 }
+
+/* Cart drawer: brief "delivery paid to carrier" note (replaced the old
+   free-shipping progress bar — there is no free shipping). */
+.cart-drawer__shipping-note {
+    margin-bottom: 12px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}

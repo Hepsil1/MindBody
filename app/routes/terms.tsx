@@ -96,7 +96,7 @@ const CONTENT: Record<Locale, PageContent> = {
                     [
                         "Доставка здійснюється Новою Поштою та Укрпоштою по всій Україні. Деталі — на сторінці ",
                         { to: "/delivery", label: "«Доставка та оплата»" },
-                        ". Безкоштовна доставка від 2000₴.",
+                        ". Доставка завжди за тарифами перевізника.",
                     ],
                 ],
             },
@@ -188,7 +188,7 @@ const CONTENT: Record<Locale, PageContent> = {
                     [
                         "Delivery across Ukraine is provided by Nova Poshta and Ukrposhta. For details, see the ",
                         { to: "/delivery", label: "Delivery and Payment" },
-                        " page. Free delivery on orders over 2000₴.",
+                        " page. Delivery is always at the carrier's rates.",
                     ],
                 ],
             },
@@ -280,7 +280,7 @@ const CONTENT: Record<Locale, PageContent> = {
                     [
                         "Доставка осуществляется Новой Почтой и Укрпочтой по всей Украине. Подробности — на странице ",
                         { to: "/delivery", label: "«Доставка и оплата»" },
-                        ". Бесплатная доставка от 2000₴.",
+                        ". Доставка всегда по тарифам перевозчика.",
                     ],
                 ],
             },

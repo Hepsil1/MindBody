@@ -261,31 +261,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                         {/* Footer */}
                         <div className="cart-drawer__footer">
-                            {/* Free shipping progress bar */}
-                            {(() => {
-                                const FREE_SHIPPING = 2000;
-                                const remaining = Math.max(0, FREE_SHIPPING - total);
-                                const progress = Math.min(100, (total / FREE_SHIPPING) * 100);
-                                return remaining > 0 ? (
-                                    <div className="cart-drawer__shipping-progress">
-                                        <div className="cart-drawer__shipping-bar">
-                                            <div
-                                                className="cart-drawer__shipping-fill"
-                                                style={{ width: `${progress}%` }}
-                                            />
-                                        </div>
-                                        <span className="cart-drawer__shipping-text">
-                                            {t("До безкоштовної доставки ще {amount}", {
-                                                amount: money(remaining),
-                                            })}
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <div className="cart-drawer__shipping-free">
-                                        {t("🎉 Безкоштовна доставка!")}
-                                    </div>
-                                );
-                            })()}
+                            {/* No free-shipping threshold — delivery is always paid to the
+                                carrier on receipt, so there's no progress nudge here. */}
+                            <div className="cart-drawer__shipping-note">
+                                {t("Доставка за тарифами перевізника")}
+                            </div>
 
                             <div className="cart-drawer__total">
                                 <span>{t("Разом:")}</span>

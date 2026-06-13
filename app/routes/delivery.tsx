@@ -1,16 +1,13 @@
-import { LLink, useI18n, useMoney } from "../i18n";
-
-/** UAH threshold above which shipping is free (checkout charges in UAH). */
-const FREE_SHIPPING_FROM_UAH = 2000;
+import { LLink, useI18n } from "../i18n";
 
 const CONTENT = {
     uk: {
         breadcrumbHome: "Головна",
         title: "Доставка та оплата",
         deliveryHeading: "Доставка",
-        freeBanner: "Безкоштовна доставка від 2 000 ₴",
+        freeBanner: "Доставка — за тарифами перевізника",
         paidBanner:
-            "До 2 000 ₴ — за тарифами Нової Пошти, зазвичай ≈70–120 ₴ залежно від ваги та маршруту.",
+            "Нова Пошта зазвичай ≈70–120 ₴ залежно від ваги та маршруту. Оплата при отриманні.",
         carriers: [
             {
                 name: "Нова Пошта",
@@ -46,9 +43,9 @@ const CONTENT = {
         breadcrumbHome: "Home",
         title: "Delivery & Payment",
         deliveryHeading: "Delivery",
-        freeBanner: "Free shipping on orders over {sum}",
+        freeBanner: "Delivery — at the carrier's rates",
         paidBanner:
-            "Under {sum} — Nova Poshta rates apply, usually ≈UAH 70–120 depending on weight and route.",
+            "Nova Poshta is usually ≈UAH 70–120 depending on weight and route. Paid on receipt.",
         carriers: [
             {
                 name: "Nova Poshta",
@@ -84,9 +81,9 @@ const CONTENT = {
         breadcrumbHome: "Главная",
         title: "Доставка и оплата",
         deliveryHeading: "Доставка",
-        freeBanner: "Бесплатная доставка от {sum}",
+        freeBanner: "Доставка — по тарифам перевозчика",
         paidBanner:
-            "До {sum} — по тарифам Новой Почты, обычно ≈70–120 грн в зависимости от веса и маршрута.",
+            "Новая Почта обычно ≈70–120 грн в зависимости от веса и маршрута. Оплата при получении.",
         carriers: [
             {
                 name: "Новая Почта",
@@ -122,9 +119,7 @@ const CONTENT = {
 
 export default function Delivery() {
     const { locale } = useI18n();
-    const money = useMoney();
     const c = CONTENT[locale];
-    const freeFrom = money(FREE_SHIPPING_FROM_UAH);
 
     return (
         <main className="delivery-page">
@@ -154,11 +149,9 @@ export default function Delivery() {
                             {c.deliveryHeading}
                         </h2>
 
-                        {/* F-043 — concrete shipping economics. Premium meta-description
-                            promises "free shipping over 2000₴" but the page didn't
-                            actually state the threshold or the price below it. Putting
-                            both numbers up-front lets the buyer plan the cart total
-                            instead of guessing at checkout. */}
+                        {/* Honest shipping line: there is no free-shipping threshold —
+                            delivery is always paid to the carrier on receipt (Nova Poshta
+                            tariff), with a typical price range so the buyer can plan. */}
                         <div
                             style={{
                                 marginBottom: "30px",
@@ -172,12 +165,8 @@ export default function Delivery() {
                                 gap: "8px",
                             }}
                         >
-                            <strong style={{ fontSize: "1.1rem" }}>
-                                {c.freeBanner.replace("{sum}", freeFrom)}
-                            </strong>
-                            <span style={{ opacity: 0.92 }}>
-                                {c.paidBanner.replace("{sum}", freeFrom)}
-                            </span>
+                            <strong style={{ fontSize: "1.1rem" }}>{c.freeBanner}</strong>
+                            <span style={{ opacity: 0.92 }}>{c.paidBanner}</span>
                         </div>
 
                         {c.carriers.map((carrier) => (
