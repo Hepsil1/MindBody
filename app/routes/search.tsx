@@ -119,7 +119,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
                 is_sale: isSale,
                 sale_price: isSale ? price : undefined,
                 discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
-                inStock,
+                is_stock: inStock,
             };
         });
 
@@ -173,7 +173,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
                     is_sale: isSale,
                     sale_price: isSale ? price : undefined,
                     discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
-                    inStock,
+                    is_stock: inStock,
                 };
             });
         }

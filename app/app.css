@@ -5542,12 +5542,16 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
    ================================================================ */
 .cookie-banner {
     position: fixed;
-    left: 50%;
+    /* Bottom-LEFT corner card (was centered, which sat on top of the hero's
+       centered CTA and the PDP "Додати в кошик" button on first visit). */
+    left: 20px;
+    right: auto;
     bottom: 20px;
-    transform: translateX(-50%);
     width: calc(100% - 40px);
-    max-width: 720px;
-    z-index: 1000;
+    max-width: 440px;
+    /* Above the mobile sticky buy bar (z 999) so the banner is never hidden;
+       on mobile it's also lifted above that bar — see the body:has rule. */
+    z-index: 1100;
     background: var(--color-bg-white);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -5569,7 +5573,8 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 .cookie-banner__inner {
     display: flex;
     align-items: center;
-    gap: 24px;
+    flex-wrap: wrap;
+    gap: 16px 24px;
     padding: 18px 24px;
 }
 
@@ -5664,6 +5669,15 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     .cookie-banner__btn {
         flex: 1;
         padding: 12px 16px;
+    }
+}
+
+/* On pages with a mobile sticky buy/checkout bar, lift the banner ABOVE it so
+   the primary CTA stays tappable while consent is still pending. */
+@media (max-width: 600px) {
+    body:has(.mobile-sticky-cta) .cookie-banner {
+        bottom: calc(68px + env(safe-area-inset-bottom));
+        border-radius: var(--radius-lg);
     }
 }
 
@@ -16612,4 +16626,24 @@ select {
     font-size: 0.85rem;
     color: var(--color-text-secondary);
     line-height: 1.4;
+}
+
+/* "Показати всі результати" link at the foot of the header search overlay —
+   the bridge from the 8 inline hits to the full /search grid. */
+.search-overlay__see-all {
+    display: block;
+    margin-top: 4px;
+    padding: 14px 16px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--color-primary);
+    text-decoration: none;
+    border-top: 1px solid var(--color-border);
+}
+.search-overlay__see-all:hover,
+.search-overlay__see-all:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }

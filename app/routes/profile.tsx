@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AuthUtils, type User, type Address, type UserSettings } from "../utils/auth";
 import { StorageUtils } from "../utils/storage";
+import { useModalA11y } from "../components/admin/useModalA11y";
 import { useI18n, useMoney, LLink } from "../i18n";
 
 export function meta() {
@@ -67,6 +68,13 @@ export default function Profile() {
 
     // Toast state
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+    // Accessible modals (shared hook): Escape closes, Tab trapped inside, focus
+    // moves in on open and returns to the trigger on close.
+    const passwordModalRef = useRef<HTMLDivElement>(null);
+    const addressModalRef = useRef<HTMLDivElement>(null);
+    useModalA11y(passwordModalRef, () => setShowPasswordModal(false), showPasswordModal);
+    useModalA11y(addressModalRef, () => setShowAddressModal(false), showAddressModal);
 
     useEffect(() => {
         const initProfile = async () => {
@@ -1037,11 +1045,20 @@ export default function Profile() {
             {/* Password Modal */}
             {showPasswordModal && (
                 <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="modal"
+                        onClick={(e) => e.stopPropagation()}
+                        ref={passwordModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="password-modal-title"
+                    >
                         <div className="modal__header">
-                            <h3>{t("Змінити пароль")}</h3>
+                            <h3 id="password-modal-title">{t("Змінити пароль")}</h3>
                             <button
+                                type="button"
                                 className="modal__close"
+                                aria-label={t("Закрити")}
                                 onClick={() => setShowPasswordModal(false)}
                             >
                                 <svg
@@ -1107,11 +1124,20 @@ export default function Profile() {
             {/* Address Modal */}
             {showAddressModal && (
                 <div className="modal-overlay" onClick={() => setShowAddressModal(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="modal"
+                        onClick={(e) => e.stopPropagation()}
+                        ref={addressModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="address-modal-title"
+                    >
                         <div className="modal__header">
-                            <h3>{t("Додати адресу")}</h3>
+                            <h3 id="address-modal-title">{t("Додати адресу")}</h3>
                             <button
+                                type="button"
                                 className="modal__close"
+                                aria-label={t("Закрити")}
                                 onClick={() => setShowAddressModal(false)}
                             >
                                 <svg

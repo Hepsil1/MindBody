@@ -314,6 +314,16 @@ export function Header() {
         setSearchResults([]);
     };
 
+    // Enter / "see all" → the full /search page (the overlay only shows the
+    // top 8 inline hits; previously there was no way to reach the full grid).
+    const submitSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        const q = searchQuery.trim();
+        if (q.length < 2) return;
+        navigate(lp(`/search?q=${encodeURIComponent(q)}`));
+        closeSearch();
+    };
+
     // Close on Escape
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -384,7 +394,7 @@ export function Header() {
                         <LNavLink to={user ? "/profile" : "/auth"} className="top-bar__link">
                             {user ? t("Профіль") : t("Увійти")}
                         </LNavLink>
-                        <LanguageSwitcher className="lang-switch--top-bar" />
+                        <LanguageSwitcher className="lang-switch--topbar" />
                     </div>
                 </div>
             </div>
@@ -659,7 +669,11 @@ export function Header() {
             {isSearchOpen && (
                 <div className="search-overlay" onClick={closeSearch}>
                     <div className="search-overlay__content" onClick={(e) => e.stopPropagation()}>
-                        <div className="search-overlay__input-wrap">
+                        <form
+                            className="search-overlay__input-wrap"
+                            role="search"
+                            onSubmit={submitSearch}
+                        >
                             <svg
                                 className="search-overlay__icon"
                                 width="20"
@@ -699,7 +713,7 @@ export function Header() {
                                     <line x1="6" y1="6" x2="18" y2="18" />
                                 </svg>
                             </button>
-                        </div>
+                        </form>
 
                         {/* Results */}
                         {searchQuery.length >= 2 && (
@@ -741,6 +755,15 @@ export function Header() {
                                             query: searchQuery,
                                         })}
                                     </div>
+                                )}
+                                {!isSearching && searchResults.length > 0 && (
+                                    <LLink
+                                        to={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                                        className="search-overlay__see-all"
+                                        onClick={closeSearch}
+                                    >
+                                        {t("Показати всі результати")} →
+                                    </LLink>
                                 )}
                             </div>
                         )}
