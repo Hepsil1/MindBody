@@ -1,7 +1,12 @@
 import { prisma } from "../../db.server";
+import { checkRateLimit } from "../../utils/rateLimit.server";
 
 // GET /api/promo?code=ЗИМА25 — validate promo code
 export async function loader({ request }: { request: Request }) {
+    // Throttle promo-code guessing (brute-forcing valid codes).
+    const limited = checkRateLimit(request, "promo", 10, 60_000);
+    if (limited) return limited;
+
     const url = new URL(request.url);
     const code = url.searchParams.get("code")?.trim().toUpperCase();
 

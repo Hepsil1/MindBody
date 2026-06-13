@@ -328,6 +328,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
             if (e instanceof InsufficientStockError || e instanceof ProductUnavailableError) {
                 return { ok: false, status: 400, error: e.message };
             }
+            // Promo exhausted under concurrency: the atomic guard in
+            // incrementPromoUsageTx returned 0 rows and rolled back the tx.
+            if (e instanceof PromoError) {
+                return { ok: false, status: 409, error: e.message };
+            }
             // Near-concurrent duplicate landed first — return the winner.
             if (idempotencyKey && isIdempotencyConflict(e)) {
                 const existing = await findOrderByKey(idempotencyKey);

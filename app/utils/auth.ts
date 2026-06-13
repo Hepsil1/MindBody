@@ -63,32 +63,9 @@ export const validatePassword = (password: string): { valid: boolean; message: s
     return { valid: true, message: "" };
 };
 
-// Send registration notification via server-side route
-const sendRegistrationNotification = async (user: User): Promise<void> => {
-    const message = `
-🎉 *НОВА РЕЄСТРАЦІЯ - MIND BODY*
-━━━━━━━━━━━━━━━━━━━━━
-👤 *Ім'я:* ${user.name}
-📧 *Email:* ${user.email}
-📱 *Телефон:* ${user.phone || "Не вказано"}
-
-ℹ️ *Додаткова інформація:*
-🔐 *Метод реєстрації:* ${user.provider === "google" ? "Google" : "Email/Пароль"}
-🆔 *ID:* \`${user.id}\`
-📅 *Дата:* ${new Date().toLocaleString("uk-UA")}
-━━━━━━━━━━━━━━━━━━━━━
-    `.trim();
-
-    try {
-        await fetch("/api/telegram/send", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message }),
-        });
-    } catch (error) {
-        console.error("Failed to send registration notification:", error);
-    }
-};
+// NOTE: the registration Telegram notification used to fire from here, but
+// /api/telegram/send is now locked down (no browser caller). The alert is sent
+// server-side from api.register instead.
 
 export const AuthUtils = {
     // Get current auth state (synchronous — from sessionStorage)
@@ -149,9 +126,6 @@ export const AuthUtils = {
 
             sessionStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
             window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
-
-            // Send Telegram notification
-            await sendRegistrationNotification(user);
 
             // Initialize default settings
             AuthUtils.saveSettings({
@@ -220,6 +194,12 @@ export const AuthUtils = {
     logout: async (): Promise<void> => {
         sessionStorage.removeItem(STORAGE_KEYS.AUTH_USER);
         window.dispatchEvent(new Event(EVENTS.AUTH_CHANGED));
+        // Also clear the server session cookie so it can't outlive client logout.
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+        } catch {
+            /* best-effort — client state is already cleared */
+        }
     },
 
     // Handle OAuth callback

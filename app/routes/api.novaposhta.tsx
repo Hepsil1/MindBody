@@ -3,9 +3,15 @@
 
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { searchCities, getWarehouses } from "../utils/novaposhta.server";
+import { checkRateLimit } from "../utils/rateLimit.server";
 
 // Handle POST requests for city/warehouse search
 export async function action({ request }: ActionFunctionArgs) {
+    // This proxies to Nova Poshta using the shop's API key — throttle so it can't
+    // be hammered to burn the shop's NP quota. 30/min covers normal typeahead.
+    const limited = checkRateLimit(request, "novaposhta", 30, 60_000);
+    if (limited) return limited;
+
     const formData = await request.formData();
     const actionType = formData.get("action") as string;
 
@@ -32,6 +38,9 @@ export async function action({ request }: ActionFunctionArgs) {
 
 // Handle GET requests (for testing)
 export async function loader({ request }: LoaderFunctionArgs) {
+    const limited = checkRateLimit(request, "novaposhta", 30, 60_000);
+    if (limited) return limited;
+
     const url = new URL(request.url);
     const actionType = url.searchParams.get("action");
 

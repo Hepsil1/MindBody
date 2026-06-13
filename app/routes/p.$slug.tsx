@@ -1179,17 +1179,22 @@ export default function ProductDetail() {
                                             onClick={async () => {
                                                 setQuickBuySending(true);
                                                 try {
-                                                    const res = await fetch("/api/telegram/send", {
+                                                    const res = await fetch("/api/quick-order", {
                                                         method: "POST",
                                                         headers: {
                                                             "Content-Type": "application/json",
                                                         },
                                                         body: JSON.stringify({
-                                                            message: `🔥 ШВИДКЕ ЗАМОВЛЕННЯ\n\n📦 ${product.name}\n💰 ${product.price} ₴${selectedSize ? `\n📏 Розмір: ${selectedSize}` : ""}${selectedColor ? `\n🎨 Колір: ${selectedColor}` : ""}\n👤 Ім'я: ${quickBuyName || "Не вказано"}\n📞 Телефон: ${quickBuyPhone}`,
+                                                            name: quickBuyName,
+                                                            phone: quickBuyPhone,
+                                                            productName: product.name,
+                                                            price: product.price,
+                                                            size: selectedSize,
+                                                            color: selectedColor,
                                                         }),
                                                     });
-                                                    // Don't tell the customer the order was accepted
-                                                    // if the send actually failed (a dropped order).
+                                                    // The server persists the lead + sends Telegram;
+                                                    // a non-OK response means it wasn't accepted.
                                                     if (!res.ok) throw new Error("send failed");
                                                     setQuickBuyOpen(false);
                                                     setQuickBuyPhone("");

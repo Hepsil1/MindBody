@@ -80,11 +80,17 @@ export default function Contacts() {
         if (!form.name.trim() || !form.contact.trim() || !form.message.trim()) return;
         setStatus("sending");
         try {
-            const text = `📩 *Нове повідомлення з сайту*\n\n👤 *Ім'я:* ${form.name}\n📞 *Контакт:* ${form.contact}\n💬 *Повідомлення:* ${form.message}`;
-            const res = await fetch("/api/telegram/send", {
+            // Submit structured fields to the server, which validates them,
+            // composes + sends the Telegram notification and persists the lead.
+            // (The old direct /api/telegram/send call is now locked down.)
+            const res = await fetch("/api/contact", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text }),
+                body: JSON.stringify({
+                    name: form.name,
+                    contact: form.contact,
+                    message: form.message,
+                }),
             });
             if (!res.ok) throw new Error("send failed");
             setStatus("sent");

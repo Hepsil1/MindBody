@@ -2,28 +2,24 @@ import type { LoaderFunctionArgs } from "react-router";
 import { prisma } from "../db.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-    const url = new URL(request.url);
-    const email = url.searchParams.get("email");
+    // Identity comes from the signed HttpOnly session cookie set at login — never
+    // from a query param. This fixes the previously-broken order history (the
+    // session email was never populated, so this endpoint always 403'd) AND closes
+    // the latent IDOR where an attacker could read any customer's orders via ?email=.
+    const { getSession } = await import("../utils/userSession.server");
+    const session = await getSession(request.headers.get("Cookie"));
+    const sessionEmail = session.get("email");
 
-    if (!email) {
-        return new Response("Email required", { status: 400 });
+    if (!sessionEmail) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+        });
     }
 
+    const emailLower = String(sessionEmail).toLowerCase().trim();
+
     try {
-        const { getSession } = await import("../utils/userSession.server");
-        const session = await getSession(request.headers.get("Cookie"));
-        const sessionEmail = session.get("email");
-
-        // Protect from IDOR (only allow fetching own orders)
-        if (!sessionEmail || sessionEmail !== email.toLowerCase().trim()) {
-            return new Response(JSON.stringify({ error: "Unauthorized access to orders" }), {
-                status: 403,
-                headers: { "Content-Type": "application/json" },
-            });
-        }
-        // Use case-insensitive email matching
-        const emailLower = email.toLowerCase().trim();
-
         // Find customer by email, case-insensitively.
         const customer = await prisma.customer.findFirst({
             where: { email: { equals: emailLower, mode: "insensitive" } },

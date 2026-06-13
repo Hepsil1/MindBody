@@ -84,6 +84,10 @@ async function makeNovaPoshtaRequest<T>(
                 calledMethod,
                 methodProperties,
             }),
+            // Hard 5s timeout: a hanging Nova Poshta API must not stall the
+            // checkout address autocomplete indefinitely. On timeout the catch
+            // below returns the graceful empty-result shape.
+            signal: AbortSignal.timeout(5000),
         });
 
         if (!response.ok) {
