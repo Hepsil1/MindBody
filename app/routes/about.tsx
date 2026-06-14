@@ -289,13 +289,12 @@ export default function About() {
                                 className="about-sun__logo"
                             />
                         </picture>
-                        <span className="about-sun__script">sport wear</span>
                     </div>
                     <p className="about-sun__tagline">{c.heroSubtitle}</p>
-                    <div className="about-sun__scroll" aria-hidden="true">
-                        <span className="about-sun__scroll-word">Scroll</span>
-                        <span className="about-sun__scroll-line" />
-                    </div>
+                </div>
+                <div className="about-sun__scroll" aria-hidden="true">
+                    <span className="about-sun__scroll-word">Scroll</span>
+                    <span className="about-sun__scroll-line" />
                 </div>
             </section>
 
