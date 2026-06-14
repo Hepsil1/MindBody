@@ -10269,7 +10269,16 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     }
 }
 
-.modal {
+/* Scoped to .modal-overlay so it overrides the legacy `.modal { display:none;
+   position:fixed; inset:0 }` rule earlier in this file — without this, every
+   overlay modal (password / address / profile-completion) inherits display:none
+   and renders 0×0. */
+.modal-overlay .modal {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    display: block;
+    opacity: 1;
     background: white;
     border-radius: 20px;
     width: 100%;
