@@ -1,135 +1,642 @@
-/* ========================================
-   ABOUT PAGE — Hero Overlay Styles
-   Extracted from inline styles in about.tsx
-   ======================================== */
+/* ============================================================
+   /about — "MIND BODY" cinematic brand page
+   Dark WebGL particle-sun hero → cream editorial story →
+   dark contact band. Self-contained; uses design tokens from
+   app.css. Mobile-first.
+   ============================================================ */
 
-/* Breathing Logo Animation */
-@keyframes breathe {
-    0%,
-    100% {
-        transform: scale(1);
-        filter: brightness(0) invert(1) drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
-    }
-    50% {
-        transform: scale(1.05);
-        filter: brightness(0) invert(1) drop-shadow(0 0 25px rgba(255, 255, 255, 0.5));
-    }
+.about-cinema {
+    background: var(--color-bg-cream);
+    overflow-x: clip;
 }
 
-/* Scroll Down Animation */
-@keyframes scrollDown {
-    0% {
-        transform: translateY(-100%);
-    }
-    100% {
-        transform: translateY(250%);
-    }
+/* ---- Shared scroll-reveal ---------------------------------- */
+.about-cinema [data-reveal] {
+    opacity: 0;
+    transform: translateY(42px);
+    transition:
+        opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+}
+.about-cinema [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
 }
 
-/* Hero Overlay Container */
-.about-hero-overlay {
+/* ---- Shared eyebrow --------------------------------------- */
+.about-eyebrow {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-widest);
+    color: var(--color-primary);
+    margin-bottom: var(--space-lg);
+}
+.about-eyebrow--light {
+    color: var(--color-primary-light);
+}
+
+/* ============================================================
+   HERO — WebGL living sun
+   ============================================================ */
+.about-sun {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 42%, #143a3c 0%, #0c2729 46%, #071a1c 100%);
+    isolation: isolate;
+}
+.about-sun__canvas {
     position: absolute;
     inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 1;
+}
+/* Vignette + bottom fade into the cream manifesto */
+.about-sun__veil {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 45%, transparent 38%, rgba(4, 16, 18, 0.55) 100%);
+}
+.about-sun::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 26%;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent, var(--color-bg-cream));
+}
+
+.about-sun__inner {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+    padding: var(--space-2xl) var(--space-md);
     pointer-events: none;
 }
-
-/* Centered Logo */
-.about-hero-logo-wrap {
+.about-sun__mark {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    margin-top: -40px;
+    gap: var(--space-sm);
 }
-
-.about-hero-logo {
-    max-width: 75vw;
-    width: 550px;
+.about-sun__logo {
+    width: min(72vw, 300px);
     height: auto;
-    animation: breathe 4s ease-in-out infinite;
+    filter: drop-shadow(0 8px 40px rgba(0, 0, 0, 0.45));
+    animation: aboutLogoRise 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-
-/* Bottom Left Subtitle */
-.about-hero-subtitle {
-    position: absolute;
-    left: 50px;
-    bottom: 50px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    opacity: 0.8;
+.about-sun__script {
+    font-family: var(--font-script);
+    font-style: italic;
+    font-size: var(--text-2xl);
+    color: rgba(246, 234, 210, 0.92);
+    letter-spacing: 0.04em;
+    animation: aboutFadeIn 1.6s ease 0.3s both;
 }
-
-.about-hero-subtitle__text {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
-    color: #fff;
-    font-size: clamp(0.8rem, 1vw, 0.9rem);
-    font-family: "Tenor Sans", sans-serif;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    margin: 0;
-    white-space: nowrap;
-}
-
-.about-hero-subtitle__line {
-    width: 1px;
-    height: 40px;
-    background: #fff;
-}
-
-/* Right Scroll Indicator */
-.about-hero-scroll {
-    position: absolute;
-    right: 50px;
-    bottom: 50px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    opacity: 0.9;
-}
-
-.about-hero-scroll__label {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    color: #fff;
-    font-size: 0.75rem;
-    letter-spacing: 4px;
-    text-transform: uppercase;
+.about-sun__tagline {
+    margin-top: var(--space-xl);
+    font-family: var(--font-display);
     font-weight: 300;
-    transform: rotate(180deg);
+    font-size: clamp(1.25rem, 2.6vw, 2rem);
+    line-height: var(--leading-snug);
+    color: rgba(250, 248, 246, 0.9);
+    max-width: 18ch;
+    margin-inline: auto;
+    animation: aboutFadeIn 1.8s ease 0.6s both;
 }
-
-.about-hero-scroll__track {
+.about-sun__scroll {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(24px, 6vh, 56px);
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    z-index: 3;
+    animation: aboutFadeIn 2s ease 1s both;
+}
+.about-sun__scroll-word {
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-widest);
+    color: rgba(246, 234, 210, 0.7);
+}
+.about-sun__scroll-line {
     width: 1px;
-    height: 50px;
-    background: rgba(255, 255, 255, 0.4);
+    height: 56px;
+    background: linear-gradient(to bottom, rgba(246, 234, 210, 0.7), transparent);
+    position: relative;
     overflow: hidden;
 }
-
-.about-hero-scroll__thumb {
+.about-sun__scroll-line::after {
+    content: "";
+    position: absolute;
+    top: -40%;
+    left: 0;
     width: 100%;
     height: 40%;
-    background: #fff;
-    animation: scrollDown 2s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+    background: rgba(246, 234, 210, 0.95);
+    animation: aboutScrollDrip 2.2s ease-in-out infinite;
 }
 
-@media (max-width: 768px) {
-    .about-hero-subtitle,
-    .about-hero-scroll {
+@keyframes aboutLogoRise {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+@keyframes aboutFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+@keyframes aboutScrollDrip {
+    0% {
+        top: -40%;
+    }
+    100% {
+        top: 120%;
+    }
+}
+
+/* ============================================================
+   MANIFESTO — oversized brand statement
+   ============================================================ */
+.about-manifesto {
+    max-width: 1100px;
+    margin-inline: auto;
+    padding: clamp(var(--space-4xl), 12vw, var(--space-5xl)) var(--space-lg);
+}
+.about-manifesto__text {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: clamp(1.6rem, 4.2vw, 3.25rem);
+    line-height: 1.28;
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-primary);
+}
+.about-manifesto__text strong {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+.about-manifesto__text em {
+    font-style: italic;
+    color: var(--color-accent);
+}
+
+/* ============================================================
+   STORY — editorial split
+   ============================================================ */
+.about-story {
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding: var(--space-3xl) var(--space-lg);
+    display: grid;
+    gap: clamp(var(--space-2xl), 5vw, var(--space-4xl));
+    align-items: center;
+}
+.about-story__media {
+    position: relative;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-xl);
+    aspect-ratio: 4 / 5;
+}
+.about-story__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+.about-story__media:hover .about-story__img {
+    transform: scale(1.05);
+}
+.about-story__est {
+    position: absolute;
+    left: var(--space-lg);
+    bottom: var(--space-lg);
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-text-white);
+    background: rgba(30, 68, 68, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.about-story__title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-lg);
+}
+.about-story__highlight {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-2xl);
+    max-width: 46ch;
+}
+.about-story__values {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+.about-value {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    color: var(--color-text-primary);
+}
+.about-value svg {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    color: var(--color-primary);
+}
+
+@media (min-width: 901px) {
+    .about-story {
+        grid-template-columns: 46% 1fr;
+    }
+}
+
+/* ============================================================
+   PROCESS — sticky "journey"
+   ============================================================ */
+.about-process {
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding: var(--space-3xl) var(--space-lg) var(--space-4xl);
+    display: grid;
+    gap: var(--space-2xl);
+}
+.about-process__aside {
+    align-self: start;
+}
+.about-process__title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-primary);
+}
+.about-process__title em {
+    display: block;
+    font-style: italic;
+    color: var(--color-primary);
+}
+.about-process__rule {
+    display: block;
+    width: 64px;
+    height: 2px;
+    margin-top: var(--space-xl);
+    background: var(--color-primary);
+}
+.about-process__steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+}
+.about-step {
+    display: grid;
+    gap: var(--space-lg);
+    position: relative;
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--color-border);
+}
+.about-step__num {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 300;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--color-primary-light);
+    text-stroke: 1px var(--color-primary-light);
+}
+.about-step__media {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    aspect-ratio: 16 / 11;
+}
+.about-step__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+.about-step:hover .about-step__media img {
+    transform: scale(1.06);
+}
+.about-step__name {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: var(--text-2xl);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-sm);
+}
+.about-step__text p,
+.about-step__text {
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary);
+}
+
+@media (min-width: 901px) {
+    .about-process {
+        grid-template-columns: 0.85fr 1.15fr;
+        gap: var(--space-4xl);
+    }
+    .about-process__aside {
+        position: sticky;
+        top: 120px;
+    }
+    .about-step {
+        grid-template-columns: auto 1fr;
+        align-items: start;
+        gap: var(--space-xl);
+    }
+    .about-step__media {
+        grid-column: 1 / -1;
+        order: 3;
+    }
+    .about-step__num {
+        order: 1;
+    }
+    .about-step__text {
+        order: 2;
+        align-self: center;
+    }
+}
+
+/* ============================================================
+   LOOKBOOK — asymmetric owner-curated gallery
+   ============================================================ */
+.about-lookbook {
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding: 0 var(--space-lg) var(--space-4xl);
+}
+.about-lookbook__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+}
+.about-lookbook__cell {
+    margin: 0;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    aspect-ratio: 3 / 4;
+}
+.about-lookbook__cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+.about-lookbook__cell:hover img {
+    transform: scale(1.07);
+}
+
+@media (min-width: 901px) {
+    .about-lookbook__grid {
+        grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: 220px;
+        gap: var(--space-lg);
+    }
+    .about-lookbook__cell {
+        aspect-ratio: auto;
+        height: 100%;
+    }
+    /* Magazine rhythm: a couple of cells span 2 rows / 2 cols */
+    .about-lookbook__cell--0 {
+        grid-row: span 2;
+    }
+    .about-lookbook__cell--3 {
+        grid-column: span 2;
+    }
+    .about-lookbook__cell--4 {
+        grid-row: span 2;
+    }
+}
+
+/* ============================================================
+   CONTACT — dark closing band
+   ============================================================ */
+.about-contact {
+    background: var(--gradient-values, linear-gradient(135deg, #1e4444, #0c2729));
+    color: var(--color-text-white);
+    padding: clamp(var(--space-4xl), 10vw, var(--space-5xl)) var(--space-lg);
+}
+.about-contact__head {
+    max-width: var(--container-max);
+    margin-inline: auto;
+    margin-bottom: var(--space-3xl);
+}
+.about-contact__title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.25rem, 5vw, 3.75rem);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-white);
+}
+.about-contact__title em {
+    font-style: italic;
+    color: var(--color-primary-light);
+}
+.about-contact__desc {
+    margin-top: var(--space-lg);
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: rgba(250, 248, 246, 0.78);
+    max-width: 52ch;
+}
+.about-contact__desc em {
+    font-style: italic;
+    color: rgba(250, 248, 246, 0.95);
+}
+.about-contact__body {
+    max-width: var(--container-max);
+    margin-inline: auto;
+    display: grid;
+    gap: var(--space-2xl);
+}
+.about-contact__phones {
+    display: grid;
+    gap: var(--space-md);
+}
+.about-contact__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.04);
+    text-decoration: none;
+    color: var(--color-text-white);
+    transition:
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        transform var(--transition-fast);
+}
+.about-contact__link:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+.about-contact__icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: var(--radius-full);
+    background: var(--color-primary-light);
+    color: #06201f;
+}
+.about-contact__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.about-contact__phone {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+.about-contact__hint {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: rgba(250, 248, 246, 0.55);
+}
+.about-contact__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    align-items: center;
+}
+.about-contact__ig,
+.about-contact__shop {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-full);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+        transform var(--transition-fast),
+        background var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+.about-contact__ig {
+    background: var(--color-text-white);
+    color: var(--color-primary-dark);
+}
+.about-contact__ig:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+.about-contact__shop {
+    background: transparent;
+    color: var(--color-text-white);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+.about-contact__shop:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+.about-contact__shop svg {
+    transition: transform var(--transition-fast);
+}
+.about-contact__shop:hover svg {
+    transform: translateX(4px);
+}
+
+@media (min-width: 901px) {
+    .about-contact__body {
+        grid-template-columns: 1.1fr 0.9fr;
+        align-items: start;
+        gap: var(--space-4xl);
+    }
+    .about-contact__cta {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .about-contact__ig,
+    .about-contact__shop {
+        justify-content: center;
+    }
+}
+
+/* ============================================================
+   Reduced motion — kill non-essential movement
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    .about-cinema [data-reveal] {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+    .about-sun__logo,
+    .about-sun__script,
+    .about-sun__tagline,
+    .about-sun__scroll {
+        animation: none !important;
+    }
+    .about-sun__scroll-line::after {
         display: none;
     }
-
-    .about-hero-logo {
-        width: 80vw;
+    .about-story__img,
+    .about-step__media img,
+    .about-lookbook__cell img {
+        transition: none;
     }
 }
