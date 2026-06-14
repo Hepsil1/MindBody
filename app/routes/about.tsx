@@ -1,12 +1,13 @@
 import type { Route } from "./+types/about";
 import { prisma } from "../db.server";
 import { useLoaderData } from "react-router";
-import { useState, useEffect } from "react";
-import HeroSlider, { type SlideData } from "../components/HeroSlider";
+import { useEffect } from "react";
+import { type SlideData } from "../components/HeroSlider";
 import { EditorAffordance } from "../components/EditorAffordance";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import { useI18n, LLink } from "../i18n";
 import { localeFromParamSafe, OG_LOCALE } from "../i18n/config";
+import SunScene from "../components/about/SunScene";
 import "../styles/about-page.css";
 import "../styles/home.css";
 import "../styles/contacts.css";
@@ -238,270 +239,286 @@ export default function About() {
     const { locale } = useI18n();
     const c = CONTENT[locale];
 
+    // Cinematic scroll reveals: add `.is-in` to [data-reveal] elements the
+    // first time they enter the viewport. Reduced-motion / no IntersectionObserver
+    // → everything is shown immediately.
+    useEffect(() => {
+        const els = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduce || !("IntersectionObserver" in window)) {
+            els.forEach((el) => el.classList.add("is-in"));
+            return;
+        }
+        const io = new IntersectionObserver(
+            (entries) => {
+                for (const e of entries) {
+                    if (e.isIntersecting) {
+                        e.target.classList.add("is-in");
+                        io.unobserve(e.target);
+                    }
+                }
+            },
+            { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+        );
+        els.forEach((el) => io.observe(el));
+        return () => io.disconnect();
+    }, [locale]);
+
+    // Owner-curated About slides → a lookbook gallery (preserves their imagery
+    // and the admin "edit slides" affordance).
+    const lookbook = slides
+        .flatMap((s) => [s.image1, s.image2, s.image3])
+        .filter((src): src is string => Boolean(src))
+        .slice(0, 6);
+
     return (
-        <main className="about-dynamic">
-            {/*
-                Batch 39 atom 1: a11y/SEO H1.  The page leads with a
-                HeroSlider showing the brand logo image, then jumps to
-                story-premium H2.  Screen readers and crawlers had no
-                document-level H1 to anchor the page.  Visually-hidden
-                heading preserves the editorial layout while making the
-                page properly addressable.
-            */}
+        <main className="about-cinema">
             <h1 className="visually-hidden">{c.h1}</h1>
 
-            {/* Full-Screen Hero with Slides using HeroSlider. EditorAffordance
-                renders ONLY inside the admin preview iframe (?editor=1) — the
-                «Про бренд» tab previously had no click-to-edit affordance at
-                all, forcing the operator to find the toolbar button. */}
-            <EditorAffordance
-                label="Редагувати слайди"
-                message={{ type: "OPEN_ABOUT_SLIDES_EDITOR" }}
-            >
-                <HeroSlider slides={slides}>
-                    <div className="about-hero-overlay">
-                        {/* Centered Brand Logo with Breathing Animation */}
-                        <div className="about-hero-logo-wrap">
-                            <picture>
-                                <source srcSet="/pics/mind_body_logo.webp" type="image/webp" />
-                                <img
-                                    src="/pics/mind_body_logo.png"
-                                    alt="MIND BODY"
-                                    className="about-hero-logo"
-                                />
-                            </picture>
-                        </div>
-
-                        {/* Bottom Left Subtitle */}
-                        <div className="about-hero-subtitle">
-                            <p className="about-hero-subtitle__text">{c.heroSubtitle}</p>
-                            <div className="about-hero-subtitle__line"></div>
-                        </div>
-
-                        {/* Right Side Scroll Indicator */}
-                        <div className="about-hero-scroll">
-                            <span className="about-hero-scroll__label">Scroll</span>
-                            <div className="about-hero-scroll__track">
-                                <div className="about-hero-scroll__thumb"></div>
-                            </div>
-                        </div>
+            {/* ── HERO — WebGL living sun ─────────────────────────────── */}
+            <section className="about-sun">
+                <SunScene />
+                <div className="about-sun__veil" aria-hidden="true" />
+                <div className="about-sun__inner">
+                    <div className="about-sun__mark">
+                        <picture>
+                            <source srcSet="/pics/mind_body_logo_white.webp" type="image/webp" />
+                            <img
+                                src="/pics/mind_body_logo_white.webp"
+                                alt="MIND BODY"
+                                className="about-sun__logo"
+                            />
+                        </picture>
                     </div>
-                </HeroSlider>
-            </EditorAffordance>
+                    <p className="about-sun__tagline">{c.heroSubtitle}</p>
+                </div>
+                <div className="about-sun__scroll" aria-hidden="true">
+                    <span className="about-sun__scroll-word">Scroll</span>
+                    <span className="about-sun__scroll-line" />
+                </div>
+            </section>
 
-            {/* Story Section - Premium Redesign */}
-            <section className="story-premium">
-                <div className="story-premium__left">
-                    <div className="story-premium__overlay"></div>
+            {/* ── MANIFESTO — oversized brand statement ───────────────── */}
+            <section className="about-manifesto">
+                <p className="about-manifesto__text" data-reveal>
+                    <strong>MIND BODY</strong>
+                    {c.storyLead}
+                    <em>{c.storyLeadEm}</em>
+                    {c.storyLeadEnd}
+                </p>
+            </section>
+
+            {/* ── STORY — editorial split, parallax media ─────────────── */}
+            <section className="about-story">
+                <div className="about-story__media" data-reveal>
                     <picture>
                         <source
                             srcSet={buildWebpSrcset("/pics1cloths/IMG_6215.webp")}
-                            sizes="(max-width: 768px) 100vw, 50vw"
+                            sizes="(max-width: 900px) 100vw, 46vw"
                             type="image/webp"
                         />
                         <img
                             src="/pics1cloths/IMG_6215.webp"
                             alt="MIND BODY"
-                            className="story-premium__image"
+                            className="about-story__img"
                             loading="lazy"
                             decoding="async"
                         />
                     </picture>
-                    <div className="story-premium__badge">
-                        <span>Est. 2020</span>
-                    </div>
+                    <span className="about-story__est">Est. 2020</span>
                 </div>
-                <div className="story-premium__right">
-                    <div className="story-premium__logos">
-                        <div className="story-logo story-logo--1"></div>
-                        <div className="story-logo story-logo--2"></div>
-                        <div className="story-logo story-logo--3"></div>
-                        <div className="story-logo story-logo--4"></div>
-                        <div className="story-logo story-logo--5"></div>
-                    </div>
-                    <div className="story-premium__content">
-                        <span className="story-premium__tag">Our Story</span>
-                        <h2 className="story-premium__title">Motivate for active life</h2>
-                        <div className="story-premium__text">
-                            <p>
-                                <strong>MIND BODY sport wear</strong>
-                                {c.storyLead}
-                                <em>{c.storyLeadEm}</em>
-                                {c.storyLeadEnd}
-                            </p>
-                            <p className="story-premium__highlight">{c.storyHighlight}</p>
-                        </div>
-                        <div className="story-premium__values">
-                            <div className="story-value">
-                                <div className="story-value__icon">
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="1.2"
-                                    >
-                                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
-                                        <path d="M8 12L11 15L16 9" />
-                                    </svg>
-                                </div>
-                                <span className="story-value__text">Premium Quality</span>
-                            </div>
-                            <div className="story-value">
-                                <div className="story-value__icon">
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="1.2"
-                                    >
-                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                                    </svg>
-                                </div>
-                                <span className="story-value__text">Handmade with Love</span>
-                            </div>
-                            <div className="story-value">
-                                <div className="story-value__icon">
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="1.2"
-                                    >
-                                        <path d="M12 2L2 7L12 12L22 7L12 2Z" />
-                                        <path d="M2 17L12 22L22 17" />
-                                        <path d="M2 12L12 17L22 12" />
-                                    </svg>
-                                </div>
-                                <span className="story-value__text">Eco Materials</span>
-                            </div>
-                        </div>
-                    </div>
+                <div className="about-story__body" data-reveal>
+                    <span className="about-eyebrow">Our Story</span>
+                    <h2 className="about-story__title">{c.heroSubtitle}</h2>
+                    <p className="about-story__highlight">{c.storyHighlight}</p>
+                    <ul className="about-story__values">
+                        <li className="about-value">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.1"
+                                aria-hidden="true"
+                            >
+                                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
+                                <path d="M8 12L11 15L16 9" />
+                            </svg>
+                            <span>Premium Quality</span>
+                        </li>
+                        <li className="about-value">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.1"
+                                aria-hidden="true"
+                            >
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                            <span>Handmade with Love</span>
+                        </li>
+                        <li className="about-value">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.1"
+                                aria-hidden="true"
+                            >
+                                <path d="M12 2L2 7L12 12L22 7L12 2Z" />
+                                <path d="M2 17L12 22L22 17" />
+                                <path d="M2 12L12 17L22 12" />
+                            </svg>
+                            <span>Eco Materials</span>
+                        </li>
+                    </ul>
                 </div>
             </section>
 
-            {/* Process Section - Wide Cards with Logo Background */}
-            <section className="process-wide">
-                <div className="process-wide__bg">
-                    <div className="process-logo process-logo--1"></div>
-                    <div className="process-logo process-logo--2"></div>
-                    <div className="process-logo process-logo--3"></div>
-                    <div className="process-logo process-logo--4"></div>
-                    <div className="process-logo process-logo--5"></div>
-                    <div className="process-logo process-logo--6"></div>
-                    <div className="process-logo process-logo--7"></div>
-                    <div className="process-logo process-logo--8"></div>
+            {/* ── PROCESS — sticky "journey" 01 → 04 ──────────────────── */}
+            <section className="about-process">
+                <div className="about-process__aside" data-reveal>
+                    <span className="about-eyebrow about-eyebrow--light">{c.processTag}</span>
+                    <h2 className="about-process__title">
+                        {c.processTitle}
+                        <em>{c.processTitleEm}</em>
+                    </h2>
+                    <span className="about-process__rule" aria-hidden="true" />
                 </div>
-                <div className="process-wide__container">
-                    <div className="process-wide__header">
-                        <span className="process-wide__tag">{c.processTag}</span>
-                        <h2 className="process-wide__title">
-                            {c.processTitle}
-                            <em>{c.processTitleEm}</em>
-                        </h2>
-                    </div>
-                    <div className="process-wide__grid">
-                        {PROCESS_STEPS.map((step, i) => (
-                            <div className="process-wide__card" key={step.number}>
-                                <div className="process-wide__number">{step.number}</div>
-                                <div className="process-wide__image">
+                <div className="about-process__steps">
+                    {PROCESS_STEPS.map((step, i) => (
+                        <article className="about-step" data-reveal key={step.number}>
+                            <span className="about-step__num">{step.number}</span>
+                            <div className="about-step__media">
+                                <picture>
+                                    <source
+                                        srcSet={buildWebpSrcset(step.image)}
+                                        sizes="(max-width: 900px) 88vw, 40vw"
+                                        type="image/webp"
+                                    />
+                                    <img
+                                        src={step.image}
+                                        alt={step.alt}
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
+                                </picture>
+                            </div>
+                            <div className="about-step__text">
+                                <h3 className="about-step__name">{c.steps[i].name}</h3>
+                                <p>{c.steps[i].text}</p>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            </section>
+
+            {/* ── LOOKBOOK — owner-curated slide imagery (admin-editable) ─ */}
+            {lookbook.length > 0 && (
+                <EditorAffordance
+                    label="Редагувати слайди"
+                    message={{ type: "OPEN_ABOUT_SLIDES_EDITOR" }}
+                >
+                    <section className="about-lookbook" data-reveal>
+                        <div className="about-lookbook__grid">
+                            {lookbook.map((src, i) => (
+                                <figure
+                                    className={`about-lookbook__cell about-lookbook__cell--${i % 6}`}
+                                    key={src + i}
+                                >
                                     <picture>
                                         <source
-                                            srcSet={buildWebpSrcset(step.image)}
-                                            sizes="(max-width: 768px) 50vw, 25vw"
+                                            srcSet={buildWebpSrcset(src)}
+                                            sizes="(max-width: 900px) 50vw, 30vw"
                                             type="image/webp"
                                         />
                                         <img
-                                            src={step.image}
-                                            alt={step.alt}
+                                            src={src}
+                                            alt="MIND BODY"
                                             loading="lazy"
                                             decoding="async"
                                         />
                                     </picture>
-                                </div>
-                                <div className="process-wide__content">
-                                    <h3 className="process-wide__name">{c.steps[i].name}</h3>
-                                    <p className="process-wide__text">{c.steps[i].text}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+                                </figure>
+                            ))}
+                        </div>
+                    </section>
+                </EditorAffordance>
+            )}
 
-            {/* Contact Section - Premium with Flying Logos */}
-            <section className="contact-premium" id="contact-premium">
-                <div className="contact-premium__left">
-                    <div className="contact-premium__logos">
-                        <div className="flying-logo flying-logo--1"></div>
-                        <div className="flying-logo flying-logo--2"></div>
-                        <div className="flying-logo flying-logo--3"></div>
-                        <div className="flying-logo flying-logo--4"></div>
-                        <div className="flying-logo flying-logo--5"></div>
-                    </div>
-                    <div className="contact-premium__text">
-                        <span className="contact-premium__label">{c.contactLabel}</span>
-                        <h2 className="contact-premium__title">
-                            {c.contactTitle} <br />
-                            <em>{c.contactTitleEm}</em>
-                        </h2>
-                    </div>
-                </div>
-                <div className="contact-premium__right">
-                    <p className="contact-premium__desc">
+            {/* ── CONTACT — close ─────────────────────────────────────── */}
+            <section className="about-contact" id="contact-premium">
+                <div className="about-contact__head" data-reveal>
+                    <span className="about-eyebrow about-eyebrow--light">{c.contactLabel}</span>
+                    <h2 className="about-contact__title">
+                        {c.contactTitle} <em>{c.contactTitleEm}</em>
+                    </h2>
+                    <p className="about-contact__desc">
                         <em>{c.contactDescEm}</em>
                         {c.contactDescEnd}
                     </p>
-                    <div className="contact-premium__phones">
+                </div>
+                <div className="about-contact__body" data-reveal>
+                    <div className="about-contact__phones">
                         {PHONES.map((phone, i) => (
                             <a
                                 href={`tel:${phone.tel}`}
-                                className="contact-premium__link"
+                                className="about-contact__link"
                                 key={phone.tel}
                             >
-                                <div className="contact-premium__icon">
+                                <span className="about-contact__icon">
                                     <svg
-                                        width="20"
-                                        height="20"
+                                        width="18"
+                                        height="18"
                                         viewBox="0 0 24 24"
                                         fill="none"
                                         stroke="currentColor"
                                         strokeWidth="2"
+                                        aria-hidden="true"
                                     >
                                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                                     </svg>
-                                </div>
-                                <div className="contact-premium__info">
-                                    <span className="contact-premium__phone">{phone.display}</span>
-                                    <span className="contact-premium__hint">{c.phoneHints[i]}</span>
-                                </div>
+                                </span>
+                                <span className="about-contact__info">
+                                    <span className="about-contact__phone">{phone.display}</span>
+                                    <span className="about-contact__hint">{c.phoneHints[i]}</span>
+                                </span>
                             </a>
                         ))}
                     </div>
-                    <a
-                        href="https://www.instagram.com/mind_body_sportwear/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="contact-premium__social"
-                    >
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                        </svg>
-                        <span>{c.instagramCta}</span>
-                    </a>
-                    {/* Atom L (P0): closing CTA back to /shop — page used to
-                        dead-end in a phone list, no path to the catalog.
-                        Premium /about must land the brand-story reader
-                        back into a buying flow. */}
-                    <LLink
-                        to="/shop/yoga"
-                        className="btn btn--primary"
-                        style={{
-                            marginTop: "32px",
-                            alignSelf: "flex-start",
-                        }}
-                    >
-                        {c.collectionCta}
-                    </LLink>
+                    <div className="about-contact__cta">
+                        <a
+                            href="https://www.instagram.com/mind_body_sportwear/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="about-contact__ig"
+                        >
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                aria-hidden="true"
+                            >
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                            </svg>
+                            <span>{c.instagramCta}</span>
+                        </a>
+                        <LLink to="/shop/yoga" className="about-contact__shop">
+                            <span>{c.collectionCta}</span>
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                aria-hidden="true"
+                            >
+                                <path d="M5 12h14M13 6l6 6-6 6" />
+                            </svg>
+                        </LLink>
+                    </div>
                 </div>
             </section>
         </main>
