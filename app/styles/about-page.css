@@ -1,554 +1,325 @@
 /* ============================================================
-   /about — "Polotno · The Living Bolt"
-   One continuous WebGL silk surface (PolotnoCloth) is fixed behind
-   every section; content scrolls over it. Cream-and-teal luminous
-   silk for the light sections, settling to deep-teal/plum satin at
-   the contact close. Self-contained; uses design tokens from app.css.
-   Header & footer are untouched.
+   /about — "MIND BODY" campaign film
+   Full-screen photographic "acts": each is a tall section whose
+   sticky frame pins for its scroll duration while the photo does a
+   scroll-driven Ken-Burns zoom; huge serif type reveals over it.
+   Minimal copy, cinematic motion, dark/premium. Header & footer
+   are untouched. Uses design tokens from app.css.
    ============================================================ */
 
-.about-silk {
+.cine {
     position: relative;
-    background: var(--color-bg-cream);
+    background: #0b1314;
     overflow-x: clip;
-    --about-day: 0;
-}
-
-/* CSS-gradient "silk" backdrop: paints first (LCP) and is the permanent
-   fallback when WebGL/reduced-motion is unavailable. */
-.about-silk__backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: linear-gradient(155deg, #f7f3ed 0%, #eef2ec 38%, #d6e3dd 66%, #9cc1ba 100%);
-}
-.polotno-cloth__canvas {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-    z-index: 0;
-    pointer-events: none;
-}
-
-/* Content sits above the fixed silk. Scope to `section` only — a `> div`
-   rule would out-specificity and disable the fixed backdrop/canvas. */
-.about-silk section {
-    position: relative;
-    z-index: 1;
-}
-
-/* ---- Shared scroll-reveal ---- */
-.about-silk [data-reveal] {
-    opacity: 0;
-    transform: translateY(38px);
-    transition:
-        opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: opacity, transform;
-}
-.about-silk [data-reveal].is-in {
-    opacity: 1;
-    transform: none;
-}
-
-/* ---- Shared type ---- */
-.silk-eyebrow {
-    display: inline-block;
-    font-family: var(--font-body);
-    font-size: var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-widest);
-    color: var(--color-primary-dark);
-    margin-bottom: var(--space-md);
-}
-.silk-eyebrow--light {
-    color: rgba(246, 234, 210, 0.85);
-}
-.silk-h2 {
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-size: clamp(2rem, 4.5vw, 3.25rem);
-    line-height: var(--leading-tight);
-    letter-spacing: var(--tracking-tight);
-    color: var(--color-text-primary);
-}
-.silk-h2 em {
-    font-style: italic;
-    color: var(--color-primary);
-}
-.silk-h2--light {
     color: #fbf7f0;
 }
-.silk-h2--light em {
-    color: var(--color-primary-light);
-}
-/* Frosted-cream panel keeps copy legible over the moving silk. */
-.silk-panel {
-    background: rgba(250, 248, 246, 0.64);
-    backdrop-filter: blur(14px) saturate(1.05);
-    -webkit-backdrop-filter: blur(14px) saturate(1.05);
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    border-radius: var(--radius-xl);
-    padding: clamp(var(--space-xl), 4vw, var(--space-3xl));
-    box-shadow: var(--shadow-lg);
+
+/* Cinematic vignette/grain overlay — fixed, never blocks clicks, below header. */
+.cine-grain {
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 42%, transparent 55%, rgba(4, 10, 11, 0.55) 100%);
+    mix-blend-mode: multiply;
 }
 
-/* ============================================================
-   HERO — the unrolling bolt
-   ============================================================ */
-.silk-hero {
-    min-height: 100svh;
-    display: flex;
-    align-items: flex-end;
-    padding: clamp(var(--space-xl), 6vw, var(--space-4xl));
-}
-.silk-hero__mark {
+/* ---- Acts ---- */
+.cine-act {
     position: relative;
+    height: 175vh;
 }
-.silk-hero__mark::before {
+.cine-act--hero {
+    height: 115vh;
+}
+.cine-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+    background: #0b1314;
+}
+.cine-media {
+    position: absolute;
+    inset: 0;
+}
+.cine-media picture,
+.cine-media img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.cine-ken {
+    object-fit: cover;
+    transform-origin: 50% 45%;
+    /* Scroll-driven zoom: --p (0→1) is written per act by JS. */
+    transform: scale(calc(1.08 + var(--p, 0) * 0.22));
+    will-change: transform;
+}
+.cine-ken--right {
+    transform-origin: 78% 45%;
+}
+
+/* Gradient veils for legible type over photography */
+.cine-veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        to top,
+        rgba(7, 16, 17, 0.78) 0%,
+        rgba(7, 16, 17, 0.25) 42%,
+        rgba(7, 16, 17, 0.4) 100%
+    );
+}
+.cine-veil--hero {
+    background: radial-gradient(
+        ellipse at 50% 38%,
+        rgba(7, 16, 17, 0.1),
+        rgba(7, 16, 17, 0.66) 100%
+    );
+}
+.cine-veil--left {
+    background: linear-gradient(
+        to right,
+        rgba(7, 16, 17, 0.82) 0%,
+        rgba(7, 16, 17, 0.4) 42%,
+        rgba(7, 16, 17, 0.05) 75%
+    );
+}
+.cine-veil--strong {
+    background: linear-gradient(
+        to top,
+        rgba(6, 13, 14, 0.92) 0%,
+        rgba(6, 13, 14, 0.5) 60%,
+        rgba(6, 13, 14, 0.7) 100%
+    );
+}
+
+/* ---- Copy layers ---- */
+.cine-hero__copy {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 2;
+}
+.cine-hero__copy picture,
+.cine-hero__copy img {
+    width: auto;
+    height: auto;
+}
+.cine-hero__logo {
+    width: min(78vw, 460px);
+    height: auto;
+    filter: drop-shadow(0 16px 60px rgba(0, 0, 0, 0.5));
+    animation: cineFade 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+.cine-scroll {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(28px, 6vh, 64px);
+    transform: translateX(-50%);
+    z-index: 3;
+}
+.cine-scroll__line {
+    display: block;
+    width: 1px;
+    height: 64px;
+    background: linear-gradient(rgba(251, 247, 240, 0.8), transparent);
+    position: relative;
+    overflow: hidden;
+}
+.cine-scroll__line::after {
     content: "";
     position: absolute;
-    left: -10%;
-    top: -24%;
-    width: 135%;
-    height: 170%;
-    z-index: -1;
-    background: radial-gradient(ellipse at 32% 55%, rgba(250, 248, 246, 0.72), transparent 70%);
+    top: -45%;
+    left: 0;
+    width: 100%;
+    height: 45%;
+    background: rgba(251, 247, 240, 0.95);
+    animation: cineDrip 2.2s ease-in-out infinite;
 }
-.silk-hero__logo {
-    width: min(74vw, 360px);
-    height: auto;
-    display: block;
-    animation: silkRise 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
-}
-.silk-hero__script {
-    display: block;
-    font-family: var(--font-script);
-    font-style: italic;
-    font-size: var(--text-2xl);
-    color: var(--color-primary-dark);
-    margin-top: var(--space-xs);
-    animation: silkRise 1.4s ease 0.5s both;
-}
-.silk-hero__tagline {
-    font-family: var(--font-display);
-    font-weight: 300;
-    font-size: clamp(1.4rem, 3vw, 2.2rem);
-    line-height: var(--leading-snug);
-    color: var(--color-text-primary);
-    max-width: 16ch;
-    margin-top: var(--space-lg);
-    text-shadow: 0 1px 26px rgba(250, 248, 246, 0.85);
-    animation: silkRise 1.4s ease 0.7s both;
-}
-.silk-scroll {
+
+.cine-copy {
     position: absolute;
-    right: clamp(var(--space-lg), 5vw, var(--space-4xl));
-    bottom: clamp(var(--space-xl), 6vw, var(--space-4xl));
+    inset: 0;
+    z-index: 2;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: var(--space-sm);
+    justify-content: center;
+    padding: clamp(var(--space-xl), 8vw, 9rem);
 }
-.silk-scroll__word {
+.cine-copy--left {
+    align-items: flex-start;
+    text-align: left;
+}
+.cine-copy--center {
+    align-items: center;
+    text-align: center;
+}
+
+.cine-eyebrow {
     font-family: var(--font-body);
     font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: var(--tracking-widest);
-    color: var(--color-primary-dark);
-}
-.silk-scroll__line {
-    width: 1px;
-    height: 54px;
-    background: linear-gradient(var(--color-primary-dark), transparent);
-    position: relative;
-    overflow: hidden;
-}
-.silk-scroll__line::after {
-    content: "";
-    position: absolute;
-    top: -40%;
-    left: 0;
-    width: 100%;
-    height: 40%;
-    background: var(--color-primary);
-    animation: silkDrip 2.2s ease-in-out infinite;
-}
-@keyframes silkRise {
-    from {
-        opacity: 0;
-        transform: translateY(24px);
-    }
-    to {
-        opacity: 1;
-        transform: none;
-    }
-}
-@keyframes silkDrip {
-    0% {
-        top: -40%;
-    }
-    100% {
-        top: 120%;
-    }
+    color: rgba(251, 247, 240, 0.72);
+    margin-bottom: var(--space-lg);
 }
 
-/* ============================================================
-   MANIFESTO — the fold
-   ============================================================ */
-.silk-manifesto {
-    min-height: 92svh;
-    display: flex;
-    align-items: center;
-    padding: clamp(var(--space-3xl), 10vw, var(--space-5xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl));
-}
-.silk-manifesto__text {
-    max-width: 20ch;
+/* The single big statement */
+.cine-statement {
     font-family: var(--font-display);
     font-weight: 300;
-    font-size: clamp(2rem, 5.6vw, 4.25rem);
-    line-height: 1.16;
+    font-size: clamp(2.6rem, 8vw, 7rem);
+    line-height: 1.04;
     letter-spacing: var(--tracking-tight);
-    color: var(--color-text-primary);
-    text-shadow: 0 1px 34px rgba(250, 248, 246, 0.88);
-}
-.silk-manifesto__text .silk-line {
-    display: block;
-}
-.silk-manifesto__text strong {
-    font-weight: 600;
-    color: var(--color-primary);
-}
-.silk-manifesto__text em {
-    font-style: italic;
-    color: var(--color-accent);
+    color: #fbf7f0;
+    max-width: 16ch;
+    margin: 0;
+    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.4);
 }
 
-/* ============================================================
-   STORY — the drape
-   ============================================================ */
-.silk-story {
-    min-height: 100svh;
-    display: grid;
-    gap: clamp(var(--space-xl), 5vw, var(--space-4xl));
-    align-items: center;
-    padding: clamp(var(--space-3xl), 8vw, var(--space-4xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl));
-}
-.silk-story__media {
-    position: relative;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    box-shadow: var(--shadow-xl);
-    aspect-ratio: 4 / 5;
-}
-.silk-story__img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform var(--transition-slow);
-}
-.silk-story__media:hover .silk-story__img {
-    transform: scale(1.05);
-}
-.silk-story__est {
-    position: absolute;
-    left: var(--space-lg);
-    bottom: var(--space-lg);
-    font-family: var(--font-body);
-    font-size: var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-wider);
-    color: var(--color-text-white);
-    background: rgba(30, 68, 68, 0.55);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-full);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-.silk-story__body .silk-h2 {
-    margin-bottom: var(--space-md);
-}
-.silk-lede {
-    font-family: var(--font-body);
-    font-size: var(--text-lg);
-    line-height: var(--leading-relaxed);
-    color: var(--color-text-secondary);
-    margin: 0 0 var(--space-2xl);
-    max-width: 46ch;
-}
-.silk-values {
+/* Craft — four words */
+.cine-craft {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: clamp(var(--space-sm), 1.4vw, var(--space-lg));
 }
-.silk-values li {
+.cine-craft__item {
     display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    font-family: var(--font-body);
-    color: var(--color-text-primary);
-}
-.silk-values svg {
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
-    color: var(--color-primary);
-}
-@media (min-width: 920px) {
-    .silk-story {
-        grid-template-columns: 44% 1fr;
-    }
-}
-
-/* ============================================================
-   PROCESS — four taut panels (gapless; replaces the v1 hole)
-   ============================================================ */
-.silk-process {
-    min-height: 100svh;
-    display: flex;
-    flex-direction: column;
+    align-items: baseline;
+    gap: var(--space-lg);
     justify-content: center;
-    gap: clamp(var(--space-xl), 4vw, var(--space-3xl));
-    padding: clamp(var(--space-3xl), 8vw, var(--space-4xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl));
 }
-.silk-process__head {
-    align-self: flex-start;
-    max-width: 44ch;
-}
-.silk-process__head .silk-h2 em {
-    color: var(--color-primary);
-}
-.silk-process__panels {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-md);
-}
-.silk-step {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    background: rgba(250, 248, 246, 0.6);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-}
-.silk-step__media {
-    position: relative;
-    aspect-ratio: 3 / 4;
-    overflow: hidden;
-}
-.silk-step__media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform var(--transition-slow);
-}
-.silk-step:hover .silk-step__media img {
-    transform: scale(1.06);
-}
-.silk-step__num {
-    position: absolute;
-    top: var(--space-sm);
-    left: var(--space-md);
-    font-family: var(--font-display);
-    font-size: var(--text-4xl);
-    line-height: 1;
-    color: rgba(255, 255, 255, 0.92);
-    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
-}
-.silk-step__body {
-    padding: var(--space-lg);
-}
-.silk-step__name {
-    font-family: var(--font-display);
-    font-weight: 500;
-    font-size: var(--text-2xl);
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-xs);
-}
-.silk-step__body p {
+.cine-craft__num {
     font-family: var(--font-body);
     font-size: var(--text-sm);
-    line-height: var(--leading-relaxed);
-    color: var(--color-text-secondary);
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-primary-light);
 }
-@media (min-width: 920px) {
-    .silk-process__panels {
-        grid-template-columns: repeat(4, 1fr);
-    }
+.cine-craft__name {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    line-height: 1.05;
+    color: #fbf7f0;
 }
 
-/* ============================================================
-   LOOKBOOK — owner-curated gallery on living fabric
-   ============================================================ */
-.silk-lookbook {
-    padding: clamp(var(--space-2xl), 6vw, var(--space-4xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl));
-}
-.silk-lookbook__grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-md);
-}
-.silk-lookbook__cell {
+/* Values */
+.cine-values {
+    list-style: none;
     margin: 0;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
-    aspect-ratio: 3 / 4;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(var(--space-xs), 1vw, var(--space-md));
 }
-.silk-lookbook__cell img {
+.cine-values__line {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(1.8rem, 5vw, 3.75rem);
+    line-height: 1.1;
+    color: #fbf7f0;
+}
+
+/* ---- Reel (auto-scroll film strip) ---- */
+.cine-reel {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    padding: clamp(var(--space-xl), 5vw, var(--space-4xl)) 0;
+    background: #0b1314;
+}
+.cine-reel__track {
+    display: flex;
+    width: max-content;
+    gap: var(--space-md);
+    animation: cineReel 44s linear infinite;
+}
+.cine-reel:hover .cine-reel__track {
+    animation-play-state: paused;
+}
+.cine-reel__cell {
+    margin: 0;
+    flex: 0 0 auto;
+    width: clamp(220px, 26vw, 420px);
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+}
+.cine-reel__cell img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform var(--transition-slow);
-}
-.silk-lookbook__cell:hover img {
-    transform: scale(1.07);
-}
-@media (min-width: 920px) {
-    .silk-lookbook__grid {
-        grid-template-columns: repeat(4, 1fr);
-        grid-auto-rows: 220px;
-        gap: var(--space-lg);
-    }
-    .silk-lookbook__cell {
-        aspect-ratio: auto;
-        height: 100%;
-    }
-    .silk-lookbook__cell--0 {
-        grid-row: span 2;
-    }
-    .silk-lookbook__cell--3 {
-        grid-column: span 2;
-    }
-    .silk-lookbook__cell--4 {
-        grid-row: span 2;
-    }
+    filter: grayscale(0.1) contrast(1.02);
 }
 
-/* ============================================================
-   CONTACT — heavy satin settle (light text on dark silk)
-   ============================================================ */
-.silk-contact {
-    min-height: 100svh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    /* Offset the #contact-premium jump (header nav "Контакти") below the
-       fixed header (38px bar + 80/64px header). */
+/* ---- Contact ---- */
+.cine-act--contact {
+    height: 130vh;
     scroll-margin-top: clamp(98px, 22vw, 118px);
-    padding: clamp(var(--space-3xl), 10vw, var(--space-5xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl));
 }
-/* Guarantee light-text contrast while the silk is mid-settle. */
-.silk-contact::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: linear-gradient(to bottom, rgba(6, 24, 26, 0.15), rgba(6, 24, 26, 0.55));
+.cine-contact {
+    align-items: flex-start;
+    text-align: left;
+    max-width: 760px;
 }
-.silk-contact > * {
-    position: relative;
-    z-index: 1;
-}
-.silk-contact__head {
-    max-width: var(--container-max);
-    margin: 0 auto var(--space-3xl);
-    width: 100%;
-}
-.silk-contact__desc {
-    margin-top: var(--space-lg);
-    font-family: var(--font-body);
-    font-size: var(--text-lg);
-    line-height: var(--leading-relaxed);
-    color: rgba(250, 248, 246, 0.82);
-    max-width: 50ch;
-}
-.silk-contact__desc em {
-    font-style: italic;
-    color: #fff;
-}
-.silk-contact__body {
-    width: 100%;
-    max-width: var(--container-max);
-    margin: 0 auto;
-    display: grid;
-    gap: var(--space-2xl);
-}
-.silk-contact__phones {
-    display: grid;
-    gap: var(--space-md);
-}
-.silk-contact__link {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.06);
-    text-decoration: none;
+.cine-contact__title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.4rem, 6vw, 4.5rem);
+    line-height: 1.05;
+    letter-spacing: var(--tracking-tight);
     color: #fbf7f0;
-    transition:
-        background var(--transition-fast),
-        border-color var(--transition-fast),
-        transform var(--transition-fast);
+    margin: 0 0 var(--space-2xl);
 }
-.silk-contact__link:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
+.cine-contact__title em {
+    font-style: italic;
+    color: var(--color-primary-light);
 }
-.silk-contact__icon {
-    display: grid;
-    place-items: center;
-    width: 42px;
-    height: 42px;
-    flex-shrink: 0;
-    border-radius: var(--radius-full);
-    background: var(--color-primary-light);
-    color: #06201f;
+.cine-contact__phones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xl) var(--space-3xl);
+    margin-bottom: var(--space-2xl);
 }
-.silk-contact__info {
+.cine-phone {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    text-decoration: none;
+    color: #fbf7f0;
+    transition: opacity var(--transition-fast);
 }
-.silk-contact__phone {
+.cine-phone:hover {
+    opacity: 0.7;
+}
+.cine-phone__num {
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 2.6vw, 1.9rem);
+    font-weight: 400;
+}
+.cine-phone__hint {
     font-family: var(--font-body);
-    font-size: var(--text-lg);
-    font-weight: 500;
-}
-.silk-contact__hint {
     font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
-    color: rgba(250, 248, 246, 0.55);
+    color: rgba(251, 247, 240, 0.5);
 }
-.silk-contact__cta {
+.cine-contact__cta {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-md);
-    align-items: center;
 }
-.silk-contact__ig,
-.silk-contact__shop {
+.cine-btn {
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
@@ -563,71 +334,140 @@
         background var(--transition-fast),
         box-shadow var(--transition-fast);
 }
-.silk-contact__ig {
+.cine-btn--solid {
     background: #fbf7f0;
-    color: var(--color-primary-dark);
+    color: #0b1314;
 }
-.silk-contact__ig:hover {
+.cine-btn--solid:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
-.silk-contact__shop {
+.cine-btn--ghost {
     background: transparent;
     color: #fbf7f0;
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(251, 247, 240, 0.4);
 }
-.silk-contact__shop:hover {
-    background: rgba(255, 255, 255, 0.1);
+.cine-btn--ghost:hover {
+    background: rgba(251, 247, 240, 0.1);
     transform: translateY(-2px);
 }
-.silk-contact__shop svg {
+.cine-btn--ghost svg {
     transition: transform var(--transition-fast);
 }
-.silk-contact__shop:hover svg {
+.cine-btn--ghost:hover svg {
     transform: translateX(4px);
 }
-.silk-contact__link:focus-visible,
-.silk-contact__ig:focus-visible,
-.silk-contact__shop:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.85);
-    outline-offset: 2px;
+.cine-phone:focus-visible,
+.cine-btn:focus-visible {
+    outline: 2px solid rgba(251, 247, 240, 0.85);
+    outline-offset: 3px;
 }
-@media (min-width: 920px) {
-    .silk-contact__body {
-        grid-template-columns: 1.1fr 0.9fr;
-        align-items: start;
-        gap: var(--space-4xl);
-    }
-    .silk-contact__cta {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .silk-contact__ig,
-    .silk-contact__shop {
-        justify-content: center;
+
+/* ---- Lookbook (optional) ---- */
+.cine-lookbook {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-xs);
+    background: #0b1314;
+}
+.cine-lookbook__cell {
+    margin: 0;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+}
+.cine-lookbook__cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+.cine-lookbook__cell:hover img {
+    transform: scale(1.05);
+}
+@media (min-width: 720px) {
+    .cine-lookbook {
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
-/* ============================================================
-   Reduced motion — silk is static; reveals shown immediately
-   ============================================================ */
+/* ---- Reveal-in motion ----
+   Hidden state is gated behind .cine--anim (added by JS) so that without
+   JS — or before hydration — all copy, phones and CTAs remain visible. */
+.cine--anim [data-cine-reveal] {
+    opacity: 0;
+    transform: translateY(46px);
+    transition:
+        opacity 1.1s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+.cine--anim [data-cine-reveal].in {
+    opacity: 1;
+    transform: none;
+}
+
+@keyframes cineFade {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+@keyframes cineDrip {
+    0% {
+        top: -45%;
+    }
+    100% {
+        top: 130%;
+    }
+}
+@keyframes cineReel {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+/* ---- Mobile ---- */
+@media (max-width: 760px) {
+    .cine-act {
+        height: 150vh;
+    }
+    .cine-act--hero {
+        height: 100svh;
+    }
+    .cine-copy {
+        padding: clamp(var(--space-lg), 9vw, var(--space-3xl));
+    }
+    .cine-craft__item {
+        gap: var(--space-md);
+    }
+}
+
+/* ---- Reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
-    .about-silk [data-reveal] {
+    .cine [data-cine-reveal] {
         opacity: 1 !important;
         transform: none !important;
         transition: none !important;
     }
-    .silk-hero__logo,
-    .silk-hero__script,
-    .silk-hero__tagline {
+    .cine-ken {
+        transform: scale(1.04) !important;
+    }
+    .cine-hero__logo {
         animation: none !important;
     }
-    .silk-scroll__line::after {
+    .cine-scroll__line::after {
         display: none;
     }
-    .silk-story__img,
-    .silk-step__media img,
-    .silk-lookbook__cell img {
-        transition: none;
+    .cine-reel__track {
+        animation: none !important;
     }
 }

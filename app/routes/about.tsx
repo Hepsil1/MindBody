@@ -1,16 +1,12 @@
 import type { Route } from "./+types/about";
 import { prisma } from "../db.server";
 import { useLoaderData } from "react-router";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { type SlideData } from "../components/HeroSlider";
 import { EditorAffordance } from "../components/EditorAffordance";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import { useI18n, LLink } from "../i18n";
 import { localeFromParamSafe, OG_LOCALE } from "../i18n/config";
-import PolotnoCloth, {
-    makeClothTargets,
-    type ClothTargets,
-} from "../components/about/PolotnoCloth";
 import "../styles/about-page.css";
 import "../styles/home.css";
 import "../styles/contacts.css";
@@ -82,6 +78,24 @@ const PHONES = [
     { tel: "+380509656737", display: "+380 (50) 965-67-37" },
     { tel: "+380973542848", display: "+380 (97) 354-28-48" },
 ] as const;
+
+// Campaign-film acts: one full-screen photo each (Ken Burns + parallax).
+const HERO_IMG = "/pics1cloths/IMG_6204.webp";
+const STATEMENT_IMG = "/pics1cloths/IMG_6202.webp";
+const CRAFT_IMG = "/pics1cloths/IMG_6212.webp";
+const VALUES_IMG = "/pics1cloths/IMG_6206.webp";
+const CONTACT_IMG = "/pics1cloths/IMG_6207.webp";
+// The auto-scrolling reel between acts — pure visual rhythm, no text.
+const REEL = [
+    "/pics1cloths/IMG_6210.webp",
+    "/pics1cloths/IMG_6205.webp",
+    "/pics1cloths/IMG_6201.webp",
+    "/pics1cloths/IMG_6203.webp",
+    "/pics1cloths/IMG_6209.webp",
+    "/pics1cloths/IMG_6215.webp",
+];
+// Latin value tags (kept as short editorial labels, as in the brand copy).
+const VALUES = ["Premium Quality", "Handmade with Love", "Eco Materials"] as const;
 
 // Long-form brand prose lives inline per locale (not in the t() dictionary).
 // The `uk` variant is the canonical text — keep it byte-identical.
@@ -242,88 +256,44 @@ export default function About() {
     const { locale } = useI18n();
     const c = CONTENT[locale];
 
-    // Shared morph targets the WebGL silk lerps toward; the scroll effect below
-    // writes a preset per section so the same cloth unrolls → folds → drapes →
-    // pulls taut → settles into dark satin as you scroll.
-    const clothTargets = useRef<ClothTargets>(makeClothTargets());
-
-    // Cinematic scroll reveals: add `.is-in` to [data-reveal] elements the
-    // first time they enter the viewport. Reduced-motion / no IntersectionObserver
-    // → everything is shown immediately.
+    // Cinematic motion (native scroll, no deps):
+    //  • [data-cine-reveal] → `.in` on first entry (type/photos reveal in).
+    //  • each [data-cine] act gets a 0→1 `--p` across its pinned scroll range,
+    //    driving the Ken-Burns zoom + parallax of its sticky full-screen photo.
+    // Reduced-motion / no-IO → everything shown immediately, no scroll work.
     useEffect(() => {
-        const els = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
         const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const reveals = Array.from(document.querySelectorAll<HTMLElement>("[data-cine-reveal]"));
         if (reduce || !("IntersectionObserver" in window)) {
-            els.forEach((el) => el.classList.add("is-in"));
+            reveals.forEach((el) => el.classList.add("in"));
             return;
         }
         const io = new IntersectionObserver(
             (entries) => {
                 for (const e of entries) {
                     if (e.isIntersecting) {
-                        e.target.classList.add("is-in");
+                        e.target.classList.add("in");
                         io.unobserve(e.target);
                     }
                 }
             },
-            { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+            { threshold: 0.25, rootMargin: "0px 0px -12% 0px" },
         );
-        els.forEach((el) => io.observe(el));
-        return () => io.disconnect();
-    }, [locale]);
+        // Only now (JS present, motion allowed) arm the hidden→reveal states.
+        document.querySelector(".cine")?.classList.add("cine--anim");
+        reveals.forEach((el) => io.observe(el));
 
-    // Scroll authority (native scroll, no extra deps): pick the section under
-    // the viewport centre and write its silk preset + a scroll-velocity energy
-    // so the cloth billows when you move and breathes calm when you stop. Also
-    // publishes a 0→1 --about-day progress var for subtle DOM re-grading.
-    useEffect(() => {
-        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (reduce) return;
-        const root = document.querySelector<HTMLElement>(".about-silk");
-
-        type Preset = Pick<ClothTargets, "fold" | "drape" | "tension" | "settle" | "dark">;
-        const presets: Record<string, Preset> = {
-            hero: { fold: 0.0, drape: 0.0, tension: 0.0, settle: 0.0, dark: 0.0 },
-            manifesto: { fold: 1.0, drape: 0.1, tension: 0.0, settle: 0.0, dark: 0.5 },
-            story: { fold: 0.45, drape: 1.0, tension: 0.0, settle: 0.0, dark: 0.5 },
-            process: { fold: 0.25, drape: 0.1, tension: 1.0, settle: 0.0, dark: 0.55 },
-            lookbook: { fold: 0.3, drape: 0.2, tension: 0.15, settle: 0.0, dark: 0.4 },
-            contact: { fold: 0.4, drape: 0.1, tension: 0.0, settle: 1.0, dark: 0.2 },
-        };
-
-        const ids = ["hero", "manifesto", "story", "process", "lookbook", "contact"];
-        let lastY = window.scrollY;
+        const acts = Array.from(document.querySelectorAll<HTMLElement>("[data-cine]"));
         let ticking = false;
-
         const apply = () => {
             ticking = false;
             const vh = window.innerHeight;
-            const mid = window.scrollY + vh / 2;
-            let key = "hero";
-            for (const id of ids) {
-                // The contact section keeps the legacy #contact-premium anchor
-                // (header "Контакти" links to it); others use silk-<id>.
-                const el = document.getElementById(
-                    id === "contact" ? "contact-premium" : `silk-${id}`,
-                );
-                if (!el) continue;
-                if (mid >= el.offsetTop) key = id;
-            }
-            const pr = presets[key] ?? presets.hero;
-            const tg = clothTargets.current;
-            tg.fold = pr.fold;
-            tg.drape = pr.drape;
-            tg.tension = pr.tension;
-            tg.settle = pr.settle;
-            tg.dark = pr.dark;
-
-            const dy = Math.abs(window.scrollY - lastY);
-            lastY = window.scrollY;
-            tg.scrollVel = Math.min(1, tg.scrollVel * 0.6 + dy / 55);
-
-            if (root) {
-                const max = document.body.scrollHeight - vh || 1;
-                root.style.setProperty("--about-day", Math.min(1, window.scrollY / max).toFixed(3));
+            const y = window.scrollY;
+            for (const act of acts) {
+                const top = act.offsetTop;
+                const h = act.offsetHeight;
+                const p = Math.min(1, Math.max(0, (y - top) / Math.max(h - vh, 1)));
+                act.style.setProperty("--p", p.toFixed(3));
             }
         };
         const onScroll = () => {
@@ -335,13 +305,10 @@ export default function About() {
         apply();
         window.addEventListener("scroll", onScroll, { passive: true });
         window.addEventListener("resize", onScroll);
-        const decay = window.setInterval(() => {
-            clothTargets.current.scrollVel *= 0.85;
-        }, 140);
         return () => {
+            io.disconnect();
             window.removeEventListener("scroll", onScroll);
             window.removeEventListener("resize", onScroll);
-            window.clearInterval(decay);
         };
     }, [locale]);
 
@@ -353,258 +320,269 @@ export default function About() {
         .slice(0, 6);
 
     return (
-        <main className="about-silk">
+        <main className="cine">
             <h1 className="visually-hidden">{c.h1}</h1>
+            <div className="cine-grain" aria-hidden="true" />
 
-            {/* The single persistent hero: one living piece of WebGL silk fixed
-                behind every section. A CSS gradient backdrop paints first (LCP)
-                and is the fallback when WebGL/reduced-motion is unavailable. */}
-            <div className="about-silk__backdrop" aria-hidden="true" />
-            <PolotnoCloth targetsRef={clothTargets} />
-
-            {/* HERO — the unrolling bolt */}
-            <section id="silk-hero" className="silk-hero">
-                <div className="silk-hero__mark">
-                    <picture>
-                        <source srcSet="/pics/mind_body_logo.webp" type="image/webp" />
-                        <img
-                            src="/pics/mind_body_logo.png"
-                            alt="MIND BODY"
-                            className="silk-hero__logo"
-                        />
-                    </picture>
-                    <span className="silk-hero__script">sport wear</span>
-                    <p className="silk-hero__tagline">{c.heroSubtitle}</p>
-                </div>
-                <div className="silk-scroll" aria-hidden="true">
-                    <span className="silk-scroll__word">Scroll</span>
-                    <span className="silk-scroll__line" />
-                </div>
-            </section>
-
-            {/* MANIFESTO — the fold */}
-            <section id="silk-manifesto" className="silk-manifesto">
-                <p className="silk-manifesto__text">
-                    <span className="silk-line" data-reveal>
-                        <strong>MIND BODY</strong>
-                        {c.storyLead}
-                    </span>
-                    <span className="silk-line" data-reveal>
-                        <em>{c.storyLeadEm}</em>
-                        {c.storyLeadEnd}
-                    </span>
-                </p>
-            </section>
-
-            {/* STORY — the drape (silk wipes to reveal the real photo) */}
-            <section id="silk-story" className="silk-story">
-                <div className="silk-story__media" data-reveal>
-                    <picture>
-                        <source
-                            srcSet={buildWebpSrcset("/pics1cloths/IMG_6215.webp")}
-                            sizes="(max-width: 900px) 86vw, 44vw"
-                            type="image/webp"
-                        />
-                        <img
-                            src="/pics1cloths/IMG_6215.webp"
-                            alt="MIND BODY"
-                            className="silk-story__img"
-                            loading="lazy"
-                            decoding="async"
-                        />
-                    </picture>
-                    <span className="silk-story__est">Est. 2020</span>
-                </div>
-                <div className="silk-story__body silk-panel" data-reveal>
-                    <span className="silk-eyebrow">Our Story</span>
-                    <h2 className="silk-h2">{c.heroSubtitle}</h2>
-                    <p className="silk-lede">{c.storyHighlight}</p>
-                    <ul className="silk-values">
-                        <li>
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.1"
-                                aria-hidden="true"
-                            >
-                                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
-                                <path d="M8 12L11 15L16 9" />
-                            </svg>
-                            <span>Premium Quality</span>
-                        </li>
-                        <li>
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.1"
-                                aria-hidden="true"
-                            >
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                            </svg>
-                            <span>Handmade with Love</span>
-                        </li>
-                        <li>
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.1"
-                                aria-hidden="true"
-                            >
-                                <path d="M12 2L2 7L12 12L22 7L12 2Z" />
-                                <path d="M2 17L12 22L22 17" />
-                                <path d="M2 12L12 17L22 12" />
-                            </svg>
-                            <span>Eco Materials</span>
-                        </li>
-                    </ul>
+            {/* ACT I — opening title card */}
+            <section className="cine-act cine-act--hero" data-cine>
+                <div className="cine-stage">
+                    <div className="cine-media">
+                        <picture>
+                            <source
+                                srcSet={buildWebpSrcset(HERO_IMG)}
+                                sizes="100vw"
+                                type="image/webp"
+                            />
+                            <img
+                                src={HERO_IMG}
+                                alt="MIND BODY"
+                                className="cine-ken"
+                                decoding="async"
+                            />
+                        </picture>
+                    </div>
+                    <div className="cine-veil cine-veil--hero" />
+                    <div className="cine-hero__copy">
+                        <picture>
+                            <source srcSet="/pics/mind_body_logo_white.webp" type="image/webp" />
+                            <img
+                                src="/pics/mind_body_logo_white.webp"
+                                alt="MIND BODY"
+                                className="cine-hero__logo"
+                            />
+                        </picture>
+                    </div>
+                    <div className="cine-scroll" aria-hidden="true">
+                        <span className="cine-scroll__line" />
+                    </div>
                 </div>
             </section>
 
-            {/* PROCESS — four taut panels (gapless; kills the v1 sticky hole) */}
-            <section id="silk-process" className="silk-process">
-                <header className="silk-process__head silk-panel" data-reveal>
-                    <span className="silk-eyebrow">{c.processTag}</span>
-                    <h2 className="silk-h2">
-                        {c.processTitle}
-                        <em>{c.processTitleEm}</em>
-                    </h2>
-                </header>
-                <div className="silk-process__panels">
-                    {PROCESS_STEPS.map((step, i) => (
-                        <article className="silk-step" data-reveal key={step.number}>
-                            <div className="silk-step__media">
-                                <picture>
-                                    <source
-                                        srcSet={buildWebpSrcset(step.image)}
-                                        sizes="(max-width: 900px) 92vw, 24vw"
-                                        type="image/webp"
-                                    />
-                                    <img
-                                        src={step.image}
-                                        alt={step.alt}
-                                        loading="lazy"
-                                        decoding="async"
-                                    />
-                                </picture>
-                                <span className="silk-step__num">{step.number}</span>
-                            </div>
-                            <div className="silk-step__body">
-                                <h3 className="silk-step__name">{c.steps[i].name}</h3>
-                                <p>{c.steps[i].text}</p>
-                            </div>
-                        </article>
+            {/* ACT II — the statement (the only real line of copy) */}
+            <section className="cine-act cine-act--statement" data-cine>
+                <div className="cine-stage">
+                    <div className="cine-media">
+                        <picture>
+                            <source
+                                srcSet={buildWebpSrcset(STATEMENT_IMG)}
+                                sizes="100vw"
+                                type="image/webp"
+                            />
+                            <img
+                                src={STATEMENT_IMG}
+                                alt="MIND BODY"
+                                className="cine-ken cine-ken--right"
+                                loading="lazy"
+                                decoding="async"
+                            />
+                        </picture>
+                    </div>
+                    <div className="cine-veil cine-veil--left" />
+                    <div className="cine-copy cine-copy--left">
+                        <p className="cine-statement" data-cine-reveal>
+                            {c.heroSubtitle}
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* REEL — auto-scrolling film strip, pure rhythm (no text) */}
+            <section className="cine-reel" aria-label="MIND BODY">
+                <div className="cine-reel__track">
+                    {[...REEL, ...REEL].map((src, i) => (
+                        <figure
+                            className="cine-reel__cell"
+                            key={src + i}
+                            aria-hidden={i >= REEL.length}
+                        >
+                            <picture>
+                                <source
+                                    srcSet={buildWebpSrcset(src)}
+                                    sizes="40vw"
+                                    type="image/webp"
+                                />
+                                <img src={src} alt="MIND BODY" loading="lazy" decoding="async" />
+                            </picture>
+                        </figure>
                     ))}
                 </div>
             </section>
 
-            {/* LOOKBOOK — owner-curated slide imagery (admin-editable) */}
+            {/* ACT III — the craft, told in four words over one frame */}
+            <section className="cine-act cine-act--craft" data-cine>
+                <div className="cine-stage">
+                    <div className="cine-media">
+                        <picture>
+                            <source
+                                srcSet={buildWebpSrcset(CRAFT_IMG)}
+                                sizes="100vw"
+                                type="image/webp"
+                            />
+                            <img
+                                src={CRAFT_IMG}
+                                alt="MIND BODY"
+                                className="cine-ken"
+                                loading="lazy"
+                                decoding="async"
+                            />
+                        </picture>
+                    </div>
+                    <div className="cine-veil" />
+                    <div className="cine-copy cine-copy--center">
+                        <span className="cine-eyebrow" data-cine-reveal>
+                            {c.processTag}
+                        </span>
+                        <ol className="cine-craft">
+                            {PROCESS_STEPS.map((step, i) => (
+                                <li
+                                    className="cine-craft__item"
+                                    data-cine-reveal
+                                    style={{ transitionDelay: `${i * 0.1}s` }}
+                                    key={step.number}
+                                >
+                                    <span className="cine-craft__num">{step.number}</span>
+                                    <span className="cine-craft__name">{c.steps[i].name}</span>
+                                </li>
+                            ))}
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            {/* ACT IV — values */}
+            <section className="cine-act cine-act--values" data-cine>
+                <div className="cine-stage">
+                    <div className="cine-media">
+                        <picture>
+                            <source
+                                srcSet={buildWebpSrcset(VALUES_IMG)}
+                                sizes="100vw"
+                                type="image/webp"
+                            />
+                            <img
+                                src={VALUES_IMG}
+                                alt="MIND BODY"
+                                className="cine-ken cine-ken--right"
+                                loading="lazy"
+                                decoding="async"
+                            />
+                        </picture>
+                    </div>
+                    <div className="cine-veil cine-veil--left" />
+                    <div className="cine-copy cine-copy--left">
+                        <ul className="cine-values">
+                            {VALUES.map((v, i) => (
+                                <li
+                                    className="cine-values__line"
+                                    data-cine-reveal
+                                    style={{ transitionDelay: `${i * 0.12}s` }}
+                                    key={v}
+                                >
+                                    {v}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            {/* LOOKBOOK — owner-curated slides (admin-editable; hidden if none) */}
             {lookbook.length > 0 && (
                 <EditorAffordance
                     label="Редагувати слайди"
                     message={{ type: "OPEN_ABOUT_SLIDES_EDITOR" }}
                 >
-                    <section id="silk-lookbook" className="silk-lookbook" data-reveal>
-                        <div className="silk-lookbook__grid">
-                            {lookbook.map((src, i) => (
-                                <figure
-                                    className={`silk-lookbook__cell silk-lookbook__cell--${i % 6}`}
-                                    key={src + i}
-                                >
-                                    <picture>
-                                        <source
-                                            srcSet={buildWebpSrcset(src)}
-                                            sizes="(max-width: 900px) 50vw, 30vw"
-                                            type="image/webp"
-                                        />
-                                        <img
-                                            src={src}
-                                            alt="MIND BODY"
-                                            loading="lazy"
-                                            decoding="async"
-                                        />
-                                    </picture>
-                                </figure>
-                            ))}
-                        </div>
+                    <section className="cine-lookbook" data-cine-reveal>
+                        {lookbook.map((src, i) => (
+                            <figure className="cine-lookbook__cell" key={src + i}>
+                                <picture>
+                                    <source
+                                        srcSet={buildWebpSrcset(src)}
+                                        sizes="(max-width: 900px) 50vw, 33vw"
+                                        type="image/webp"
+                                    />
+                                    <img
+                                        src={src}
+                                        alt="MIND BODY"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
+                                </picture>
+                            </figure>
+                        ))}
                     </section>
                 </EditorAffordance>
             )}
 
-            {/* CONTACT — heavy satin settle (keeps #contact-premium anchor) */}
-            <section id="contact-premium" className="silk-contact">
-                <div className="silk-contact__head" data-reveal>
-                    <span className="silk-eyebrow silk-eyebrow--light">{c.contactLabel}</span>
-                    <h2 className="silk-h2 silk-h2--light">
-                        {c.contactTitle} <em>{c.contactTitleEm}</em>
-                    </h2>
-                    <p className="silk-contact__desc">
-                        <em>{c.contactDescEm}</em>
-                        {c.contactDescEnd}
-                    </p>
-                </div>
-                <div className="silk-contact__body" data-reveal>
-                    <div className="silk-contact__phones">
-                        {PHONES.map((phone, i) => (
-                            <a
-                                href={`tel:${phone.tel}`}
-                                className="silk-contact__link"
-                                key={phone.tel}
-                            >
-                                <span className="silk-contact__icon">
-                                    <svg
-                                        width="18"
-                                        height="18"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        aria-hidden="true"
-                                    >
-                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                    </svg>
-                                </span>
-                                <span className="silk-contact__info">
-                                    <span className="silk-contact__phone">{phone.display}</span>
-                                    <span className="silk-contact__hint">{c.phoneHints[i]}</span>
-                                </span>
-                            </a>
-                        ))}
+            {/* ACT V — contact close (keeps #contact-premium anchor) */}
+            <section id="contact-premium" className="cine-act cine-act--contact" data-cine>
+                <div className="cine-stage">
+                    <div className="cine-media">
+                        <picture>
+                            <source
+                                srcSet={buildWebpSrcset(CONTACT_IMG)}
+                                sizes="100vw"
+                                type="image/webp"
+                            />
+                            <img
+                                src={CONTACT_IMG}
+                                alt="MIND BODY"
+                                className="cine-ken"
+                                loading="lazy"
+                                decoding="async"
+                            />
+                        </picture>
                     </div>
-                    <div className="silk-contact__cta">
-                        <a
-                            href="https://www.instagram.com/mind_body_sportwear/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="silk-contact__ig"
-                        >
-                            <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                aria-hidden="true"
+                    <div className="cine-veil cine-veil--strong" />
+                    <div className="cine-copy cine-contact">
+                        <span className="cine-eyebrow" data-cine-reveal>
+                            {c.contactLabel}
+                        </span>
+                        <h2 className="cine-contact__title" data-cine-reveal>
+                            {c.contactTitle} <em>{c.contactTitleEm}</em>
+                        </h2>
+                        <div className="cine-contact__phones" data-cine-reveal>
+                            {PHONES.map((phone, i) => (
+                                <a href={`tel:${phone.tel}`} className="cine-phone" key={phone.tel}>
+                                    <span className="cine-phone__num">{phone.display}</span>
+                                    <span className="cine-phone__hint">{c.phoneHints[i]}</span>
+                                </a>
+                            ))}
+                        </div>
+                        <div className="cine-contact__cta" data-cine-reveal>
+                            <a
+                                href="https://www.instagram.com/mind_body_sportwear/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="cine-btn cine-btn--solid"
                             >
-                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                            </svg>
-                            <span>{c.instagramCta}</span>
-                        </a>
-                        <LLink to="/shop/yoga" className="silk-contact__shop">
-                            <span>{c.collectionCta}</span>
-                            <svg
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                aria-hidden="true"
-                            >
-                                <path d="M5 12h14M13 6l6 6-6 6" />
-                            </svg>
-                        </LLink>
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                                </svg>
+                                <span>{c.instagramCta}</span>
+                            </a>
+                            <LLink to="/shop/yoga" className="cine-btn cine-btn--ghost">
+                                <span>{c.collectionCta}</span>
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M5 12h14M13 6l6 6-6 6" />
+                                </svg>
+                            </LLink>
+                        </div>
                     </div>
                 </div>
             </section>
