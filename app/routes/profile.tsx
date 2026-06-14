@@ -45,9 +45,10 @@ export default function Profile() {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState("");
     const [editPhone, setEditPhone] = useState("");
-    // True when the logged-in customer has no phone yet (e.g. fresh Google
-    // sign-in) — drives a prompt + auto-opens the editor to capture it.
-    const [needsPhone, setNeedsPhone] = useState(false);
+    // Profile-completion modal — pops up after a FIRST Google sign-in (a Google
+    // account with no phone yet) to capture name + phone for COD delivery.
+    const [showCompleteModal, setShowCompleteModal] = useState(false);
+    const [completeSaving, setCompleteSaving] = useState(false);
 
     // Change password state
     const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -73,8 +74,10 @@ export default function Profile() {
     // moves in on open and returns to the trigger on close.
     const passwordModalRef = useRef<HTMLDivElement>(null);
     const addressModalRef = useRef<HTMLDivElement>(null);
+    const completeModalRef = useRef<HTMLDivElement>(null);
     useModalA11y(passwordModalRef, () => setShowPasswordModal(false), showPasswordModal);
     useModalA11y(addressModalRef, () => setShowAddressModal(false), showAddressModal);
+    useModalA11y(completeModalRef, () => setShowCompleteModal(false), showCompleteModal);
 
     useEffect(() => {
         const initProfile = async () => {
@@ -88,12 +91,11 @@ export default function Profile() {
             setUser(authState.user);
             setEditName(authState.user.name);
             setEditPhone(authState.user.phone || "");
-            // Phone is required for COD, and Google sign-ins arrive without one.
-            // Open the editor + show a prompt so the customer completes it.
-            if (!authState.user.phone) {
-                setActiveTab("overview");
-                setIsEditing(true);
-                setNeedsPhone(true);
+            // First Google sign-in (a Google account that has no phone yet):
+            // pop the completion modal to capture name + phone. Scoped to Google —
+            // the email sign-up form already collects a phone of its own.
+            if (authState.user.provider === "google" && !authState.user.phone) {
+                setShowCompleteModal(true);
             }
 
             // Load data
@@ -169,8 +171,33 @@ export default function Profile() {
         if (result.success && result.user) {
             setUser(result.user);
             setIsEditing(false);
-            setNeedsPhone(false);
             showToast("Профіль оновлено!", "success");
+        } else {
+            showToast(result.message || "Не вдалося зберегти", "error");
+        }
+    };
+
+    // Save handler for the first-Google-login completion modal (name + phone).
+    const handleCompleteProfile = async () => {
+        const trimmedName = editName.trim();
+        if (trimmedName.length < 2) {
+            showToast("Вкажіть ім'я", "error");
+            return;
+        }
+        if (editPhone.replace(/\D/g, "").length < 10) {
+            showToast("Вкажіть коректний номер телефону", "error");
+            return;
+        }
+        setCompleteSaving(true);
+        const result = await AuthUtils.updateProfile({
+            name: trimmedName,
+            phone: editPhone.trim(),
+        });
+        setCompleteSaving(false);
+        if (result.success && result.user) {
+            setUser(result.user);
+            setShowCompleteModal(false);
+            showToast("Дякуємо! Профіль збережено.", "success");
         } else {
             showToast(result.message || "Не вдалося зберегти", "error");
         }
@@ -555,16 +582,6 @@ export default function Profile() {
                                         )}
                                     </div>
                                     <div className="profile-card__content">
-                                        {needsPhone && !user.phone && (
-                                            <div className="profile-complete-prompt" role="status">
-                                                <strong>{t("Завершіть профіль")}</strong>
-                                                <span>
-                                                    {t(
-                                                        "Додайте номер телефону — він потрібен, щоб ми підтвердили та доставили замовлення.",
-                                                    )}
-                                                </span>
-                                            </div>
-                                        )}
                                         <div className="profile-grid">
                                             <div className="profile-field">
                                                 <label>
@@ -1211,6 +1228,87 @@ export default function Profile() {
                             </button>
                             <button className="btn-primary" onClick={handleAddAddress}>
                                 {t("Додати")}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Profile-completion modal — first Google sign-in (name + phone) */}
+            {showCompleteModal && (
+                <div className="modal-overlay" onClick={() => setShowCompleteModal(false)}>
+                    <div
+                        className="modal"
+                        onClick={(e) => e.stopPropagation()}
+                        ref={completeModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="complete-modal-title"
+                    >
+                        <div className="modal__header">
+                            <h3 id="complete-modal-title">{t("Вітаємо в MIND BODY!")}</h3>
+                            <button
+                                type="button"
+                                className="modal__close"
+                                aria-label={t("Закрити")}
+                                onClick={() => setShowCompleteModal(false)}
+                            >
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="modal__content">
+                            <p className="modal__lead">
+                                {t(
+                                    "Залиште ім'я та номер телефону — вони потрібні, щоб ми підтвердили та доставили ваше замовлення.",
+                                )}
+                            </p>
+                            <div className="form-group">
+                                <label htmlFor="complete-name">{t("Ім'я")}</label>
+                                <input
+                                    id="complete-name"
+                                    type="text"
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    placeholder={t("Ваше ім'я")}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="complete-phone">{t("Телефон")}</label>
+                                <input
+                                    id="complete-phone"
+                                    type="tel"
+                                    value={editPhone}
+                                    onChange={(e) => setEditPhone(e.target.value)}
+                                    placeholder="+380 XX XXX XX XX"
+                                    autoFocus
+                                />
+                            </div>
+                        </div>
+                        <div className="modal__footer">
+                            <button
+                                type="button"
+                                className="btn-cancel"
+                                onClick={() => setShowCompleteModal(false)}
+                            >
+                                {t("Пізніше")}
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-primary"
+                                onClick={handleCompleteProfile}
+                                disabled={completeSaving}
+                            >
+                                {completeSaving ? t("Збереження...") : t("Зберегти")}
                             </button>
                         </div>
                     </div>
