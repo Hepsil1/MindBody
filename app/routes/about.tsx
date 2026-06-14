@@ -1,13 +1,16 @@
 import type { Route } from "./+types/about";
 import { prisma } from "../db.server";
 import { useLoaderData } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { type SlideData } from "../components/HeroSlider";
 import { EditorAffordance } from "../components/EditorAffordance";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import { useI18n, LLink } from "../i18n";
 import { localeFromParamSafe, OG_LOCALE } from "../i18n/config";
-import SunScene from "../components/about/SunScene";
+import PolotnoCloth, {
+    makeClothTargets,
+    type ClothTargets,
+} from "../components/about/PolotnoCloth";
 import "../styles/about-page.css";
 import "../styles/home.css";
 import "../styles/contacts.css";
@@ -239,6 +242,11 @@ export default function About() {
     const { locale } = useI18n();
     const c = CONTENT[locale];
 
+    // Shared morph targets the WebGL silk lerps toward; the scroll effect below
+    // writes a preset per section so the same cloth unrolls → folds → drapes →
+    // pulls taut → settles into dark satin as you scroll.
+    const clothTargets = useRef<ClothTargets>(makeClothTargets());
+
     // Cinematic scroll reveals: add `.is-in` to [data-reveal] elements the
     // first time they enter the viewport. Reduced-motion / no IntersectionObserver
     // → everything is shown immediately.
@@ -264,6 +272,79 @@ export default function About() {
         return () => io.disconnect();
     }, [locale]);
 
+    // Scroll authority (native scroll, no extra deps): pick the section under
+    // the viewport centre and write its silk preset + a scroll-velocity energy
+    // so the cloth billows when you move and breathes calm when you stop. Also
+    // publishes a 0→1 --about-day progress var for subtle DOM re-grading.
+    useEffect(() => {
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduce) return;
+        const root = document.querySelector<HTMLElement>(".about-silk");
+
+        type Preset = Pick<ClothTargets, "fold" | "drape" | "tension" | "settle" | "dark">;
+        const presets: Record<string, Preset> = {
+            hero: { fold: 0.0, drape: 0.0, tension: 0.0, settle: 0.0, dark: 0.0 },
+            manifesto: { fold: 1.0, drape: 0.1, tension: 0.0, settle: 0.0, dark: 0.5 },
+            story: { fold: 0.45, drape: 1.0, tension: 0.0, settle: 0.0, dark: 0.5 },
+            process: { fold: 0.25, drape: 0.1, tension: 1.0, settle: 0.0, dark: 0.55 },
+            lookbook: { fold: 0.3, drape: 0.2, tension: 0.15, settle: 0.0, dark: 0.4 },
+            contact: { fold: 0.4, drape: 0.1, tension: 0.0, settle: 1.0, dark: 0.2 },
+        };
+
+        const ids = ["hero", "manifesto", "story", "process", "lookbook", "contact"];
+        let lastY = window.scrollY;
+        let ticking = false;
+
+        const apply = () => {
+            ticking = false;
+            const vh = window.innerHeight;
+            const mid = window.scrollY + vh / 2;
+            let key = "hero";
+            for (const id of ids) {
+                // The contact section keeps the legacy #contact-premium anchor
+                // (header "Контакти" links to it); others use silk-<id>.
+                const el = document.getElementById(
+                    id === "contact" ? "contact-premium" : `silk-${id}`,
+                );
+                if (!el) continue;
+                if (mid >= el.offsetTop) key = id;
+            }
+            const pr = presets[key] ?? presets.hero;
+            const tg = clothTargets.current;
+            tg.fold = pr.fold;
+            tg.drape = pr.drape;
+            tg.tension = pr.tension;
+            tg.settle = pr.settle;
+            tg.dark = pr.dark;
+
+            const dy = Math.abs(window.scrollY - lastY);
+            lastY = window.scrollY;
+            tg.scrollVel = Math.min(1, tg.scrollVel * 0.6 + dy / 55);
+
+            if (root) {
+                const max = document.body.scrollHeight - vh || 1;
+                root.style.setProperty("--about-day", Math.min(1, window.scrollY / max).toFixed(3));
+            }
+        };
+        const onScroll = () => {
+            if (!ticking) {
+                ticking = true;
+                requestAnimationFrame(apply);
+            }
+        };
+        apply();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+        const decay = window.setInterval(() => {
+            clothTargets.current.scrollVel *= 0.85;
+        }, 140);
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+            window.removeEventListener("resize", onScroll);
+            window.clearInterval(decay);
+        };
+    }, [locale]);
+
     // Owner-curated About slides → a lookbook gallery (preserves their imagery
     // and the admin "edit slides" affordance).
     const lookbook = slides
@@ -272,67 +353,74 @@ export default function About() {
         .slice(0, 6);
 
     return (
-        <main className="about-cinema">
+        <main className="about-silk">
             <h1 className="visually-hidden">{c.h1}</h1>
 
-            {/* ── HERO — WebGL living sun ─────────────────────────────── */}
-            <section className="about-sun">
-                <SunScene />
-                <div className="about-sun__veil" aria-hidden="true" />
-                <div className="about-sun__inner">
-                    <div className="about-sun__mark">
-                        <picture>
-                            <source srcSet="/pics/mind_body_logo_white.webp" type="image/webp" />
-                            <img
-                                src="/pics/mind_body_logo_white.webp"
-                                alt="MIND BODY"
-                                className="about-sun__logo"
-                            />
-                        </picture>
-                    </div>
-                    <p className="about-sun__tagline">{c.heroSubtitle}</p>
+            {/* The single persistent hero: one living piece of WebGL silk fixed
+                behind every section. A CSS gradient backdrop paints first (LCP)
+                and is the fallback when WebGL/reduced-motion is unavailable. */}
+            <div className="about-silk__backdrop" aria-hidden="true" />
+            <PolotnoCloth targetsRef={clothTargets} />
+
+            {/* HERO — the unrolling bolt */}
+            <section id="silk-hero" className="silk-hero">
+                <div className="silk-hero__mark">
+                    <picture>
+                        <source srcSet="/pics/mind_body_logo.webp" type="image/webp" />
+                        <img
+                            src="/pics/mind_body_logo.png"
+                            alt="MIND BODY"
+                            className="silk-hero__logo"
+                        />
+                    </picture>
+                    <span className="silk-hero__script">sport wear</span>
+                    <p className="silk-hero__tagline">{c.heroSubtitle}</p>
                 </div>
-                <div className="about-sun__scroll" aria-hidden="true">
-                    <span className="about-sun__scroll-word">Scroll</span>
-                    <span className="about-sun__scroll-line" />
+                <div className="silk-scroll" aria-hidden="true">
+                    <span className="silk-scroll__word">Scroll</span>
+                    <span className="silk-scroll__line" />
                 </div>
             </section>
 
-            {/* ── MANIFESTO — oversized brand statement ───────────────── */}
-            <section className="about-manifesto">
-                <p className="about-manifesto__text" data-reveal>
-                    <strong>MIND BODY</strong>
-                    {c.storyLead}
-                    <em>{c.storyLeadEm}</em>
-                    {c.storyLeadEnd}
+            {/* MANIFESTO — the fold */}
+            <section id="silk-manifesto" className="silk-manifesto">
+                <p className="silk-manifesto__text">
+                    <span className="silk-line" data-reveal>
+                        <strong>MIND BODY</strong>
+                        {c.storyLead}
+                    </span>
+                    <span className="silk-line" data-reveal>
+                        <em>{c.storyLeadEm}</em>
+                        {c.storyLeadEnd}
+                    </span>
                 </p>
             </section>
 
-            {/* ── STORY — editorial split, parallax media ─────────────── */}
-            <section className="about-story">
-                <div className="about-story__media" data-reveal>
+            {/* STORY — the drape (silk wipes to reveal the real photo) */}
+            <section id="silk-story" className="silk-story">
+                <div className="silk-story__media" data-reveal>
                     <picture>
                         <source
                             srcSet={buildWebpSrcset("/pics1cloths/IMG_6215.webp")}
-                            sizes="(max-width: 900px) 100vw, 46vw"
+                            sizes="(max-width: 900px) 86vw, 44vw"
                             type="image/webp"
                         />
                         <img
                             src="/pics1cloths/IMG_6215.webp"
                             alt="MIND BODY"
-                            className="about-story__img"
+                            className="silk-story__img"
                             loading="lazy"
                             decoding="async"
                         />
                     </picture>
-                    <span className="about-story__est">Est. 2020</span>
+                    <span className="silk-story__est">Est. 2020</span>
                 </div>
-                <div className="about-story__body" data-reveal>
-                    <span className="about-eyebrow">Our Story</span>
-                    <h2 className="about-story__title">{c.heroSubtitle}</h2>
-                    <p className="about-story__highlight">{c.storyHighlight}</p>
-                    <ul className="about-story__values">
-                        <li className="about-value">
+                <div className="silk-story__body silk-panel" data-reveal>
+                    <span className="silk-eyebrow">Our Story</span>
+                    <h2 className="silk-h2">{c.heroSubtitle}</h2>
+                    <p className="silk-lede">{c.storyHighlight}</p>
+                    <ul className="silk-values">
+                        <li>
                             <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -345,7 +433,7 @@ export default function About() {
                             </svg>
                             <span>Premium Quality</span>
                         </li>
-                        <li className="about-value">
+                        <li>
                             <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -357,7 +445,7 @@ export default function About() {
                             </svg>
                             <span>Handmade with Love</span>
                         </li>
-                        <li className="about-value">
+                        <li>
                             <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -375,25 +463,23 @@ export default function About() {
                 </div>
             </section>
 
-            {/* ── PROCESS — sticky "journey" 01 → 04 ──────────────────── */}
-            <section className="about-process">
-                <div className="about-process__aside" data-reveal>
-                    <span className="about-eyebrow about-eyebrow--light">{c.processTag}</span>
-                    <h2 className="about-process__title">
+            {/* PROCESS — four taut panels (gapless; kills the v1 sticky hole) */}
+            <section id="silk-process" className="silk-process">
+                <header className="silk-process__head silk-panel" data-reveal>
+                    <span className="silk-eyebrow">{c.processTag}</span>
+                    <h2 className="silk-h2">
                         {c.processTitle}
                         <em>{c.processTitleEm}</em>
                     </h2>
-                    <span className="about-process__rule" aria-hidden="true" />
-                </div>
-                <div className="about-process__steps">
+                </header>
+                <div className="silk-process__panels">
                     {PROCESS_STEPS.map((step, i) => (
-                        <article className="about-step" data-reveal key={step.number}>
-                            <span className="about-step__num">{step.number}</span>
-                            <div className="about-step__media">
+                        <article className="silk-step" data-reveal key={step.number}>
+                            <div className="silk-step__media">
                                 <picture>
                                     <source
                                         srcSet={buildWebpSrcset(step.image)}
-                                        sizes="(max-width: 900px) 88vw, 40vw"
+                                        sizes="(max-width: 900px) 92vw, 24vw"
                                         type="image/webp"
                                     />
                                     <img
@@ -403,9 +489,10 @@ export default function About() {
                                         decoding="async"
                                     />
                                 </picture>
+                                <span className="silk-step__num">{step.number}</span>
                             </div>
-                            <div className="about-step__text">
-                                <h3 className="about-step__name">{c.steps[i].name}</h3>
+                            <div className="silk-step__body">
+                                <h3 className="silk-step__name">{c.steps[i].name}</h3>
                                 <p>{c.steps[i].text}</p>
                             </div>
                         </article>
@@ -413,17 +500,17 @@ export default function About() {
                 </div>
             </section>
 
-            {/* ── LOOKBOOK — owner-curated slide imagery (admin-editable) ─ */}
+            {/* LOOKBOOK — owner-curated slide imagery (admin-editable) */}
             {lookbook.length > 0 && (
                 <EditorAffordance
                     label="Редагувати слайди"
                     message={{ type: "OPEN_ABOUT_SLIDES_EDITOR" }}
                 >
-                    <section className="about-lookbook" data-reveal>
-                        <div className="about-lookbook__grid">
+                    <section id="silk-lookbook" className="silk-lookbook" data-reveal>
+                        <div className="silk-lookbook__grid">
                             {lookbook.map((src, i) => (
                                 <figure
-                                    className={`about-lookbook__cell about-lookbook__cell--${i % 6}`}
+                                    className={`silk-lookbook__cell silk-lookbook__cell--${i % 6}`}
                                     key={src + i}
                                 >
                                     <picture>
@@ -446,27 +533,27 @@ export default function About() {
                 </EditorAffordance>
             )}
 
-            {/* ── CONTACT — close ─────────────────────────────────────── */}
-            <section className="about-contact" id="contact-premium">
-                <div className="about-contact__head" data-reveal>
-                    <span className="about-eyebrow about-eyebrow--light">{c.contactLabel}</span>
-                    <h2 className="about-contact__title">
+            {/* CONTACT — heavy satin settle (keeps #contact-premium anchor) */}
+            <section id="contact-premium" className="silk-contact">
+                <div className="silk-contact__head" data-reveal>
+                    <span className="silk-eyebrow silk-eyebrow--light">{c.contactLabel}</span>
+                    <h2 className="silk-h2 silk-h2--light">
                         {c.contactTitle} <em>{c.contactTitleEm}</em>
                     </h2>
-                    <p className="about-contact__desc">
+                    <p className="silk-contact__desc">
                         <em>{c.contactDescEm}</em>
                         {c.contactDescEnd}
                     </p>
                 </div>
-                <div className="about-contact__body" data-reveal>
-                    <div className="about-contact__phones">
+                <div className="silk-contact__body" data-reveal>
+                    <div className="silk-contact__phones">
                         {PHONES.map((phone, i) => (
                             <a
                                 href={`tel:${phone.tel}`}
-                                className="about-contact__link"
+                                className="silk-contact__link"
                                 key={phone.tel}
                             >
-                                <span className="about-contact__icon">
+                                <span className="silk-contact__icon">
                                     <svg
                                         width="18"
                                         height="18"
@@ -479,19 +566,19 @@ export default function About() {
                                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                                     </svg>
                                 </span>
-                                <span className="about-contact__info">
-                                    <span className="about-contact__phone">{phone.display}</span>
-                                    <span className="about-contact__hint">{c.phoneHints[i]}</span>
+                                <span className="silk-contact__info">
+                                    <span className="silk-contact__phone">{phone.display}</span>
+                                    <span className="silk-contact__hint">{c.phoneHints[i]}</span>
                                 </span>
                             </a>
                         ))}
                     </div>
-                    <div className="about-contact__cta">
+                    <div className="silk-contact__cta">
                         <a
                             href="https://www.instagram.com/mind_body_sportwear/"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="about-contact__ig"
+                            className="silk-contact__ig"
                         >
                             <svg
                                 width="20"
@@ -504,7 +591,7 @@ export default function About() {
                             </svg>
                             <span>{c.instagramCta}</span>
                         </a>
-                        <LLink to="/shop/yoga" className="about-contact__shop">
+                        <LLink to="/shop/yoga" className="silk-contact__shop">
                             <span>{c.collectionCta}</span>
                             <svg
                                 width="18"
