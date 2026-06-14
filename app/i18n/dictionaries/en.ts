@@ -14,6 +14,15 @@ export const en: Record<string, string> = {
     "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика. Доставка Новою Поштою по всій Україні.":
         "Ukrainian sportswear brand for women and kids. Yoga, gymnastics, acrobatics. Nova Poshta delivery across Ukraine.",
 
+    // --- profile completion (first Google sign-in) ---
+    "Вітаємо в MIND BODY!": "Welcome to MIND BODY!",
+    "Залиште ім'я та номер телефону — вони потрібні, щоб ми підтвердили та доставили ваше замовлення.":
+        "Leave your name and phone number — we need them to confirm and deliver your order.",
+    "Ваше ім'я": "Your name",
+    Пізніше: "Later",
+    "Збереження...": "Saving...",
+    "Дякуємо! Профіль збережено.": "Thank you! Your profile has been saved.",
+
     // --- root / global ---
     "Перейти до контенту": "Skip to content",
     "Помилка!": "Error!",
