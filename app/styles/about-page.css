@@ -69,12 +69,13 @@
    never crops to an empty backdrop. */
 .sol-media__fill {
     position: absolute;
-    inset: -5%;
+    inset: -6%;
     z-index: 0;
     background-size: cover;
     background-position: center;
-    filter: blur(48px) saturate(1.2) brightness(0.78);
-    transform: scale(1.12);
+    /* muted, dark ambient wash — premium, never a vivid colour slab */
+    filter: blur(56px) saturate(0.8) brightness(0.58);
+    transform: scale(1.18);
 }
 /* The sharp portrait, contained so the whole subject stays in frame. */
 .sol-media__fg {
