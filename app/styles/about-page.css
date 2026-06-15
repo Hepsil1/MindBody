@@ -44,23 +44,19 @@
     position: relative;
     z-index: 1;
 }
-.sol-act--hero {
-    height: 112vh;
-}
+/* Each act is one full screen (no sticky — body{overflow-x:hidden} breaks it). */
+.sol-act--hero,
 .sol-act--statement,
-.sol-act--beat {
-    height: 178vh;
-}
+.sol-act--beat,
 .sol-act--daybreak {
-    height: 320vh;
+    min-height: 100svh;
 }
 .sol-act--contact {
-    height: 132vh;
+    min-height: 100svh;
     scroll-margin-top: clamp(98px, 22vw, 118px);
 }
 .sol-stage {
-    position: sticky;
-    top: 0;
+    position: relative;
     height: 100svh;
     overflow: hidden;
 }
@@ -97,8 +93,16 @@
 }
 .sol-ken {
     transform-origin: 50% 50%;
-    transform: scale(calc(1.01 + var(--p, 0) * 0.07));
+    animation: solKen 18s ease-in-out infinite alternate;
     will-change: transform;
+}
+@keyframes solKen {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(1.12);
+    }
 }
 
 /* Veils for type legibility over imagery */
@@ -287,15 +291,7 @@
     left: clamp(var(--space-lg), 7vw, 7rem);
 }
 
-/* ── ACT 3 — daybreak reveal ── */
-.sol-daybreak__back {
-    z-index: 1;
-}
-.sol-daybreak__front {
-    z-index: 2;
-    /* studio shadow wipes away left→right as --p climbs, revealing terrace */
-    clip-path: inset(0 calc(var(--p, 0) * 100%) 0 0);
-}
+/* ── ACT 3 — daybreak ── */
 .sol-daybreak__title {
     margin: 0;
     font-family: var(--font-display);
@@ -517,13 +513,6 @@
 
 /* ── Mobile ── */
 @media (max-width: 760px) {
-    .sol-act--statement,
-    .sol-act--beat {
-        height: 150vh;
-    }
-    .sol-act--daybreak {
-        height: 230vh;
-    }
     .sol-copy {
         padding: clamp(var(--space-lg), 9vw, var(--space-3xl));
     }
@@ -538,6 +527,7 @@
     }
     .sol-ken {
         transform: scale(1.04) !important;
+        animation: none !important;
     }
     .sol-hero__logo,
     .sol-eyebrow {
@@ -551,8 +541,5 @@
     }
     .sol-cell img {
         transition: none;
-    }
-    .sol-daybreak__front {
-        clip-path: inset(0 60% 0 0);
     }
 }

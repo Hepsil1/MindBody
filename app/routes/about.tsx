@@ -65,8 +65,7 @@ const HERO_POSTER = "/pics1cloths/IMG_6201.webp"; // LCP paint
 const STATEMENT_STILL = "/pics1cloths/IMG_6206.webp"; // studio, hood up
 const STUDIO_STILLNESS = "/pics1cloths/IMG_6202.webp"; // studio, back
 const STUDIO_MOTION = "/pics1cloths/IMG_6203.webp"; // studio, motion
-const DAYBREAK_SHADOW = "/pics1cloths/IMG_6210.webp"; // studio (clipped away)
-const DAYBREAK_LIGHT = "/lifestyle/0Y4A5932.webp"; // terrace (revealed)
+const DAYBREAK_LIGHT = "/lifestyle/0Y4A5932.webp"; // bright terrace daybreak
 const CONTACT_BG = "/lifestyle/0Y4A5964.webp"; // softened bright close
 // Daylight lookbook grid — the four craft words ride the first four cells.
 const TERRACE = [
@@ -449,8 +448,7 @@ export default function About() {
             {/* ACT 3 — DAYBREAK: studio shadow wipes to reveal terrace light */}
             <section className="sol-act sol-act--daybreak" data-act>
                 <div className="sol-stage">
-                    <Frame src={DAYBREAK_LIGHT} wrap="sol-daybreak__back" />
-                    <Frame src={DAYBREAK_SHADOW} wrap="sol-daybreak__front" />
+                    <Frame src={DAYBREAK_LIGHT} />
                     <div className="sol-veil sol-veil--center" />
                     <div className="sol-copy sol-copy--center">
                         <h2 className="sol-daybreak__title" data-reveal>
