@@ -142,12 +142,15 @@
         linear-gradient(to top, rgba(6, 13, 14, 0.55), transparent 38%);
 }
 .sol-veil--cream {
-    background: linear-gradient(
-        to top,
-        rgba(250, 248, 246, 0.94) 0%,
-        rgba(250, 248, 246, 0.62) 46%,
-        rgba(250, 248, 246, 0.3) 100%
-    );
+    background:
+        linear-gradient(
+            to right,
+            rgba(250, 248, 246, 0.98) 0%,
+            rgba(250, 248, 246, 0.86) 36%,
+            rgba(250, 248, 246, 0.22) 68%,
+            rgba(250, 248, 246, 0) 86%
+        ),
+        linear-gradient(to top, rgba(250, 248, 246, 0.9), rgba(250, 248, 246, 0.15) 55%);
 }
 .sol-veil--center {
     background: radial-gradient(ellipse at 50% 50%, rgba(6, 13, 14, 0.5), transparent 62%);
@@ -385,7 +388,10 @@
 .sol-contact {
     align-items: flex-start;
     text-align: left;
-    max-width: 820px;
+    max-width: 560px;
+}
+.sol-contact__phones {
+    gap: var(--space-md) var(--space-xl);
 }
 .sol-contact__title {
     margin: 0 0 var(--space-2xl);
