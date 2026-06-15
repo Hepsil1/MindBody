@@ -1,447 +1,398 @@
 /* ============================================================
-   /about — "SOLNOIR · The Light Study"
-   One continuous exposure: a page-level --lum climbs dark→cream as
-   you scroll, carrying a brand film through moody studio frames, an
-   interactive daybreak reveal, into a bright daylight lookbook and a
-   cream contact close. Native-scroll only, no deps. Header & footer
-   untouched. Tokens from app.css.
+   /about — MIND BODY brand story (light editorial)
+   Cream canvas, dark legible type, teal/sliva accents, aligned
+   grids, tasteful scroll-reveals. Reads as an ABOUT page, not a
+   photo reel. Header & footer untouched. Tokens from app.css.
    ============================================================ */
 
-.sol {
-    position: relative;
-    color: #fbf7f0;
-    overflow-x: clip;
-    --lum: 0.62;
-}
-
-/* Exposure backdrop — dark base, cream overlay fades up with --lum */
-.sol-sky {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background: #0a1213;
-}
-.sol-sky::after {
-    content: "";
-    position: absolute;
-    inset: 0;
+.ab {
     background: var(--color-bg-cream, #faf8f6);
-    opacity: var(--lum);
-}
-/* Film vignette/grain — heaviest in the dark, clears as light blooms */
-.sol-grain {
-    position: fixed;
-    inset: 0;
-    z-index: 5;
-    pointer-events: none;
-    mix-blend-mode: multiply;
-    background: radial-gradient(circle at 50% 42%, transparent 48%, rgba(4, 9, 10, 0.7) 120%);
-    opacity: calc(0.2 + (1 - var(--lum)) * 0.55);
+    color: var(--color-text-primary, #1a1a1a);
+    overflow-x: clip;
 }
 
-/* Acts sit above the sky */
-.sol-act {
-    position: relative;
-    z-index: 1;
-}
-/* Each act is one full screen (no sticky — body{overflow-x:hidden} breaks it). */
-.sol-act--hero,
-.sol-act--statement,
-.sol-act--beat,
-.sol-act--daybreak {
-    min-height: 100svh;
-}
-.sol-act--contact {
-    min-height: 100svh;
-    scroll-margin-top: clamp(98px, 22vw, 118px);
-}
-.sol-stage {
-    position: relative;
-    height: 100svh;
-    overflow: hidden;
-}
-.sol-media {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-}
-/* Soft blurred wash (from the LQIP) fills the wide frame so portrait media
-   never crops to an empty backdrop. */
-.sol-media__fill {
-    position: absolute;
-    inset: -6%;
-    z-index: 0;
-    background-size: cover;
-    background-position: center;
-    /* muted, dark ambient wash — premium, never a vivid colour slab */
-    filter: blur(56px) saturate(0.8) brightness(0.58);
-    transform: scale(1.18);
-}
-/* The sharp portrait, contained so the whole subject stays in frame. */
-.sol-media__fg {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    display: block;
-}
-.sol-media__fg img,
-.sol-media__fg video,
-.sol-video {
-    width: 100%;
-    height: 100%;
-    display: block;
-    object-fit: contain;
-}
-.sol-ken {
-    transform-origin: 50% 50%;
-    animation: solKen 18s ease-in-out infinite alternate;
-    will-change: transform;
-}
-@keyframes solKen {
-    from {
-        transform: scale(1);
-    }
-    to {
-        transform: scale(1.12);
-    }
-}
-
-/* Veils for type legibility over imagery */
-.sol-veil {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(
-        to top,
-        rgba(6, 13, 14, 0.72) 0%,
-        rgba(6, 13, 14, 0.22) 45%,
-        rgba(6, 13, 14, 0.34) 100%
-    );
-}
-.sol-veil--hero {
-    background: radial-gradient(
-        ellipse at 50% 40%,
-        rgba(6, 13, 14, 0.12),
-        rgba(6, 13, 14, 0.62) 100%
-    );
-}
-.sol-veil--left {
-    background:
-        linear-gradient(
-            to right,
-            rgba(6, 13, 14, 0.88) 0%,
-            rgba(6, 13, 14, 0.5) 40%,
-            rgba(6, 13, 14, 0.1) 72%
-        ),
-        radial-gradient(ellipse 85% 85% at 55% 45%, transparent 32%, rgba(6, 13, 14, 0.55) 100%);
-}
-/* Spotlight the centred subject, darken the (light-grey studio) edges so the
-   moody mood + overlay text both land. */
-.sol-veil--studio {
-    background:
-        radial-gradient(ellipse 78% 82% at 50% 44%, transparent 30%, rgba(6, 13, 14, 0.82) 100%),
-        linear-gradient(to top, rgba(6, 13, 14, 0.55), transparent 38%);
-}
-.sol-veil--cream {
-    background:
-        linear-gradient(
-            to right,
-            rgba(250, 248, 246, 0.98) 0%,
-            rgba(250, 248, 246, 0.86) 36%,
-            rgba(250, 248, 246, 0.22) 68%,
-            rgba(250, 248, 246, 0) 86%
-        ),
-        linear-gradient(to top, rgba(250, 248, 246, 0.9), rgba(250, 248, 246, 0.15) 55%);
-}
-.sol-veil--center {
-    background: radial-gradient(ellipse at 50% 50%, rgba(6, 13, 14, 0.5), transparent 62%);
-}
-
-/* ── ACT 0 — iris aperture over the film ── */
-.sol-aperture {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    overflow: hidden;
-}
-.sol-aperture::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 44%;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(320);
-    box-shadow:
-        0 0 70px 24px rgba(8, 14, 15, 0.85),
-        0 0 0 100vmax #0a1213;
-}
-.sol--anim .sol-aperture::after {
-    animation: solIris 1.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
-}
-@keyframes solIris {
-    from {
-        transform: translate(-50%, -50%) scale(0);
-    }
-    to {
-        transform: translate(-50%, -50%) scale(320);
-    }
-}
-
-.sol-hero__copy {
-    position: absolute;
-    inset: 0;
-    z-index: 4;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-lg);
-    text-align: center;
-}
-.sol-hero__logo {
-    width: min(74vw, 420px);
-    height: auto;
-    filter: drop-shadow(0 16px 60px rgba(0, 0, 0, 0.5));
-    animation: solFade 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both;
-}
-.sol-eyebrow {
-    font-family: var(--font-accent, "Italiana"), serif;
-    font-size: var(--text-sm);
+.ab-eyebrow {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: var(--tracking-widest);
-    color: rgba(251, 247, 240, 0.82);
-    animation: solFade 1.6s ease 0.5s both;
+    color: var(--color-primary, #2a5a5a);
+    margin-bottom: var(--space-lg);
 }
-.sol-eyebrow--dark {
-    color: var(--color-primary-dark, #1e4444);
-    animation: none;
-}
-.sol-scroll {
-    position: absolute;
-    left: 50%;
-    bottom: clamp(26px, 6vh, 60px);
-    transform: translateX(-50%);
-    z-index: 4;
-}
-.sol-scroll__line {
+.ab-eyebrow--center {
     display: block;
-    width: 1px;
-    height: 60px;
-    background: linear-gradient(rgba(251, 247, 240, 0.8), transparent);
-    position: relative;
-    overflow: hidden;
-}
-.sol-scroll__line::after {
-    content: "";
-    position: absolute;
-    top: -45%;
-    left: 0;
-    width: 100%;
-    height: 45%;
-    background: rgba(251, 247, 240, 0.95);
-    animation: solDrip 2.2s ease-in-out infinite;
-}
-
-/* ── Copy layers (statement / daybreak / contact) ── */
-.sol-copy {
-    position: absolute;
-    inset: 0;
-    z-index: 4;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: clamp(var(--space-xl), 8vw, 9rem);
-}
-.sol-copy--left {
-    align-items: flex-start;
-    text-align: left;
-}
-.sol-copy--center {
-    align-items: center;
     text-align: center;
 }
-.sol-statement {
-    margin: 0;
-    max-width: 15ch;
-    font-family: var(--font-display);
-    font-weight: 300;
-    font-size: clamp(2.6rem, 8vw, 7rem);
-    line-height: 1.03;
-    letter-spacing: var(--tracking-tight);
-    color: #fbf7f0;
-    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.4);
+.ab-eyebrow--light {
+    color: var(--color-primary-light, #4a8a8a);
 }
 
-/* Held-beat tags */
-.sol-tag {
-    position: absolute;
-    z-index: 4;
-    font-family: var(--font-accent, "Italiana"), serif;
-    font-size: clamp(1.1rem, 2.4vw, 1.7rem);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-widest);
-    color: rgba(251, 247, 240, 0.92);
-    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.65);
-}
-.sol-tag--tr {
-    top: clamp(96px, 16vh, 200px);
-    right: clamp(var(--space-lg), 7vw, 7rem);
-}
-.sol-tag--bl {
-    bottom: clamp(60px, 14vh, 180px);
-    left: clamp(var(--space-lg), 7vw, 7rem);
-}
-
-/* ── ACT 3 — daybreak ── */
-.sol-daybreak__title {
-    margin: 0;
+.ab-h2 {
     font-family: var(--font-display);
     font-weight: 400;
-    font-size: clamp(2.2rem, 6vw, 5rem);
-    line-height: 1.04;
+    font-size: clamp(1.9rem, 3.6vw, 3rem);
+    line-height: var(--leading-tight);
     letter-spacing: var(--tracking-tight);
-    color: #fbf7f0;
-    text-shadow:
-        0 2px 30px rgba(0, 0, 0, 0.65),
-        0 0 70px rgba(0, 0, 0, 0.45);
+    color: var(--color-text-primary, #1a1a1a);
 }
-.sol-daybreak__title em {
+.ab-h2 strong {
+    font-weight: 600;
+    color: var(--color-primary, #2a5a5a);
+}
+.ab-h2 em {
     font-style: italic;
+    color: var(--color-accent, #4b3b6b);
+}
+.ab-h2--light {
+    color: #fbf7f0;
+}
+.ab-h2--light em {
+    color: var(--color-primary-light, #4a8a8a);
 }
 
-/* ── ACT 4 — daylight terrace grid ── */
-.sol-act--terrace {
-    padding: clamp(var(--space-2xl), 7vw, var(--space-4xl))
-        clamp(var(--space-md), 5vw, var(--space-3xl));
+/* ---- Reveal (gated by JS-added .ab--anim so no-JS shows all) ---- */
+.ab--anim [data-reveal] {
+    opacity: 0;
+    transform: translateY(34px);
+    transition:
+        opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
 }
-.sol-terrace__head {
-    max-width: var(--container-max);
-    margin: 0 auto clamp(var(--space-lg), 4vw, var(--space-2xl));
+.ab--anim [data-reveal].in {
+    opacity: 1;
+    transform: none;
 }
-.sol-grid {
-    max-width: var(--container-max);
-    margin: 0 auto;
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.ab-hero {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: clamp(var(--space-sm), 1.4vw, var(--space-md));
+    gap: clamp(var(--space-xl), 5vw, var(--space-4xl));
+    align-items: center;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding: clamp(var(--space-3xl), 9vw, var(--space-5xl))
+        clamp(var(--space-lg), 6vw, var(--space-4xl)) clamp(var(--space-2xl), 6vw, var(--space-4xl));
 }
-.sol-cell {
+.ab-hero__title {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: clamp(2.4rem, 5vw, 4.2rem);
+    line-height: 1.06;
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-primary, #1a1a1a);
+    max-width: 14ch;
+    margin: 0 0 var(--space-xl);
+}
+.ab-hero__lead {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary, #555);
+    max-width: 46ch;
+    margin: 0 0 var(--space-xl);
+}
+.ab-hero__est {
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-text-muted, #666);
+}
+.ab-hero__media {
     position: relative;
-    margin: 0;
+    border-radius: var(--radius-xl);
     overflow: hidden;
-    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-xl);
     aspect-ratio: 4 / 5;
     background: var(--color-bg-soft, #f4f1ed);
 }
-.sol-cell img {
+.ab-hero__media video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 28%;
+    display: block;
+}
+@media (min-width: 900px) {
+    .ab-hero {
+        grid-template-columns: 1.05fr 0.8fr;
+    }
+    .ab-hero__media {
+        max-height: 80vh;
+    }
+}
+
+/* ============================================================
+   STORY
+   ============================================================ */
+.ab-story {
+    display: grid;
+    gap: clamp(var(--space-xl), 5vw, var(--space-4xl));
+    align-items: center;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding: clamp(var(--space-2xl), 6vw, var(--space-4xl))
+        clamp(var(--space-lg), 6vw, var(--space-4xl));
+}
+.ab-story__media {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    aspect-ratio: 4 / 5;
+    background: var(--color-bg-soft, #f4f1ed);
+}
+.ab-story__media img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform var(--transition-slow);
 }
-.sol-cell:hover img {
+.ab-story__media:hover img {
+    transform: scale(1.04);
+}
+.ab-story__highlight {
+    margin: var(--space-xl) 0 0;
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary, #555);
+    max-width: 46ch;
+}
+@media (min-width: 900px) {
+    .ab-story {
+        grid-template-columns: 44% 1fr;
+    }
+}
+
+/* ============================================================
+   VALUES
+   ============================================================ */
+.ab-values {
+    background: var(--color-bg-soft, #f4f1ed);
+    padding: clamp(var(--space-2xl), 6vw, var(--space-4xl))
+        clamp(var(--space-lg), 6vw, var(--space-4xl));
+}
+.ab-values__grid {
+    list-style: none;
+    margin: var(--space-xl) auto 0;
+    padding: 0;
+    max-width: 1000px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+}
+.ab-value {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    color: var(--color-text-primary, #1a1a1a);
+}
+.ab-value svg {
+    width: 40px;
+    height: 40px;
+    color: var(--color-primary, #2a5a5a);
+}
+@media (min-width: 720px) {
+    .ab-values__grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ============================================================
+   PROCESS
+   ============================================================ */
+.ab-process {
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding: clamp(var(--space-3xl), 7vw, var(--space-5xl))
+        clamp(var(--space-lg), 6vw, var(--space-4xl));
+}
+.ab-process__head {
+    max-width: 30ch;
+    margin-bottom: clamp(var(--space-xl), 4vw, var(--space-3xl));
+}
+.ab-process__title em {
+    display: block;
+    color: var(--color-primary, #2a5a5a);
+}
+.ab-process__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(var(--space-xl), 4vw, var(--space-3xl));
+}
+.ab-step {
+    display: grid;
+    gap: var(--space-lg);
+}
+.ab-step__media {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    aspect-ratio: 3 / 2;
+    background: var(--color-bg-soft, #f4f1ed);
+}
+.ab-step__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+.ab-step:hover .ab-step__media img {
     transform: scale(1.05);
 }
-.sol-cell__cap {
+.ab-step__num {
     position: absolute;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-sm);
-    padding: var(--space-md);
-    background: linear-gradient(to top, rgba(6, 13, 14, 0.55), transparent);
-    color: #fbf7f0;
-}
-.sol-cell__num {
-    font-family: var(--font-body);
-    font-size: var(--text-xs);
-    letter-spacing: var(--tracking-wider);
-    color: rgba(251, 247, 240, 0.75);
-}
-.sol-cell__name {
+    top: var(--space-md);
+    left: var(--space-lg);
     font-family: var(--font-display);
-    font-size: clamp(1.3rem, 2.4vw, 2rem);
+    font-size: var(--text-3xl);
+    line-height: 1;
+    color: #fff;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+}
+.ab-step__name {
+    font-family: var(--font-display);
     font-weight: 500;
+    font-size: var(--text-2xl);
+    color: var(--color-text-primary, #1a1a1a);
+    margin-bottom: var(--space-sm);
+}
+.ab-step__text p {
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary, #555);
+    max-width: 48ch;
 }
 @media (min-width: 760px) {
-    .sol-grid {
+    .ab-process__grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: clamp(var(--space-2xl), 3vw, var(--space-4xl))
+            clamp(var(--space-xl), 3vw, var(--space-3xl));
+    }
+}
+
+/* ============================================================
+   LOOKBOOK
+   ============================================================ */
+.ab-lookbook {
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding: clamp(var(--space-2xl), 6vw, var(--space-4xl))
+        clamp(var(--space-lg), 6vw, var(--space-4xl));
+}
+.ab-lookbook__head {
+    margin-bottom: clamp(var(--space-lg), 4vw, var(--space-2xl));
+}
+.ab-lookbook__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+}
+.ab-cell {
+    margin: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    aspect-ratio: 4 / 5;
+    background: var(--color-bg-soft, #f4f1ed);
+}
+.ab-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+.ab-cell:hover img {
+    transform: scale(1.05);
+}
+@media (min-width: 760px) {
+    .ab-lookbook__grid {
         grid-template-columns: repeat(3, 1fr);
         grid-auto-rows: 1fr;
+        gap: var(--space-lg);
     }
-    /* magazine rhythm — two hero cells span larger */
-    .sol-cell--0 {
-        grid-column: span 2;
+    .ab-cell--0 {
         grid-row: span 2;
         aspect-ratio: auto;
     }
-    .sol-cell--3 {
-        grid-row: span 2;
+    .ab-cell--4 {
+        grid-column: span 2;
         aspect-ratio: auto;
     }
 }
 
-/* ── ACT 5 — contact (cream) ── */
-.sol-contact {
-    align-items: flex-start;
-    text-align: left;
-    max-width: 560px;
+/* ============================================================
+   CONTACT — dark teal close
+   ============================================================ */
+.ab-contact {
+    background: var(--gradient-values, linear-gradient(135deg, #1e4444, #0c2729));
+    color: #fbf7f0;
+    padding: clamp(var(--space-3xl), 8vw, var(--space-5xl))
+        clamp(var(--space-lg), 6vw, var(--space-4xl));
 }
-.sol-contact__phones {
-    gap: var(--space-md) var(--space-xl);
+.ab-contact__inner {
+    max-width: var(--container-max);
+    margin-inline: auto;
 }
-.sol-contact__title {
-    margin: 0 0 var(--space-2xl);
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-size: clamp(2.4rem, 6vw, 4.5rem);
-    line-height: 1.04;
-    letter-spacing: var(--tracking-tight);
-    color: var(--color-text-primary, #1a1a1a);
+.ab-contact__head {
+    max-width: 40ch;
+    margin-bottom: clamp(var(--space-xl), 5vw, var(--space-3xl));
 }
-.sol-contact__title em {
-    font-style: italic;
-    color: var(--color-primary, #2a5a5a);
+.ab-contact__desc {
+    margin-top: var(--space-lg);
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: rgba(250, 248, 246, 0.78);
 }
-.sol-contact__phones {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-lg) var(--space-3xl);
-    margin-bottom: var(--space-2xl);
+.ab-contact__cols {
+    display: grid;
+    gap: var(--space-2xl);
 }
-.sol-phone {
+.ab-contact__phones {
+    display: grid;
+    gap: var(--space-lg);
+}
+.ab-phone {
     display: flex;
     flex-direction: column;
     gap: 2px;
     text-decoration: none;
-    color: var(--color-text-primary, #1a1a1a);
+    color: #fbf7f0;
     transition: opacity var(--transition-fast);
 }
-.sol-phone:hover {
-    opacity: 0.65;
+.ab-phone:hover {
+    opacity: 0.7;
 }
-.sol-phone__num {
+.ab-phone__num {
     font-family: var(--font-display);
-    font-size: clamp(1.3rem, 2.6vw, 1.9rem);
-    font-weight: 500;
+    font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+    font-weight: 400;
 }
-.sol-phone__hint {
+.ab-phone__hint {
     font-family: var(--font-body);
     font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
-    color: var(--color-text-muted, #666);
+    color: rgba(250, 248, 246, 0.5);
 }
-.sol-contact__cta {
+.ab-contact__cta {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-md);
+    align-items: flex-start;
 }
-.sol-btn {
+.ab-btn {
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
@@ -456,97 +407,61 @@
         background var(--transition-fast),
         box-shadow var(--transition-fast);
 }
-.sol-btn--solid {
-    background: var(--color-primary, #2a5a5a);
-    color: #fff;
+.ab-btn--solid {
+    background: #fbf7f0;
+    color: var(--color-primary-dark, #1e4444);
 }
-.sol-btn--solid:hover {
+.ab-btn--solid:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
 }
-.sol-btn--ghost {
+.ab-btn--ghost {
     background: transparent;
-    color: var(--color-primary-dark, #1e4444);
-    border: 1px solid rgba(42, 90, 90, 0.4);
+    color: #fbf7f0;
+    border: 1px solid rgba(255, 255, 255, 0.4);
 }
-.sol-btn--ghost:hover {
-    background: rgba(42, 90, 90, 0.08);
+.ab-btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
     transform: translateY(-2px);
 }
-.sol-btn--ghost svg {
+.ab-btn--ghost svg {
     transition: transform var(--transition-fast);
 }
-.sol-btn--ghost:hover svg {
+.ab-btn--ghost:hover svg {
     transform: translateX(4px);
 }
-.sol-phone:focus-visible,
-.sol-btn:focus-visible {
-    outline: 2px solid var(--color-primary, #2a5a5a);
+.ab-phone:focus-visible,
+.ab-btn:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.85);
     outline-offset: 3px;
 }
-
-/* ── Reveal motion (gated by JS-added .sol--anim) ── */
-.sol--anim [data-reveal] {
-    opacity: 0;
-    transform: translateY(42px);
-    transition:
-        opacity 1.1s cubic-bezier(0.16, 1, 0.3, 1),
-        transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: opacity, transform;
-}
-.sol--anim [data-reveal].in {
-    opacity: 1;
-    transform: none;
-}
-
-@keyframes solFade {
-    from {
-        opacity: 0;
-        transform: translateY(16px);
+@media (min-width: 760px) {
+    .ab-contact__cols {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: var(--space-4xl);
     }
-    to {
-        opacity: 1;
-        transform: none;
+    .ab-contact__phones {
+        grid-template-columns: repeat(3, auto);
+        gap: var(--space-3xl);
     }
-}
-@keyframes solDrip {
-    0% {
-        top: -45%;
-    }
-    100% {
-        top: 130%;
+    .ab-contact__cta {
+        flex-direction: column;
     }
 }
 
-/* ── Mobile ── */
-@media (max-width: 760px) {
-    .sol-copy {
-        padding: clamp(var(--space-lg), 9vw, var(--space-3xl));
-    }
-}
-
-/* ── Reduced motion ── */
+/* ============================================================
+   Reduced motion
+   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-    .sol--anim [data-reveal] {
+    .ab--anim [data-reveal] {
         opacity: 1 !important;
         transform: none !important;
         transition: none !important;
     }
-    .sol-ken {
-        transform: scale(1.04) !important;
-        animation: none !important;
-    }
-    .sol-hero__logo,
-    .sol-eyebrow {
-        animation: none !important;
-    }
-    .sol-aperture::after {
-        animation: none !important;
-    }
-    .sol-scroll__line::after {
-        display: none;
-    }
-    .sol-cell img {
+    .ab-story__media img,
+    .ab-step__media img,
+    .ab-cell img {
         transition: none;
     }
 }
