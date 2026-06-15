@@ -54,3 +54,8 @@ graphify-out/
 /temp-app.css
 /UsersAdministratorAppDataLocalTemplive-app.css
 public/uploads/_video_originals/
+
+# Raw Telegram brand-content exports (not committed)
+tg-content/
+public/ChatExport_2026-06-15/
+public/_tmpframes/

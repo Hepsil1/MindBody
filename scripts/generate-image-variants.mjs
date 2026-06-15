@@ -60,7 +60,7 @@ import sharp from "sharp";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, "..", "public");
-const TARGET_DIRS = ["pics", "pics1cloths", "pics2cloths", "generalpics", "uploads"];
+const TARGET_DIRS = ["pics", "pics1cloths", "pics2cloths", "generalpics", "uploads", "lifestyle"];
 const WIDTHS = [400, 800, 1200, 1600, 2400];
 const MASTER_MAX_WIDTH = 3200; // 4K retina desktop / iMac 5K @100vw
 const WEBP_QUALITY = 82;

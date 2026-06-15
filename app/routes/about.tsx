@@ -4,12 +4,11 @@ import { useLoaderData } from "react-router";
 import { useEffect } from "react";
 import { type SlideData } from "../components/HeroSlider";
 import { EditorAffordance } from "../components/EditorAffordance";
-import { buildWebpSrcset } from "../utils/responsive-image";
+import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
+import { getLqipStyle } from "../utils/lqip";
 import { useI18n, LLink } from "../i18n";
 import { localeFromParamSafe, OG_LOCALE } from "../i18n/config";
 import "../styles/about-page.css";
-import "../styles/home.css";
-import "../styles/contacts.css";
 
 const META = {
     uk: {
@@ -43,27 +42,42 @@ export function meta({ params }: Route.MetaArgs) {
     const m = META[locale];
     return [
         { title: m.title },
-        {
-            name: "description",
-            content: m.description,
-        },
+        { name: "description", content: m.description },
         { property: "og:title", content: m.ogTitle },
-        {
-            property: "og:description",
-            content: m.ogDescription,
-        },
+        { property: "og:description", content: m.ogDescription },
         { property: "og:type", content: "website" },
         { property: "og:image", content: "/brand-sun.png" },
-        // brand-sun.png is 504x503. Declaring up front avoids the social
-        // preview "fetching..." placeholder on first share.
         { property: "og:image:width", content: "504" },
         { property: "og:image:height", content: "503" },
         { property: "og:locale", content: OG_LOCALE[locale] },
     ];
 }
 
-// Static per-card data for the process section — images and numbers don't
-// change with the locale; names/texts come from CONTENT[locale].steps.
+// HTML must revalidate every deploy (hashed chunks change) — otherwise a
+// stale cached document references a 404'd chunk and hydration sticks.
+export function headers() {
+    return { "Cache-Control": "no-cache" };
+}
+
+// ── Real curated assets (from the brand shoot + Telegram lookbook) ──────────
+const HERO_VIDEO = "/uploads/brand-hero.mp4";
+const HERO_POSTER = "/pics1cloths/IMG_6201.webp"; // LCP paint
+const STATEMENT_STILL = "/pics1cloths/IMG_6206.webp"; // studio, hood up
+const STUDIO_STILLNESS = "/pics1cloths/IMG_6202.webp"; // studio, back
+const STUDIO_MOTION = "/pics1cloths/IMG_6203.webp"; // studio, motion
+const DAYBREAK_SHADOW = "/pics1cloths/IMG_6210.webp"; // studio (clipped away)
+const DAYBREAK_LIGHT = "/lifestyle/0Y4A5932.webp"; // terrace (revealed)
+const CONTACT_BG = "/lifestyle/0Y4A5964.webp"; // softened bright close
+// Daylight lookbook grid — the four craft words ride the first four cells.
+const TERRACE = [
+    "/lifestyle/0Y4A5929.webp",
+    "/lifestyle/0Y4A5969.webp",
+    "/lifestyle/0Y4A5940.webp",
+    "/lifestyle/0Y4A5975.webp",
+    "/lifestyle/0Y4A6005.webp",
+    "/lifestyle/0Y4A5994.webp",
+];
+
 const PROCESS_STEPS = [
     { number: "01", image: "/pics1cloths/IMG_6203.webp", alt: "Idea" },
     { number: "02", image: "/pics1cloths/IMG_6209.webp", alt: "Materials" },
@@ -71,69 +85,28 @@ const PROCESS_STEPS = [
     { number: "04", image: "/pics1cloths/IMG_6201.webp", alt: "Result" },
 ] as const;
 
-// Phone list of the contact section — numbers are locale-independent;
-// the hint under each number comes from CONTENT[locale].phoneHints.
 const PHONES = [
     { tel: "+380966650855", display: "+380 (96) 665-08-55" },
     { tel: "+380509656737", display: "+380 (50) 965-67-37" },
     { tel: "+380973542848", display: "+380 (97) 354-28-48" },
 ] as const;
 
-// Campaign-film acts: one full-screen photo each (Ken Burns + parallax).
-const HERO_IMG = "/pics1cloths/IMG_6204.webp";
-const STATEMENT_IMG = "/pics1cloths/IMG_6202.webp";
-const CRAFT_IMG = "/pics1cloths/IMG_6212.webp";
-const VALUES_IMG = "/pics1cloths/IMG_6206.webp";
-const CONTACT_IMG = "/pics1cloths/IMG_6207.webp";
-// The auto-scrolling reel between acts — pure visual rhythm, no text.
-const REEL = [
-    "/pics1cloths/IMG_6210.webp",
-    "/pics1cloths/IMG_6205.webp",
-    "/pics1cloths/IMG_6201.webp",
-    "/pics1cloths/IMG_6203.webp",
-    "/pics1cloths/IMG_6209.webp",
-    "/pics1cloths/IMG_6215.webp",
-];
-// Latin value tags (kept as short editorial labels, as in the brand copy).
-const VALUES = ["Premium Quality", "Handmade with Love", "Eco Materials"] as const;
-
-// Long-form brand prose lives inline per locale (not in the t() dictionary).
-// The `uk` variant is the canonical text — keep it byte-identical.
+// Long-form brand prose per locale (uk canonical). Most of it is unused on
+// this minimal-copy page — kept so the wording stays under one roof.
 const CONTENT = {
     uk: {
         h1: "Про бренд MIND BODY — преміум одяг для йоги, спорту та активного життя",
         heroSubtitle: "Одяг, який надихає тебе рухатись",
-        storyLead: " — бренд одягу для йоги, танців, фітнесу та інших видів спорту, який ",
-        storyLeadEm: "чудово зарекомендував себе",
-        storyLeadEnd: " серед відомих тренерів по всьому світу.",
-        storyHighlight:
-            "Одяг, стимулюючий до практики, в ньому всі твої улюблені заняття перетворюються на справжнє задоволення!",
+        studyEyebrow: "Етюд у світлі",
+        stillnessTag: "Спокій",
+        motionTag: "Рух",
+        daybreakTitle: "Світло, що",
+        daybreakTitleEm: "розкриває",
         processTag: "Наш процес",
-        processTitle: "Шлях до ",
-        processTitleEm: "досконалості",
-        steps: [
-            {
-                name: "Ідея",
-                text: "Натхнення з практики йоги та активного руху. Ми створюємо образи, що відповідають духу свободи.",
-            },
-            {
-                name: "Матеріали",
-                text: "Тканини найвищої якості з усього світу. Дихаючі, еластичні та довговічні.",
-            },
-            {
-                name: "Пошив",
-                text: "Ручна робота досвідчених майстрів. Кожен шов — це прояв любові до справи.",
-            },
-            {
-                name: "Результат",
-                text: "Одяг, що надихає на нові звершення. Стиль, комфорт та впевненість у кожному русі.",
-            },
-        ],
+        steps: [{ name: "Ідея" }, { name: "Матеріали" }, { name: "Пошив" }, { name: "Результат" }],
         contactLabel: "Ми на зв'язку",
         contactTitle: "Давай",
         contactTitleEm: "поговоримо",
-        contactDescEm: "Готові відповісти",
-        contactDescEnd: " на будь-які питання та допомогти з вибором ідеального образу для вас",
         phoneHints: ["Основний", "Viber / Telegram", "WhatsApp"],
         instagramCta: "Слідкуй за нами в Instagram",
         collectionCta: "Переглянути колекцію",
@@ -141,37 +114,16 @@ const CONTENT = {
     en: {
         h1: "About the MIND BODY brand — premium apparel for yoga, sport and active living",
         heroSubtitle: "Clothing that inspires you to move",
-        storyLead: " — a brand of apparel for yoga, dance, fitness and other sports that has ",
-        storyLeadEm: "proven itself",
-        storyLeadEnd: " among renowned coaches all over the world.",
-        storyHighlight:
-            "Clothing that inspires your practice — in it, all your favourite activities turn into pure delight!",
+        studyEyebrow: "A study in light",
+        stillnessTag: "Stillness",
+        motionTag: "Motion",
+        daybreakTitle: "Light that",
+        daybreakTitleEm: "reveals",
         processTag: "Our process",
-        processTitle: "The path to ",
-        processTitleEm: "perfection",
-        steps: [
-            {
-                name: "Idea",
-                text: "Inspiration drawn from yoga practice and active movement. We create looks that match the spirit of freedom.",
-            },
-            {
-                name: "Materials",
-                text: "The finest fabrics from around the world. Breathable, stretchy and built to last.",
-            },
-            {
-                name: "Sewing",
-                text: "Handcrafted by experienced makers. Every seam is an expression of love for the craft.",
-            },
-            {
-                name: "Result",
-                text: "Clothing that inspires new achievements. Style, comfort and confidence in every move.",
-            },
-        ],
+        steps: [{ name: "Idea" }, { name: "Materials" }, { name: "Sewing" }, { name: "Result" }],
         contactLabel: "We're in touch",
         contactTitle: "Let's",
         contactTitleEm: "talk",
-        contactDescEm: "Ready to answer",
-        contactDescEnd: " any question and help you find your perfect look",
         phoneHints: ["Main", "Viber / Telegram", "WhatsApp"],
         instagramCta: "Follow us on Instagram",
         collectionCta: "Shop the collection",
@@ -179,47 +131,24 @@ const CONTENT = {
     ru: {
         h1: "О бренде MIND BODY — премиум одежда для йоги, спорта и активной жизни",
         heroSubtitle: "Одежда, которая вдохновляет тебя двигаться",
-        storyLead: " — бренд одежды для йоги, танцев, фитнеса и других видов спорта, который ",
-        storyLeadEm: "отлично зарекомендовал себя",
-        storyLeadEnd: " среди известных тренеров по всему миру.",
-        storyHighlight:
-            "Одежда, стимулирующая к практике, — в ней все твои любимые занятия превращаются в настоящее удовольствие!",
+        studyEyebrow: "Этюд в свете",
+        stillnessTag: "Покой",
+        motionTag: "Движение",
+        daybreakTitle: "Свет, который",
+        daybreakTitleEm: "раскрывает",
         processTag: "Наш процесс",
-        processTitle: "Путь к ",
-        processTitleEm: "совершенству",
-        steps: [
-            {
-                name: "Идея",
-                text: "Вдохновение из практики йоги и активного движения. Мы создаём образы, отвечающие духу свободы.",
-            },
-            {
-                name: "Материалы",
-                text: "Ткани высочайшего качества со всего мира. Дышащие, эластичные и долговечные.",
-            },
-            {
-                name: "Пошив",
-                text: "Ручная работа опытных мастеров. Каждый шов — проявление любви к делу.",
-            },
-            {
-                name: "Результат",
-                text: "Одежда, вдохновляющая на новые свершения. Стиль, комфорт и уверенность в каждом движении.",
-            },
-        ],
+        steps: [{ name: "Идея" }, { name: "Материалы" }, { name: "Пошив" }, { name: "Результат" }],
         contactLabel: "Мы на связи",
         contactTitle: "Давай",
         contactTitleEm: "поговорим",
-        contactDescEm: "Готовы ответить",
-        contactDescEnd: " на любые вопросы и помочь с выбором идеального образа для вас",
         phoneHints: ["Основной", "Viber / Telegram", "WhatsApp"],
         instagramCta: "Следи за нами в Instagram",
         collectionCta: "Смотреть коллекцию",
     },
 } as const;
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader() {
     try {
-        // Fetch About slides via typed Prisma query. The Slide model has a
-        // `page` column scoped by which page renders the slide.
         const aboutSlidesRaw = await prisma.slide.findMany({
             where: { page: "about" },
             orderBy: { order: "asc" },
@@ -233,7 +162,6 @@ export async function loader({ request }: Route.LoaderArgs) {
                 image3: true,
             },
         });
-
         const aboutSlides: SlideData[] = aboutSlidesRaw.map((s) => ({
             id: s.id,
             name: s.name,
@@ -243,7 +171,6 @@ export async function loader({ request }: Route.LoaderArgs) {
             image2: s.image2,
             image3: s.image3,
         }));
-
         return { slides: aboutSlides };
     } catch (error) {
         console.error("About loader error:", error);
@@ -251,23 +178,83 @@ export async function loader({ request }: Route.LoaderArgs) {
     }
 }
 
+// AVIF→WebP→LQIP picture with the house pipeline.
+function Pic({
+    src,
+    alt = "MIND BODY",
+    className,
+    sizes = "100vw",
+    eager = false,
+}: {
+    src: string;
+    alt?: string;
+    className?: string;
+    sizes?: string;
+    eager?: boolean;
+}) {
+    return (
+        <picture>
+            <source srcSet={buildAvifSrcset(src)} sizes={sizes} type="image/avif" />
+            <source srcSet={buildWebpSrcset(src)} sizes={sizes} type="image/webp" />
+            <img
+                src={src}
+                alt={alt}
+                className={className}
+                loading={eager ? "eager" : "lazy"}
+                decoding="async"
+                style={getLqipStyle(src)}
+            />
+        </picture>
+    );
+}
+
 export default function About() {
     const { slides } = useLoaderData<typeof loader>();
     const { locale } = useI18n();
     const c = CONTENT[locale];
 
-    // Cinematic motion (native scroll, no deps):
-    //  • [data-cine-reveal] → `.in` on first entry (type/photos reveal in).
-    //  • each [data-cine] act gets a 0→1 `--p` across its pinned scroll range,
-    //    driving the Ken-Burns zoom + parallax of its sticky full-screen photo.
-    // Reduced-motion / no-IO → everything shown immediately, no scroll work.
+    // One native-scroll engine drives the whole "light study":
+    //  • a page-level --lum (0→1) climbs dark→cream with a SHAPED curve
+    //    (dip darker just before the daybreak, then bloom),
+    //  • each [data-act] gets a 0→1 --p across its pinned range (Ken-Burns +
+    //    the daybreak clip-reveal),
+    //  • [data-reveal] elements reveal once on entry,
+    //  • every <video> pauses while offscreen.
+    // Reduced-motion / no-JS → everything visible, --lum rests warm, no scrub.
     useEffect(() => {
+        const root = document.querySelector<HTMLElement>(".sol");
         const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        const reveals = Array.from(document.querySelectorAll<HTMLElement>("[data-cine-reveal]"));
+        const reveals = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
+        const videos = Array.from(document.querySelectorAll<HTMLVideoElement>(".sol video"));
+
+        // Offscreen-pause videos (runs in every mode).
+        let vio: IntersectionObserver | null = null;
+        if ("IntersectionObserver" in window) {
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    for (const e of entries) {
+                        const v = e.target as HTMLVideoElement;
+                        if (e.isIntersecting) v.play().catch(() => {});
+                        else v.pause();
+                    }
+                },
+                { threshold: 0.15 },
+            );
+            videos.forEach((v) => observer.observe(v));
+            vio = observer;
+        } else {
+            videos.forEach((v) => v.play().catch(() => {}));
+        }
+
         if (reduce || !("IntersectionObserver" in window)) {
             reveals.forEach((el) => el.classList.add("in"));
-            return;
+            root?.style.setProperty("--lum", "0.62");
+            return () => vio?.disconnect();
         }
+
+        root?.classList.add("sol--anim");
+        root?.style.setProperty("--lum", "0");
+
         const io = new IntersectionObserver(
             (entries) => {
                 for (const e of entries) {
@@ -277,22 +264,29 @@ export default function About() {
                     }
                 }
             },
-            { threshold: 0.25, rootMargin: "0px 0px -12% 0px" },
+            { threshold: 0.2, rootMargin: "0px 0px -10% 0px" },
         );
-        // Only now (JS present, motion allowed) arm the hidden→reveal states.
-        document.querySelector(".cine")?.classList.add("cine--anim");
         reveals.forEach((el) => io.observe(el));
 
-        const acts = Array.from(document.querySelectorAll<HTMLElement>("[data-cine]"));
+        const acts = Array.from(document.querySelectorAll<HTMLElement>("[data-act]"));
         let ticking = false;
         const apply = () => {
             ticking = false;
             const vh = window.innerHeight;
             const y = window.scrollY;
+            const prog = Math.min(1, Math.max(0, y / Math.max(document.body.scrollHeight - vh, 1)));
+            // Shaped exposure: rise → dip before daybreak → bloom to full light.
+            let lum;
+            if (prog < 0.34) lum = (prog / 0.34) * 0.4;
+            else if (prog < 0.5) lum = 0.4 - ((prog - 0.34) / 0.16) * 0.24;
+            else if (prog < 0.78) lum = 0.16 + ((prog - 0.5) / 0.28) * 0.84;
+            else lum = 1;
+            root?.style.setProperty("--lum", lum.toFixed(3));
             for (const act of acts) {
-                const top = act.offsetTop;
-                const h = act.offsetHeight;
-                const p = Math.min(1, Math.max(0, (y - top) / Math.max(h - vh, 1)));
+                const p = Math.min(
+                    1,
+                    Math.max(0, (y - act.offsetTop) / Math.max(act.offsetHeight - vh, 1)),
+                );
                 act.style.setProperty("--p", p.toFixed(3));
             }
         };
@@ -307,255 +301,190 @@ export default function About() {
         window.addEventListener("resize", onScroll);
         return () => {
             io.disconnect();
+            vio?.disconnect();
             window.removeEventListener("scroll", onScroll);
             window.removeEventListener("resize", onScroll);
         };
     }, [locale]);
 
-    // Owner-curated About slides → a lookbook gallery (preserves their imagery
-    // and the admin "edit slides" affordance).
     const lookbook = slides
         .flatMap((s) => [s.image1, s.image2, s.image3])
         .filter((src): src is string => Boolean(src))
         .slice(0, 6);
 
     return (
-        <main className="cine">
+        <main className="sol">
             <h1 className="visually-hidden">{c.h1}</h1>
-            <div className="cine-grain" aria-hidden="true" />
+            {/* Global exposure backdrop: dark→cream driven by --lum */}
+            <div className="sol-sky" aria-hidden="true" />
+            <div className="sol-grain" aria-hidden="true" />
 
-            {/* ACT I — opening title card */}
-            <section className="cine-act cine-act--hero" data-cine>
-                <div className="cine-stage">
-                    <div className="cine-media">
-                        <picture>
-                            <source
-                                srcSet={buildWebpSrcset(HERO_IMG)}
-                                sizes="100vw"
-                                type="image/webp"
-                            />
-                            <img
-                                src={HERO_IMG}
-                                alt="MIND BODY"
-                                className="cine-ken"
-                                decoding="async"
-                            />
-                        </picture>
+            {/* ACT 0 — aperture opens over the brand film */}
+            <section className="sol-act sol-act--hero" data-act>
+                <div className="sol-stage">
+                    <div className="sol-media">
+                        <video
+                            className="sol-video"
+                            poster={HERO_POSTER}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            preload="auto"
+                            aria-hidden="true"
+                        >
+                            <source src={HERO_VIDEO} type="video/mp4" />
+                        </video>
                     </div>
-                    <div className="cine-veil cine-veil--hero" />
-                    <div className="cine-hero__copy">
+                    <div className="sol-veil sol-veil--hero" />
+                    <div className="sol-aperture" aria-hidden="true" />
+                    <div className="sol-hero__copy">
+                        <span className="sol-eyebrow" data-reveal>
+                            {c.studyEyebrow}
+                        </span>
                         <picture>
                             <source srcSet="/pics/mind_body_logo_white.webp" type="image/webp" />
                             <img
                                 src="/pics/mind_body_logo_white.webp"
                                 alt="MIND BODY"
-                                className="cine-hero__logo"
+                                className="sol-hero__logo"
                             />
                         </picture>
                     </div>
-                    <div className="cine-scroll" aria-hidden="true">
-                        <span className="cine-scroll__line" />
+                    <div className="sol-scroll" aria-hidden="true">
+                        <span className="sol-scroll__line" />
                     </div>
                 </div>
             </section>
 
-            {/* ACT II — the statement (the only real line of copy) */}
-            <section className="cine-act cine-act--statement" data-cine>
-                <div className="cine-stage">
-                    <div className="cine-media">
-                        <picture>
-                            <source
-                                srcSet={buildWebpSrcset(STATEMENT_IMG)}
-                                sizes="100vw"
-                                type="image/webp"
-                            />
-                            <img
-                                src={STATEMENT_IMG}
-                                alt="MIND BODY"
-                                className="cine-ken cine-ken--right"
-                                loading="lazy"
-                                decoding="async"
-                            />
-                        </picture>
+            {/* ACT 1 — the statement */}
+            <section className="sol-act sol-act--statement" data-act>
+                <div className="sol-stage">
+                    <div className="sol-media">
+                        <Pic src={STATEMENT_STILL} className="sol-ken sol-ken--right" />
                     </div>
-                    <div className="cine-veil cine-veil--left" />
-                    <div className="cine-copy cine-copy--left">
-                        <p className="cine-statement" data-cine-reveal>
-                            {c.heroSubtitle}
+                    <div className="sol-veil sol-veil--left" />
+                    <div className="sol-copy sol-copy--left">
+                        <p className="sol-statement" data-reveal>
+                            <span className="sol-statement__line">{c.heroSubtitle}</span>
                         </p>
                     </div>
                 </div>
             </section>
 
-            {/* REEL — auto-scrolling film strip, pure rhythm (no text) */}
-            <section className="cine-reel" aria-label="MIND BODY">
-                <div className="cine-reel__track">
-                    {[...REEL, ...REEL].map((src, i) => (
+            {/* ACT 2 — two held beats: stillness / motion */}
+            <section className="sol-act sol-act--beat" data-act>
+                <div className="sol-stage">
+                    <div className="sol-media">
+                        <Pic src={STUDIO_STILLNESS} className="sol-ken" />
+                    </div>
+                    <div className="sol-veil" />
+                    <span className="sol-tag sol-tag--tr" data-reveal>
+                        {c.stillnessTag}
+                    </span>
+                </div>
+            </section>
+            <section className="sol-act sol-act--beat" data-act>
+                <div className="sol-stage">
+                    <div className="sol-media">
+                        <Pic src={STUDIO_MOTION} className="sol-ken sol-ken--right" />
+                    </div>
+                    <div className="sol-veil" />
+                    <span className="sol-tag sol-tag--bl" data-reveal>
+                        {c.motionTag}
+                    </span>
+                </div>
+            </section>
+
+            {/* ACT 3 — DAYBREAK: studio shadow wipes to reveal terrace light */}
+            <section className="sol-act sol-act--daybreak" data-act>
+                <div className="sol-stage">
+                    <div className="sol-media sol-daybreak__back">
+                        <Pic src={DAYBREAK_LIGHT} className="sol-ken" />
+                    </div>
+                    <div className="sol-media sol-daybreak__front">
+                        <Pic src={DAYBREAK_SHADOW} className="sol-ken" />
+                        <div className="sol-veil" />
+                    </div>
+                    <div className="sol-copy sol-copy--center">
+                        <h2 className="sol-daybreak__title" data-reveal>
+                            {c.daybreakTitle} <em>{c.daybreakTitleEm}</em>
+                        </h2>
+                    </div>
+                </div>
+            </section>
+
+            {/* ACT 4 — the terrace: daylight lookbook grid (craft as captions) */}
+            <section className="sol-act sol-act--terrace">
+                <header className="sol-terrace__head" data-reveal>
+                    <span className="sol-eyebrow sol-eyebrow--dark">{c.processTag}</span>
+                </header>
+                <div className="sol-grid">
+                    {TERRACE.map((src, i) => (
                         <figure
-                            className="cine-reel__cell"
-                            key={src + i}
-                            aria-hidden={i >= REEL.length}
+                            className={`sol-cell sol-cell--${i}`}
+                            data-reveal
+                            style={{ transitionDelay: `${(i % 3) * 0.08}s` }}
+                            key={src}
                         >
-                            <picture>
-                                <source
-                                    srcSet={buildWebpSrcset(src)}
-                                    sizes="40vw"
-                                    type="image/webp"
-                                />
-                                <img src={src} alt="MIND BODY" loading="lazy" decoding="async" />
-                            </picture>
+                            <Pic src={src} sizes="(max-width: 760px) 50vw, 33vw" />
+                            {i < PROCESS_STEPS.length && (
+                                <figcaption className="sol-cell__cap">
+                                    <span className="sol-cell__num">{PROCESS_STEPS[i].number}</span>
+                                    <span className="sol-cell__name">{c.steps[i].name}</span>
+                                </figcaption>
+                            )}
                         </figure>
                     ))}
                 </div>
             </section>
 
-            {/* ACT III — the craft, told in four words over one frame */}
-            <section className="cine-act cine-act--craft" data-cine>
-                <div className="cine-stage">
-                    <div className="cine-media">
-                        <picture>
-                            <source
-                                srcSet={buildWebpSrcset(CRAFT_IMG)}
-                                sizes="100vw"
-                                type="image/webp"
-                            />
-                            <img
-                                src={CRAFT_IMG}
-                                alt="MIND BODY"
-                                className="cine-ken"
-                                loading="lazy"
-                                decoding="async"
-                            />
-                        </picture>
-                    </div>
-                    <div className="cine-veil" />
-                    <div className="cine-copy cine-copy--center">
-                        <span className="cine-eyebrow" data-cine-reveal>
-                            {c.processTag}
-                        </span>
-                        <ol className="cine-craft">
-                            {PROCESS_STEPS.map((step, i) => (
-                                <li
-                                    className="cine-craft__item"
-                                    data-cine-reveal
-                                    style={{ transitionDelay: `${i * 0.1}s` }}
-                                    key={step.number}
-                                >
-                                    <span className="cine-craft__num">{step.number}</span>
-                                    <span className="cine-craft__name">{c.steps[i].name}</span>
-                                </li>
-                            ))}
-                        </ol>
-                    </div>
-                </div>
-            </section>
-
-            {/* ACT IV — values */}
-            <section className="cine-act cine-act--values" data-cine>
-                <div className="cine-stage">
-                    <div className="cine-media">
-                        <picture>
-                            <source
-                                srcSet={buildWebpSrcset(VALUES_IMG)}
-                                sizes="100vw"
-                                type="image/webp"
-                            />
-                            <img
-                                src={VALUES_IMG}
-                                alt="MIND BODY"
-                                className="cine-ken cine-ken--right"
-                                loading="lazy"
-                                decoding="async"
-                            />
-                        </picture>
-                    </div>
-                    <div className="cine-veil cine-veil--left" />
-                    <div className="cine-copy cine-copy--left">
-                        <ul className="cine-values">
-                            {VALUES.map((v, i) => (
-                                <li
-                                    className="cine-values__line"
-                                    data-cine-reveal
-                                    style={{ transitionDelay: `${i * 0.12}s` }}
-                                    key={v}
-                                >
-                                    {v}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-            {/* LOOKBOOK — owner-curated slides (admin-editable; hidden if none) */}
+            {/* Owner-curated About slides (admin-editable; hidden when none) */}
             {lookbook.length > 0 && (
                 <EditorAffordance
                     label="Редагувати слайди"
                     message={{ type: "OPEN_ABOUT_SLIDES_EDITOR" }}
                 >
-                    <section className="cine-lookbook" data-cine-reveal>
-                        {lookbook.map((src, i) => (
-                            <figure className="cine-lookbook__cell" key={src + i}>
-                                <picture>
-                                    <source
-                                        srcSet={buildWebpSrcset(src)}
-                                        sizes="(max-width: 900px) 50vw, 33vw"
-                                        type="image/webp"
-                                    />
-                                    <img
-                                        src={src}
-                                        alt="MIND BODY"
-                                        loading="lazy"
-                                        decoding="async"
-                                    />
-                                </picture>
-                            </figure>
-                        ))}
+                    <section className="sol-act sol-act--terrace">
+                        <div className="sol-grid">
+                            {lookbook.map((src, i) => (
+                                <figure className="sol-cell" data-reveal key={src + i}>
+                                    <Pic src={src} sizes="(max-width: 760px) 50vw, 33vw" />
+                                </figure>
+                            ))}
+                        </div>
                     </section>
                 </EditorAffordance>
             )}
 
-            {/* ACT V — contact close (keeps #contact-premium anchor) */}
-            <section id="contact-premium" className="cine-act cine-act--contact" data-cine>
-                <div className="cine-stage">
-                    <div className="cine-media">
-                        <picture>
-                            <source
-                                srcSet={buildWebpSrcset(CONTACT_IMG)}
-                                sizes="100vw"
-                                type="image/webp"
-                            />
-                            <img
-                                src={CONTACT_IMG}
-                                alt="MIND BODY"
-                                className="cine-ken"
-                                loading="lazy"
-                                decoding="async"
-                            />
-                        </picture>
+            {/* ACT 5 — contact, cream resolution (keeps #contact-premium) */}
+            <section id="contact-premium" className="sol-act sol-act--contact" data-act>
+                <div className="sol-stage">
+                    <div className="sol-media">
+                        <Pic src={CONTACT_BG} className="sol-ken" />
                     </div>
-                    <div className="cine-veil cine-veil--strong" />
-                    <div className="cine-copy cine-contact">
-                        <span className="cine-eyebrow" data-cine-reveal>
+                    <div className="sol-veil sol-veil--cream" />
+                    <div className="sol-copy sol-contact">
+                        <span className="sol-eyebrow sol-eyebrow--dark" data-reveal>
                             {c.contactLabel}
                         </span>
-                        <h2 className="cine-contact__title" data-cine-reveal>
+                        <h2 className="sol-contact__title" data-reveal>
                             {c.contactTitle} <em>{c.contactTitleEm}</em>
                         </h2>
-                        <div className="cine-contact__phones" data-cine-reveal>
+                        <div className="sol-contact__phones" data-reveal>
                             {PHONES.map((phone, i) => (
-                                <a href={`tel:${phone.tel}`} className="cine-phone" key={phone.tel}>
-                                    <span className="cine-phone__num">{phone.display}</span>
-                                    <span className="cine-phone__hint">{c.phoneHints[i]}</span>
+                                <a href={`tel:${phone.tel}`} className="sol-phone" key={phone.tel}>
+                                    <span className="sol-phone__num">{phone.display}</span>
+                                    <span className="sol-phone__hint">{c.phoneHints[i]}</span>
                                 </a>
                             ))}
                         </div>
-                        <div className="cine-contact__cta" data-cine-reveal>
+                        <div className="sol-contact__cta" data-reveal>
                             <a
                                 href="https://www.instagram.com/mind_body_sportwear/"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="cine-btn cine-btn--solid"
+                                className="sol-btn sol-btn--solid"
                             >
                                 <svg
                                     width="20"
@@ -568,7 +497,7 @@ export default function About() {
                                 </svg>
                                 <span>{c.instagramCta}</span>
                             </a>
-                            <LLink to="/shop/yoga" className="cine-btn cine-btn--ghost">
+                            <LLink to="/shop/yoga" className="sol-btn sol-btn--ghost">
                                 <span>{c.collectionCta}</span>
                                 <svg
                                     width="18"
