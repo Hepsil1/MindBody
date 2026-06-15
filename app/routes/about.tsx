@@ -430,6 +430,7 @@ export default function About() {
             <section className="sol-act sol-act--beat" data-act>
                 <div className="sol-stage">
                     <Frame src={STUDIO_STILLNESS} />
+                    <div className="sol-veil sol-veil--studio" />
                     <span className="sol-tag sol-tag--tr" data-reveal>
                         {c.stillnessTag}
                     </span>
@@ -438,6 +439,7 @@ export default function About() {
             <section className="sol-act sol-act--beat" data-act>
                 <div className="sol-stage">
                     <Frame src={STUDIO_MOTION} />
+                    <div className="sol-veil sol-veil--studio" />
                     <span className="sol-tag sol-tag--bl" data-reveal>
                         {c.motionTag}
                     </span>

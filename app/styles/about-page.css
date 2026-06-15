@@ -121,12 +121,21 @@
     );
 }
 .sol-veil--left {
-    background: linear-gradient(
-        to right,
-        rgba(6, 13, 14, 0.8) 0%,
-        rgba(6, 13, 14, 0.36) 44%,
-        rgba(6, 13, 14, 0.04) 76%
-    );
+    background:
+        linear-gradient(
+            to right,
+            rgba(6, 13, 14, 0.88) 0%,
+            rgba(6, 13, 14, 0.5) 40%,
+            rgba(6, 13, 14, 0.1) 72%
+        ),
+        radial-gradient(ellipse 85% 85% at 55% 45%, transparent 32%, rgba(6, 13, 14, 0.55) 100%);
+}
+/* Spotlight the centred subject, darken the (light-grey studio) edges so the
+   moody mood + overlay text both land. */
+.sol-veil--studio {
+    background:
+        radial-gradient(ellipse 78% 82% at 50% 44%, transparent 30%, rgba(6, 13, 14, 0.82) 100%),
+        linear-gradient(to top, rgba(6, 13, 14, 0.55), transparent 38%);
 }
 .sol-veil--cream {
     background: linear-gradient(
