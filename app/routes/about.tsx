@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { type SlideData } from "../components/HeroSlider";
 import { EditorAffordance } from "../components/EditorAffordance";
 import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
-import { getLqipStyle } from "../utils/lqip";
+import { getLqip, getLqipStyle } from "../utils/lqip";
 import { useI18n, LLink } from "../i18n";
 import { localeFromParamSafe, OG_LOCALE } from "../i18n/config";
 import "../styles/about-page.css";
@@ -178,7 +178,8 @@ export async function loader() {
     }
 }
 
-// AVIF→WebP→LQIP picture with the house pipeline.
+// AVIF→WebP→LQIP picture (cover) — used in the grid where the cell aspect
+// already matches the 4:5 portraits, so there's no crop.
 function Pic({
     src,
     alt = "MIND BODY",
@@ -205,6 +206,74 @@ function Pic({
                 style={getLqipStyle(src)}
             />
         </picture>
+    );
+}
+
+// Full-bleed "frame": the 4:5 portrait shows CONTAINED + sharp over a soft
+// blurred wash (free, from the LQIP) that fills the wide viewport — so the
+// full subject (face, greenery) is always visible and nothing crops to an
+// empty backdrop. The premium standard for portrait media in a landscape frame.
+function Frame({
+    src,
+    sizes = "100vw",
+    eager = false,
+    wrap = "",
+}: {
+    src: string;
+    sizes?: string;
+    eager?: boolean;
+    wrap?: string;
+}) {
+    const lqip = getLqip(src);
+    return (
+        <div className={`sol-media ${wrap}`}>
+            {lqip && (
+                <div
+                    className="sol-media__fill"
+                    style={{ backgroundImage: `url("${lqip}")` }}
+                    aria-hidden="true"
+                />
+            )}
+            <picture className="sol-media__fg">
+                <source srcSet={buildAvifSrcset(src)} sizes={sizes} type="image/avif" />
+                <source srcSet={buildWebpSrcset(src)} sizes={sizes} type="image/webp" />
+                <img
+                    src={src}
+                    alt="MIND BODY"
+                    className="sol-ken"
+                    loading={eager ? "eager" : "lazy"}
+                    decoding="async"
+                />
+            </picture>
+        </div>
+    );
+}
+
+// Same blurred-fill treatment for the brand films.
+function VideoFrame({ src, poster }: { src: string; poster: string }) {
+    const lqip = getLqip(poster);
+    return (
+        <div className="sol-media">
+            {lqip && (
+                <div
+                    className="sol-media__fill"
+                    style={{ backgroundImage: `url("${lqip}")` }}
+                    aria-hidden="true"
+                />
+            )}
+            <video
+                className="sol-media__fg sol-video"
+                poster={poster}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                aria-hidden="true"
+            >
+                <source src={src} type="video/mp4" />
+            </video>
+        </div>
     );
 }
 
@@ -322,20 +391,7 @@ export default function About() {
             {/* ACT 0 — aperture opens over the brand film */}
             <section className="sol-act sol-act--hero" data-act>
                 <div className="sol-stage">
-                    <div className="sol-media">
-                        <video
-                            className="sol-video"
-                            poster={HERO_POSTER}
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            preload="auto"
-                            aria-hidden="true"
-                        >
-                            <source src={HERO_VIDEO} type="video/mp4" />
-                        </video>
-                    </div>
+                    <VideoFrame src={HERO_VIDEO} poster={HERO_POSTER} />
                     <div className="sol-veil sol-veil--hero" />
                     <div className="sol-aperture" aria-hidden="true" />
                     <div className="sol-hero__copy">
@@ -360,9 +416,7 @@ export default function About() {
             {/* ACT 1 — the statement */}
             <section className="sol-act sol-act--statement" data-act>
                 <div className="sol-stage">
-                    <div className="sol-media">
-                        <Pic src={STATEMENT_STILL} className="sol-ken sol-ken--right" />
-                    </div>
+                    <Frame src={STATEMENT_STILL} />
                     <div className="sol-veil sol-veil--left" />
                     <div className="sol-copy sol-copy--left">
                         <p className="sol-statement" data-reveal>
@@ -375,10 +429,7 @@ export default function About() {
             {/* ACT 2 — two held beats: stillness / motion */}
             <section className="sol-act sol-act--beat" data-act>
                 <div className="sol-stage">
-                    <div className="sol-media">
-                        <Pic src={STUDIO_STILLNESS} className="sol-ken" />
-                    </div>
-                    <div className="sol-veil" />
+                    <Frame src={STUDIO_STILLNESS} />
                     <span className="sol-tag sol-tag--tr" data-reveal>
                         {c.stillnessTag}
                     </span>
@@ -386,10 +437,7 @@ export default function About() {
             </section>
             <section className="sol-act sol-act--beat" data-act>
                 <div className="sol-stage">
-                    <div className="sol-media">
-                        <Pic src={STUDIO_MOTION} className="sol-ken sol-ken--right" />
-                    </div>
-                    <div className="sol-veil" />
+                    <Frame src={STUDIO_MOTION} />
                     <span className="sol-tag sol-tag--bl" data-reveal>
                         {c.motionTag}
                     </span>
@@ -399,13 +447,9 @@ export default function About() {
             {/* ACT 3 — DAYBREAK: studio shadow wipes to reveal terrace light */}
             <section className="sol-act sol-act--daybreak" data-act>
                 <div className="sol-stage">
-                    <div className="sol-media sol-daybreak__back">
-                        <Pic src={DAYBREAK_LIGHT} className="sol-ken" />
-                    </div>
-                    <div className="sol-media sol-daybreak__front">
-                        <Pic src={DAYBREAK_SHADOW} className="sol-ken" />
-                        <div className="sol-veil" />
-                    </div>
+                    <Frame src={DAYBREAK_LIGHT} wrap="sol-daybreak__back" />
+                    <Frame src={DAYBREAK_SHADOW} wrap="sol-daybreak__front" />
+                    <div className="sol-veil sol-veil--center" />
                     <div className="sol-copy sol-copy--center">
                         <h2 className="sol-daybreak__title" data-reveal>
                             {c.daybreakTitle} <em>{c.daybreakTitleEm}</em>
@@ -460,9 +504,7 @@ export default function About() {
             {/* ACT 5 — contact, cream resolution (keeps #contact-premium) */}
             <section id="contact-premium" className="sol-act sol-act--contact" data-act>
                 <div className="sol-stage">
-                    <div className="sol-media">
-                        <Pic src={CONTACT_BG} className="sol-ken" />
-                    </div>
+                    <Frame src={CONTACT_BG} />
                     <div className="sol-veil sol-veil--cream" />
                     <div className="sol-copy sol-contact">
                         <span className="sol-eyebrow sol-eyebrow--dark" data-reveal>
