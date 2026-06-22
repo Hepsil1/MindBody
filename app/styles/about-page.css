@@ -1,458 +1,1538 @@
-/* ============================================================
-   /about — MIND BODY brand story (light editorial)
-   Cream canvas, dark legible type, teal/sliva accents, aligned
-   grids, tasteful scroll-reveals. Reads as an ABOUT page, not a
-   photo reel. Header & footer untouched. Tokens from app.css.
-   ============================================================ */
+/* ───────────────────────────────────────────────────────────────────────
+   /about — "ДРУГА ШКІРА" (Second Skin) v34 — a LIGHT editorial that moves.
+   The logo is a DRAWING of the stitch on the back of every garment: the
+   laced-open criss-cross back + the embroidered sun. The page recognises the
+   brand FROM BEHIND and carries the same signature to the KIDS line.
+   TYPE: ONE Onest-800 peak (hero) + ONE serif climax in the hero accent and
+   the ORIGIN quote (Spectral italic) — the rest is a calm grotesque valley.
+   The per-heading italic "tic" is gone; chapter accents are an Onest weight-beat.
+   Kickers lead with a confident numeral + a faint sun bullet (the through-line).
+   MOTION: ONE WOW peak — the back laces open into the light (clip-path wipe)
+   while the headline rises from behind a mask and the sun blooms; every other
+   photo keeps one quiet scale breath. NO GSAP/Lenis/sticky/morph. Transition-
+   based so it plays under OS reduce-motion (owner browses with it ON): app.css
+   zeroes durations but preserves delays, so the scoped block at the foot
+   re-enables /about's own durations. The STILL page is the product.
+   ─────────────────────────────────────────────────────────────────────── */
 
 .ab {
-    background: var(--color-bg-cream, #faf8f6);
-    color: var(--color-text-primary, #1a1a1a);
-    overflow-x: clip;
+    --ab-font: "Onest", system-ui, -apple-system, sans-serif;
+    --ab-display: "Onest", system-ui, sans-serif;
+    --ab-serif: "Spectral", Georgia, serif;
+    --ab-paper: #f4efe6; /* warm milk */
+    --ab-paper-2: #ece4d7; /* soft beige */
+    --ab-paper-3: #e3dac9; /* deepest, the grounded pause */
+    --ab-ink: #241d15; /* main: warm graphite / bistre */
+    --ab-ink-soft: #6f6657; /* secondary: warm taupe-grey, fully readable */
+    --ab-ink-faint: #a99d8a; /* markers / numerals: muted warm beige */
+    --ab-teal: #285757; /* the real logo colour — chrome use: sun mark + CTA */
+    --ab-thread: #2f8d80; /* turquoise lacing — appears INSIDE photos only */
+    --ab-border: #ddd3c4;
+    --ab-deboss-light: rgba(255, 252, 246, 0.7);
+    --ab-deboss-dark: rgba(36, 29, 21, 0.22);
+    /* layout */
+    --maxw: 1340px;
+    --gutter: 28px;
+    --pad: clamp(20px, 5vw, 72px);
+    /* spacing */
+    --s-sec: clamp(60px, 8vh, 116px);
+    --s-head: clamp(22px, 3.4vh, 42px);
+    --s-stack: clamp(10px, 1.4vh, 16px);
+    --s-stack-2: clamp(14px, 2vh, 22px);
+    /* VIOLENT scale: one peak (hero), a calm valley (chapters), tiny labels */
+    --fs-mega: clamp(3.2rem, 9.4vw, 8.6rem); /* HERO only — the peak */
+    --fs-quote: clamp(2.4rem, 5.4vw, 4.4rem); /* ORIGIN pull-quote */
+    --fs-h2: clamp(1.9rem, 4vw, 3.1rem); /* chapter heads — the valley */
+    --fs-h3: clamp(1.4rem, 2.2vw, 2rem);
+    --fs-lead: clamp(1.12rem, 1.45vw, 1.4rem);
+    --fs-body: clamp(1rem, 1.04vw, 1.1rem);
+    --fs-micro: 0.64rem;
+    --tr-micro: 0.22em;
+    --tr-tight: -0.035em;
+    /* aspect ladder */
+    --ar-portrait: 4 / 5;
+    --ar-card: 3 / 4;
+    --ar-macro: 16 / 11;
+    --ab-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    counter-reset: ab-kicker;
+    position: relative;
+    isolation: isolate;
+    background: var(--ab-paper);
+    color: var(--ab-ink);
+    font-family: var(--ab-font);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings:
+        "kern" 1,
+        "liga" 1,
+        "calt" 1;
+    overflow: hidden; /* clips full-bleed children → no horizontal scroll */
 }
 
-.ab-eyebrow {
-    display: inline-block;
-    font-family: var(--font-body);
-    font-size: var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-widest);
-    color: var(--color-primary, #2a5a5a);
-    margin-bottom: var(--space-lg);
-}
-.ab-eyebrow--center {
-    display: block;
-    text-align: center;
-}
-.ab-eyebrow--light {
-    color: var(--color-primary-light, #4a8a8a);
+/* film/textile grain — fixed, static, below the global header (z 200) */
+.ab::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
 }
 
+/* shared container + 12-col grid */
+.ab-grid {
+    width: min(100% - var(--pad) * 2, var(--maxw));
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--gutter);
+}
+
+/* ── shared type ───────────────────────────────────────────────────────── */
+.ab-display,
+.ab-h2,
+.ab-hero__title,
+.ab-mat__title,
+.ab-origin__quote,
+.ab-final__title,
+.ab-kids__title,
+.ab-flow__name {
+    font-family: var(--ab-display);
+}
+.ab-kicker,
+.ab-body,
+.ab-gal__name,
+.ab-mat__name,
+.ab-hero__corner {
+    font-family: var(--ab-font);
+}
 .ab-h2 {
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-size: clamp(1.9rem, 3.6vw, 3rem);
-    line-height: var(--leading-tight);
-    letter-spacing: var(--tracking-tight);
-    color: var(--color-text-primary, #1a1a1a);
+    font-weight: 700;
+    font-size: var(--fs-h2);
+    line-height: 1;
+    letter-spacing: -0.028em;
+    margin: var(--s-stack) 0 0;
+    text-wrap: balance;
 }
-.ab-h2 strong {
-    font-weight: 600;
-    color: var(--color-primary, #2a5a5a);
+.ab-h2 .ab-line,
+.ab-mat__title .ab-line,
+.ab-origin__quote .ab-line,
+.ab-final__title .ab-line,
+.ab-kids__title .ab-line {
+    display: block;
 }
-.ab-h2 em {
-    font-style: italic;
-    color: var(--color-accent, #4b3b6b);
-}
-.ab-h2--light {
-    color: #fbf7f0;
-}
-.ab-h2--light em {
-    color: var(--color-primary-light, #4a8a8a);
+.ab-body {
+    font-size: var(--fs-body);
+    line-height: 1.62;
+    color: var(--ab-ink);
 }
 
-/* ---- Reveal (gated by JS-added .ab--anim so no-JS shows all) ---- */
-.ab--anim [data-reveal] {
-    opacity: 0;
-    transform: translateY(34px);
-    transition:
-        opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: opacity, transform;
+/* editorial chapter marker: a confident lining numeral LEADS, a faint sun
+   bullet sits in the gutter (the logo through-line), label is a quiet micro-cap */
+.ab-kicker {
+    counter-increment: ab-kicker;
+    position: relative;
+    padding-left: 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55em;
+    font-family: var(--ab-font);
+    font-size: var(--fs-micro);
+    font-weight: 600;
+    letter-spacing: var(--tr-micro);
+    text-transform: uppercase;
+    color: var(--ab-ink-soft);
+    font-feature-settings:
+        "tnum" 1,
+        "lnum" 1;
 }
-.ab--anim [data-reveal].in {
+.ab-kicker::before {
+    content: counter(ab-kicker, decimal-leading-zero);
+    font-family: var(--ab-font);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-transform: none;
+    color: var(--ab-ink);
+}
+.ab-kicker::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    background: var(--ab-ink-faint);
+    opacity: 0.55;
+    -webkit-mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
+    mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
+}
+
+/* the accent — DEFAULT is an Onest weight-beat (no serif, no underline). The
+   serif-italic climax survives in exactly TWO places (hero + origin quote).
+   On the calm valley chapter heads, the accent is suppressed entirely. */
+.ab-em {
+    font-family: inherit;
+    font-style: normal;
+    font-weight: 800;
+    font-size: 1em;
+    letter-spacing: -0.04em;
+    color: var(--ab-ink);
+    white-space: normal;
+}
+.ab-hero__title .ab-em,
+.ab-origin__quote .ab-em {
+    font-family: var(--ab-serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.12em;
+    letter-spacing: -0.01em;
+    color: var(--ab-ink);
+    white-space: normal;
+}
+.ab-h2 .ab-em,
+.ab-mat__title .ab-em,
+.ab-final__title .ab-em {
+    font-weight: inherit;
+    letter-spacing: inherit;
+}
+
+/* ── reveals (quiet rise, no blur) ─────────────────────────────────────── */
+[data-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+        opacity 0.9s ease,
+        transform 1s var(--ab-ease);
+    transition-delay: var(--d, 0s);
+}
+[data-reveal].in {
     opacity: 1;
     transform: none;
 }
 
-/* ============================================================
-   HERO
-   ============================================================ */
-.ab-hero {
-    display: grid;
-    gap: clamp(var(--space-xl), 5vw, var(--space-4xl));
+/* ── opening choreography (plays under reduce-motion via the scoped block) ── */
+[data-hero-rise] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+        opacity 0.95s ease,
+        transform 1s var(--ab-ease);
+    transition-delay: var(--rd, 0s);
+}
+.ab--play [data-hero-rise] {
+    opacity: 1;
+    transform: none;
+}
+/* masked-line rise — hero headline + origin quote slide up from behind their line */
+.ab-hero__title .ab-line,
+.ab-origin__quote .ab-line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.09em;
+    margin-bottom: -0.09em; /* mask breathing room for й/ц/щ + italic tails */
+}
+.ab-hero__title .ab-line > .l,
+.ab-origin__quote .ab-line > .l {
+    display: block;
+    transform: translateY(112%);
+    transition: transform 1.15s var(--ab-ease);
+    transition-delay: var(--ld, 0s);
+}
+.ab-hero__title .ab-line:nth-child(1) > .l {
+    --ld: 1.15s;
+}
+.ab-hero__title .ab-line:nth-child(2) > .l {
+    --ld: 1.27s;
+}
+.ab--play .ab-hero__title .ab-line > .l,
+.ab-origin__quote.in .ab-line > .l {
+    transform: translateY(0);
+}
+
+/* ── the REAL mark — static base; bloom/fade is opt-in per wrapper ──────── */
+.ab-mark {
+    display: block;
+}
+.ab-mark__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--ab-teal); /* the sun rhymes with the embroidered garment sun */
+    -webkit-mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
+    mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
+}
+/* the wordmark glyph (different mask) — never bloomed (a circle would crop it) */
+.ab-mark__img--word {
+    background: var(--ab-ink);
+    -webkit-mask-image: url(/pics/mind_body_1.png);
+    mask-image: url(/pics/mind_body_1.png);
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+/* sun BLOOM (clip-path circle) — hero lockup sun + final sign-off */
+.ab-lockup__sun .ab-mark__img,
+.ab-final__sign .ab-mark__img {
+    clip-path: circle(0% at 50% 50%);
+    opacity: 0;
+    transition:
+        clip-path 1s var(--ab-ease) 0.55s,
+        opacity 0.5s ease 0.55s;
+}
+.ab--play .ab-lockup__sun .ab-mark__img,
+.ab-final__sign.in .ab-mark__img {
+    clip-path: circle(72% at 50% 50%);
+    opacity: 1;
+}
+/* wordmark FADE — hero lockup word + final sign-off word */
+.ab-lockup__word .ab-mark__img,
+.ab-final__word .ab-mark__img {
+    opacity: 0;
+    transition: opacity 0.7s ease;
+}
+.ab-lockup__word .ab-mark__img {
+    transition-delay: 0.82s;
+}
+.ab-final__word .ab-mark__img {
+    transition-delay: 0.15s;
+}
+.ab--play .ab-lockup__word .ab-mark__img,
+.ab-final__word.in .ab-mark__img {
+    opacity: 1;
+}
+
+/* ── HERO lockup — sun + rule + wordmark, names the brand (a11y + presence) ── */
+.ab-lockup {
+    display: inline-flex;
     align-items: center;
-    max-width: var(--container-max);
-    margin-inline: auto;
-    padding: clamp(var(--space-3xl), 9vw, var(--space-5xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl)) clamp(var(--space-2xl), 6vw, var(--space-4xl));
+    gap: clamp(12px, 1.4vw, 18px);
 }
-.ab-hero__title {
-    font-family: var(--font-display);
-    font-weight: 300;
-    font-size: clamp(2.4rem, 5vw, 4.2rem);
-    line-height: 1.06;
-    letter-spacing: var(--tracking-tight);
-    color: var(--color-text-primary, #1a1a1a);
-    max-width: 14ch;
-    margin: 0 0 var(--space-xl);
+.ab-lockup__sun {
+    width: clamp(40px, 4.4vw, 58px);
+    aspect-ratio: 1;
+    flex: 0 0 auto;
 }
-.ab-hero__lead {
-    font-family: var(--font-body);
-    font-size: var(--text-lg);
-    line-height: var(--leading-relaxed);
-    color: var(--color-text-secondary, #555);
-    max-width: 46ch;
-    margin: 0 0 var(--space-xl);
+.ab-lockup__word {
+    width: clamp(110px, 11vw, 150px);
+    aspect-ratio: 1024 / 155;
+    flex: 0 0 auto;
 }
-.ab-hero__est {
-    font-family: var(--font-body);
-    font-size: var(--text-xs);
+.ab-lockup__rule {
+    width: 1px;
+    align-self: stretch;
+    margin-block: 5px;
+    background: var(--ab-border);
+    opacity: 0;
+    transition: opacity 0.8s ease 0.9s;
+}
+.ab--play .ab-lockup__rule {
+    opacity: 1;
+}
+
+/* ── CTA (earned teal: type-led, light-sweep fill) ─────────────────────── */
+.ab-cta {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 13px;
+    padding: 15px 30px;
+    border: 1px solid var(--ab-teal);
+    color: var(--ab-teal);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    letter-spacing: var(--tracking-wider);
-    color: var(--color-text-muted, #666);
+    text-decoration: none;
+    background: transparent;
+    overflow: hidden;
+    isolation: isolate;
+    min-height: 48px;
+    transition:
+        color 0.5s ease,
+        letter-spacing 0.5s var(--ab-ease);
+}
+.ab-cta > span,
+.ab-cta svg {
+    position: relative;
+    z-index: 1;
+}
+.ab-cta::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: var(--ab-teal);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.55s var(--ab-ease);
+}
+.ab-cta svg {
+    transition: transform 0.45s var(--ab-ease);
+}
+@media (hover: hover) {
+    .ab-cta:hover {
+        color: #fff;
+        letter-spacing: 0.19em;
+    }
+    .ab-cta:hover::before {
+        transform: scaleX(1);
+    }
+    .ab-cta:hover svg {
+        transform: translateX(5px);
+    }
+}
+.ab-cta:focus-visible {
+    outline: 2px solid var(--ab-teal);
+    outline-offset: 3px;
+}
+
+/* ── chapter shell ─────────────────────────────────────────────────────── */
+.ab-sec {
+    padding: var(--s-sec) 0;
+    border-top: 1px solid var(--ab-border);
+}
+
+/* ── proof strap — provenance + breadth, fills the post-hero void ──────── */
+.ab-strap {
+    width: min(100% - var(--pad) * 2, var(--maxw));
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 26px;
+    padding: 18px 0;
+    border-top: 1px solid var(--ab-border);
+    border-bottom: 1px solid var(--ab-border);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--tr-micro);
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ab-ink-soft);
+}
+.ab-strap span {
+    display: inline-flex;
+    align-items: center;
+}
+.ab-strap span + span::before {
+    content: "";
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ab-teal);
+    margin-right: 26px;
+}
+
+/* ── 01 HERO · ЗІ СПИНИ — full-bleed split: type field | back-shot ─────── */
+.ab-hero {
+    position: relative;
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    min-height: clamp(560px, 88vh, 860px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    overflow: hidden;
+    background: var(--ab-paper);
 }
 .ab-hero__media {
     position: relative;
-    border-radius: var(--radius-xl);
+    grid-column: 2;
+    grid-row: 1;
     overflow: hidden;
-    box-shadow: var(--shadow-xl);
-    aspect-ratio: 4 / 5;
-    background: var(--color-bg-soft, #f4f1ed);
+    background: var(--ab-paper-2);
 }
-.ab-hero__media video {
+/* slow camera push-in. Absolute so the portrait fills + crops the cell instead of
+   driving its intrinsic height. NO clip-path here — this is the LCP image and must
+   paint immediately; the "lace open" theatre lives in the masked headline + sun bloom. */
+.ab-hero__media img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 50% 28%;
     display: block;
+    transform: scale(1.08);
+    transition: transform 2.6s var(--ab-ease) 0.1s;
+    will-change: transform;
 }
-@media (min-width: 900px) {
-    .ab-hero {
-        grid-template-columns: 1.05fr 0.8fr;
-    }
-    .ab-hero__media {
-        max-height: 80vh;
-    }
+.ab--play .ab-hero__media img {
+    transform: scale(1);
 }
-
-/* ============================================================
-   STORY
-   ============================================================ */
-.ab-story {
+/* a cream feather on the image's left edge so the studio melts into the type field */
+.ab-hero__media::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(90deg, var(--ab-paper) 0%, rgba(244, 239, 230, 0) 15%);
+}
+.ab-hero__panel {
+    grid-column: 1;
+    grid-row: 1;
+    position: relative;
+    z-index: 2;
     display: grid;
-    gap: clamp(var(--space-xl), 5vw, var(--space-4xl));
-    align-items: center;
-    max-width: var(--container-max);
-    margin-inline: auto;
-    padding: clamp(var(--space-2xl), 6vw, var(--space-4xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl));
+    grid-template-rows: auto 1fr auto;
+    padding: clamp(86px, 10vh, 120px) clamp(24px, 4vw, 60px) clamp(24px, 4vh, 48px) var(--pad);
 }
-.ab-story__media {
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    aspect-ratio: 4 / 5;
-    background: var(--color-bg-soft, #f4f1ed);
-}
-.ab-story__media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform var(--transition-slow);
-}
-.ab-story__media:hover img {
-    transform: scale(1.04);
-}
-.ab-story__highlight {
-    margin: var(--space-xl) 0 0;
-    font-family: var(--font-body);
-    font-size: var(--text-lg);
-    line-height: var(--leading-relaxed);
-    color: var(--color-text-secondary, #555);
-    max-width: 46ch;
-}
-@media (min-width: 900px) {
-    .ab-story {
-        grid-template-columns: 44% 1fr;
-    }
-}
-
-/* ============================================================
-   VALUES
-   ============================================================ */
-.ab-values {
-    background: var(--color-bg-soft, #f4f1ed);
-    padding: clamp(var(--space-2xl), 6vw, var(--space-4xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl));
-}
-.ab-values__grid {
-    list-style: none;
-    margin: var(--space-xl) auto 0;
-    padding: 0;
-    max-width: 1000px;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-xl);
-}
-.ab-value {
+.ab-hero__head {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: var(--space-md);
-    text-align: center;
-    font-family: var(--font-display);
-    font-size: var(--text-2xl);
-    color: var(--color-text-primary, #1a1a1a);
+    align-items: flex-start;
+    gap: clamp(12px, 1.8vh, 20px);
 }
-.ab-value svg {
-    width: 40px;
-    height: 40px;
-    color: var(--color-primary, #2a5a5a);
+.ab-hero__main {
+    align-self: center;
+    padding-block: clamp(16px, 3.4vh, 40px);
 }
-@media (min-width: 720px) {
-    .ab-values__grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ============================================================
-   PROCESS
-   ============================================================ */
-.ab-process {
-    max-width: var(--container-max);
-    margin-inline: auto;
-    padding: clamp(var(--space-3xl), 7vw, var(--space-5xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl));
-}
-.ab-process__head {
-    max-width: 30ch;
-    margin-bottom: clamp(var(--space-xl), 4vw, var(--space-3xl));
-}
-.ab-process__title em {
-    display: block;
-    color: var(--color-primary, #2a5a5a);
-}
-.ab-process__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: clamp(var(--space-xl), 4vw, var(--space-3xl));
-}
-.ab-step {
-    display: grid;
-    gap: var(--space-lg);
-}
-.ab-step__media {
-    position: relative;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
-    aspect-ratio: 3 / 2;
-    background: var(--color-bg-soft, #f4f1ed);
-}
-.ab-step__media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform var(--transition-slow);
-}
-.ab-step:hover .ab-step__media img {
-    transform: scale(1.05);
-}
-.ab-step__num {
-    position: absolute;
-    top: var(--space-md);
-    left: var(--space-lg);
-    font-family: var(--font-display);
-    font-size: var(--text-3xl);
-    line-height: 1;
-    color: #fff;
-    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
-}
-.ab-step__name {
-    font-family: var(--font-display);
-    font-weight: 500;
-    font-size: var(--text-2xl);
-    color: var(--color-text-primary, #1a1a1a);
-    margin-bottom: var(--space-sm);
-}
-.ab-step__text p {
-    font-family: var(--font-body);
-    font-size: var(--text-base);
-    line-height: var(--leading-relaxed);
-    color: var(--color-text-secondary, #555);
-    max-width: 48ch;
-}
-@media (min-width: 760px) {
-    .ab-process__grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: clamp(var(--space-2xl), 3vw, var(--space-4xl))
-            clamp(var(--space-xl), 3vw, var(--space-3xl));
-    }
-}
-
-/* ============================================================
-   LOOKBOOK
-   ============================================================ */
-.ab-lookbook {
-    max-width: var(--container-max);
-    margin-inline: auto;
-    padding: clamp(var(--space-2xl), 6vw, var(--space-4xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl));
-}
-.ab-lookbook__head {
-    margin-bottom: clamp(var(--space-lg), 4vw, var(--space-2xl));
-}
-.ab-lookbook__grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-md);
-}
-.ab-cell {
+.ab-hero__title {
+    font-weight: 800;
+    font-size: var(--fs-mega);
+    line-height: 0.9;
+    letter-spacing: var(--tr-tight);
+    color: var(--ab-ink);
     margin: 0;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    aspect-ratio: 4 / 5;
-    background: var(--color-bg-soft, #f4f1ed);
+    text-wrap: balance;
 }
-.ab-cell img {
+.ab-hero__sub {
+    margin: clamp(18px, 2.6vh, 30px) 0 0;
+    font-family: var(--ab-font);
+    font-weight: 500;
+    font-size: var(--fs-lead);
+    line-height: 1.5;
+    color: var(--ab-ink-soft);
+    max-width: 36ch;
+}
+.ab-hero__cta {
+    margin-top: clamp(22px, 3vh, 36px);
+}
+.ab-hero__corner {
+    align-self: end;
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.66rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ab-ink-soft);
+}
+.ab-hero__corner::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ab-teal);
+}
+
+/* ── 02 MATERIAL · the laced back, large + the debossed sun peak ───────── */
+.ab-mat__grid {
+    align-items: center;
+    row-gap: clamp(26px, 4vh, 44px);
+}
+.ab-mat__media {
+    position: relative;
+    z-index: 1;
+    grid-column: 1 / 9;
+    aspect-ratio: var(--ar-macro);
+    overflow: hidden;
+    background: var(--ab-paper-2);
+    contain: paint;
+    margin: 0;
+}
+.ab-mat__media img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform var(--transition-slow);
-}
-.ab-cell:hover img {
+    display: block;
     transform: scale(1.05);
+    transition: transform 1.5s var(--ab-ease);
 }
-@media (min-width: 760px) {
-    .ab-lookbook__grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--space-lg);
+.ab-mat__media.in img {
+    transform: scale(1);
+}
+@media (hover: hover) {
+    .ab-mat__media.in:hover img {
+        transform: scale(1.035);
     }
 }
+.ab-mat__aside {
+    position: relative;
+    grid-column: 9 / 13;
+    align-self: center;
+}
+.ab-mat__title {
+    font-weight: 700;
+    font-size: var(--fs-h3);
+    line-height: 1;
+    letter-spacing: -0.028em;
+    margin: var(--s-stack) 0 0;
+}
+.ab-mat__lead {
+    margin: var(--s-stack-2) 0 0;
+    font-family: var(--ab-font);
+    font-weight: 500;
+    font-style: normal;
+    font-size: var(--fs-lead);
+    line-height: 1.5;
+    color: var(--ab-ink-soft);
+    max-width: 30ch;
+}
+.ab-mat__index {
+    position: relative;
+    z-index: 1;
+    list-style: none;
+    margin: clamp(22px, 3vh, 36px) 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 2vh, 22px);
+}
+.ab-mat__item {
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+    padding-top: clamp(12px, 1.6vh, 18px);
+    border-top: 1px solid var(--ab-border);
+}
+.ab-mat__n {
+    font-family: var(--ab-font);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+    color: var(--ab-ink);
+    flex: 0 0 auto;
+    min-width: 1.6em;
+    font-feature-settings:
+        "tnum" 1,
+        "lnum" 1;
+}
+.ab-mat__name {
+    display: block;
+    font-weight: 600;
+    font-size: 1.04rem;
+    letter-spacing: -0.01em;
+}
+.ab-mat__desc {
+    display: block;
+    margin-top: 0.28rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--ab-ink-soft);
+    max-width: 28ch;
+}
+/* the LOGO peak — a big debossed sun pressed into the paper beside the real stitch */
+.ab-mat__sun {
+    position: absolute;
+    left: -6%;
+    bottom: -4%;
+    z-index: 0;
+    width: clamp(170px, 26vw, 350px);
+    aspect-ratio: 1;
+    pointer-events: none;
+    transform: rotate(-12deg) scale(0.965);
+    opacity: 0;
+    transition:
+        opacity 1s ease 0.3s,
+        transform 1.4s var(--ab-ease) 0.3s;
+}
+.ab-mat__sun.in {
+    opacity: 1;
+    transform: rotate(-12deg) scale(1);
+}
+.ab-mat__sun .ab-mark__img {
+    background: var(--ab-paper);
+    filter: drop-shadow(0 1px 0 var(--ab-deboss-light))
+        drop-shadow(0 -1px 1px var(--ab-deboss-dark));
+}
 
-/* ============================================================
-   CONTACT — dark teal close
-   ============================================================ */
-.ab-contact {
-    background: var(--gradient-values, linear-gradient(135deg, #1e4444, #0c2729));
-    color: #fbf7f0;
-    padding: clamp(var(--space-3xl), 8vw, var(--space-5xl))
-        clamp(var(--space-lg), 6vw, var(--space-4xl));
+/* ── 03 IN MOTION · 2 frames, the body draws a line ────────────────────── */
+.ab-flow__head {
+    margin-bottom: var(--s-head);
 }
-.ab-contact__inner {
-    max-width: var(--container-max);
-    margin-inline: auto;
+.ab-flow__head .ab-kicker {
+    grid-column: 1 / 13;
+    margin-bottom: var(--s-stack);
 }
-.ab-contact__head {
+.ab-flow__head .ab-h2 {
+    grid-column: 1 / 9;
+}
+.ab-flow__sub {
+    grid-column: 1 / 8;
+    margin: var(--s-stack-2) 0 0;
+    font-family: var(--ab-font);
+    font-weight: 500;
+    font-style: normal;
+    font-size: var(--fs-lead);
+    line-height: 1.5;
+    color: var(--ab-ink-soft);
     max-width: 40ch;
-    margin-bottom: clamp(var(--space-xl), 5vw, var(--space-3xl));
 }
-.ab-contact__desc {
-    margin-top: var(--space-lg);
-    font-family: var(--font-body);
-    font-size: var(--text-lg);
-    line-height: var(--leading-relaxed);
-    color: rgba(250, 248, 246, 0.78);
-}
-.ab-contact__cols {
+.ab-flow__pair {
+    width: min(100% - var(--pad) * 2, var(--maxw));
+    margin-inline: auto;
     display: grid;
-    gap: var(--space-2xl);
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gutter);
 }
-.ab-contact__phones {
+.ab-flow__frame {
+    display: flex;
+    flex-direction: column;
+}
+.ab-flow__media {
+    display: block;
+    margin: 0;
+    aspect-ratio: var(--ar-portrait);
+    overflow: hidden;
+    background: var(--ab-paper-2);
+    contain: paint;
+}
+.ab-flow__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scale(1.055);
+    transition: transform 1.2s var(--ab-ease);
+}
+.ab-flow__frame.in .ab-flow__media img {
+    transform: scale(1);
+}
+.ab-flow__cap {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin-top: clamp(14px, 1.8vh, 20px);
+}
+.ab-flow__cap > * {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+        opacity 0.8s ease,
+        transform 0.9s var(--ab-ease);
+}
+.ab-flow__frame.in .ab-flow__cap > * {
+    opacity: 1;
+    transform: none;
+}
+.ab-flow__frame.in .ab-flow__n {
+    transition-delay: 0.5s;
+}
+.ab-flow__frame.in .ab-flow__name {
+    transition-delay: 0.62s;
+}
+.ab-flow__frame.in .ab-flow__line {
+    transition-delay: 0.78s;
+}
+.ab-flow__n {
+    font-family: var(--ab-font);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+    color: var(--ab-ink);
+    font-feature-settings:
+        "tnum" 1,
+        "lnum" 1;
+}
+.ab-flow__name {
+    font-weight: 700;
+    font-size: clamp(1.4rem, 2.2vw, 2rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+}
+.ab-flow__line {
+    flex-basis: 100%;
+    margin-top: 0.2rem;
+    font-family: var(--ab-serif);
+    font-style: italic;
+    font-size: clamp(1rem, 1.3vw, 1.2rem);
+    line-height: 1.35;
+    color: var(--ab-ink-soft);
+}
+
+/* ── 04 KIDS · the same signature, the next generation ─────────────────── */
+.ab-kids {
+    background: var(--ab-paper);
+}
+.ab-kids__head .ab-kicker {
+    grid-column: 1 / 13;
+}
+.ab-kids__band {
+    position: relative;
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--ab-paper-2);
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 1.1s var(--ab-ease);
+    margin-top: clamp(20px, 3vh, 36px);
+    contain: paint;
+}
+.ab-kids__band.in {
+    clip-path: inset(0 0 0 0);
+}
+.ab-kids__band img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scale(1.055);
+    transition: transform 2.4s var(--ab-ease) 0.1s;
+}
+.ab-kids__band.in img {
+    transform: scale(1);
+}
+.ab-kids__body {
+    margin-top: clamp(28px, 4vh, 48px);
+    align-items: start;
+}
+.ab-kids__copy {
+    grid-column: 1 / 6;
+}
+.ab-kids__title {
+    font-weight: 700;
+    font-size: clamp(2rem, 4.4vw, 3.3rem);
+    line-height: 0.96;
+    letter-spacing: -0.028em;
+    color: var(--ab-ink);
+    margin: 0;
+}
+.ab-kids__lead {
+    margin-top: var(--s-stack);
+    font-family: var(--ab-font);
+    font-weight: 500;
+    font-size: var(--fs-lead);
+    line-height: 1.5;
+    color: var(--ab-ink-soft);
+    max-width: 34ch;
+}
+.ab-kids__facts {
+    list-style: none;
+    margin: clamp(18px, 3vh, 28px) 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+}
+.ab-kids__fact {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.96rem;
+    color: var(--ab-ink);
+}
+.ab-kids__cta {
+    margin-top: clamp(20px, 3vh, 32px);
+}
+.ab-kids__trip {
+    grid-column: 6 / 13;
+    align-self: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
     display: grid;
-    gap: var(--space-lg);
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--gutter);
 }
-.ab-phone {
+.ab-kids__frame {
+    margin: 0;
+    aspect-ratio: var(--ar-portrait);
+    overflow: hidden;
+    background: var(--ab-paper-2);
+    contain: paint;
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+        opacity 0.9s ease,
+        transform 1.05s var(--ab-ease);
+    transition-delay: var(--d, 0s);
+}
+.ab-kids__trip.in .ab-kids__frame {
+    opacity: 1;
+    transform: none;
+}
+.ab-kids__frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scale(1.055);
+    transition: transform 1.4s var(--ab-ease);
+}
+.ab-kids__trip.in .ab-kids__frame img {
+    transform: scale(1);
+}
+
+/* ── 05 ORIGIN · second skin, sewn in Ukraine (2nd register) ───────────── */
+.ab-origin {
+    position: relative;
+    overflow: hidden;
+    background: var(--ab-paper-2);
+}
+.ab-origin__sun {
+    position: absolute;
+    z-index: 0;
+    right: -6%;
+    top: 8%;
+    width: clamp(160px, 22vw, 300px);
+    aspect-ratio: 1;
+    pointer-events: none;
+}
+.ab-origin__sun .ab-mark__img {
+    background: #e6ddcd; /* paper-2 minus ~5% L — felt, not seen */
+}
+.ab-origin__grid {
+    position: relative;
+    z-index: 1;
+    align-items: stretch;
+    row-gap: clamp(22px, 4vh, 36px);
+}
+.ab-origin__copy {
+    grid-column: 1 / 7;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.ab-origin__copy .ab-kicker {
+    margin-bottom: var(--s-stack);
+}
+.ab-origin__quote {
+    font-weight: 700;
+    font-size: var(--fs-quote);
+    line-height: 0.98;
+    letter-spacing: -0.028em;
+    color: var(--ab-ink);
+    margin: 0 0 var(--s-head);
+}
+.ab-origin__text {
+    margin: 0;
+    color: var(--ab-ink-soft);
+    max-width: 38ch;
+}
+.ab-origin__chips {
+    list-style: none;
+    margin: clamp(20px, 3vh, 30px) 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(9px, 1.3vh, 14px);
+}
+.ab-origin__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 1.02rem;
+    color: var(--ab-ink);
+}
+.ab-tick {
+    width: 22px;
+    height: 1.5px;
+    background: var(--ab-ink-faint);
+    flex: 0 0 auto;
+}
+.ab-origin__media {
+    position: relative;
+    grid-column: 7 / 13;
+    align-self: stretch;
+    margin: 0;
+    min-height: clamp(420px, 50vh, 540px);
+    overflow: hidden;
+    background: var(--ab-paper-3);
+    contain: paint;
+}
+.ab-origin__media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scale(1.05);
+    transition: transform 1.5s var(--ab-ease);
+}
+.ab-origin__media.in img {
+    transform: scale(1);
+}
+
+/* ── 06 CATALOGUE · character (live Prisma rail; affordance + bars) ─────── */
+.ab-gal__head {
+    margin-bottom: var(--s-head);
+}
+.ab-gal__head .ab-kicker {
+    grid-column: 1 / 13;
+    margin-bottom: var(--s-stack);
+}
+.ab-gal__head .ab-h2 {
+    grid-column: 1 / 9;
+}
+.ab-gal__sub {
+    grid-column: 1 / 8;
+    margin: var(--s-stack-2) 0 0;
+    font-family: var(--ab-font);
+    font-weight: 500;
+    font-style: normal;
+    font-size: var(--fs-lead);
+    line-height: 1.5;
+    color: var(--ab-ink-soft);
+    max-width: 42ch;
+}
+.ab-gal__railwrap {
+    position: relative;
+}
+.ab-gal__rail {
+    list-style: none;
+    margin: 0;
+    padding: 4px var(--pad) 14px;
+    display: flex;
+    gap: clamp(18px, 1.8vw, 28px);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 56px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 56px), transparent 100%);
+}
+.ab-gal__rail::-webkit-scrollbar {
+    display: none;
+}
+.ab-gal__nav {
+    position: absolute;
+    top: 38%;
+    right: var(--pad);
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ab-border);
+    background: var(--ab-paper);
+    color: var(--ab-ink);
+    cursor: pointer;
+    z-index: 2;
+    transition:
+        background 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease;
+}
+.ab-gal__nav:hover {
+    background: var(--ab-teal);
+    color: #fff;
+    border-color: var(--ab-teal);
+}
+.ab-gal__nav:focus-visible {
+    outline: 2px solid var(--ab-teal);
+    outline-offset: 3px;
+}
+@media (hover: none) {
+    .ab-gal__nav {
+        display: none;
+    }
+}
+.ab-gal__item {
+    flex: 0 0 auto;
+    width: clamp(230px, 24vw, 310px);
+    scroll-snap-align: start;
+    opacity: 0;
+    transform: translateY(18px);
+}
+.ab-gal__rail.in .ab-gal__item {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity 0.7s ease,
+        transform 0.8s var(--ab-ease);
+}
+.ab-gal__rail.in .ab-gal__item:nth-child(1) {
+    transition-delay: 0s;
+}
+.ab-gal__rail.in .ab-gal__item:nth-child(2) {
+    transition-delay: 0.06s;
+}
+.ab-gal__rail.in .ab-gal__item:nth-child(3) {
+    transition-delay: 0.12s;
+}
+.ab-gal__rail.in .ab-gal__item:nth-child(4) {
+    transition-delay: 0.18s;
+}
+.ab-gal__rail.in .ab-gal__item:nth-child(5) {
+    transition-delay: 0.24s;
+}
+.ab-gal__rail.in .ab-gal__item:nth-child(6) {
+    transition-delay: 0.3s;
+}
+.ab-gal__rail.in .ab-gal__item:nth-child(7) {
+    transition-delay: 0.36s;
+}
+.ab-gal__rail.in .ab-gal__item:nth-child(8) {
+    transition-delay: 0.42s;
+}
+.ab-gal__card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+}
+.ab-gal__card:focus-visible {
+    outline: 2px solid var(--ab-teal);
+    outline-offset: 3px;
+}
+.ab-gal__shot {
+    display: block;
+    aspect-ratio: var(--ar-card);
+    overflow: hidden;
+    background: var(--ab-paper-2);
+}
+.ab-gal__shot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform-origin: 50% 40%;
+    transition: transform 1.1s var(--ab-ease);
+}
+@media (hover: hover) {
+    .ab-gal__card:hover .ab-gal__shot img {
+        transform: scale(1.045);
+    }
+    .ab-gal__card:hover .ab-gal__go svg {
+        transform: translateX(4px);
+    }
+}
+.ab-gal__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: clamp(14px, 1.8vh, 18px);
+}
+.ab-gal__name {
+    font-weight: 500;
+    font-size: 1.02rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+.ab-gal__bars {
+    display: flex;
+    height: 3px;
+    width: 54px;
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+.ab-gal__bar {
+    flex: 1;
+}
+.ab-gal__go {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 0.6rem;
+    font-size: 0.64rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ab-ink-soft);
+}
+.ab-gal__go svg {
+    transition: transform 0.4s var(--ab-ease);
+}
+
+/* ── 07 FINAL · find your movement + contacts + the teal sign-off ──────── */
+.ab-final {
+    background: var(--ab-paper-3);
+}
+.ab-final__lead {
+    grid-column: 1 / 7;
+}
+.ab-final__mark {
+    width: 44px;
+    aspect-ratio: 1;
+    margin-bottom: clamp(18px, 2.6vh, 30px);
+}
+.ab-final__title {
+    font-weight: 800;
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    line-height: 0.94;
+    letter-spacing: -0.028em;
+    margin: 0;
+    max-width: 8ch;
+}
+.ab-final__cats {
+    grid-column: 7 / 13;
+    align-self: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.ab-final__cat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+    color: var(--ab-ink);
+    font-size: 1.05rem;
+    letter-spacing: 0.12em;
+    padding: clamp(13px, 1.8vh, 18px) 0;
+    border-bottom: 1px solid var(--ab-border);
+    transition:
+        color 0.35s ease,
+        padding-left 0.4s var(--ab-ease);
+}
+.ab-final__cat:focus-visible {
+    outline: 2px solid var(--ab-teal);
+    outline-offset: 3px;
+}
+.ab-final__cat svg {
+    color: var(--ab-ink-faint);
+    transition:
+        transform 0.4s var(--ab-ease),
+        color 0.35s ease;
+}
+@media (hover: hover) {
+    .ab-final__cat:hover {
+        color: var(--ab-ink);
+        padding-left: 10px;
+    }
+    .ab-final__cat:hover svg {
+        transform: translateX(4px);
+        color: var(--ab-teal);
+    }
+}
+.ab-final__foot {
+    grid-column: 1 / 7;
+    margin-top: clamp(34px, 6vh, 70px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 2vh, 20px);
+    align-items: flex-start;
+}
+.ab-final__line {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--ab-ink-soft);
+    letter-spacing: 0.02em;
+}
+.ab-final__contact {
+    grid-column: 7 / 13;
+    margin-top: clamp(34px, 6vh, 70px);
+}
+.ab-final__clabel {
+    display: block;
+    font-size: 0.66rem;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--ab-ink-soft);
+    margin-bottom: clamp(12px, 1.6vh, 16px);
+}
+.ab-final__phones {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    text-decoration: none;
-    color: #fbf7f0;
-    transition: opacity var(--transition-fast);
+    margin-bottom: clamp(14px, 2vh, 20px);
 }
-.ab-phone:hover {
-    opacity: 0.7;
-}
-.ab-phone__num {
-    font-family: var(--font-display);
-    font-size: clamp(1.4rem, 2.6vw, 1.9rem);
-    font-weight: 400;
-}
-.ab-phone__hint {
-    font-family: var(--font-body);
-    font-size: var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-wide);
-    color: rgba(250, 248, 246, 0.5);
-}
-.ab-contact__cta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-md);
-    align-items: flex-start;
-}
-.ab-btn {
+.ab-final__phone {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-md) var(--space-xl);
-    border-radius: var(--radius-full);
-    font-family: var(--font-body);
-    font-size: var(--text-base);
-    font-weight: 500;
+    min-height: 44px;
+    padding-block: 4px;
     text-decoration: none;
-    transition:
-        transform var(--transition-fast),
-        background var(--transition-fast),
-        box-shadow var(--transition-fast);
+    color: var(--ab-ink);
+    font-size: 1.02rem;
+    transition: color 0.3s ease;
 }
-.ab-btn--solid {
-    background: #fbf7f0;
-    color: var(--color-primary-dark, #1e4444);
+.ab-final__phone:hover {
+    color: var(--ab-teal);
 }
-.ab-btn--solid:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-}
-.ab-btn--ghost {
-    background: transparent;
-    color: #fbf7f0;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-}
-.ab-btn--ghost:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
-}
-.ab-btn--ghost svg {
-    transition: transform var(--transition-fast);
-}
-.ab-btn--ghost:hover svg {
-    transform: translateX(4px);
-}
-.ab-phone:focus-visible,
-.ab-btn:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.85);
+.ab-final__phone:focus-visible {
+    outline: 2px solid var(--ab-teal);
     outline-offset: 3px;
 }
-@media (min-width: 760px) {
-    .ab-contact__cols {
-        grid-template-columns: 1fr auto;
-        align-items: center;
-        gap: var(--space-4xl);
+.ab-final__channels {
+    display: flex;
+    gap: 10px;
+}
+.ab-final__ch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--ab-border);
+    color: var(--ab-ink);
+    transition:
+        background 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease;
+}
+.ab-final__ch svg {
+    width: 17px;
+    height: 17px;
+}
+.ab-final__ch:hover {
+    background: var(--ab-teal);
+    color: #fff;
+    border-color: var(--ab-teal);
+}
+.ab-final__ch:focus-visible {
+    outline: 2px solid var(--ab-teal);
+    outline-offset: 3px;
+}
+/* closing bookend: a confident teal sun + the wordmark, signed off */
+.ab-final__sign {
+    grid-column: 1 / 13;
+    width: clamp(84px, 11vw, 128px);
+    aspect-ratio: 1;
+    margin: clamp(30px, 5vh, 56px) auto 0;
+}
+.ab-final__word {
+    grid-column: 1 / 13;
+    width: clamp(132px, 15vw, 188px);
+    aspect-ratio: 1024 / 155;
+    margin: 14px auto 0;
+}
+.ab-final__mark-row {
+    grid-column: 1 / 13;
+    margin-top: clamp(16px, 2.4vh, 24px);
+    padding-top: clamp(16px, 2vh, 22px);
+    border-top: 1px solid var(--ab-border);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ab-ink-soft);
+}
+
+/* ── responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+    .ab {
+        --gutter: 22px;
     }
-    .ab-contact__phones {
-        grid-template-columns: repeat(3, auto);
-        gap: var(--space-3xl);
+    .ab-mat__media {
+        grid-column: 1 / 8;
     }
-    .ab-contact__cta {
-        flex-direction: column;
+    .ab-mat__aside {
+        grid-column: 8 / 13;
+    }
+    .ab-flow__head .ab-h2,
+    .ab-gal__head .ab-h2 {
+        grid-column: 1 / 13;
+    }
+    .ab-gal__sub,
+    .ab-flow__sub {
+        grid-column: 1 / 10;
+    }
+    .ab-kids__copy {
+        grid-column: 1 / 5;
+    }
+    .ab-kids__trip {
+        grid-column: 5 / 13;
+    }
+    .ab-origin__copy {
+        grid-column: 1 / 6;
+    }
+    .ab-origin__media {
+        grid-column: 6 / 13;
+    }
+    .ab-final__lead,
+    .ab-final__foot {
+        grid-column: 1 / 8;
+    }
+    .ab-final__cats,
+    .ab-final__contact {
+        grid-column: 8 / 13;
     }
 }
 
-/* ============================================================
-   Reduced motion
-   ============================================================ */
-@media (prefers-reduced-motion: reduce) {
-    .ab--anim [data-reveal] {
-        opacity: 1 !important;
-        transform: none !important;
-        transition: none !important;
+@media (max-width: 860px) {
+    .ab {
+        --gutter: 16px;
     }
-    .ab-story__media img,
-    .ab-step__media img,
-    .ab-cell img {
-        transition: none;
+    /* hero → stacked: tall image band on top, type field below */
+    .ab-hero {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        min-height: auto;
+    }
+    .ab-hero__media {
+        grid-column: 1;
+        grid-row: 1;
+        min-height: 58svh;
+    }
+    .ab-hero__media::before {
+        background: linear-gradient(0deg, var(--ab-paper) 0%, rgba(244, 239, 230, 0) 16%);
+    }
+    .ab-hero__panel {
+        grid-column: 1;
+        grid-row: 2;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(16px, 3vh, 26px);
+        padding: clamp(26px, 4vh, 40px) var(--pad) clamp(40px, 6vh, 60px);
+    }
+    .ab-hero__main {
+        max-width: none;
+        padding-block: 0;
+    }
+    .ab-hero__corner {
+        align-self: start;
+    }
+    /* material → block: full-bleed portrait macro, copy below */
+    .ab-mat__grid {
+        display: block;
+    }
+    .ab-mat__media {
+        width: 100vw;
+        margin-inline: calc(50% - 50vw);
+        aspect-ratio: var(--ar-portrait);
+        margin-bottom: clamp(22px, 4vh, 34px);
+    }
+    .ab-mat__media img {
+        object-position: 50% 36%;
+    }
+    .ab-mat__sun {
+        width: clamp(150px, 42vw, 220px);
+        left: auto;
+        right: -6%;
+        bottom: -2%;
+    }
+    .ab-flow__pair {
+        grid-template-columns: 1fr;
+        gap: clamp(30px, 5vh, 46px);
+    }
+    /* kids → stacked: band (taller crop for the wide splits image), copy, triptych */
+    .ab-kids__band {
+        aspect-ratio: 1 / 1;
+    }
+    .ab-kids__body {
+        display: block;
+    }
+    .ab-kids__copy {
+        margin-top: clamp(22px, 4vh, 34px);
+    }
+    .ab-kids__trip {
+        margin-top: clamp(22px, 4vh, 34px);
+        grid-template-columns: 1fr;
+        gap: clamp(16px, 4vh, 28px);
+    }
+    .ab-origin__grid {
+        display: block;
+    }
+    .ab-origin__copy {
+        margin-top: 0;
+    }
+    .ab-origin__sun {
+        right: -22%;
+        top: 3%;
+    }
+    .ab-origin__media {
+        max-width: 86vw;
+        margin-inline: auto;
+        margin-top: clamp(22px, 4vh, 34px);
+        aspect-ratio: var(--ar-portrait);
+        min-height: 0;
+    }
+    .ab-final__lead,
+    .ab-final__cats,
+    .ab-final__foot,
+    .ab-final__contact {
+        grid-column: 1 / 13;
+    }
+    .ab-final__cats {
+        margin-top: clamp(24px, 4vh, 36px);
+    }
+    .ab-final__contact {
+        margin-top: clamp(26px, 4vh, 40px);
+    }
+}
+
+@media (max-width: 520px) {
+    .ab-gal__item {
+        width: 74vw;
+    }
+    .ab-hero__title {
+        font-size: clamp(2.6rem, 14vw, 3.8rem);
+    }
+    .ab-kids__trip {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* ── motion is intentional here ────────────────────────────────────────────
+   /about does NOT gate motion behind reduce-motion. The owner browses with OS
+   reduce-motion ON yet wants the motion; app.css carries a site-wide reduce
+   reset that PRESERVES transition-delay — so re-enable /about's OWN scoped
+   durations here (the .ab descendant selector outranks the universal one).
+   EVERY animated beat below MUST be restated or it snaps instant under
+   reduce-motion (the owner's actual review path). */
+@media (prefers-reduced-motion: reduce) {
+    .ab [data-reveal],
+    .ab [data-hero-rise],
+    .ab .ab-lockup__rule,
+    .ab .ab-flow__cap > *,
+    .ab .ab-gal__rail.in .ab-gal__item,
+    .ab .ab-gal__shot img,
+    .ab .ab-final__cat svg {
+        transition-duration: 0.95s !important;
+    }
+    /* masked-line rise (hero + origin) */
+    .ab .ab-hero__title .ab-line > .l,
+    .ab .ab-origin__quote .ab-line > .l {
+        transition-duration: 1.15s !important;
+    }
+    /* the sun bloom + wordmark fade */
+    .ab .ab-lockup__sun .ab-mark__img,
+    .ab .ab-final__sign .ab-mark__img {
+        transition-duration: 1s, 0.5s !important;
+    }
+    .ab .ab-lockup__word .ab-mark__img,
+    .ab .ab-final__word .ab-mark__img {
+        transition-duration: 0.7s !important;
+    }
+    /* the debossed sun settle */
+    .ab .ab-mat__sun {
+        transition-duration: 1s, 1.4s !important;
+    }
+    /* the cinematic breath-ins + kids band wipe */
+    .ab .ab-hero__media img {
+        transition-duration: 2.6s !important;
+    }
+    .ab .ab-mat__media img {
+        transition-duration: 1.5s !important;
+    }
+    .ab .ab-flow__media img {
+        transition-duration: 1.2s !important;
+    }
+    .ab .ab-origin__media img {
+        transition-duration: 1.5s !important;
+    }
+    .ab .ab-kids__band {
+        transition-duration: 1.1s !important;
+    }
+    .ab .ab-kids__band img {
+        transition-duration: 2.4s !important;
+    }
+    .ab .ab-kids__frame {
+        transition-duration: 0.9s, 1.05s !important;
+    }
+    .ab .ab-kids__frame img {
+        transition-duration: 1.4s !important;
     }
 }
