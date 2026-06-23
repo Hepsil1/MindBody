@@ -40,7 +40,7 @@
     --s-stack: clamp(10px, 1.4vh, 16px);
     --s-stack-2: clamp(14px, 2vh, 22px);
     /* VIOLENT scale: one peak (hero), a calm valley (chapters), tiny labels */
-    --fs-mega: clamp(3.2rem, 9.4vw, 8.6rem); /* HERO only — the peak */
+    --fs-mega: clamp(2.6rem, 6.4vw, 5.6rem); /* HERO only — confident, not oversized (FIX A) */
     --fs-quote: clamp(2.4rem, 5.4vw, 4.4rem); /* ORIGIN pull-quote */
     --fs-h2: clamp(1.9rem, 4vw, 3.1rem); /* chapter heads — the valley */
     --fs-h3: clamp(1.4rem, 2.2vw, 2rem);
@@ -54,6 +54,11 @@
     --ar-card: 3 / 4;
     --ar-macro: 16 / 11;
     --ab-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --ab-ease-soft: cubic-bezier(0.33, 1, 0.68, 1); /* long scrubs / parallax */
+    --ab-ease-io: cubic-bezier(0.22, 0.61, 0.36, 1); /* bloom / wipe */
+    --ab-dur-fast: 0.6s;
+    --ab-dur: 1s;
+    --ab-dur-slow: 1.4s;
     counter-reset: ab-kicker;
     position: relative;
     isolation: isolate;
@@ -81,6 +86,17 @@
     mix-blend-mode: multiply;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 180px 180px;
+}
+
+/* page-wide warm vignette — the "cinematic grade" across the full-bleed showpieces.
+   Fixed, ≤4% ink at the corners, never over the centre. Colour stays in the garments. */
+.ab::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(120% 90% at 50% 42%, transparent 56%, rgba(36, 29, 21, 0.04) 100%);
 }
 
 /* shared container + 12-col grid */
@@ -247,10 +263,13 @@
     transition-delay: var(--ld, 0s);
 }
 .ab-hero__title .ab-line:nth-child(1) > .l {
-    --ld: 1.15s;
+    --ld: 1s;
 }
 .ab-hero__title .ab-line:nth-child(2) > .l {
-    --ld: 1.27s;
+    --ld: 1.12s;
+}
+.ab-hero__title .ab-line:nth-child(3) > .l {
+    --ld: 1.24s;
 }
 .ab--play .ab-hero__title .ab-line > .l,
 .ab-origin__quote.in .ab-line > .l {
@@ -433,7 +452,7 @@
     margin-right: 26px;
 }
 
-/* ── 01 HERO · ЗІ СПИНИ — full-bleed split: type field | back-shot ─────── */
+/* ── 01 HERO · СОНЦЕ СХОДИТЬ ЗІ СПИНИ — full-bleed split: type field | back-shot ─ */
 .ab-hero {
     position: relative;
     width: 100vw;
@@ -444,6 +463,28 @@
     grid-template-rows: 1fr;
     overflow: hidden;
     background: var(--ab-paper);
+}
+/* hero ambient bloom — the embroidered sun made atmospheric (teal radial ≤6% alpha).
+   Sits behind the type panel; fades in on first paint (Layer A), drifts on scroll
+   (Layer B, immune to reduce-motion). pointer-events:none, colour-only-from-garment safe. */
+.ab-hero__bloom {
+    position: absolute;
+    z-index: 0;
+    left: -8%;
+    top: 38%;
+    width: clamp(360px, 46vw, 720px);
+    aspect-ratio: 1;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(
+        circle at 50% 50%,
+        color-mix(in srgb, var(--ab-teal) 6%, transparent) 0%,
+        transparent 68%
+    );
+    transition: opacity 1.2s var(--ab-ease-io) 0.4s;
+}
+.ab--play .ab-hero__bloom {
+    opacity: 1;
 }
 .ab-hero__media {
     position: relative;
@@ -491,32 +532,32 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: clamp(12px, 1.8vh, 20px);
+    gap: clamp(10px, 1.4vh, 16px);
 }
 .ab-hero__main {
     align-self: center;
-    padding-block: clamp(16px, 3.4vh, 40px);
+    padding-block: clamp(12px, 2.6vh, 30px);
 }
 .ab-hero__title {
     font-weight: 800;
     font-size: var(--fs-mega);
-    line-height: 0.9;
-    letter-spacing: var(--tr-tight);
+    line-height: 0.94;
+    letter-spacing: -0.03em;
     color: var(--ab-ink);
     margin: 0;
     text-wrap: balance;
 }
 .ab-hero__sub {
-    margin: clamp(18px, 2.6vh, 30px) 0 0;
+    margin: clamp(16px, 2.2vh, 26px) 0 0;
     font-family: var(--ab-font);
     font-weight: 500;
     font-size: var(--fs-lead);
     line-height: 1.5;
     color: var(--ab-ink-soft);
-    max-width: 36ch;
+    max-width: 38ch;
 }
 .ab-hero__cta {
-    margin-top: clamp(22px, 3vh, 36px);
+    margin-top: clamp(20px, 2.6vh, 32px);
 }
 .ab-hero__corner {
     align-self: end;
@@ -537,22 +578,34 @@
     background: var(--ab-teal);
 }
 
-/* ── 02 MATERIAL · the laced back, large + the debossed sun peak ───────── */
+/* ── 02 MATERIAL · macro knot ↔ same knot worn full-length + the teal sun peak ── */
 .ab-mat__grid {
     align-items: center;
     row-gap: clamp(26px, 4vh, 44px);
+    column-gap: var(--gutter);
 }
 .ab-mat__media {
     position: relative;
     z-index: 1;
-    grid-column: 1 / 9;
-    aspect-ratio: var(--ar-macro);
+    grid-column: 1 / 6;
+    aspect-ratio: var(--ar-portrait);
     overflow: hidden;
     background: var(--ab-paper-2);
     contain: paint;
     margin: 0;
 }
-.ab-mat__media img {
+.ab-mat__full {
+    position: relative;
+    z-index: 1;
+    grid-column: 6 / 9;
+    aspect-ratio: var(--ar-portrait);
+    overflow: hidden;
+    background: var(--ab-paper-2);
+    contain: paint;
+    margin: 0;
+}
+.ab-mat__media img,
+.ab-mat__full img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -560,11 +613,13 @@
     transform: scale(1.05);
     transition: transform 1.5s var(--ab-ease);
 }
-.ab-mat__media.in img {
+.ab-mat__media.in img,
+.ab-mat__full.in img {
     transform: scale(1);
 }
 @media (hover: hover) {
-    .ab-mat__media.in:hover img {
+    .ab-mat__media.in:hover img,
+    .ab-mat__full.in:hover img {
         transform: scale(1.035);
     }
 }
@@ -653,10 +708,9 @@
     opacity: 1;
     transform: rotate(-12deg) scale(1);
 }
+/* FIX C — a low-alpha TEAL sun reads on cream (paper-on-paper did not). No deboss. */
 .ab-mat__sun .ab-mark__img {
-    background: var(--ab-paper);
-    filter: drop-shadow(0 1px 0 var(--ab-deboss-light))
-        drop-shadow(0 -1px 1px var(--ab-deboss-dark));
+    background: color-mix(in srgb, var(--ab-teal) 14%, transparent);
 }
 
 /* ── 03 IN MOTION · 2 frames, the body draws a line ────────────────────── */
@@ -685,7 +739,7 @@
     width: min(100% - var(--pad) * 2, var(--maxw));
     margin-inline: auto;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: var(--gutter);
 }
 .ab-flow__frame {
@@ -765,38 +819,104 @@
     color: var(--ab-ink-soft);
 }
 
-/* ── 04 KIDS · the same signature, the next generation ─────────────────── */
+/* ── 04 THE BACK · СПИНА В КОЛЬОРІ — mid-page full-bleed 2-up, parallax-in-frame ─ */
+.ab-back__head {
+    margin-bottom: var(--s-head);
+}
+.ab-back__head .ab-kicker {
+    grid-column: 1 / 13;
+    margin-bottom: var(--s-stack);
+}
+.ab-back__title {
+    grid-column: 1 / 9;
+}
+.ab-back__lead {
+    grid-column: 1 / 8;
+    margin: var(--s-stack-2) 0 0;
+    font-family: var(--ab-font);
+    font-weight: 500;
+    font-size: var(--fs-lead);
+    line-height: 1.5;
+    color: var(--ab-ink-soft);
+    max-width: 42ch;
+}
+.ab-back__pair {
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(4px, 0.8vw, 12px);
+}
+.ab-back__frame {
+    position: relative;
+    margin: 0;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--ab-paper-2);
+    contain: paint;
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+        opacity 0.9s ease,
+        transform 1s var(--ab-ease);
+    transition-delay: var(--d, 0s);
+}
+.ab-back__frame.in {
+    opacity: 1;
+    transform: none;
+}
+.ab-back__frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scale(1.1);
+    transition: transform 1.6s var(--ab-ease);
+}
+.ab-back__frame.in img {
+    transform: scale(1); /* one-shot settle (owner-visible WOW #2 floor) */
+}
+
+/* ── 06 KIDS · ТОЙ САМИЙ КРІЙ — one bold full-bleed showpiece + restrained 2-up ── */
 .ab-kids {
     background: var(--ab-paper);
 }
 .ab-kids__head .ab-kicker {
     grid-column: 1 / 13;
 }
-.ab-kids__band {
+.ab-kids__show {
     position: relative;
     width: 100vw;
     margin-inline: calc(50% - 50vw);
-    aspect-ratio: 16 / 10;
+    margin-top: clamp(20px, 3vh, 36px);
+    aspect-ratio: 16 / 9;
     overflow: hidden;
     background: var(--ab-paper-2);
-    clip-path: inset(0 0 100% 0);
-    transition: clip-path 1.1s var(--ab-ease);
-    margin-top: clamp(20px, 3vh, 36px);
     contain: paint;
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+        opacity 1s ease,
+        transform 1.1s var(--ab-ease);
 }
-.ab-kids__band.in {
-    clip-path: inset(0 0 0 0);
+.ab-kids__show.in {
+    opacity: 1;
+    transform: none;
 }
-.ab-kids__band img {
+.ab-kids__show img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
-    transform: scale(1.055);
-    transition: transform 2.4s var(--ab-ease) 0.1s;
+    transform: scale(1.06);
+    clip-path: inset(0 0 100% 0); /* camera push-in (one-shot Layer-A wipe; owner sees it) */
+    transition:
+        transform 1.5s var(--ab-ease) 0.05s,
+        clip-path 1.1s var(--ab-ease-io) 0.05s;
 }
-.ab-kids__band.in img {
+.ab-kids__show.in img {
     transform: scale(1);
+    clip-path: inset(0);
 }
 .ab-kids__body {
     margin-top: clamp(28px, 4vh, 48px);
@@ -840,34 +960,21 @@
 .ab-kids__cta {
     margin-top: clamp(20px, 3vh, 32px);
 }
-.ab-kids__trip {
+.ab-kids__duo {
     grid-column: 6 / 13;
     align-self: center;
-    list-style: none;
-    padding: 0;
-    margin: 0;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: var(--gutter);
 }
-.ab-kids__frame {
+.ab-kids__duoframe {
     margin: 0;
     aspect-ratio: var(--ar-portrait);
     overflow: hidden;
     background: var(--ab-paper-2);
     contain: paint;
-    opacity: 0;
-    transform: translateY(24px);
-    transition:
-        opacity 0.9s ease,
-        transform 1.05s var(--ab-ease);
-    transition-delay: var(--d, 0s);
 }
-.ab-kids__trip.in .ab-kids__frame {
-    opacity: 1;
-    transform: none;
-}
-.ab-kids__frame img {
+.ab-kids__duoframe img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -875,7 +982,54 @@
     transform: scale(1.055);
     transition: transform 1.4s var(--ab-ease);
 }
-.ab-kids__trip.in .ab-kids__frame img {
+.ab-kids__duoframe.in img {
+    transform: scale(1);
+}
+
+/* ── 07 LOOKBOOK · КОЛІР — ЦЕ НАСТРІЙ — the colour-range valley (contained 3-up) ── */
+.ab-look__head {
+    margin-bottom: var(--s-head);
+}
+.ab-look__head .ab-kicker {
+    grid-column: 1 / 13;
+    margin-bottom: var(--s-stack);
+}
+.ab-look__title {
+    grid-column: 1 / 9;
+}
+.ab-look__sub {
+    grid-column: 1 / 8;
+    margin: var(--s-stack-2) 0 0;
+    font-family: var(--ab-font);
+    font-weight: 500;
+    font-size: var(--fs-lead);
+    line-height: 1.5;
+    color: var(--ab-ink-soft);
+    max-width: 42ch;
+}
+.ab-look__row {
+    width: min(100% - var(--pad) * 2, var(--maxw));
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--gutter);
+}
+.ab-look__frame {
+    margin: 0;
+    aspect-ratio: var(--ar-portrait);
+    overflow: hidden;
+    background: var(--ab-paper-2);
+    contain: paint;
+}
+.ab-look__frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scale(1.055);
+    transition: transform 1.2s var(--ab-ease);
+}
+.ab-look__frame.in img {
     transform: scale(1);
 }
 
@@ -895,7 +1049,8 @@
     pointer-events: none;
 }
 .ab-origin__sun .ab-mark__img {
-    background: #e6ddcd; /* paper-2 minus ~5% L — felt, not seen */
+    /* carry the visible-mark thesis — a quiet but real teal tint, not paper-on-paper */
+    background: color-mix(in srgb, var(--ab-teal) 8%, transparent);
 }
 .ab-origin__grid {
     position: relative;
@@ -1320,29 +1475,197 @@
     color: var(--ab-ink-soft);
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   LAYER B — CSS scroll-driven cinema (the KEYSTONE).
+   These animations are bound to scroll position via animation-timeline:view()/
+   scroll(), so their progress ignores animation-DURATION entirely. The site-wide
+   reduce-motion reset (app.css) zeroes only animation-/transition-DURATION and
+   never animation-timeline — so every beat below plays for the owner (reduce-
+   motion ON) natively, 0 JS, on the compositor thread. They are NEVER restated in
+   the scoped reduce block (restating does nothing) and are NEVER the sole source
+   of visibility (the @supports-not floor is the Layer-A IO `.in` end-state).
+   ════════════════════════════════════════════════════════════════════════ */
+/* Layer-B — scroll-scrubbed cinema. Gated behind no-preference: under OS reduce-
+   motion the browser FREEZES scroll-driven animations at a resting frame (so they'd
+   override + stall the Layer-A floor), so we withhold them there and let the Layer-A
+   IO reveals (restated in the scoped reduce block) carry the motion the owner sees.
+   reduce-motion-OFF users get the continuous scroll-scrub. */
+@media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+        /* WOW 1 — HERO: leave-push (the back keeps opening as you exit) + bloom drift.
+       NO entry gate on the LCP img — it has already painted; this only animates on exit. */
+        .ab-hero__media img {
+            animation: ab-hero-leave linear both;
+            animation-timeline: view();
+            animation-range: cover 0% exit 100%;
+            will-change: transform;
+        }
+        @keyframes ab-hero-leave {
+            to {
+                transform: scale(1.06) translateY(-4%);
+            }
+        }
+        .ab-hero__bloom {
+            animation: ab-bloom-drift linear both;
+            animation-timeline: scroll();
+            animation-range: 0% 40%;
+        }
+        @keyframes ab-bloom-drift {
+            to {
+                transform: translateY(-6%);
+                opacity: 0.04;
+            }
+        }
+
+        /* §02 MATERIAL — parallax-within-frame (scale 1.12 over-bleed hides drift edges) */
+        .ab-mat__media img,
+        .ab-mat__full img {
+            animation: ab-drift linear both;
+            animation-timeline: view();
+            animation-range: entry 0% exit 100%;
+            will-change: transform;
+        }
+        @keyframes ab-drift {
+            from {
+                transform: scale(1.12) translateY(-3.5%);
+            }
+            to {
+                transform: scale(1.12) translateY(3.5%);
+            }
+        }
+
+        /* §03 IN MOTION — gentle opposed drift per frame (alt frame reversed) */
+        .ab-flow__media img {
+            animation: ab-drift linear both;
+            animation-timeline: view();
+            animation-range: entry 0% exit 100%;
+            will-change: transform;
+        }
+        .ab-flow__frame--alt .ab-flow__media img {
+            animation-name: ab-drift-rev;
+        }
+        @keyframes ab-drift-rev {
+            from {
+                transform: scale(1.12) translateY(3.5%);
+            }
+            to {
+                transform: scale(1.12) translateY(-3.5%);
+            }
+        }
+
+        /* WOW 2 — §04 THE BACK: true parallax-within-frame, opposite directions for depth */
+        .ab-back__frame img {
+            animation: ab-back-drift linear both;
+            animation-timeline: view();
+            animation-range: entry 0% exit 100%;
+            will-change: transform;
+        }
+        @keyframes ab-back-drift {
+            from {
+                transform: scale(1.1) translateY(-4%);
+            }
+            to {
+                transform: scale(1.1) translateY(4%);
+            }
+        }
+        .ab-back__frame--b img {
+            animation-name: ab-back-drift-rev;
+        }
+        @keyframes ab-back-drift-rev {
+            from {
+                transform: scale(1.1) translateY(4%);
+            }
+            to {
+                transform: scale(1.1) translateY(-4%);
+            }
+        }
+
+        /* §05 ORIGIN — the brand line lands with weight as it crosses centre */
+        .ab-origin__quote .ab-em {
+            animation: ab-track linear both;
+            animation-timeline: view();
+            animation-range: entry 20% cover 60%;
+        }
+        @keyframes ab-track {
+            from {
+                letter-spacing: 0.04em;
+                transform: translateY(0.12em);
+                opacity: 0.6;
+            }
+            to {
+                letter-spacing: -0.01em;
+                transform: none;
+                opacity: 1;
+            }
+        }
+
+        /* WOW 3 — §06 KIDS: scrubbed clip-path camera push-in on the child mid-arabesque.
+       NEVER the hero LCP — this is a below-the-fold showpiece. */
+        .ab-kids__show img {
+            animation: ab-kids-push linear both;
+            animation-timeline: view();
+            animation-range: entry 0% entry 90%;
+            will-change: transform, clip-path;
+        }
+        @keyframes ab-kids-push {
+            from {
+                clip-path: inset(0 0 100% 0);
+                transform: scale(1.06);
+            }
+            to {
+                clip-path: inset(0);
+                transform: scale(1);
+            }
+        }
+
+        /* §07 LOOKBOOK — a light valley parallax to match the rest */
+        .ab-look__frame img {
+            animation: ab-drift-soft linear both;
+            animation-timeline: view();
+            animation-range: entry 0% exit 100%;
+            will-change: transform;
+        }
+        @keyframes ab-drift-soft {
+            from {
+                transform: scale(1.08) translateY(-2.4%);
+            }
+            to {
+                transform: scale(1.08) translateY(2.4%);
+            }
+        }
+    }
+}
+
 /* ── responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
     .ab {
         --gutter: 22px;
     }
     .ab-mat__media {
-        grid-column: 1 / 8;
+        grid-column: 1 / 5;
+    }
+    .ab-mat__full {
+        grid-column: 5 / 8;
     }
     .ab-mat__aside {
         grid-column: 8 / 13;
     }
     .ab-flow__head .ab-h2,
-    .ab-gal__head .ab-h2 {
+    .ab-gal__head .ab-h2,
+    .ab-back__title,
+    .ab-look__title {
         grid-column: 1 / 13;
     }
     .ab-gal__sub,
-    .ab-flow__sub {
+    .ab-flow__sub,
+    .ab-back__lead,
+    .ab-look__sub {
         grid-column: 1 / 10;
     }
     .ab-kids__copy {
         grid-column: 1 / 5;
     }
-    .ab-kids__trip {
+    .ab-kids__duo {
         grid-column: 5 / 13;
     }
     .ab-origin__copy {
@@ -1394,13 +1717,13 @@
     .ab-hero__corner {
         align-self: start;
     }
-    /* material → block: full-bleed portrait macro, copy below */
+    /* material → block: macro then full-body stacked, copy below */
     .ab-mat__grid {
         display: block;
     }
-    .ab-mat__media {
-        width: 100vw;
-        margin-inline: calc(50% - 50vw);
+    .ab-mat__media,
+    .ab-mat__full {
+        grid-column: auto;
         aspect-ratio: var(--ar-portrait);
         margin-bottom: clamp(22px, 4vh, 34px);
     }
@@ -1417,9 +1740,19 @@
         grid-template-columns: 1fr;
         gap: clamp(30px, 5vh, 46px);
     }
-    /* kids → stacked: band (taller crop for the wide splits image), copy, triptych */
-    .ab-kids__band {
-        aspect-ratio: 1 / 1;
+    /* the back → stacked full-width 2-up */
+    .ab-back__pair {
+        grid-template-columns: 1fr;
+        gap: clamp(8px, 2vh, 16px);
+    }
+    /* lookbook → stacked */
+    .ab-look__row {
+        grid-template-columns: 1fr;
+        gap: clamp(22px, 4vh, 34px);
+    }
+    /* kids → stacked: full-bleed show (taller crop), copy, 2-up */
+    .ab-kids__show {
+        aspect-ratio: 4 / 5;
     }
     .ab-kids__body {
         display: block;
@@ -1427,10 +1760,10 @@
     .ab-kids__copy {
         margin-top: clamp(22px, 4vh, 34px);
     }
-    .ab-kids__trip {
+    .ab-kids__duo {
         margin-top: clamp(22px, 4vh, 34px);
-        grid-template-columns: 1fr;
-        gap: clamp(16px, 4vh, 28px);
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(12px, 3vw, 20px);
     }
     .ab-origin__grid {
         display: block;
@@ -1468,20 +1801,18 @@
         width: 74vw;
     }
     .ab-hero__title {
-        font-size: clamp(2.6rem, 14vw, 3.8rem);
-    }
-    .ab-kids__trip {
-        grid-template-columns: 1fr 1fr;
+        font-size: clamp(2.4rem, 11vw, 3.4rem);
     }
 }
 
-/* ── motion is intentional here ────────────────────────────────────────────
+/* ── motion is intentional here (LAYER A only) ─────────────────────────────
    /about does NOT gate motion behind reduce-motion. The owner browses with OS
    reduce-motion ON yet wants the motion; app.css carries a site-wide reduce
    reset that PRESERVES transition-delay — so re-enable /about's OWN scoped
    durations here (the .ab descendant selector outranks the universal one).
-   EVERY animated beat below MUST be restated or it snaps instant under
-   reduce-motion (the owner's actual review path). */
+   EVERY Layer-A beat below MUST be restated or it snaps instant under reduce-
+   motion (the owner's actual review path). Do NOT add any animation-timeline
+   (view()/scroll()) beat here — Layer-B is immune and restating does nothing. */
 @media (prefers-reduced-motion: reduce) {
     .ab [data-reveal],
     .ab [data-hero-rise],
@@ -1506,15 +1837,20 @@
     .ab .ab-final__word .ab-mark__img {
         transition-duration: 0.7s !important;
     }
-    /* the debossed sun settle */
+    /* the teal sun settle */
     .ab .ab-mat__sun {
         transition-duration: 1s, 1.4s !important;
     }
-    /* the cinematic breath-ins + kids band wipe */
+    /* hero ambient bloom fade (Layer-A) */
+    .ab .ab-hero__bloom {
+        transition-duration: 1.2s !important;
+    }
+    /* the cinematic breath-ins */
     .ab .ab-hero__media img {
         transition-duration: 2.6s !important;
     }
-    .ab .ab-mat__media img {
+    .ab .ab-mat__media img,
+    .ab .ab-mat__full img {
         transition-duration: 1.5s !important;
     }
     .ab .ab-flow__media img {
@@ -1523,16 +1859,25 @@
     .ab .ab-origin__media img {
         transition-duration: 1.5s !important;
     }
-    .ab .ab-kids__band {
-        transition-duration: 1.1s !important;
+    /* §04 THE BACK — reveal + scale-breath fallback (Layer-A floor) */
+    .ab .ab-back__frame {
+        transition-duration: 0.9s, 1s !important;
     }
-    .ab .ab-kids__band img {
-        transition-duration: 2.4s !important;
-    }
-    .ab .ab-kids__frame {
-        transition-duration: 0.9s, 1.05s !important;
-    }
-    .ab .ab-kids__frame img {
+    .ab .ab-back__frame img {
         transition-duration: 1.4s !important;
+    }
+    /* §06 KIDS — full-bleed show reveal + breath (Layer-A floor) */
+    .ab .ab-kids__show {
+        transition-duration: 1s, 1.1s !important;
+    }
+    .ab .ab-kids__show img {
+        transition-duration: 1.5s, 1.1s !important;
+    }
+    .ab .ab-kids__duoframe img {
+        transition-duration: 1.4s !important;
+    }
+    /* §07 LOOKBOOK — valley breath (Layer-A floor) */
+    .ab .ab-look__frame img {
+        transition-duration: 1.2s !important;
     }
 }

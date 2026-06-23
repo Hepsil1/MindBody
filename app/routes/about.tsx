@@ -11,20 +11,20 @@ import { cachedFetch } from "../utils/cache.server";
 import { localizeEntities } from "../utils/translations.server";
 import "../styles/about-page.css";
 
-// /about — "ДРУГА ШКІРА" (Second Skin) v34. Big idea: the logo is a DRAWING of the
-// stitch on the back of every garment — the laced-open criss-cross back + the
-// embroidered sun. The page recognises the brand FROM BEHIND, and carries the same
-// signature forward to the kids line (the next generation). Light warm-milk world,
-// colour ONLY from the garments. ONE typographic peak (Onest 800 hero) + ONE serif
-// climax in the hero accent and the ORIGIN pull-quote (Spectral italic) — the rest
-// is a calm grotesque valley (the per-heading italic "tic" is gone). ONE WOW peak:
-// the back laces open into the light (clip-path wipe) while the headline rises from
-// behind a mask and the sun blooms between the shoulder blades. The mark is
-// architecture: named lockup (hero) → faint sun rhythm (every kicker) → debossed
-// peak beside the real stitch → tonal watermark → teal sign-off. PERFORMANCE FIRST:
-// native scroll + IntersectionObserver + CSS only — NO GSAP/Lenis/sticky/morph. Every
-// animated beat is restated in the scoped reduce-motion block (owner browses with
-// reduce-motion ON) so the STILL page is the product. Real catalogue via the loader.
+// /about — v39 "СОНЦЕ ВЕДЕ — directed cut". In-place cinematic upgrade of the v34
+// "Друга шкіра" spine, same two files, same identity (cream paper ladder, Onest 800
+// + a single Spectral-italic em, the laced-back-+-sun thesis, real-logo architecture,
+// the live Prisma rail). The page is now a DIRECTED FILM: forte hero → andante
+// material → 3-frame motion run → forte THE BACK (new mid-page full-bleed 2-up) →
+// serif climax origin → forte KIDS (rebuilt, one full-bleed + restrained 2-up) →
+// lookbook valley → catalogue → resolve. TWO motion layers, both ending on the SAME
+// visible state: Layer A = data-reveal + IO `.in` transitions (SSR/no-JS floor,
+// restated in the scoped reduce-motion block); Layer B = CSS scroll-driven cinema via
+// @supports(animation-timeline:view()) — IMMUNE to the site reduce-motion reset
+// (app.css zeroes only animation-/transition-DURATION, never animation-timeline), so
+// the owner (reduce-motion ON) sees every scrubbed beat natively. NO GSAP/Lenis/
+// sticky/pin/morph/blend/WebGL. Colour ONLY from the garments; ambiance from grain +
+// hero teal bloom + one page-wide warm vignette only. Real catalogue via the loader.
 
 export const links: Route.LinksFunction = () => [
     { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -48,22 +48,22 @@ const META = {
     uk: {
         title: "Про бренд | MIND BODY",
         description:
-            "MIND BODY — український бренд одягу як друга шкіра: плетена спина, вишите сонце, м’яка посадка для йоги, спорту, танцю і щодня. Жінки та діти. Зшито в Україні.",
-        ogTitle: "MIND BODY — друга шкіра, яку впізнають зі спини",
+            "MIND BODY — український бренд одягу для руху: м’яка тканина, що тягнеться, плетена спина і вишите сонце. Жіноча та дитяча лінії. Зшито в Україні.",
+        ogTitle: "MIND BODY — м’який одяг для руху",
         ogDescription: "Український бренд одягу для жінок і дітей, які рухаються. Зшито в Україні.",
     },
     en: {
         title: "About the Brand | MIND BODY",
         description:
-            "MIND BODY is a Ukrainian clothing brand built like a second skin: a laced back, an embroidered sun, a soft fit for yoga, sport, dance and every day. Women and kids. Sewn in Ukraine.",
-        ogTitle: "MIND BODY — a second skin, recognised from behind",
+            "MIND BODY is a Ukrainian clothing brand made for movement: soft fabric that stretches, a laced back and an embroidered sun. Women’s and kids’ lines. Sewn in Ukraine.",
+        ogTitle: "MIND BODY — soft clothing made for movement",
         ogDescription: "A Ukrainian brand for women and kids who move. Sewn in Ukraine.",
     },
     ru: {
         title: "О бренде | MIND BODY",
         description:
-            "MIND BODY — украинский бренд одежды как вторая кожа: плетёная спина, вышитое солнце, мягкая посадка для йоги, спорта, танца и каждый день. Женщины и дети. Сшито в Украине.",
-        ogTitle: "MIND BODY — вторая кожа, которую узнают со спины",
+            "MIND BODY — украинский бренд одежды для движения: мягкая тянущаяся ткань, плетёная спина и вышитое солнце. Женская и детская линии. Сшито в Украине.",
+        ogTitle: "MIND BODY — мягкая одежда для движения",
         ogDescription: "Украинский бренд для женщин и детей, которые двигаются. Сшито в Украине.",
     },
 } as const;
@@ -149,54 +149,62 @@ type Tok = { w: string; em?: boolean };
 const CONTENT = {
     uk: {
         made: "ЗШИТО В УКРАЇНІ",
-        heroKicker: "ДРУГА ШКІРА",
+        heroKicker: "MIND BODY · УКРАЇНА",
         heroLines: [
-            [{ w: "Нас" }, { w: "впізнають" }],
-            [{ w: "зі" }, { w: "спини", em: true }],
+            [{ w: "М’який" }, { w: "одяг" }],
+            [{ w: "для" }, { w: "руху" }, { w: "—" }],
+            [{ w: "щодня", em: true }],
         ] as Tok[][],
-        heroSub:
-            "Преміум-одяг для руху — йога, спорт, танець, щодня. Жінки та діти. Плетена спина, вишите сонце. Зшито в Україні.",
+        heroSub: "М’яка тканина, що тягнеться. Жіноча та дитяча лінії.",
         heroCta: "Дивитися колекції",
         proofA: "Плетена спина",
         proofB: "Дорослі + діти",
         matKicker: "МАТЕРІАЛ",
         matTitle: [
-            [{ w: "Плетена" }, { w: "спина" }, { w: "—" }],
-            [{ w: "наш" }, { w: "підпис", em: true }],
+            [{ w: "Плетена" }, { w: "спина" }],
+            [{ w: "і" }, { w: "вишите" }, { w: "сонце" }],
         ] as Tok[][],
-        matLead: "Шість пасем сходяться у вузол, сонце — між лопатками. Це впізнають без бирки.",
+        matLead:
+            "Шість пасем сходяться у вузол між лопатками, поряд — вишите сонце. Дрібниця, яку видно зблизька.",
         mat: [
             { n: "Плетена спина", d: "акцент, що відкриває лінію тіла" },
             { n: "Вишите сонце", d: "фірмовий знак MIND BODY на тканині" },
-            { n: "Друга шкіра", d: "м’яка посадка, що рухається з тобою" },
+            { n: "М’яка посадка", d: "тягнеться й рухається з тобою" },
         ],
         flowKicker: "У РУСІ",
-        flowTitle: [
-            [{ w: "Рух" }, { w: "—" }],
-            [{ w: "це" }, { w: "мова", em: true }],
-        ] as Tok[][],
-        flowSub:
-            "Тіло говорить тим, як рухається. Ми шиємо одяг, який не перебиває — а підсилює кожен рух.",
+        flowTitle: [[{ w: "Створено" }], [{ w: "для" }, { w: "руху" }]] as Tok[][],
+        flowSub: "Тканина тягнеться у чотирьох напрямках, дихає й повертає форму.",
         flow: [
-            { n: "Зігнутись", d: "посадка не зраджує" },
-            { n: "Розкритись", d: "спина відкрита, лінія чиста" },
+            { n: "Поворот", d: "посадка не зраджує" },
+            { n: "Розтяжка", d: "спина відкрита, лінія чиста" },
+            { n: "Нахил", d: "тканина йде за тілом" },
         ],
-        kidsKicker: "НАСТУПНЕ",
+        backKicker: "СПИНА",
+        backTitle: [
+            [{ w: "Один" }, { w: "крій," }],
+            [{ w: "кілька" }, { w: "кольорів" }],
+        ] as Tok[][],
+        backLead:
+            "Та сама плетена спина — у бірюзі, у сливі, у пудрі. Обирай колір під свій настрій.",
+        kidsKicker: "ДІТИ",
         kidsTitle: [
-            [{ w: "Той" }, { w: "самий" }, { w: "підпис" }, { w: "—" }],
-            [{ w: "нове" }, { w: "покоління", em: true }],
+            [{ w: "Той" }, { w: "самий" }, { w: "крій" }, { w: "—" }],
+            [{ w: "менший" }, { w: "розмір" }],
         ] as Tok[][],
         kidsLead:
-            "Та сама плетена спина, те саме вишите сонце — тепер і в дитячій лінії. Та сама друга шкіра, той самий рух, лиш менший розмір.",
+            "Та сама плетена спина і вишите сонце — у дитячих розмірах. М’яко, тягнеться, не сковує рух.",
         kidsFacts: ["Та сама спина", "Зшито в Україні", "Створено для руху"],
-        kidsCta: "Дивитися дитячі",
+        kidsCta: "Дитяча лінія",
+        lookKicker: "КОЛЕКЦІЯ",
+        lookTitle: [[{ w: "Колір" }, { w: "—" }, { w: "це" }, { w: "настрій" }]] as Tok[][],
+        lookSub: "Слива, шоколад, червоний — той самий крій у різних кольорах.",
         originKicker: "ВИТОКИ",
         originQuote: [
-            [{ w: "Друга" }, { w: "шкіра." }],
-            [{ w: "Зшита" }, { w: "в" }, { w: "Україні", em: true }],
+            [{ w: "Зшито" }, { w: "в" }, { w: "Україні," }],
+            [{ w: "нашими" }, { w: "руками", em: true }],
         ] as Tok[][],
         madeText:
-            "М’яка до шкіри. Тягнеться, дихає й повертає форму. Кожен шов — в Україні, нашими руками.",
+            "М’яка до шкіри тканина, що тягнеться й тримає форму. Кожен шов — в Україні. Жіноча та дитяча лінії, 14 днів на повернення.",
         fab: [
             "м’яка до шкіри",
             "тримає форму",
@@ -205,10 +213,7 @@ const CONTENT = {
             "доросла + дитяча лінія",
         ],
         galKicker: "КАТАЛОГ",
-        galTitle: [
-            [{ w: "Кожен" }, { w: "виріб" }, { w: "має" }],
-            [{ w: "свій" }, { w: "характер", em: true }],
-        ] as Tok[][],
+        galTitle: [[{ w: "Кольори" }], [{ w: "в" }, { w: "русі" }]] as Tok[][],
         galSub: "Колір, крій і деталь — кожна річ звучить інакше в русі.",
         cardCta: "Дивитися",
         railNext: "Наступні",
@@ -221,61 +226,79 @@ const CONTENT = {
         footC: "14 днів на повернення",
         altHero: "Комбінезон MIND BODY зі шнурівкою на спині та вишитим сонцем на рукаві",
         altMat: "Плетена спина MIND BODY: бірюзовий вузол і вишите сонце зблизька",
+        altMatFull: "Модель MIND BODY у комбінезоні кольору сливи: плетена спина на повний зріст",
         altFlow: "Модель MIND BODY у русі",
+        altBackTeal: "Комбінезон MIND BODY бірюзового кольору ззаду: плетена спина і вишите сонце",
+        altBackPlum: "Комбінезон MIND BODY кольору сливи ззаду: плетена спина і вишите сонце",
         altOrigin: "Модель у комбінезоні MIND BODY кольору сливи, вишите сонце на рукаві",
-        altKidsPair: "Дві дівчинки MIND BODY KIDS у вертикальних шпагатах, тримаються за руки",
-        altKidsBackTeal: "Дитячий комбінезон MIND BODY смарагдового кольору: спина і вишите сонце",
-        altKidsBackBlue: "Дитячий комбінезон MIND BODY кольору пудри: плетена спина і вишите сонце",
+        altLook: [
+            "Комбінезон MIND BODY кольору сливи",
+            "Комбінезон MIND BODY кольору шоколаду",
+            "Комбінезон MIND BODY червоного кольору",
+        ],
+        altKidsShow:
+            "Дитина MIND BODY KIDS у бірюзовому комбінезоні з піднятою рукою: плетена спина і вишите сонце",
         altKidsMacro: "Плетена спина MIND BODY KIDS зблизька: шнурівка-хрест і вишите сонце",
+        altKidsPair: "Дві дівчинки MIND BODY KIDS тримаються за руки",
     },
     en: {
         made: "SEWN IN UKRAINE",
-        heroKicker: "SECOND SKIN",
-        heroLines: [[{ w: "Recognised" }], [{ w: "from" }, { w: "behind", em: true }]] as Tok[][],
-        heroSub:
-            "Premium activewear for movement — yoga, sport, dance, every day. Women and kids. A laced back, an embroidered sun. Sewn in Ukraine.",
+        heroKicker: "MIND BODY · UKRAINE",
+        heroLines: [
+            [{ w: "Soft" }, { w: "clothing" }],
+            [{ w: "for" }, { w: "movement" }, { w: "—" }],
+            [{ w: "every" }, { w: "day", em: true }],
+        ] as Tok[][],
+        heroSub: "Soft fabric that stretches. Women’s and kids’ lines.",
         heroCta: "View the collections",
         proofA: "Laced back",
         proofB: "Women + kids",
         matKicker: "MATERIAL",
         matTitle: [
-            [{ w: "A" }, { w: "laced" }, { w: "back" }, { w: "—" }],
-            [{ w: "our" }, { w: "signature", em: true }],
+            [{ w: "A" }, { w: "laced" }, { w: "back" }],
+            [{ w: "and" }, { w: "an" }, { w: "embroidered" }, { w: "sun" }],
         ] as Tok[][],
         matLead:
-            "Six strands meet in one knot, the sun between the shoulder blades. Known without a label.",
+            "Six strands meet in a knot between the shoulder blades, an embroidered sun beside it. A detail you notice up close.",
         mat: [
             { n: "Laced back", d: "an accent that opens the line of the body" },
             { n: "Embroidered sun", d: "the MIND BODY mark, in the cloth" },
-            { n: "Second skin", d: "a soft fit that moves with you" },
+            { n: "Soft fit", d: "stretches and moves with you" },
         ],
         flowKicker: "IN MOTION",
-        flowTitle: [
-            [{ w: "Movement" }, { w: "is" }],
-            [{ w: "a" }, { w: "language", em: true }],
-        ] as Tok[][],
-        flowSub:
-            "The body speaks in how it moves. We make clothing that never interrupts it — only amplifies it.",
+        flowTitle: [[{ w: "Made" }], [{ w: "for" }, { w: "movement" }]] as Tok[][],
+        flowSub: "Four-way stretch — it breathes and springs back.",
         flow: [
-            { n: "Bend", d: "the fit never betrays you" },
-            { n: "Open up", d: "back open, line clean" },
+            { n: "Twist", d: "the fit never betrays you" },
+            { n: "Stretch", d: "back open, line clean" },
+            { n: "Bend", d: "the fabric follows the body" },
         ],
-        kidsKicker: "NEXT",
+        backKicker: "THE BACK",
+        backTitle: [
+            [{ w: "One" }, { w: "cut," }],
+            [{ w: "several" }, { w: "colours" }],
+        ] as Tok[][],
+        backLead:
+            "The same laced back — in turquoise, plum and powder. Choose the colour for your mood.",
+        kidsKicker: "KIDS",
         kidsTitle: [
-            [{ w: "The" }, { w: "same" }, { w: "signature" }, { w: "—" }],
-            [{ w: "a" }, { w: "new" }, { w: "generation", em: true }],
+            [{ w: "The" }, { w: "same" }, { w: "cut" }, { w: "—" }],
+            [{ w: "a" }, { w: "smaller" }, { w: "size" }],
         ] as Tok[][],
         kidsLead:
-            "The same laced back, the same embroidered sun — now on the kids line too. The same second skin, the same movement, in a smaller size.",
+            "The same laced back and embroidered sun — in kids’ sizes. Soft, stretchy, never restricts movement.",
         kidsFacts: ["The same back", "Sewn in Ukraine", "Made for movement"],
-        kidsCta: "Shop kids",
+        kidsCta: "Kids line",
+        lookKicker: "THE RANGE",
+        lookTitle: [[{ w: "Colour" }, { w: "is" }, { w: "mood" }]] as Tok[][],
+        lookSub: "Plum, chocolate, red — the same cut in different colours.",
         originKicker: "ORIGIN",
         originQuote: [
-            [{ w: "A" }, { w: "second" }, { w: "skin." }],
-            [{ w: "Sewn" }, { w: "in" }, { w: "Ukraine", em: true }],
+            [{ w: "Sewn" }, { w: "in" }, { w: "Ukraine," }],
+            [{ w: "by" }, { w: "our" }, { w: "hands", em: true }],
         ] as Tok[][],
         madeText:
-            "Soft on the skin. It stretches, breathes and springs back. Every seam — in Ukraine, by our hands.",
+            "Soft-to-skin fabric that stretches and holds its shape. Every seam sewn in Ukraine. Women’s and kids’ lines, 14-day returns.",
         fab: [
             "soft on the skin",
             "holds its shape",
@@ -284,10 +307,7 @@ const CONTENT = {
             "women + kids line",
         ],
         galKicker: "CATALOGUE",
-        galTitle: [
-            [{ w: "Every" }, { w: "piece" }, { w: "has" }],
-            [{ w: "its" }, { w: "own" }, { w: "character", em: true }],
-        ] as Tok[][],
+        galTitle: [[{ w: "Colours" }], [{ w: "in" }, { w: "motion" }]] as Tok[][],
         galSub: "Colour, cut and detail — each piece reads differently in motion.",
         cardCta: "View",
         railNext: "Next",
@@ -300,63 +320,78 @@ const CONTENT = {
         footC: "14 days to return",
         altHero: "MIND BODY jumpsuit with a laced back and an embroidered sun on the sleeve",
         altMat: "MIND BODY laced back: turquoise knot and embroidered sun, close up",
+        altMatFull: "MIND BODY model in a plum jumpsuit: the laced back, full length",
         altFlow: "A MIND BODY model in motion",
+        altBackTeal: "MIND BODY turquoise jumpsuit from behind: laced back and embroidered sun",
+        altBackPlum: "MIND BODY plum jumpsuit from behind: laced back and embroidered sun",
         altOrigin: "Model in a plum MIND BODY jumpsuit, embroidered sun on the sleeve",
-        altKidsPair: "Two MIND BODY KIDS girls in vertical splits, holding hands",
-        altKidsBackTeal: "MIND BODY kids emerald unitard: the back and embroidered sun",
-        altKidsBackBlue: "MIND BODY kids powder-blue unitard: laced back and embroidered sun",
+        altLook: [
+            "MIND BODY plum jumpsuit",
+            "MIND BODY chocolate jumpsuit",
+            "MIND BODY red jumpsuit",
+        ],
+        altKidsShow:
+            "MIND BODY KIDS child in a turquoise unitard, arm raised: laced back and embroidered sun",
         altKidsMacro: "MIND BODY KIDS laced back, close up: criss-cross lacing and embroidered sun",
+        altKidsPair: "Two MIND BODY KIDS girls holding hands",
     },
     ru: {
         made: "СШИТО В УКРАИНЕ",
-        heroKicker: "ВТОРАЯ КОЖА",
+        heroKicker: "MIND BODY · УКРАИНА",
         heroLines: [
-            [{ w: "Нас" }, { w: "узнают" }],
-            [{ w: "со" }, { w: "спины", em: true }],
+            [{ w: "Мягкая" }, { w: "одежда" }],
+            [{ w: "для" }, { w: "движения" }, { w: "—" }],
+            [{ w: "каждый" }, { w: "день", em: true }],
         ] as Tok[][],
-        heroSub:
-            "Премиум-одежда для движения — йога, спорт, танец, каждый день. Женщины и дети. Плетёная спина, вышитое солнце. Сшито в Украине.",
+        heroSub: "Мягкая тянущаяся ткань. Женская и детская линии.",
         heroCta: "Смотреть коллекции",
         proofA: "Плетёная спина",
         proofB: "Взрослые + дети",
         matKicker: "МАТЕРИАЛ",
         matTitle: [
-            [{ w: "Плетёная" }, { w: "спина" }, { w: "—" }],
-            [{ w: "наш" }, { w: "почерк", em: true }],
+            [{ w: "Плетёная" }, { w: "спина" }],
+            [{ w: "и" }, { w: "вышитое" }, { w: "солнце" }],
         ] as Tok[][],
-        matLead: "Шесть прядей сходятся в узел, солнце — между лопатками. Узнают без бирки.",
+        matLead:
+            "Шесть прядей сходятся в узел между лопатками, рядом — вышитое солнце. Деталь, которую видно вблизи.",
         mat: [
             { n: "Плетёная спина", d: "акцент, который открывает линию тела" },
             { n: "Вышитое солнце", d: "фирменный знак MIND BODY на ткани" },
-            { n: "Вторая кожа", d: "мягкая посадка, что движется с тобой" },
+            { n: "Мягкая посадка", d: "тянется и движется с тобой" },
         ],
         flowKicker: "В ДВИЖЕНИИ",
-        flowTitle: [
-            [{ w: "Движение" }, { w: "—" }],
-            [{ w: "это" }, { w: "язык", em: true }],
-        ] as Tok[][],
-        flowSub:
-            "Тело говорит тем, как движется. Мы шьём одежду, которая не перебивает — а усиливает каждое движение.",
+        flowTitle: [[{ w: "Создано" }], [{ w: "для" }, { w: "движения" }]] as Tok[][],
+        flowSub: "Ткань тянется в четырёх направлениях, дышит и держит форму.",
         flow: [
-            { n: "Согнуться", d: "посадка не подводит" },
-            { n: "Раскрыться", d: "спина открыта, линия чистая" },
+            { n: "Поворот", d: "посадка не подводит" },
+            { n: "Растяжка", d: "спина открыта, линия чистая" },
+            { n: "Наклон", d: "ткань идёт за телом" },
         ],
-        kidsKicker: "СЛЕДУЮЩЕЕ",
+        backKicker: "СПИНА",
+        backTitle: [
+            [{ w: "Один" }, { w: "крой," }],
+            [{ w: "несколько" }, { w: "цветов" }],
+        ] as Tok[][],
+        backLead: "Та же плетёная спина — в бирюзе, сливе и пудре. Выбирай цвет под настроение.",
+        kidsKicker: "ДЕТИ",
         kidsTitle: [
-            [{ w: "Тот" }, { w: "же" }, { w: "почерк" }, { w: "—" }],
-            [{ w: "новое" }, { w: "поколение", em: true }],
+            [{ w: "Тот" }, { w: "же" }, { w: "крой" }, { w: "—" }],
+            [{ w: "меньший" }, { w: "размер" }],
         ] as Tok[][],
         kidsLead:
-            "Та же плетёная спина, то же вышитое солнце — теперь и в детской линии. Та же вторая кожа, то же движение, лишь меньший размер.",
+            "Та же плетёная спина и вышитое солнце — в детских размерах. Мягко, тянется, не сковывает движение.",
         kidsFacts: ["Та же спина", "Сшито в Украине", "Создано для движения"],
-        kidsCta: "Смотреть детские",
+        kidsCta: "Детская линия",
+        lookKicker: "КОЛЛЕКЦИЯ",
+        lookTitle: [[{ w: "Цвет" }, { w: "—" }, { w: "это" }, { w: "настроение" }]] as Tok[][],
+        lookSub: "Слива, шоколад, красный — тот же крой в разных цветах.",
         originKicker: "ИСТОКИ",
         originQuote: [
-            [{ w: "Вторая" }, { w: "кожа." }],
-            [{ w: "Сшита" }, { w: "в" }, { w: "Украине", em: true }],
+            [{ w: "Сшито" }, { w: "в" }, { w: "Украине," }],
+            [{ w: "нашими" }, { w: "руками", em: true }],
         ] as Tok[][],
         madeText:
-            "Мягкая к коже. Тянется, дышит и возвращает форму. Каждый шов — в Украине, нашими руками.",
+            "Мягкая к коже ткань, которая тянется и держит форму. Каждый шов — в Украине. Женская и детская линии, возврат 14 дней.",
         fab: [
             "мягкая к коже",
             "держит форму",
@@ -365,10 +400,7 @@ const CONTENT = {
             "взрослая + детская линия",
         ],
         galKicker: "КАТАЛОГ",
-        galTitle: [
-            [{ w: "У" }, { w: "каждого" }, { w: "изделия" }],
-            [{ w: "свой" }, { w: "характер", em: true }],
-        ] as Tok[][],
+        galTitle: [[{ w: "Цвета" }], [{ w: "в" }, { w: "движении" }]] as Tok[][],
         galSub: "Цвет, крой и деталь — каждая вещь звучит иначе в движении.",
         cardCta: "Смотреть",
         railNext: "Следующие",
@@ -381,13 +413,20 @@ const CONTENT = {
         footC: "14 дней на возврат",
         altHero: "Комбинезон MIND BODY со шнуровкой на спине и вышитым солнцем на рукаве",
         altMat: "Плетёная спина MIND BODY: бирюзовый узел и вышитое солнце вблизи",
+        altMatFull: "Модель MIND BODY в комбинезоне цвета сливы: плетёная спина в полный рост",
         altFlow: "Модель MIND BODY в движении",
+        altBackTeal: "Комбинезон MIND BODY бирюзового цвета сзади: плетёная спина и вышитое солнце",
+        altBackPlum: "Комбинезон MIND BODY цвета сливы сзади: плетёная спина и вышитое солнце",
         altOrigin: "Модель в комбинезоне MIND BODY цвета сливы, вышитое солнце на рукаве",
-        altKidsPair: "Две девочки MIND BODY KIDS в вертикальных шпагатах, держатся за руки",
-        altKidsBackTeal: "Детский комбинезон MIND BODY изумрудного цвета: спина и вышитое солнце",
-        altKidsBackBlue:
-            "Детский комбинезон MIND BODY цвета пудры: плетёная спина и вышитое солнце",
+        altLook: [
+            "Комбинезон MIND BODY цвета сливы",
+            "Комбинезон MIND BODY цвета шоколада",
+            "Комбинезон MIND BODY красного цвета",
+        ],
+        altKidsShow:
+            "Ребёнок MIND BODY KIDS в бирюзовом комбинезоне с поднятой рукой: плетёная спина и вышитое солнце",
         altKidsMacro: "Плетёная спина MIND BODY KIDS вблизи: шнуровка-крест и вышитое солнце",
+        altKidsPair: "Две девочки MIND BODY KIDS держатся за руки",
     },
 } as const;
 
@@ -511,19 +550,29 @@ function Lines({ lines, period }: { lines: Tok[][]; period?: boolean }) {
     );
 }
 
-const HERO_IMG = "/generalpics/347_131123.webp"; // teal jumpsuit, back, laced spine + sun on sleeve
+const HERO_IMG = "/generalpics/347_131123.webp"; // teal jumpsuit, back, laced spine + sun on sleeve — LCP, never clip/opacity-gate
 const MAT_IMG = "/brand/detail-strap.webp"; // macro: turquoise woven knot + embroidered sun
-const ORIGIN_IMG = "/generalpics/588_131123.webp"; // plum long-sleeve, hand to face, sun on sleeve
-// "Рух — це мова" — two contained frames: bend → open back
+const MAT_FULL = "/generalpics/595_131123.webp"; // full-body plum BACK, laced spine, white floor
+const ORIGIN_IMG = "/generalpics/588_131123.webp"; // plum portrait, hand to face, sun on sleeve
+// "Створено для руху" — three contained frames: twist · stretch · bend
 const FLOW_IMG = [
-    { src: "/brand/move-bend.webp", pos: "50% 42%" },
     { src: "/brand/move-twist.webp", pos: "50% 18%" },
+    { src: "/brand/move-stretch.webp", pos: "50% 30%" },
+    { src: "/brand/move-bend.webp", pos: "50% 42%" },
 ];
-// KIDS — the same signature (laced back + sun), the next generation, dynamic poses
-const KIDS_BAND = "/brand/kids/kids-pair-splits.webp"; // two girls, mirrored vertical splits, holding hands
-const KIDS_BACK_TEAL = "/brand/kids/kids-back-teal.webp"; // emerald back, mesh + sun
-const KIDS_BACK_BLUE = "/brand/kids/kids-back-blue.webp"; // powder-blue back, laced + sun
-const KIDS_MACRO = "/brand/kids/kids-back-macro.webp"; // macro: laced cross + embroidered sun
+// §04 THE BACK — the signature detail across colourways (near-full-bleed 2-up)
+const BACK_TEAL = "/generalpics/338_131123.webp"; // teal BACK, laced, sun on sleeve
+const BACK_PLUM = "/generalpics/602_131123.webp"; // plum BACK, laced, sun on sleeve
+// §07 LOOKBOOK — colour range, contained 3-up on reflective floor
+const LOOK = [
+    "/brand/material-plum.webp",
+    "/brand/material-brown.webp",
+    "/brand/lookbook-red.webp",
+];
+// §06 KIDS — the same signature, smaller size (one full-bleed showpiece + restrained 2-up)
+const KIDS_SHOW = "/brand/kids/kids-teal-arabesque.webp"; // child teal, arm-raised arabesque, laced back + sun
+const KIDS_MACRO = "/brand/kids/kids-back-macro.webp"; // macro: child laced cross + embroidered sun
+const KIDS_PAIR = "/brand/kids/kids-pair-reach.webp"; // two girls holding hands
 
 export default function About() {
     const { locale } = useI18n();
@@ -570,11 +619,13 @@ export default function About() {
     return (
         <main className={"ab ab--enter" + (played ? " ab--play" : "")}>
             <noscript>
-                <style>{`.ab--enter [data-hero-rise]{opacity:1!important;transform:none!important}.ab .ab-line>.l{transform:none!important}.ab-mark__img{opacity:1!important;filter:none!important;transform:none!important;clip-path:none!important}.ab-lockup__rule{opacity:1!important}.ab-hero__media img,.ab-mat__media img,.ab-flow__media img,.ab-origin__media img,.ab-kids__band img,.ab-kids__frame img{transform:none!important;clip-path:none!important}.ab-kids__band{clip-path:none!important}.ab-kids__frame{opacity:1!important;transform:none!important}.ab [data-reveal]{opacity:1!important;transform:none!important;filter:none!important}`}</style>
+                <style>{`.ab--enter [data-hero-rise]{opacity:1!important;transform:none!important}.ab .ab-line>.l{transform:none!important}.ab-mark__img{opacity:1!important;filter:none!important;transform:none!important;clip-path:none!important}.ab-lockup__rule{opacity:1!important}.ab-hero__bloom{opacity:1!important}.ab-hero__media img,.ab-mat__media img,.ab-flow__media img,.ab-back__frame img,.ab-origin__media img,.ab-look__frame img,.ab-kids__show img,.ab-kids__duo img{transform:none!important;clip-path:none!important}.ab-kids__show,.ab-kids__duo .ab-look__frame,.ab-back__frame{opacity:1!important;transform:none!important}.ab [data-reveal]{opacity:1!important;transform:none!important;filter:none!important}`}</style>
             </noscript>
 
-            {/* 01 — HERO · ЗІ СПИНИ — the back laces open into the light */}
+            {/* 01 — HERO · СОНЦЕ СХОДИТЬ ЗІ СПИНИ — camera settles on an already-painted
+                frame, sun blooms between the shoulder blades, masked headline rises */}
             <section className="ab-hero" data-act="hero">
+                <span className="ab-hero__bloom" aria-hidden="true" />
                 <div className="ab-hero__media">
                     <Pic
                         src={HERO_IMG}
@@ -609,7 +660,7 @@ export default function About() {
                         <p
                             className="ab-hero__sub"
                             data-hero-rise
-                            style={{ "--rd": "1.65s" } as CSSProperties}
+                            style={{ "--rd": "1.55s" } as CSSProperties}
                         >
                             {c.heroSub}
                         </p>
@@ -617,7 +668,7 @@ export default function About() {
                             to="/shop/yoga"
                             className="ab-cta ab-hero__cta"
                             data-hero-rise
-                            style={{ "--rd": "1.85s" } as CSSProperties}
+                            style={{ "--rd": "1.75s" } as CSSProperties}
                         >
                             <span>{c.heroCta}</span>
                             <Arrow />
@@ -626,7 +677,7 @@ export default function About() {
                     <span
                         className="ab-hero__corner"
                         data-hero-rise
-                        style={{ "--rd": "1.95s" } as CSSProperties}
+                        style={{ "--rd": "1.9s" } as CSSProperties}
                     >
                         {c.made}
                     </span>
@@ -641,15 +692,27 @@ export default function About() {
                 <span>{c.footC}</span>
             </div>
 
-            {/* 02 — MATERIAL · the laced back, large */}
+            {/* 02 — MATERIAL · the laced back explained: macro knot ↔ same knot worn full-length */}
             <section className="ab-sec ab-mat" data-act="material">
                 <div className="ab-grid ab-mat__grid">
                     <figure className="ab-mat__media" data-reveal>
                         <Pic
                             src={MAT_IMG}
                             alt={c.altMat}
-                            sizes="(max-width:860px) 100vw, 64vw"
+                            sizes="(max-width:860px) 100vw, 46vw"
                             position="50% 38%"
+                        />
+                    </figure>
+                    <figure
+                        className="ab-mat__full"
+                        data-reveal
+                        style={{ "--d": "0.08s" } as CSSProperties}
+                    >
+                        <Pic
+                            src={MAT_FULL}
+                            alt={c.altMatFull}
+                            sizes="(max-width:860px) 100vw, 28vw"
+                            position="50% 42%"
                         />
                     </figure>
                     <div className="ab-mat__aside">
@@ -692,7 +755,7 @@ export default function About() {
                 </div>
             </section>
 
-            {/* 03 — IN MOTION · the body draws a line (2 frames) */}
+            {/* 03 — IN MOTION · created for movement (3 contained frames) */}
             <section className="ab-sec ab-flow" data-act="motion">
                 <div className="ab-grid ab-flow__head">
                     <span className="ab-kicker" data-reveal>
@@ -712,7 +775,9 @@ export default function About() {
                 <div className="ab-flow__pair">
                     {c.flow.map((f, i) => (
                         <figure
-                            className="ab-flow__frame"
+                            className={
+                                "ab-flow__frame" + (i % 2 === 1 ? " ab-flow__frame--alt" : "")
+                            }
                             data-reveal
                             style={{ "--d": `${i * 0.08}s` } as CSSProperties}
                             key={f.n}
@@ -721,7 +786,7 @@ export default function About() {
                                 <Pic
                                     src={FLOW_IMG[i].src}
                                     alt={`${c.altFlow} — ${f.n}`}
-                                    sizes="(max-width:860px) 92vw, 46vw"
+                                    sizes="(max-width:860px) 92vw, 31vw"
                                     position={FLOW_IMG[i].pos}
                                 />
                             </span>
@@ -735,70 +800,39 @@ export default function About() {
                 </div>
             </section>
 
-            {/* 04 — KIDS · the same signature, the next generation */}
-            <section className="ab-sec ab-kids" data-act="kids">
-                <div className="ab-grid ab-kids__head">
+            {/* 04 — THE BACK · СПИНА В КОЛЬОРІ — the signature detail across colourways
+                (near-full-bleed 2-up, each laced spine drifts within its frame) */}
+            <section className="ab-sec ab-back" data-act="back">
+                <div className="ab-grid ab-back__head">
                     <span className="ab-kicker" data-reveal>
-                        {c.kidsKicker}
+                        {c.backKicker}
                     </span>
+                    <h2 className="ab-display ab-h2 ab-back__title" data-reveal>
+                        <Lines lines={c.backTitle} />
+                    </h2>
+                    <p
+                        className="ab-back__lead"
+                        data-reveal
+                        style={{ "--d": "0.06s" } as CSSProperties}
+                    >
+                        {c.backLead}
+                    </p>
                 </div>
-                <figure className="ab-kids__band" data-reveal>
-                    <Pic src={KIDS_BAND} alt={c.altKidsPair} sizes="100vw" position="50% 28%" />
-                </figure>
-                <div className="ab-grid ab-kids__body">
-                    <div className="ab-kids__copy" data-reveal>
-                        <h2 className="ab-display ab-kids__title">
-                            <Lines lines={c.kidsTitle} />
-                        </h2>
-                        <p
-                            className="ab-kids__lead"
-                            data-reveal
-                            style={{ "--d": "0.06s" } as CSSProperties}
-                        >
-                            {c.kidsLead}
-                        </p>
-                        <ul className="ab-kids__facts">
-                            {c.kidsFacts.map((t, i) => (
-                                <li
-                                    className="ab-kids__fact"
-                                    data-reveal
-                                    style={{ "--d": `${0.06 + i * 0.06}s` } as CSSProperties}
-                                    key={t}
-                                >
-                                    <span className="ab-tick" aria-hidden="true" />
-                                    {t}
-                                </li>
-                            ))}
-                        </ul>
-                        <LLink to="/shop/kids" className="ab-cta ab-kids__cta">
-                            <span>{c.kidsCta}</span>
-                            <Arrow />
-                        </LLink>
-                    </div>
-                    <ul className="ab-kids__trip" data-reveal>
-                        {[
-                            { src: KIDS_BACK_TEAL, alt: c.altKidsBackTeal },
-                            { src: KIDS_BACK_BLUE, alt: c.altKidsBackBlue },
-                            { src: KIDS_MACRO, alt: c.altKidsMacro },
-                        ].map((k, i) => (
-                            <li
-                                className="ab-kids__frame"
-                                key={k.src}
-                                style={{ "--d": `${i * 0.12}s` } as CSSProperties}
-                            >
-                                <Pic
-                                    src={k.src}
-                                    alt={k.alt}
-                                    sizes="(max-width:860px) 92vw, 30vw"
-                                    position="50% 24%"
-                                />
-                            </li>
-                        ))}
-                    </ul>
+                <div className="ab-back__pair">
+                    <figure className="ab-back__frame" data-reveal>
+                        <Pic src={BACK_TEAL} alt={c.altBackTeal} sizes="50vw" position="50% 32%" />
+                    </figure>
+                    <figure
+                        className="ab-back__frame ab-back__frame--b"
+                        data-reveal
+                        style={{ "--d": "0.08s" } as CSSProperties}
+                    >
+                        <Pic src={BACK_PLUM} alt={c.altBackPlum} sizes="50vw" position="50% 30%" />
+                    </figure>
                 </div>
             </section>
 
-            {/* 05 — ORIGIN · second skin, sewn in Ukraine */}
+            {/* 05 — ORIGIN · sewn in Ukraine, by our hands (serif climax) */}
             <section className="ab-sec ab-origin" data-act="origin">
                 <span className="ab-origin__sun" aria-hidden="true">
                     <span className="ab-mark__img" />
@@ -847,7 +881,106 @@ export default function About() {
                 </div>
             </section>
 
-            {/* 06 — CATALOGUE · character (live Prisma rail) */}
+            {/* 06 — KIDS · ТОЙ САМИЙ КРІЙ — one bold full-bleed showpiece + restrained 2-up */}
+            <section className="ab-sec ab-kids" data-act="kids">
+                <div className="ab-grid ab-kids__head">
+                    <span className="ab-kicker" data-reveal>
+                        {c.kidsKicker}
+                    </span>
+                </div>
+                <figure className="ab-kids__show" data-reveal>
+                    <Pic src={KIDS_SHOW} alt={c.altKidsShow} sizes="100vw" position="50% 28%" />
+                </figure>
+                <div className="ab-grid ab-kids__body">
+                    <div className="ab-kids__copy" data-reveal>
+                        <h2 className="ab-display ab-kids__title">
+                            <Lines lines={c.kidsTitle} />
+                        </h2>
+                        <p
+                            className="ab-kids__lead"
+                            data-reveal
+                            style={{ "--d": "0.06s" } as CSSProperties}
+                        >
+                            {c.kidsLead}
+                        </p>
+                        <ul className="ab-kids__facts">
+                            {c.kidsFacts.map((t, i) => (
+                                <li
+                                    className="ab-kids__fact"
+                                    data-reveal
+                                    style={{ "--d": `${0.06 + i * 0.06}s` } as CSSProperties}
+                                    key={t}
+                                >
+                                    <span className="ab-tick" aria-hidden="true" />
+                                    {t}
+                                </li>
+                            ))}
+                        </ul>
+                        <LLink to="/shop/kids" className="ab-cta ab-kids__cta">
+                            <span>{c.kidsCta}</span>
+                            <Arrow />
+                        </LLink>
+                    </div>
+                    <div className="ab-kids__duo">
+                        {[
+                            { src: KIDS_MACRO, alt: c.altKidsMacro, pos: "50% 30%" },
+                            { src: KIDS_PAIR, alt: c.altKidsPair, pos: "50% 22%" },
+                        ].map((k, i) => (
+                            <figure
+                                className="ab-kids__duoframe"
+                                data-reveal
+                                key={k.src}
+                                style={{ "--d": `${i * 0.1}s` } as CSSProperties}
+                            >
+                                <Pic
+                                    src={k.src}
+                                    alt={k.alt}
+                                    sizes="(max-width:860px) 92vw, 30vw"
+                                    position={k.pos}
+                                />
+                            </figure>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* 07 — LOOKBOOK · КОЛІР — ЦЕ НАСТРІЙ — the colour-range valley (contained 3-up) */}
+            <section className="ab-sec ab-look" data-act="look">
+                <div className="ab-grid ab-look__head">
+                    <span className="ab-kicker" data-reveal>
+                        {c.lookKicker}
+                    </span>
+                    <h2 className="ab-display ab-h2 ab-look__title" data-reveal>
+                        <Lines lines={c.lookTitle} period />
+                    </h2>
+                    <p
+                        className="ab-look__sub"
+                        data-reveal
+                        style={{ "--d": "0.06s" } as CSSProperties}
+                    >
+                        {c.lookSub}
+                    </p>
+                </div>
+                <div className="ab-look__row">
+                    {LOOK.map((src, i) => (
+                        <figure
+                            className="ab-look__frame"
+                            data-reveal
+                            key={src}
+                            style={{ "--d": `${i * 0.1}s` } as CSSProperties}
+                        >
+                            <Pic
+                                src={src}
+                                alt={c.altLook[i]}
+                                sizes="(max-width:860px) 92vw, 31vw"
+                                position="50% 28%"
+                            />
+                        </figure>
+                    ))}
+                </div>
+            </section>
+
+            {/* 08 — CATALOGUE · colours in motion (live Prisma rail) */}
             <section className="ab-sec ab-gal" data-act="catalogue">
                 <div className="ab-grid ab-gal__head">
                     <span className="ab-kicker" data-reveal>
@@ -906,7 +1039,7 @@ export default function About() {
                 </div>
             </section>
 
-            {/* 07 — FINAL · find your movement + contacts */}
+            {/* 09 — FINAL · find your movement + contacts + teal sign-off bookend */}
             <section id="contact-premium" className="ab-sec ab-final" data-act="final">
                 <div className="ab-grid">
                     <div className="ab-final__lead" data-reveal>
