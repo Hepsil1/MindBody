@@ -35,6 +35,7 @@ export default [
     route("api/telegram/send", "routes/api.telegram.send.tsx"),
     route("api/search", "routes/api.search.tsx"),
     route("api/products/slugs", "routes/api.products.slugs.tsx"),
+    route("api/cart/prices", "routes/api.cart.prices.tsx"),
     route("api/reviews", "routes/api.reviews.tsx"),
     route("api/contact", "routes/api.contact.tsx"),
     route("api/quick-order", "routes/api.quick-order.tsx"),
@@ -47,6 +48,7 @@ export default [
     route("api/promo", "routes/api/promo.tsx"),
     route("api/newsletter", "routes/api.newsletter.tsx"),
     route("api/health", "routes/api.health.tsx"),
+    route("api/instagram/refresh", "routes/api.instagram.refresh.tsx"),
     route("sitemap.xml", "routes/sitemap[.]xml.tsx"),
 
     // Admin Login & Logout (Separate from layout)

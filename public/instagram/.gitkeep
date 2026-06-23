@@ -1,0 +1,2 @@
+# Runtime dir for the Instagram scrape (downloaded post thumbnails + variants +
+# ig-cache.json). Everything else here is gitignored and regenerated hourly.

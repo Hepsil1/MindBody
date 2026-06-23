@@ -9,12 +9,14 @@ import ProductCard from "../components/ProductCard";
 import BrandStories from "../components/BrandStories";
 import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
+import { readIgCache } from "../services/instagram.server";
 import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
 import { useI18n, getT, LLink } from "../i18n";
 import { localeFromParam, localeFromParamSafe, OG_LOCALE, localizePath } from "../i18n/config";
 import { localizeEntities } from "../utils/translations.server";
+import { useSmoothScroll } from "../hooks/useSmoothScroll";
 
 // One Instagram post tile rendered in the social proof section.
 interface InstagramPost {
@@ -28,6 +30,22 @@ interface InstagramData {
     followersCount: string;
     profilePictureUrl: string;
     posts: InstagramPost[];
+    // Pre-formatted display strings (built by the loader). The iPhone just prints
+    // them — its t() label wrappers stay untouched. Optional → back-compat.
+    postsCountDisplay?: string;
+    followersCountDisplay?: string;
+    followingCountDisplay?: string;
+}
+
+// Format a raw follower count the way Instagram shows it (e.g. 63874 → "63,9 тис.").
+function formatFollowers(n: number, locale: "uk" | "en" | "ru"): string {
+    if (!Number.isFinite(n)) return "";
+    if (n < 1000) return String(n);
+    const v = (Math.round((n / 1000) * 10) / 10).toLocaleString(
+        locale === "en" ? "en-US" : locale === "ru" ? "ru-RU" : "uk-UA",
+    );
+    if (locale === "en") return `${v}K`;
+    return locale === "ru" ? `${v} тыс.` : `${v} тис.`;
 }
 
 // Home category card — covers DB rows and the hard-coded fallback alike.
@@ -386,52 +404,68 @@ export async function loader({ request, params }: Route.LoaderArgs) {
             localizeEntities("Product", rawProducts.map(mapProduct), locale, ["name"]),
         ]);
 
+        // Instagram: read the local cache written by the background scraper.
+        // NEVER calls Instagram here. Returns null until the first successful
+        // scrape → we fall back to the EXACT previous hardcoded data (zero
+        // regression; safe to ship before any credentials exist).
+        const ig = await readIgCache();
+        const instagramData: InstagramData = ig
+            ? {
+                  username: ig.username,
+                  profilePictureUrl: ig.profilePictureUrl,
+                  followersCount: formatFollowers(ig.followersCount, locale),
+                  postsCountDisplay: ig.postsCount.toLocaleString("uk-UA"),
+                  followersCountDisplay: formatFollowers(ig.followersCount, locale),
+                  followingCountDisplay: ig.followingCount.toLocaleString("uk-UA"),
+                  posts: ig.posts,
+              }
+            : {
+                  // ── exact current hardcoded fallback (the curated grid) ──
+                  username: "mindbody_sportwear",
+                  followersCount: "63.9K",
+                  profilePictureUrl: "/logo-sun.png",
+                  postsCountDisplay: "2168",
+                  followersCountDisplay: "63,9 тис.",
+                  followingCountDisplay: "1257",
+                  posts: [
+                      {
+                          id: "1",
+                          mediaUrl: "/generalpics/333_131123.webp",
+                          permalink: "https://www.instagram.com/mindbody_sportwear/",
+                      },
+                      {
+                          id: "2",
+                          mediaUrl: "/generalpics/347_131123.webp",
+                          permalink: "https://www.instagram.com/mindbody_sportwear/",
+                      },
+                      {
+                          id: "3",
+                          mediaUrl: "/generalpics/374_131123.webp",
+                          permalink: "https://www.instagram.com/mindbody_sportwear/",
+                      },
+                      {
+                          id: "4",
+                          mediaUrl: "/generalpics/595_131123.webp",
+                          permalink: "https://www.instagram.com/mindbody_sportwear/",
+                      },
+                      {
+                          id: "5",
+                          mediaUrl: "/generalpics/588_131123.webp",
+                          permalink: "https://www.instagram.com/mindbody_sportwear/",
+                      },
+                      {
+                          id: "6",
+                          mediaUrl: "/generalpics/602_131123.webp",
+                          permalink: "https://www.instagram.com/mindbody_sportwear/",
+                      },
+                  ],
+              };
+
         return {
             slides: slidesPayload,
             categories,
             newProducts,
-            // Instagram preview tiles. The previous Behold CDN URLs
-            // (behold.pictures/...) are dead — every tile rendered as a
-            // broken-image icon. Use local product photography from
-            // public/generalpics instead: zero external dependency, always
-            // loads. permalink points at the real IG profile.
-            instagramData: {
-                username: "mindbody_sportwear",
-                followersCount: "63.9K",
-                profilePictureUrl: "/logo-sun.png",
-                posts: [
-                    {
-                        id: "1",
-                        mediaUrl: "/generalpics/333_131123.webp",
-                        permalink: "https://www.instagram.com/mindbody_sportwear/",
-                    },
-                    {
-                        id: "2",
-                        mediaUrl: "/generalpics/347_131123.webp",
-                        permalink: "https://www.instagram.com/mindbody_sportwear/",
-                    },
-                    {
-                        id: "3",
-                        mediaUrl: "/generalpics/374_131123.webp",
-                        permalink: "https://www.instagram.com/mindbody_sportwear/",
-                    },
-                    {
-                        id: "4",
-                        mediaUrl: "/generalpics/595_131123.webp",
-                        permalink: "https://www.instagram.com/mindbody_sportwear/",
-                    },
-                    {
-                        id: "5",
-                        mediaUrl: "/generalpics/588_131123.webp",
-                        permalink: "https://www.instagram.com/mindbody_sportwear/",
-                    },
-                    {
-                        id: "6",
-                        mediaUrl: "/generalpics/602_131123.webp",
-                        permalink: "https://www.instagram.com/mindbody_sportwear/",
-                    },
-                ],
-            } satisfies InstagramData,
+            instagramData,
             siteUrl: process.env.SITE_URL || DEFAULT_SITE_URL,
         };
     } catch (error) {
@@ -547,6 +581,8 @@ const FEATURE_ICONS = [
 export default function Home() {
     const { slides, categories, newProducts, instagramData } = useLoaderData<typeof loader>();
     const { t, lp } = useI18n();
+    // Same buttery Lenis smooth-scroll the /about page uses (owner request).
+    useSmoothScroll();
     // Owner-editable home content (admin → Редактор сайту → Налаштування).
     const { homeFeatures, homeStats, homeBrandWorld }: SiteSettings = useSiteSettings();
     const postsToRender = instagramData?.posts?.length
@@ -554,6 +590,10 @@ export default function Home() {
         : FALLBACK_INSTAGRAM_POSTS;
     const igUsername = instagramData?.username || "mindbody_sportwear";
     const igProfilePic = instagramData?.profilePictureUrl || "/logo-sun.png";
+    // Live stat numbers — fall back to the EXACT current literals → zero visual change.
+    const igPostsCount = instagramData?.postsCountDisplay ?? "2168";
+    const igFollowers = instagramData?.followersCountDisplay ?? t("63,9 тис.");
+    const igFollowing = instagramData?.followingCountDisplay ?? "1257";
 
     const [currentPlaylistIdx, setCurrentPlaylistIdx] = useState(0);
     // Ref mirror for the section IntersectionObserver (mounted once) — it
@@ -1587,21 +1627,25 @@ export default function Home() {
                                                     </div>
                                                     <div className="ig-ui-stats">
                                                         <div className="ig-ui-stat">
-                                                            <span className="num">2168</span>
+                                                            <span className="num">
+                                                                {igPostsCount}
+                                                            </span>
                                                             <span className="lbl">
                                                                 {t("публікації")}
                                                             </span>
                                                         </div>
                                                         <div className="ig-ui-stat">
                                                             <span className="num">
-                                                                {t("63,9 тис.")}
+                                                                {igFollowers}
                                                             </span>
                                                             <span className="lbl">
                                                                 {t("підписники")}
                                                             </span>
                                                         </div>
                                                         <div className="ig-ui-stat">
-                                                            <span className="num">1257</span>
+                                                            <span className="num">
+                                                                {igFollowing}
+                                                            </span>
                                                             <span className="lbl">
                                                                 {t("підписки")}
                                                             </span>

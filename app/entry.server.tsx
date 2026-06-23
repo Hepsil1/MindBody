@@ -4,19 +4,38 @@ import { createReadableStreamFromReadable } from "@react-router/node";
 import { ServerRouter } from "react-router";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
+import { startInstagramScheduler } from "./services/instagram-refresh.server";
+
+// Kick the background Instagram refresh once, when the server build loads.
+// No-op unless IG_SCRAPE_ENABLED=true AND IG_SCRAPE_SESSIONID is set, and
+// internally guarded against a double start. Single PM2 fork → safe.
+startInstagramScheduler();
 
 const ABORT_DELAY = 5_000;
 
 // CSP allowlist — kept permissive enough to not break inline styles (React),
-// Google Fonts, Instagram CDN images and our integrated APIs. Tighten with
-// nonces if/when we eliminate all inline scripts.
+// Google Fonts, Instagram CDN images, Google Analytics (gtag.js) and our
+// integrated APIs. Tighten with nonces if/when we eliminate all inline scripts.
 const CSP = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    // googletagmanager.com serves gtag.js (GA4). The Google tag runs a
+    // sandboxed-JS environment that uses eval/Function — without 'unsafe-eval'
+    // it loads but never finishes initialising (no client_id, no hits sent), so
+    // GA shows "data not collected". 'unsafe-inline' covers the inline gtag
+    // bootstrap. See app/components/Analytics.tsx.
+    // connect.facebook.net serves the Meta Pixel (fbevents.js); it loads only
+    // after cookie-consent AND only when VITE_META_PIXEL_ID is set (empty today,
+    // so dormant) — pre-listed so the Pixel works the moment an id is added
+    // instead of being silently CSP-blocked.
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://connect.facebook.net",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    // 'https:' already covers GA + Meta image beacons (google-analytics.com,
+    // www.facebook.com/tr, etc.).
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' https://api.novaposhta.ua https://api.telegram.org",
+    // GA4 sends hits/config over connect-src (collect endpoint + regional hosts).
+    // www.facebook.com is the Meta Pixel's fetch/sendBeacon target (dormant, see above).
+    "connect-src 'self' https://api.novaposhta.ua https://api.telegram.org https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.facebook.com https://connect.facebook.net",
     // 'self' (not 'none') so the admin visual editor can iframe-preview our own
     // storefront. Cross-origin framing (clickjacking) is still blocked.
     "frame-ancestors 'self'",
