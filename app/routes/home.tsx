@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback, Fragment } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
 import { EditorAffordance } from "../components/EditorAffordance";
-import { useSiteSettings, formatStatDisplay, type SiteSettings } from "../utils/site-settings";
+import { useSiteSettings, type SiteSettings } from "../utils/site-settings";
 import ProductCard from "../components/ProductCard";
 import BrandStories from "../components/BrandStories";
 import { prisma } from "../db.server";
@@ -17,6 +17,17 @@ import { useI18n, getT, LLink } from "../i18n";
 import { localeFromParam, localeFromParamSafe, OG_LOCALE, localizePath } from "../i18n/config";
 import { localizeEntities } from "../utils/translations.server";
 import { useSmoothScroll } from "../hooks/useSmoothScroll";
+
+// Onest (the owner-approved /about voice) — route-scoped, only for the cinematic
+// "Наш Instagram" title-card; the rest of home keeps its global fonts.
+export const links: Route.LinksFunction = () => [
+    { rel: "preconnect", href: "https://fonts.googleapis.com" },
+    { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+    {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap",
+    },
+];
 
 // One Instagram post tile rendered in the social proof section.
 interface InstagramPost {
@@ -626,7 +637,7 @@ export default function Home() {
     // Same buttery Lenis smooth-scroll the /about page uses (owner request).
     useSmoothScroll();
     // Owner-editable home content (admin → Редактор сайту → Налаштування).
-    const { homeFeatures, homeStats, homeBrandWorld }: SiteSettings = useSiteSettings();
+    const { homeFeatures, homeBrandWorld }: SiteSettings = useSiteSettings();
     const postsToRender = instagramData?.posts?.length
         ? instagramData.posts
         : FALLBACK_INSTAGRAM_POSTS;
@@ -856,58 +867,6 @@ export default function Home() {
         }
     };
 
-    // Animated counters — trigger when section enters viewport
-    useEffect(() => {
-        const animateCounter = (el: HTMLElement) => {
-            const target = parseInt(el.dataset.count || "0", 10);
-            const suffix = el.dataset.suffix || "";
-            const isLarge = target >= 1000;
-            const duration = 1800;
-            const start = performance.now();
-            const numEl = el.querySelector(".stat-number") as HTMLElement;
-            if (!numEl) return;
-
-            // A suffix-less value in the year range is a YEAR, not a count —
-            // skip the thousands separator so «2020» doesn't animate into the
-            // broken-looking «2 020» (mirror of formatStatDisplay's SSR rule).
-            const isYear = !suffix && target >= 1900 && target <= 2100;
-            const tick = (now: number) => {
-                const elapsed = Math.min((now - start) / duration, 1);
-                // ease-out cubic
-                const eased = 1 - Math.pow(1 - elapsed, 3);
-                const value = Math.round(eased * target);
-                if (isLarge && target >= 10000) {
-                    numEl.textContent = (value / 1000).toFixed(1) + "K" + suffix;
-                } else if (isYear) {
-                    numEl.textContent = String(value);
-                } else {
-                    numEl.textContent = value.toLocaleString("uk-UA") + suffix;
-                }
-                if (elapsed < 1) requestAnimationFrame(tick);
-            };
-            requestAnimationFrame(tick);
-        };
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting && !entry.target.classList.contains("counted")) {
-                        entry.target.classList.add("counted");
-                        animateCounter(entry.target as HTMLElement);
-                        observer.unobserve(entry.target);
-                    }
-                });
-            },
-            { threshold: 0.5 },
-        );
-
-        setTimeout(() => {
-            document.querySelectorAll(".stat-item").forEach((el) => observer.observe(el));
-        }, 100);
-
-        return () => observer.disconnect();
-    }, []);
-
     // Scroll reveal animation
     useEffect(() => {
         const observerOptions = {
@@ -957,6 +916,19 @@ export default function Home() {
             document.querySelectorAll(".bw-tile").forEach((el, i) => {
                 el.classList.add("reveal-ready");
                 (el as HTMLElement).style.transitionDelay = `${i * 0.13}s`;
+                observer.observe(el);
+            });
+
+            // Cinematic IG title-card: the title does a masked-line rise, the
+            // kicker/sub/CTA fade up. Base state is visible (CSS), so reduce-motion
+            // / no-JS shows the finished card — motion only enhances.
+            document.querySelectorAll(".ig-hyper__title").forEach((el) => {
+                el.classList.add("reveal-ready");
+                observer.observe(el);
+            });
+            document.querySelectorAll(".ig-hyper__reveal").forEach((el, i) => {
+                el.classList.add("reveal-ready");
+                (el as HTMLElement).style.transitionDelay = `${0.12 + i * 0.1}s`;
                 observer.observe(el);
             });
         }, 100);
@@ -1446,55 +1418,34 @@ export default function Home() {
                     </div>
                 </section>
 
-                {/* ANIMATED COUNTERS — owner-editable (home_stats). The visible
-                    stat-number is the SSR/no-JS value; animateCounter (above)
-                    reads data-count/data-suffix and animates on scroll. */}
-                <EditorAffordance
-                    label="Редагувати статистику"
-                    message={{ type: "OPEN_SETTINGS_SECTION", section: "stats" }}
-                >
-                    <section className="stats-section">
-                        <div className="container">
-                            <div className="stats-grid">
-                                {homeStats.items.map((stat, i) => (
-                                    <div
-                                        className="stat-item"
-                                        key={i}
-                                        data-count={stat.count}
-                                        data-suffix={stat.suffix}
-                                    >
-                                        <span className="stat-number">
-                                            {formatStatDisplay(stat.count, stat.suffix)}
-                                        </span>
-                                        <span className="stat-label">{t(stat.label)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-                </EditorAffordance>
-
                 {/* Instagram Premium Section (Merged visually into the About section logic) */}
                 <div className="ig-hyper" id="instagram">
-                    {/* Photo wall removed: was rendering 36 hidden <div> elements
-                        with backgroundImage URLs (postsToRender × 6 × 2 sides).
-                        Globally display:none in home.css since redesign — pure DOM
-                        bloat. Removing saves ~3 KB HTML + skips inline-style parsing. */}
+                    {/* Cinematic atmosphere — does NOT touch the phone or floating
+                        logos: a teal projector beam behind the content (z below text,
+                        above the watermark) + a film-grain overlay added near the end. */}
+                    <div className="ig-hyper__beam" aria-hidden="true" />
 
                     {/* The center content container */}
                     <div className="ig-hyper__content container">
                         <div className="ig-hyper__header">
-                            <p className="ig-hyper__overline">{t("Наш Instagram")}</p>
+                            <p className="ig-hyper__kicker ig-hyper__reveal">
+                                <span className="ig-hyper__rec" aria-hidden="true" />
+                                {t("Прямий ефір")} · @mindbody_sportwear
+                            </p>
+                            <span className="ig-hyper__bar" aria-hidden="true" />
                             <h2 className="ig-hyper__title">
-                                <span className="ig-hyper__title-world">{t("Світ")}</span>
-                                <em>Mind Body</em>
+                                <span className="ig-line">
+                                    <span className="l">{t("Дивись, як ми")}</span>
+                                </span>
+                                <span className="ig-line">
+                                    <span className="l">{t("рухаємось")}</span>
+                                </span>
                             </h2>
-                            <p className="ig-hyper__subtitle">
+                            <span className="ig-hyper__bar" aria-hidden="true" />
+                            <p className="ig-hyper__subtitle ig-hyper__reveal">
                                 {t(
-                                    "Більше, ніж просто одяг — це естетика, мотивація та щоденне натхнення.",
+                                    "Тут немає постановки. Кожен кадр — сьогодні. Кожен рух — справжній. Сила в прямому ефірі.",
                                 )}
-                                <br />
-                                {t("Будь в курсі нових колекцій першою.")}
                             </p>
                         </div>
 
@@ -2053,25 +2004,31 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <a
-                            href="https://www.instagram.com/mindbody_sportwear/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ig-hyper__cta"
-                        >
-                            <svg
-                                className="ig-hyper__cta-icon"
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                aria-hidden="true"
+                        <div className="ig-hyper__cta-wrap ig-hyper__reveal">
+                            <a
+                                href="https://www.instagram.com/mindbody_sportwear/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ig-hyper__cta"
                             >
-                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-                            </svg>
-                            {t("Відкрити Instagram")}
-                        </a>
+                                <svg
+                                    className="ig-hyper__cta-icon"
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+                                </svg>
+                                {t("Дивитись наживо")}
+                            </a>
+                            <span className="ig-hyper__audience">
+                                {igFollowers} {t("у залі")} · {t("сеанс триває")}
+                            </span>
+                        </div>
                     </div>
+                    <div className="ig-hyper__grain" aria-hidden="true" />
                 </div>
             </section>
         </main>
