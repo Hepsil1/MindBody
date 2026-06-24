@@ -41,6 +41,7 @@
     "lucide-react": "^1.16.0",
     "pino": "10.3.1",
     "plaiceholder": "^3.0.0",
+    "playwright": "1.60.0",
     "prisma": "^5.22.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

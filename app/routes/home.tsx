@@ -1,6 +1,6 @@
 import type { Route } from "./+types/home";
 import { useLoaderData } from "react-router";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Fragment } from "react";
 import HeroSlider, { type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
 import { EditorAffordance } from "../components/EditorAffordance";
@@ -23,6 +23,14 @@ interface InstagramPost {
     id: string;
     mediaUrl: string;
     permalink: string;
+    isVideo?: boolean;
+}
+
+// One story-highlight bubble (real cover + title).
+interface InstagramHighlight {
+    id: string;
+    title: string;
+    cover: string;
 }
 
 interface InstagramData {
@@ -35,6 +43,11 @@ interface InstagramData {
     postsCountDisplay?: string;
     followersCountDisplay?: string;
     followingCountDisplay?: string;
+    // Rich profile data scraped live (real bio, links, highlights).
+    fullName?: string;
+    biography?: string;
+    externalUrl?: string;
+    highlights?: InstagramHighlight[];
 }
 
 // Format a raw follower count the way Instagram shows it (e.g. 63874 → "63,9 тис.").
@@ -46,6 +59,31 @@ function formatFollowers(n: number, locale: "uk" | "en" | "ru"): string {
     );
     if (locale === "en") return `${v}K`;
     return locale === "ru" ? `${v} тыс.` : `${v} тис.`;
+}
+
+// Render a raw IG bio: keep line breaks, turn @mentions into links to the real
+// profiles. (Bio URLs are surfaced separately as the clickable external link.)
+function renderBioLines(bio: string) {
+    return bio.split("\n").map((line, li) => (
+        <Fragment key={li}>
+            {li > 0 && <br />}
+            {line.split(/(@[A-Za-z0-9._]+)/g).map((part, pi) =>
+                part.startsWith("@") && part.length > 1 ? (
+                    <a
+                        key={pi}
+                        href={`https://www.instagram.com/${part.slice(1)}/`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ig-ui-mention"
+                    >
+                        {part}
+                    </a>
+                ) : (
+                    <Fragment key={pi}>{part}</Fragment>
+                ),
+            )}
+        </Fragment>
+    ));
 }
 
 // Home category card — covers DB rows and the hard-coded fallback alike.
@@ -417,6 +455,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                   postsCountDisplay: ig.postsCount.toLocaleString("uk-UA"),
                   followersCountDisplay: formatFollowers(ig.followersCount, locale),
                   followingCountDisplay: ig.followingCount.toLocaleString("uk-UA"),
+                  fullName: ig.fullName,
+                  biography: ig.biography,
+                  externalUrl: ig.externalUrl,
+                  highlights: ig.highlights,
                   posts: ig.posts,
               }
             : {
@@ -479,7 +521,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     }
 }
 
-const FALLBACK_INSTAGRAM_POSTS = [
+const FALLBACK_INSTAGRAM_POSTS: InstagramPost[] = [
     {
         id: "1",
         mediaUrl: "/generalpics/333_131123.webp",
@@ -594,6 +636,30 @@ export default function Home() {
     const igPostsCount = instagramData?.postsCountDisplay ?? "2168";
     const igFollowers = instagramData?.followersCountDisplay ?? t("63,9 тис.");
     const igFollowing = instagramData?.followingCountDisplay ?? "1257";
+    // Rich live data (real bio, links, highlights). Falls back to the curated copy.
+    const igHighlights = instagramData?.highlights ?? [];
+    const igBio = instagramData?.biography || "";
+    const igExternalUrl = instagramData?.externalUrl || "https://t.me/mindbody_sportwear";
+    const igExternalLabel = igExternalUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const igFullName = instagramData?.fullName || "MIND BODY sport wear";
+    const hlToRender = igHighlights.length
+        ? igHighlights
+        : ["SALE", "SALE FLUID", "SALE SET", "ВІДГУКИ 11"].map((title, i) => ({
+              id: `fb-${i}`,
+              title,
+              cover: postsToRender[i % postsToRender.length]?.mediaUrl || "/logo-sun.png",
+          }));
+
+    // Make the in-phone feed scroll discoverable: hide the "swipe" hint once the
+    // user has scrolled even a little.
+    const igScrollRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const el = igScrollRef.current;
+        if (!el) return;
+        const onScroll = () => el.setAttribute("data-scrolled", el.scrollTop > 24 ? "1" : "0");
+        el.addEventListener("scroll", onScroll, { passive: true });
+        return () => el.removeEventListener("scroll", onScroll);
+    }, []);
 
     const [currentPlaylistIdx, setCurrentPlaylistIdx] = useState(0);
     // Ref mirror for the section IntersectionObserver (mounted once) — it
@@ -1614,8 +1680,15 @@ export default function Home() {
                                                 </div>
                                             </div>
 
-                                            {/* Scrollable Content */}
-                                            <div className="ig-ui-content">
+                                            {/* Scrollable Content — data-lenis-prevent so the
+                                                page's Lenis smooth-scroll lets the NATIVE scroll
+                                                inside the phone work (wheel + touch). Without it
+                                                Lenis eats the gesture and scrolls the page. */}
+                                            <div
+                                                className="ig-ui-content"
+                                                data-lenis-prevent
+                                                ref={igScrollRef}
+                                            >
                                                 {/* Header: Avatar & Stats */}
                                                 <div className="ig-ui-header">
                                                     <div className="ig-ui-avatar-wrap">
@@ -1655,36 +1728,36 @@ export default function Home() {
 
                                                 {/* Bio Section */}
                                                 <div className="ig-ui-bio">
-                                                    <div className="ig-ui-name">
-                                                        MIND BODY sport wear{" "}
-                                                        <span style={{ fontWeight: 400 }}>
-                                                            {t("одяг для йоги та фітнесу")}
-                                                        </span>
-                                                    </div>
+                                                    <div className="ig-ui-name">{igFullName}</div>
                                                     <div className="ig-ui-text">
-                                                        {t("Комбінезон твоєї мрії!✨")}
-                                                        <br />
-                                                        {t("Найбільший вибір,найкраща якість")}
-                                                        <br />
-                                                        {t("для маленьких 👸")}{" "}
-                                                        <span className="ig-ui-mention">
-                                                            @mindbody_kidswear
-                                                        </span>
-                                                        <br />
-                                                        {t("casual одяг")}{" "}
-                                                        <span className="ig-ui-mention">
-                                                            @fluid_feel_free
-                                                        </span>{" "}
-                                                        &nbsp;
-                                                        <span style={{ color: "#a8a8a8" }}>
-                                                            {t("ще")}
-                                                        </span>
-                                                        <br />
-                                                        <span style={{ fontWeight: 600 }}>
-                                                            {t("Показати переклад")}
-                                                        </span>
+                                                        {igBio ? (
+                                                            renderBioLines(igBio)
+                                                        ) : (
+                                                            <>
+                                                                {t("Комбінезон твоєї мрії!✨")}
+                                                                <br />
+                                                                {t(
+                                                                    "Найбільший вибір,найкраща якість",
+                                                                )}
+                                                                <br />
+                                                                {t("для маленьких 👸")}{" "}
+                                                                <span className="ig-ui-mention">
+                                                                    @mindbody_kidswear
+                                                                </span>
+                                                                <br />
+                                                                {t("casual одяг")}{" "}
+                                                                <span className="ig-ui-mention">
+                                                                    @fluid_feel_free
+                                                                </span>
+                                                            </>
+                                                        )}
                                                     </div>
-                                                    <a href={lp("/")} className="ig-ui-link">
+                                                    <a
+                                                        href={igExternalUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="ig-ui-link"
+                                                    >
                                                         <svg
                                                             width="14"
                                                             height="14"
@@ -1700,7 +1773,7 @@ export default function Home() {
                                                             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                                                             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                                                         </svg>
-                                                        t.me/mindbody_sportwear
+                                                        {igExternalLabel}
                                                     </a>
                                                 </div>
 
@@ -1742,46 +1815,36 @@ export default function Home() {
 
                                                 {/* Highlights */}
                                                 <div className="ig-ui-highlights">
-                                                    {[
-                                                        "SALE",
-                                                        "SALE FLUID",
-                                                        "SALE SET",
-                                                        "ВІДГУКИ 11",
-                                                    ].map((name, idx) => {
-                                                        const hlImg =
-                                                            postsToRender[
-                                                                idx % postsToRender.length
-                                                            ]?.mediaUrl;
-                                                        return (
-                                                            <div
-                                                                key={idx}
-                                                                className="ig-ui-highlight"
-                                                            >
-                                                                <div className="ig-ui-hl-ring">
-                                                                    <div className="ig-ui-hl-img">
-                                                                        {hlImg && (
-                                                                            <picture>
-                                                                                <source
-                                                                                    srcSet={buildWebpSrcset(
-                                                                                        hlImg,
-                                                                                    )}
-                                                                                    sizes="64px"
-                                                                                    type="image/webp"
-                                                                                />
-                                                                                <img
-                                                                                    src={hlImg}
-                                                                                    alt=""
-                                                                                    loading="lazy"
-                                                                                    decoding="async"
-                                                                                />
-                                                                            </picture>
-                                                                        )}
-                                                                    </div>
+                                                    {hlToRender.map((hl) => (
+                                                        <a
+                                                            key={hl.id}
+                                                            href={`https://www.instagram.com/${igUsername}/`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="ig-ui-highlight"
+                                                        >
+                                                            <div className="ig-ui-hl-ring">
+                                                                <div className="ig-ui-hl-img">
+                                                                    <picture>
+                                                                        <source
+                                                                            srcSet={buildWebpSrcset(
+                                                                                hl.cover,
+                                                                            )}
+                                                                            sizes="64px"
+                                                                            type="image/webp"
+                                                                        />
+                                                                        <img
+                                                                            src={hl.cover}
+                                                                            alt={hl.title}
+                                                                            loading="lazy"
+                                                                            decoding="async"
+                                                                        />
+                                                                    </picture>
                                                                 </div>
-                                                                <span>{t(name)}</span>
                                                             </div>
-                                                        );
-                                                    })}
+                                                            <span>{hl.title}</span>
+                                                        </a>
+                                                    ))}
                                                 </div>
 
                                                 {/* Tabs */}
@@ -1843,43 +1906,75 @@ export default function Home() {
 
                                                 {/* 3-Column Grid Feed */}
                                                 <div className="ig-ui-feed">
-                                                    {Array.from({ length: 9 }).map((_, i) => {
-                                                        const post =
-                                                            postsToRender[i % postsToRender.length];
-                                                        return (
-                                                            <a
-                                                                key={`ig-${i}`}
-                                                                href={post.permalink}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="ig-ui-feed-post"
-                                                            >
-                                                                {/* Atom T (cont.): IG-mock grid was the
-                                                                    biggest remaining master-fetch on
-                                                                    home (slots are ~120px wide on
-                                                                    mobile but loaded 2000w masters).
-                                                                    Picture/source/srcset = -400w
-                                                                    variant picked → ~30KB instead
-                                                                    of 150KB per tile. */}
-                                                                <picture>
-                                                                    <source
-                                                                        srcSet={buildWebpSrcset(
-                                                                            post.mediaUrl,
-                                                                        )}
-                                                                        sizes="(max-width: 768px) 33vw, 120px"
-                                                                        type="image/webp"
-                                                                    />
-                                                                    <img
-                                                                        src={post.mediaUrl}
-                                                                        alt={`Post ${i + 1}`}
-                                                                        loading="lazy"
-                                                                        decoding="async"
-                                                                    />
-                                                                </picture>
-                                                            </a>
-                                                        );
-                                                    })}
+                                                    {postsToRender.map((post, i) => (
+                                                        <a
+                                                            key={post.id}
+                                                            href={post.permalink}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="ig-ui-feed-post"
+                                                            aria-label={t("Допис в Instagram")}
+                                                        >
+                                                            {/* -400w variant served for the ~110px
+                                                                slots (sizes below), not the master.
+                                                                First row eager so the top paints
+                                                                instantly; alt="" → no "Post N" text
+                                                                flashes while a lazy tile loads. */}
+                                                            <picture>
+                                                                <source
+                                                                    srcSet={buildWebpSrcset(
+                                                                        post.mediaUrl,
+                                                                    )}
+                                                                    sizes="(max-width: 768px) 33vw, 120px"
+                                                                    type="image/webp"
+                                                                />
+                                                                <img
+                                                                    src={post.mediaUrl}
+                                                                    alt=""
+                                                                    loading={
+                                                                        i < 9 ? "eager" : "lazy"
+                                                                    }
+                                                                    decoding="async"
+                                                                />
+                                                            </picture>
+                                                            {post.isVideo && (
+                                                                <span
+                                                                    className="ig-ui-reel-badge"
+                                                                    aria-hidden="true"
+                                                                >
+                                                                    <svg
+                                                                        width="15"
+                                                                        height="15"
+                                                                        viewBox="0 0 24 24"
+                                                                        fill="#fff"
+                                                                    >
+                                                                        <path d="M8 5v14l11-7z" />
+                                                                    </svg>
+                                                                </span>
+                                                            )}
+                                                        </a>
+                                                    ))}
                                                 </div>
+                                            </div>
+
+                                            {/* Swipe-to-scroll affordance — fades once the
+                                                feed above is scrolled (data-scrolled toggled
+                                                by igScrollRef). */}
+                                            <div className="ig-ui-scroll-hint" aria-hidden="true">
+                                                <span>{t("Гортайте")}</span>
+                                                <svg
+                                                    width="15"
+                                                    height="15"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2.5"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <path d="M6 13l6 6 6-6" />
+                                                    <path d="M6 6l6 6 6-6" />
+                                                </svg>
                                             </div>
 
                                             {/* Bottom Navbar */}

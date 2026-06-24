@@ -11,20 +11,32 @@ import path from "path";
 export const IG_DIR = path.resolve("public/instagram");
 export const CACHE_FILE = path.join(IG_DIR, "ig-cache.json");
 
+// A story-highlight bubble (real cover + title, scraped from the profile DOM).
+export interface IgHighlight {
+    id: string; // slug derived from the title (stable filename key)
+    title: string; // e.g. "SALE FLUID"
+    cover: string; // "/instagram/hl_<slug>.webp" (LOCAL)
+}
+
 // On-disk shape: RAW numbers + LOCAL image urls. Locale-agnostic — the loader
 // formats the display strings per request.
 export interface IgCache {
     ok: boolean;
     fetchedAt: string; // ISO
     username: string;
+    fullName: string;
+    biography: string; // raw bio text (newlines, @mentions kept — loader linkifies)
+    externalUrl: string; // bio link, e.g. "http://t.me/mindbody_sportwear"
     profilePictureUrl: string; // "/instagram/avatar.webp"
     postsCount: number; // edge_owner_to_timeline_media.count
     followersCount: number; // edge_followed_by.count
     followingCount: number; // edge_follow.count
+    highlights: IgHighlight[];
     posts: {
         id: string; // shortcode
         mediaUrl: string; // "/instagram/<shortcode>.webp" (LOCAL master)
-        permalink: string; // https://www.instagram.com/p/<shortcode>/
+        permalink: string; // https://www.instagram.com/p/<shortcode>/ (or /reel/)
+        isVideo: boolean; // reel/video → show the play badge
     }[];
 }
 

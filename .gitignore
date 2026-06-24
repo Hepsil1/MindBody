@@ -7,6 +7,9 @@
 *.bak
 *.bak.*
 /node_modules/
+# Playwright browser binaries — pinned here via PLAYWRIGHT_BROWSERS_PATH so the
+# UWP-virtualized PM2 daemon can find them; ~600MB, reinstall via playwright.
+/.pw-browsers/
 
 # React Router
 /.react-router/
