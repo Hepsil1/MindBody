@@ -36,6 +36,7 @@ const UA =
 const SHORTCODE_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const MIN_INTERVAL_MS = 5 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
+const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // auto-refresh cadence (safe for the server IP)
 const NAV_TIMEOUT_MS = 45_000;
 const CAPTURE_WAIT_MS = 10_000;
 const IMG_TIMEOUT_MS = 20_000;
@@ -573,7 +574,7 @@ async function pruneOldImages(keep: Set<string>): Promise<void> {
 let running = false;
 let lastRunAt = 0;
 let backoffN = 0;
-let nextNormalDelayMs = HOUR_MS;
+let nextNormalDelayMs = REFRESH_INTERVAL_MS;
 function backoffMs(): number {
     return Math.min(HOUR_MS, Math.pow(2, backoffN) * 5 * 60 * 1000);
 }
@@ -705,7 +706,7 @@ export async function runRefresh(): Promise<RefreshResult> {
         await pruneOldImages(keep);
 
         backoffN = 0;
-        nextNormalDelayMs = HOUR_MS;
+        nextNormalDelayMs = REFRESH_INTERVAL_MS;
         logger.info(
             {
                 followers: m.followersCount,
