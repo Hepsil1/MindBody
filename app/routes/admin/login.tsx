@@ -11,12 +11,47 @@ import type { ActionFunctionArgs } from "react-router";
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
+// Global, IP-AGNOSTIC cap. The per-IP bucket above keys on the spoofable
+// X-Forwarded-For, so an attacker rotating XFF per request gets a fresh 5-try
+// bucket each time. This counter locks ALL logins once total failures cross the
+// threshold inside the window — rotation can't evade it. Plus a hard Map cap so
+// the per-IP map can't grow unbounded from rotated/forged IPs.
+const GLOBAL_MAX_FAILS = 30;
+const GLOBAL_WINDOW_MS = 5 * 60 * 1000;
+const MAX_MAP_SIZE = 5000;
+let globalFails = 0;
+let globalWindowStart = 0;
+let globalLockUntil = 0;
+
+function noteGlobalFail() {
+    const now = Date.now();
+    if (now - globalWindowStart > GLOBAL_WINDOW_MS) {
+        globalWindowStart = now;
+        globalFails = 0;
+    }
+    globalFails++;
+    if (globalFails >= GLOBAL_MAX_FAILS) globalLockUntil = now + GLOBAL_WINDOW_MS;
+}
+function sweepAttempts() {
+    if (loginAttempts.size < MAX_MAP_SIZE) return;
+    const now = Date.now();
+    for (const [k, v] of loginAttempts) {
+        if (now - v.lastAttempt > LOCKOUT_MS) loginAttempts.delete(k);
+    }
+}
 
 export async function action({ request }: ActionFunctionArgs) {
     const ip =
         request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
         request.headers.get("x-real-ip") ||
         "unknown";
+
+    // Global lock (IP-agnostic) — catches the XFF-rotation bypass of the per-IP
+    // bucket below. Defense-in-depth on the single shared admin credential.
+    if (Date.now() < globalLockUntil) {
+        return { error: "Забагато спроб. Спробуйте пізніше." };
+    }
+    sweepAttempts();
 
     // Check brute-force lockout
     const attempts = loginAttempts.get(ip);
@@ -49,6 +84,7 @@ export async function action({ request }: ActionFunctionArgs) {
     current.count++;
     current.lastAttempt = Date.now();
     loginAttempts.set(ip, current);
+    noteGlobalFail();
 
     const remaining = MAX_ATTEMPTS - current.count;
     if (remaining <= 0) {

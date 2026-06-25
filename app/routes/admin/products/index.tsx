@@ -107,6 +107,10 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+    // Defense-in-depth: the _layout loader already redirects unauthenticated
+    // requests, but guard here too (consistency with orders/$id, customers/$id).
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     const { where, orderBy, skip, take, state } = buildListQuery<Prisma.ProductWhereInput>(
         request,
         PRODUCT_LIST,
@@ -431,7 +435,7 @@ export default function AdminProducts() {
                                             >
                                                 {isNaN(Number(product.price))
                                                     ? "—"
-                                                    : `₴${Number(product.price).toLocaleString()}`}
+                                                    : `₴${Number(product.price).toLocaleString("uk-UA")}`}
                                             </td>
                                             <td style={{ position: "relative" }}>
                                                 <button
@@ -674,7 +678,6 @@ export default function AdminProducts() {
                     </>
                 }
                 confirmLabel="Видалити"
-                busy={mutating}
                 onConfirm={() => {
                     if (confirmProduct)
                         mutate.submit(

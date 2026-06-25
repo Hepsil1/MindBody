@@ -1,10 +1,16 @@
 import { Link, useLoaderData } from "react-router";
+import type { Route } from "./+types/index";
 import { prisma } from "../../db.server";
+import { requireAdmin } from "../../utils/admin-guard.server";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, type OrderStatus } from "../../utils/statuses";
 
 const LOW_STOCK_THRESHOLD = 5;
 
-export async function loader() {
+export async function loader({ request }: Route.LoaderArgs) {
+    // Defense-in-depth: the _layout loader already redirects unauthenticated
+    // requests, but guard here too (consistency with orders/$id, customers/$id).
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -194,7 +200,7 @@ export default function AdminDashboard() {
         {
             label: `Закінчується товар (≤${LOW_STOCK_THRESHOLD})`,
             count: d.lowStock.length,
-            to: "/admin/products?lowStock=true",
+            to: "/admin/products?lowStock=1",
             tone: "#ef4444",
             icon: (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -333,7 +339,7 @@ export default function AdminDashboard() {
                 <div className="admin-card" style={{ padding: "20px 24px" }}>
                     <div className="dash-section-head">
                         <h3>Закінчується на складі</h3>
-                        <Link to="/admin/products?lowStock=true" className="dash-section-link">
+                        <Link to="/admin/products?lowStock=1" className="dash-section-link">
                             Усі →
                         </Link>
                     </div>

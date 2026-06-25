@@ -1,13 +1,18 @@
 import { LLink, useI18n } from "../i18n";
 
+// Extensionless SSR routes ship no Cache-Control unless the route opts in
+// (Caddy's @html matcher only covers / and *.html). Match / and /about.
+export function headers() {
+    return { "Cache-Control": "no-cache" };
+}
+
 const CONTENT = {
     uk: {
         breadcrumbHome: "Головна",
         title: "Доставка та оплата",
         deliveryHeading: "Доставка",
-        freeBanner: "Доставка — за тарифами перевізника",
         paidBanner:
-            "Нова Пошта зазвичай ≈70–120 ₴ залежно від ваги та маршруту. Оплата при отриманні.",
+            "За тарифами Нової Пошти: ≈70–120 ₴ залежно від ваги та маршруту, оплата при отриманні.",
         carriers: [
             {
                 name: "Нова Пошта",
@@ -43,9 +48,7 @@ const CONTENT = {
         breadcrumbHome: "Home",
         title: "Delivery & Payment",
         deliveryHeading: "Delivery",
-        freeBanner: "Delivery — at the carrier's rates",
-        paidBanner:
-            "Nova Poshta is usually ≈UAH 70–120 depending on weight and route. Paid on receipt.",
+        paidBanner: "Nova Poshta rates: ≈UAH 70–120 by weight and route, paid on receipt.",
         carriers: [
             {
                 name: "Nova Poshta",
@@ -81,9 +84,8 @@ const CONTENT = {
         breadcrumbHome: "Главная",
         title: "Доставка и оплата",
         deliveryHeading: "Доставка",
-        freeBanner: "Доставка — по тарифам перевозчика",
         paidBanner:
-            "Новая Почта обычно ≈70–120 грн в зависимости от веса и маршрута. Оплата при получении.",
+            "По тарифам Новой Почты: ≈70–120 ₴ в зависимости от веса и маршрута, оплата при получении.",
         carriers: [
             {
                 name: "Новая Почта",
@@ -165,7 +167,6 @@ export default function Delivery() {
                                 gap: "8px",
                             }}
                         >
-                            <strong style={{ fontSize: "1.1rem" }}>{c.freeBanner}</strong>
                             <span style={{ opacity: 0.92 }}>{c.paidBanner}</span>
                         </div>
 

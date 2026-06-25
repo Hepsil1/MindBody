@@ -1,9 +1,18 @@
-import { useLoaderData, useNavigate, useActionData, Form, redirect } from "react-router";
+import {
+    useLoaderData,
+    useNavigate,
+    useNavigation,
+    useActionData,
+    useSubmit,
+    Form,
+    redirect,
+} from "react-router";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../db.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
 import { useState, useEffect } from "react";
 import { actionOk, actionError as actionErr } from "../../../utils/action-result.server";
+import { ConfirmDialog } from "../../../components/admin/ConfirmDialog";
 
 interface LoaderArgs {
     request: Request;
@@ -70,25 +79,33 @@ export async function action({ request, params }: ActionArgs) {
 
     if (intent === "delete") {
         try {
-            // Atomic cascade: order items → orders → customer, wrapped in one
-            // transaction so a mid-sequence failure can't leave orphaned rows
-            // (previously three independent awaits).
-            //
-            // TODO(product): a hard delete also erases the customer's order
-            // history. Prefer anonymizing (null the PII, keep the orders) over
-            // deletion — revisit when right-to-erasure is scoped.
-            await prisma.$transaction(async (tx) => {
-                const orders = await tx.order.findMany({
-                    where: { customerId: params.id },
-                    select: { id: true },
-                });
-                const orderIds = orders.map((o) => o.id);
-                if (orderIds.length > 0) {
-                    await tx.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
-                }
-                await tx.order.deleteMany({ where: { customerId: params.id } });
-                await tx.customer.delete({ where: { id: params.id } });
+            // Never destroy order/revenue history. If the customer has ANY
+            // orders, anonymize the PII and keep every row (order, orderItem)
+            // intact — only a customer with zero orders is hard-deleted.
+            const orderCount = await prisma.order.count({
+                where: { customerId: params.id },
             });
+
+            if (orderCount > 0) {
+                // Anonymize: null/replace the PII but keep the customer row so
+                // the orders stay attributed and reportable. email/passwordHash
+                // are @unique → use an id-scoped sentinel email + null hash to
+                // avoid a P2002 collision.
+                await prisma.customer.update({
+                    where: { id: params.id },
+                    data: {
+                        firstName: "Видалений",
+                        lastName: "клієнт",
+                        email: `deleted+${params.id}@local`,
+                        phone: null,
+                        avatar: null,
+                        passwordHash: null,
+                    },
+                });
+            } else {
+                // No orders → nothing to preserve; hard-delete the record.
+                await prisma.customer.delete({ where: { id: params.id } });
+            }
 
             return redirect("/admin/customers");
         } catch (error) {
@@ -144,8 +161,16 @@ export default function CustomerDetail() {
     const { customer } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>();
     const navigate = useNavigate();
+    const navigation = useNavigation();
+    const submit = useSubmit();
     const [isEditing, setIsEditing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    const handleDelete = () => {
+        const formData = new FormData();
+        formData.append("intent", "delete");
+        submit(formData, { method: "post" });
+    };
 
     // Surface the edit action's result (e.g. a duplicate-email rejection that
     // would otherwise fail silently). sonner is imported lazily per the gotcha.
@@ -484,7 +509,7 @@ export default function CustomerDetail() {
                                                 {item.product.name} × {item.quantity}
                                             </span>
                                             <span style={{ color: "var(--text-muted)" }}>
-                                                ₴{Number(item.price).toLocaleString()}
+                                                ₴{Number(item.price).toLocaleString("uk-UA")}
                                             </span>
                                         </div>
                                     ))}
@@ -497,7 +522,7 @@ export default function CustomerDetail() {
                                             fontSize: "16px",
                                         }}
                                     >
-                                        Разом: ₴{Number(order.total).toLocaleString()}
+                                        Разом: ₴{Number(order.total).toLocaleString("uk-UA")}
                                     </span>
                                 </div>
                             </div>
@@ -506,75 +531,35 @@ export default function CustomerDetail() {
                 )}
             </div>
 
-            {/* Delete Confirmation Modal */}
-            {showDeleteConfirm && (
-                <div
-                    style={{
-                        position: "fixed",
-                        inset: 0,
-                        background: "rgba(0,0,0,0.7)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 1000,
-                    }}
-                    onClick={() => setShowDeleteConfirm(false)}
-                >
-                    <div
-                        style={{
-                            background: "#1e293b",
-                            borderRadius: "16px",
-                            padding: "32px",
-                            maxWidth: "400px",
-                            width: "90%",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h3 style={{ color: "#ef4444", marginBottom: "16px" }}>
-                            Видалити клієнта?
-                        </h3>
-                        <p style={{ color: "var(--text-muted)", marginBottom: "24px" }}>
-                            Ви впевнені, що хочете видалити клієнта{" "}
-                            <strong style={{ color: "var(--text-main)" }}>
-                                {customer.firstName} {customer.lastName}
-                            </strong>
-                            ? Це також видалить всі його замовлення. Цю дію неможливо скасувати.
-                        </p>
-                        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-                            <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                style={{
-                                    background: "rgba(255,255,255,0.1)",
-                                    border: "none",
-                                    color: "var(--text-main)",
-                                    padding: "10px 20px",
-                                    borderRadius: "8px",
-                                    cursor: "pointer",
-                                }}
-                            >
-                                Скасувати
-                            </button>
-                            <Form method="post">
-                                <input type="hidden" name="intent" value="delete" />
-                                <button
-                                    type="submit"
-                                    style={{
-                                        background: "#ef4444",
-                                        border: "none",
-                                        color: "#fff",
-                                        padding: "10px 20px",
-                                        borderRadius: "8px",
-                                        cursor: "pointer",
-                                        fontWeight: "600",
-                                    }}
-                                >
-                                    Видалити
-                                </button>
-                            </Form>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Delete Confirmation — branded, accessible ConfirmDialog (was a
+                bespoke inline modal with no focus trap / Escape / aria). Copy
+                no longer promises to wipe orders: customers with order history
+                are anonymized server-side, not destroyed. */}
+            <ConfirmDialog
+                open={showDeleteConfirm}
+                title="Видалити клієнта?"
+                body={
+                    <>
+                        Видалити клієнта{" "}
+                        <strong style={{ color: "#f8fafc" }}>
+                            {customer.firstName} {customer.lastName}
+                        </strong>
+                        ?{" "}
+                        {customer.orders.length > 0
+                            ? "У клієнта є замовлення — його дані буде знеособлено, а історія замовлень збережеться."
+                            : "Запис буде остаточно видалено. Цю дію неможливо скасувати."}
+                    </>
+                }
+                confirmLabel="Видалити"
+                cancelLabel="Скасувати"
+                tone="danger"
+                busy={navigation.state !== "idle"}
+                onConfirm={() => {
+                    setShowDeleteConfirm(false);
+                    handleDelete();
+                }}
+                onCancel={() => setShowDeleteConfirm(false)}
+            />
         </>
     );
 }

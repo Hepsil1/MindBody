@@ -261,12 +261,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                         {/* Footer */}
                         <div className="cart-drawer__footer">
-                            {/* No free-shipping threshold — delivery is always paid to the
-                                carrier on receipt, so there's no progress nudge here. */}
-                            <div className="cart-drawer__shipping-note">
-                                {t("Доставка за тарифами перевізника")}
-                            </div>
-
                             <div className="cart-drawer__total">
                                 <span>{t("Разом:")}</span>
                                 <span className="cart-drawer__total-price">{money(total)}</span>

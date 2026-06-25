@@ -3,6 +3,7 @@ import type { Route } from "./+types/index";
 import { useEffect, useRef, useState } from "react";
 import { prisma } from "../../../db.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
+import { SHOP_SLUGS } from "../../../utils/taxonomy";
 import { actionOk, actionError, runAction } from "../../../utils/action-result.server";
 import { uploadFileChecked } from "../../../utils/upload.server";
 import { invalidateCache } from "../../../utils/cache.server";
@@ -31,7 +32,27 @@ interface CategoryRow {
     order: number;
 }
 
-export async function loader() {
+// Whitelist for the category `link` field: home.tsx renders it directly as the
+// card href, so a typo like "/shp/yoga" would ship a dead card. Accept absolute
+// http(s) URLs, or internal paths whose first segment is a real shop slug or one
+// of the known top-level pages. Mirrors the routes that actually exist.
+function isValidCategoryLink(link: string): boolean {
+    if (/^https?:\/\//i.test(link)) return true;
+    if (!link.startsWith("/")) return false;
+    const seg = link.split(/[/?#]/).filter(Boolean)[0] ?? "";
+    if (seg === "") return true; // "/" homepage
+    if (seg === "about" || seg === "contacts") return true;
+    if (seg === "shop") {
+        const sub = link.split(/[/?#]/).filter(Boolean)[1] ?? "";
+        // "/shop" root, or "/shop/<real-slug>"
+        return sub === "" || SHOP_SLUGS.includes(sub);
+    }
+    return false;
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     const categories = await prisma.category.findMany({
         orderBy: [{ order: "asc" }, { createdAt: "asc" }],
         select: {
@@ -96,6 +117,7 @@ export async function action({ request }: Route.ActionArgs) {
         const title = ((formData.get("title") as string) || "").trim();
         const link = ((formData.get("link") as string) || "").trim();
         if (!title || !link) return actionError("Заповніть назву та посилання");
+        if (!isValidCategoryLink(link)) return actionError("Невалідне посилання категорії");
         const subtitle = ((formData.get("subtitle") as string) || "").trim() || null;
         const buttonText =
             ((formData.get("buttonText") as string) || "").trim() || "Переглянути все";

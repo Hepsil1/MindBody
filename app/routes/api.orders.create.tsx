@@ -46,6 +46,7 @@ export async function action({ request }: ActionFunctionArgs) {
             total,
             paymentMethod,
             deliveryMethod,
+            comment,
             promoCode,
             idempotencyKey,
             locale,
@@ -63,7 +64,7 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         if (!result.ok) {
-            return json({ success: false, error: result.error }, result.status);
+            return json({ success: false, error: result.error, code: result.code }, result.status);
         }
 
         // A repeated idempotencyKey returns the existing order: no second order,
@@ -73,26 +74,39 @@ export async function action({ request }: ActionFunctionArgs) {
                 { orderNumber: result.orderNumber },
                 "[orders] idempotent retry — returning existing order",
             );
-            return json({ success: true, orderId: result.orderNumber, deduped: true });
+            return json({
+                success: true,
+                orderId: result.orderNumber,
+                finalTotal: result.finalTotal,
+                deduped: true,
+            });
         }
 
         const email = result.email!;
         const orderNumberInt = result.orderNumber;
 
-        // Remember the storefront language on the order (raw SQL — the column
-        // is outside the generated client until a clean prisma generate).
-        // Best-effort: a pre-migration DB must not fail the placed order.
-        if (locale !== "uk") {
-            try {
-                await prisma.$executeRaw`
-                    UPDATE "Order" SET "locale" = ${locale} WHERE "id" = ${result.orderId}
-                `;
-            } catch (e) {
-                logger.error(
-                    { err: e, orderNumber: orderNumberInt },
-                    "[orders] locale save failed",
-                );
-            }
+        // Persist fulfillment fields (shipping destination + delivery/payment
+        // method + customer comment) AND the storefront locale onto the order.
+        // Raw SQL — these columns live outside the generated Prisma client until
+        // a clean `prisma generate` (same pattern as locale/colorImages). The
+        // admin order page reads them back the same way so the operator can ship
+        // the order. Best-effort: a pre-migration DB must not fail a placed order.
+        try {
+            await prisma.$executeRaw`
+                UPDATE "Order" SET
+                    "shippingCity" = ${customer.city},
+                    "shippingWarehouse" = ${customer.warehouse},
+                    "deliveryMethod" = ${deliveryMethod},
+                    "paymentMethod" = ${paymentMethod},
+                    "comment" = ${comment || null},
+                    "locale" = ${locale}
+                WHERE "id" = ${result.orderId}
+            `;
+        } catch (e) {
+            logger.error(
+                { err: e, orderNumber: orderNumberInt },
+                "[orders] fulfillment/locale save failed",
+            );
         }
 
         // Telegram notification (admin) — fire-and-forget. The shared sender has a
@@ -188,7 +202,7 @@ export async function action({ request }: ActionFunctionArgs) {
                 });
         }
 
-        return json({ success: true, orderId: orderNumberInt });
+        return json({ success: true, orderId: orderNumberInt, finalTotal: email.finalTotal });
     } catch (error) {
         // Log the real error server-side; return a generic message so internal
         // detail (DB constraint text, third-party errors) never reaches the client.

@@ -68,6 +68,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
                 comparePrice: true,
                 category: true,
                 images: true,
+                colors: true,
+                colorImages: true,
                 shopPageSlug: true,
                 inventory: true,
                 status: true,
@@ -98,6 +100,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
             } catch {
                 // Malformed inventory JSON — treat as no stock info, fall back to status check.
             }
+            let cols: string[] = [];
+            try {
+                cols = JSON.parse(p.colors || "[]");
+            } catch {
+                // Malformed colors JSON — no swatches.
+            }
+            let colorImages: Record<string, string[]> = {};
+            try {
+                colorImages = JSON.parse(p.colorImages || "{}");
+            } catch {
+                // Malformed colorImages JSON — swatches won't preview.
+            }
             const invValues = Object.values(inv);
             const inStock =
                 p.status === "active" &&
@@ -115,6 +129,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
                 price: isSale ? comparePrice : price,
                 image: imgs[0] || "/brand-sun.png",
                 image2: imgs[1] || null,
+                colors: cols,
+                colorImages,
                 is_new: NOW - createdAt < NEW_THRESHOLD,
                 is_sale: isSale,
                 sale_price: isSale ? price : undefined,

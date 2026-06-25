@@ -80,7 +80,7 @@ export type CreateOrderResult =
           /** Present only when a NEW order was created (drives email/telegram + emailStatus). */
           email?: OrderEmailPayload;
       }
-    | { ok: false; status: number; error: string };
+    | { ok: false; status: number; error: string; code?: string };
 
 function genOrderNumber(): number {
     // YYDDD + 4 random digits. Caps at 99366*10000+9999 — fits INT4 cleanly.
@@ -184,10 +184,13 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     }
 
     // 3. Anti-fraud: server total must match client total within tolerance.
+    // PRICE_MISMATCH lets the client distinguish "your cart prices went stale"
+    // (recoverable by re-reconciling) from a generic failure.
     if (Math.abs(finalTotal - Number(total)) > 5) {
         return {
             ok: false,
             status: 400,
+            code: "PRICE_MISMATCH",
             error: `Помилка сум замовлення. Сервер: ${finalTotal}, Клієнт: ${total}`,
         };
     }

@@ -30,6 +30,13 @@ export function meta({ location }: { location: { pathname: string } }) {
     ];
 }
 
+// Extensionless SSR routes ship no Cache-Control unless the route opts in
+// (Caddy's @html matcher only covers / and *.html). A checkout shell must
+// never be cached.
+export function headers() {
+    return { "Cache-Control": "no-cache" };
+}
+
 // Telegram messages are sent via server-side API route (token is NOT in client code)
 
 type CheckoutStep = "cart" | "info" | "success";
@@ -138,7 +145,39 @@ export default function Checkout() {
 
         updateItems();
         const unsub = StorageUtils.subscribeToCart(updateItems);
+
+        // Reconcile cart prices against the live DB on entry. The cart stores
+        // the price captured at add-to-cart time; if an admin edited the price
+        // or started a sale since, the stale total would fail the server's
+        // price cross-check at order time with an opaque error. Refresh now so
+        // the customer sees the correct total and checkout succeeds. The
+        // subscribeToCart callback above re-renders when reconcilePrices fires
+        // its cart-updated event.
+        const cart = StorageUtils.getCart();
+        if (cart.length > 0) {
+            const ids = Array.from(new Set(cart.map((i) => String(i.id)))).join(",");
+            fetch(`/api/cart/prices?ids=${encodeURIComponent(ids)}`)
+                .then((r) => (r.ok ? r.json() : null))
+                .then((priceMap: Record<string, number> | null) => {
+                    if (!priceMap) return;
+                    const { updated, removed } = StorageUtils.reconcilePrices(priceMap);
+                    if (removed > 0) {
+                        showToast(
+                            t("Деякі товари більше недоступні — їх прибрано з кошика."),
+                            "warning",
+                        );
+                    } else if (updated > 0) {
+                        showToast(t("Ціни в кошику оновлено до актуальних."), "info");
+                    }
+                })
+                .catch(() => {
+                    /* transient/offline — the server still cross-checks at order time */
+                });
+        }
+
         return () => unsub();
+        // showToast/t are stable for the component lifetime; run once on mount.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const updateQuantity = (id: string | number, delta: number, size?: string, color?: string) => {
@@ -167,12 +206,32 @@ export default function Checkout() {
     const [promoError, setPromoError] = useState("");
     const [promoLoading, setPromoLoading] = useState(false);
 
-    const promoDiscount = promoApplied
-        ? promoApplied.discountType === "percent"
-            ? Math.round((subtotal * promoApplied.discountValue) / 100)
-            : Math.min(promoApplied.discountValue, subtotal)
-        : 0;
+    // A promo is only valid while the cart still meets its minOrder. If the
+    // buyer removes items and the subtotal drops below the threshold, the
+    // discount must stop applying immediately — otherwise the UI shows a
+    // discount the server will reject at submit.
+    const promoValid =
+        !!promoApplied && (!promoApplied.minOrder || subtotal >= promoApplied.minOrder);
+    const promoDiscount =
+        promoValid && promoApplied
+            ? promoApplied.discountType === "percent"
+                ? Math.round((subtotal * promoApplied.discountValue) / 100)
+                : Math.min(promoApplied.discountValue, subtotal)
+            : 0;
     const total = subtotal - promoDiscount;
+
+    // Auto-clear a now-invalid promo when the cart shrinks below its minOrder,
+    // so an invalid code is never carried into the order submission.
+    useEffect(() => {
+        if (promoApplied && promoApplied.minOrder && subtotal < promoApplied.minOrder) {
+            setPromoApplied(null);
+            setPromoCode("");
+            setPromoError("");
+            showToast(t("Промокод скасовано: сума замовлення нижча за мінімальну."), "warning");
+        }
+        // showToast/t are stable for the component lifetime.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [subtotal, promoApplied]);
 
     // F-002 — funnel-step #3. Fire begin_checkout exactly once when the
     // visitor advances from "cart" to "info" (regardless of route: the
@@ -342,7 +401,9 @@ export default function Checkout() {
                 // what the customer sees on the confirmation screen.
                 trackPurchase({
                     orderId: String(result.orderId),
-                    total,
+                    // Prefer the server-authoritative total (the server recomputes
+                    // from live DB prices) so GA4 revenue matches the real order.
+                    total: typeof result.finalTotal === "number" ? result.finalTotal : total,
                     items: items.map((it) => ({
                         id: String(it.id),
                         name: it.name,
@@ -358,6 +419,28 @@ export default function Checkout() {
                 setPromoCode("");
                 setPromoError("");
                 setStep("success");
+            } else if (result.code === "PRICE_MISMATCH") {
+                // Cart prices drifted from the DB between page-load and submit
+                // (an admin price edit / sale started mid-session). Re-reconcile
+                // so the displayed total becomes correct, and tell the customer
+                // exactly what happened instead of an opaque "try again".
+                const ids = Array.from(new Set(items.map((i) => String(i.id)))).join(",");
+                try {
+                    const pr = await fetch(`/api/cart/prices?ids=${encodeURIComponent(ids)}`);
+                    if (pr.ok) StorageUtils.reconcilePrices(await pr.json());
+                } catch {
+                    /* best effort — message below still tells the user to review */
+                }
+                showToast(
+                    t("Ціни оновилися. Кошик перераховано — перевірте суму та оформіть ще раз."),
+                    "warning",
+                );
+                console.error(result.error);
+            } else if (response.status === 429) {
+                // Order-create rate limit (4th order/min/IP). Tell the buyer to
+                // wait rather than showing the generic "try again" in a loop.
+                showToast(t("Забагато спроб, зачекайте хвилину."), "warning");
+                console.error(result.error);
             } else {
                 showToast(t("Помилка при створенні замовлення. Спробуйте ще раз."), "error");
                 console.error(result.error);
@@ -1119,9 +1202,8 @@ export default function Checkout() {
                                             <span>{t("Товари")}</span>
                                             <span>{money(subtotal)}</span>
                                         </div>
-                                        {/* Shipping is always paid to the carrier on receipt
-                                            (Nova Poshta tariff) — there is no free-shipping
-                                            threshold, so the total never includes it. */}
+                                        {/* Delivery is always paid at the carrier's tariff
+                                            on receipt — not added to the order total. */}
                                         <div className="order-row">
                                             <span>{t("Доставка@@totals")}</span>
                                             <span>{t("За тарифами перевізника")}</span>
@@ -1314,9 +1396,8 @@ export default function Checkout() {
                                         </span>
                                         <span>{money(subtotal)}</span>
                                     </div>
-                                    {/* Shipping is always paid to the carrier on receipt (Nova
-                                        Poshta tariff) — no free-shipping threshold, so no progress
-                                        nudge and the total never includes a shipping figure. */}
+                                    {/* Delivery is always paid at the carrier's tariff on
+                                        receipt — not added to the order total. */}
                                     <div className="summary-line">
                                         <span>{t("Доставка@@totals")}</span>
                                         <span>{t("За тарифами перевізника")}</span>

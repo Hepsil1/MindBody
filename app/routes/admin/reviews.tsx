@@ -29,6 +29,10 @@ const REVIEW_LIST: ListSpec = {
 };
 
 export async function loader({ request }: Route.LoaderArgs) {
+    // Defense-in-depth: the _layout loader already redirects unauthenticated
+    // requests, but guard here too (consistency with orders/$id, customers/$id).
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     const { where, orderBy, skip, take, state } = buildListQuery<Prisma.ReviewWhereInput>(
         request,
         REVIEW_LIST,

@@ -38,6 +38,12 @@ import SmartSunParticles from "./components/SmartSunParticles";
 import CookieBanner from "./components/CookieBanner";
 import Analytics from "./components/Analytics";
 
+// GA4 Measurement / Google tag ID — inlined at build by Vite. Rendered as a
+// STATIC tag in <head> (below) so Google's tag detector and crawler find it in
+// the served HTML (a JS-injected tag is invisible to them → "тег не виявлено")
+// and so it initialises before hydration instead of depending on a useEffect.
+const GA4_ID = (import.meta.env.VITE_GA4_ID || "") as string;
+
 export const links: Route.LinksFunction = () => [
     { rel: "icon", type: "image/png", href: "/logo-sun.png" },
     // iOS home-screen icon + PWA manifest — lets the site be "added to
@@ -56,21 +62,22 @@ export const links: Route.LinksFunction = () => [
        hit by warming up DNS + TCP + TLS handshake. */
     { rel: "preconnect", href: "https://api.novaposhta.ua", crossOrigin: "anonymous" },
     { rel: "preconnect", href: "https://api.telegram.org", crossOrigin: "anonymous" },
-    /* Batch 40 atom 1: dropped Italiana, Outfit, Montserrat from the
-       Google Fonts payload.  Italiana was only declared as a CSS
-       variable (never used), Outfit only ever rendered inside
-       /admin/* (a different bundle), Montserrat had zero references.
-       The single remaining link covers Cormorant Garamond (display)
-       and DM Sans (body) — both verified used across the public site.
-       Net: ~50 KB initial-load reduction, ~60 ms FCP. */
+    /* Fonts: Cormorant Garamond (display) + DM Sans (body) are used
+       site-wide.  Italiana is the eyebrow/label face — it is referenced by
+       --font-accent in app.css (and every .ab-eyebrow), so it MUST be
+       loaded or those labels silently fall back to Georgia (this was the
+       case after Batch 40 dropped it — re-added here).  Fraunces (variable,
+       opsz+wght) is used only on /about for the Latin wordmark + monumental
+       act numerals; its woff2 is fetched only when a page actually renders
+       those glyphs, so non-/about pages pay nothing. */
     {
         rel: "preload",
         as: "style",
-        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600&family=Italiana&family=Fraunces:opsz,wght@9..144,300..600&display=swap",
     },
     {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600&family=Italiana&family=Fraunces:opsz,wght@9..144,300..600&display=swap",
     },
     { rel: "stylesheet", href: appCss },
     { rel: "stylesheet", href: cartStyles },
@@ -170,6 +177,40 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     ))}
                 {isPublicPage && (
                     <link rel="alternate" hrefLang="x-default" href={DEFAULT_SITE_URL + barePath} />
+                )}
+                {/* Google tag (gtag.js) — STATIC install so Google's tag
+                    detector/crawler see it in the served HTML and it boots
+                    before hydration. Consent Mode v2: everything defaults to
+                    DENIED (cookieless pings only, no analytics/ads cookies).
+                    A returning visitor who already accepted is upgraded to
+                    "granted" SYNCHRONOUSLY here — reading the same localStorage
+                    key the banner writes — so the FIRST page_view (sent by the
+                    config below) is cookied instead of racing the post-hydration
+                    React effect (wait_for_update:500 would otherwise lapse on
+                    slow loads).
+                    page_views: the config fires the initial one; SPA <Link>
+                    navigations are tracked by GA4 Enhanced Measurement ("page
+                    changes based on browser history events", on by default for
+                    this stream — verified firing on prod). We deliberately do
+                    NOT also emit page_views from a route effect: that would
+                    double-count every navigation against Enhanced Measurement. */}
+                {GA4_ID && (
+                    <>
+                        <script
+                            dangerouslySetInnerHTML={{
+                                __html:
+                                    `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}` +
+                                    `gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});` +
+                                    `try{var c=JSON.parse(localStorage.getItem('mb_cookies_consent_v1')||'null');if(c&&c.accepted===true){gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});}}catch(e){}` +
+                                    `gtag('js',new Date());` +
+                                    `gtag('config','${GA4_ID}',{anonymize_ip:true});`,
+                            }}
+                        />
+                        <script
+                            async
+                            src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
+                        />
+                    </>
                 )}
                 <Meta />
                 <Links />

@@ -1418,28 +1418,11 @@
         width: 100%;
         text-align: center;
     }
-    .hero-slider__nav {
-        flex-direction: column;
-        bottom: auto;
-        top: 50%;
-        left: auto;
-        right: var(--space-md);
-        transform: translateY(-50%);
-    }
-
-    .hero-slider__dot {
-        width: 3px;
-        height: 32px;
-    }
-
-    .hero-slider__dot::after {
-        width: 100%;
-        height: 0;
-    }
-
-    .hero-slider__dot.is-active::after {
-        animation: dotProgressVertical 5s linear forwards;
-    }
+    /* Slide indicators get their mobile layout in a dedicated block placed
+       AFTER the base desktop rules (search "MOBILE SLIDE INDICATORS") — those
+       base rules live further down the file, so overriding them here (equal
+       specificity, earlier in source) silently failed and left the dots
+       horizontal + mis-centred on phones. */
     .hero-slider__scroll {
         display: none;
     }
@@ -1668,6 +1651,18 @@
     height: 20px;
     background: var(--color-text-white);
     animation: scrollLine 2s ease-in-out infinite;
+}
+/* === MOBILE SLIDE INDICATORS ===
+   Hidden entirely on phones (owner preference): the dots felt out of place in
+   every position tried, so we drop them on mobile regardless of slide count.
+   This block sits AFTER the base/desktop .hero-slider__nav rules so it wins the
+   cascade (equal specificity → later source order wins) — an earlier @media
+   block silently lost to those base rules. Desktop keeps its bottom-centre
+   dots unchanged. */
+@media (max-width: 768px) {
+    .hero-slider__nav {
+        display: none;
+    }
 }
 @media (max-width: 375px) {
     .hero-slider__title {
@@ -3260,6 +3255,60 @@
     }
     .ig-ui-wrapper {
         transform: scale(0.615); /* (240 / 390) */
+    }
+}
+
+/* === MOBILE SCROLL PERFORMANCE (Instagram iPhone section) ===
+   On phones, scrolling PAST this section stuttered badly. Cause: a stack of
+   always-on, GPU-expensive effects that repaint every frame while the page
+   scrolls — a 48px `filter: blur` ambient glow (pulsing), `backdrop-filter`
+   frosted badges, a soft-light grain overlay forcing the whole section onto a
+   blend layer, big 100px-blur shadows on a *moving* (floating) phone, plus
+   drifting beam + breathing rings. Desktop has the headroom; mobile does not.
+   Here we strip the section down to the static mock + the live feed (the actual
+   content) and drop the decorative motion/blur. Placed after all base + earlier
+   mobile rules so it wins the cascade. */
+@media (max-width: 768px) {
+    /* Ambient blur glow behind the phone — the single most expensive layer. */
+    .ig-premium__phone-glow {
+        display: none;
+    }
+    /* Full-section film grain forces a soft-light blend layer that repaints on
+       every scroll frame. Not worth it on mobile. */
+    .ig-hyper__grain {
+        display: none;
+    }
+    /* Stop the phone floating so its large shadow doesn't re-blur each frame,
+       and lighten the shadow itself. */
+    .ig-premium__phone {
+        animation: none;
+        box-shadow:
+            inset 0 0 0 1.5px #444,
+            0 0 0 1.5px #cfc8bd,
+            0 0 0 3px #aca498,
+            0 18px 40px -18px rgba(0, 0, 0, 0.7);
+    }
+    /* Drop the ambient "studio glow" entirely on mobile: the teal-over-cream
+       beam + rings read as a murky grey haze around the phone (owner disliked
+       it) and they're extra gradient layers to composite while scrolling.
+       Clean cream behind the phone instead. */
+    .ig-hyper__beam,
+    .ig-hyper__centerpiece::before,
+    .ig-hyper__centerpiece::after {
+        display: none;
+    }
+    /* Drop the frosted-glass blur on the LIVE badge + scroll hint (kept visible
+       with a solid fill where they still show). */
+    .ig-hyper__float {
+        animation: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(255, 255, 255, 0.92);
+    }
+    .ig-ui-scroll-hint {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(255, 255, 255, 0.92);
     }
 }
 

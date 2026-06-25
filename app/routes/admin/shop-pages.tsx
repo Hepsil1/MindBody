@@ -1,4 +1,5 @@
 import { Form, useLoaderData, useActionData, useNavigation, useSubmit } from "react-router";
+import type { Route } from "./+types/shop-pages";
 import { useState, useEffect, useRef } from "react";
 import { prisma } from "../../db.server";
 import { requireAdmin } from "../../utils/admin-guard.server";
@@ -33,7 +34,9 @@ const CameraIcon = () => (
 );
 
 // --- Loader ---
-export async function loader() {
+export async function loader({ request }: Route.LoaderArgs) {
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     const pages = await prisma.shopPage.findMany();
     // Use fallback minimal data if DB is empty
     if (!pages || pages.length === 0) {
@@ -386,11 +389,22 @@ export default function AdminPages() {
     const isSaving = navigation.state === "submitting";
 
     // Preview Logic: mimicking shop.$category.tsx structure
-    // Parse position for inline style in preview
+    // Parse position for inline style in preview. The live storefront treats the
+    // admin defaults ("50% 50% 1" / "50% 50%" / "") as "not customized" and
+    // substitutes a face-safe "50% 22%" crop (see shop.$category.tsx) — so the
+    // preview must do the same, otherwise it shows a centered crop the visitor
+    // never actually sees.
     const parsePosForStyle = (posStr: string) => {
-        const parts = posStr.split(" ");
+        const raw = (posStr || "").trim();
+        if (raw === "50% 50% 1" || raw === "50% 50%" || raw === "") {
+            return {
+                objectPosition: "50% 22%",
+                transformOrigin: "50% 22%",
+            };
+        }
+        const parts = raw.split(" ");
         const x = parts[0] || "50%";
-        const y = parts[1] || "50%";
+        const y = parts[1] || "22%";
         const scale = parseFloat(parts[2]) || 1;
         return {
             objectPosition: `${x} ${y}`,
@@ -432,11 +446,7 @@ export default function AdminPages() {
                                 fontWeight: 600,
                             }}
                         >
-                            {page.slug === "women"
-                                ? "Жіноча"
-                                : page.slug === "kids"
-                                  ? "Діти"
-                                  : page.slug}
+                            {page.slug === "kids" ? "Діти" : page.slug}
                         </button>
                     ))}
                 </div>

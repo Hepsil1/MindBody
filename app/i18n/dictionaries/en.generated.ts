@@ -47,8 +47,6 @@ export const enGenerated: Record<string, string> = {
     "Анатомічний крій, що бездоганно підкреслює вашу фігуру.":
         "Anatomical cut that flawlessly flatters your figure.",
     Бежевий: "Beige",
-    "Безкоштовна доставка від 2 000 ₴; до 2 000 ₴ — ≈70–120 ₴ за тарифами Нової Пошти":
-        "Free shipping on orders over 2 000 ₴; below that — ≈70–120 ₴ at Nova Poshta rates",
     "Безкоштовно ✓": "Free ✓",
     "Безпечна оплата": "Secure payment",
     "Безпечне з'єднання · SSL": "Secure connection · SSL",
@@ -512,8 +510,6 @@ export const enGenerated: Record<string, string> = {
         "Ukrainian sportswear brand for women and kids.",
     "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика.":
         "Ukrainian sportswear brand for women and kids. Yoga, gymnastics, acrobatics.",
-    "Український бренд спортивного одягу для жінок та дітей. Йога, гімнастика, акробатика. Безкоштовна доставка від 2000₴.":
-        "Ukrainian sportswear brand for women and kids. Yoga, gymnastics, acrobatics. Free shipping on orders over 2000₴.",
     Укрпошта: "Ukrposhta",
     Улюблене: "Wishlist",
     "умовами використання": "terms of use",

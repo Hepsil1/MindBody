@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment, type ReactNode } from "react";
 import type { FetcherWithComponents } from "react-router";
 import type { ShopPage, FilterConfig } from "@prisma/client";
 import { parseAndMergeFilterConfig } from "../../utils/filters";
@@ -13,12 +13,32 @@ import { useModalA11y } from "./useModalA11y";
  * categories/colors/sizes/priceRanges editing UI for the global
  * filter config plus optional per-shop overrides.
  */
+/** Per-page facet counts (categories/colors/sizes -> product count), built
+    server-side by deriveAvailableFacets. Keyed by shop slug, plus a "global"
+    union bucket. Drives which filters the editor SHOWS so it mirrors the live
+    storefront (a facet with 0 products on a page is hidden there too). */
+type FacetCounts = {
+    categories: Record<string, number>;
+    colors: Record<string, number>;
+    sizes: Record<string, number>;
+};
+
 interface FilterEditorModalProps {
     isOpen: boolean;
     onClose: () => void;
     filterConfigs?: Pick<FilterConfig, "id" | "config">[];
     shopPages?: Pick<ShopPage, "slug" | "title">[];
+    availableFacets?: Record<string, FacetCounts>;
     fetcher: FetcherWithComponents<unknown>;
+}
+
+/** Ukrainian plural for "товар" (1 товар / 2-4 товари / 5+ товарів). */
+function tovarWord(n: number): string {
+    const d = n % 10;
+    const dd = n % 100;
+    if (d === 1 && dd !== 11) return "товар";
+    if (d >= 2 && d <= 4 && (dd < 12 || dd > 14)) return "товари";
+    return "товарів";
 }
 
 export function FilterEditorModal({
@@ -26,6 +46,7 @@ export function FilterEditorModal({
     onClose,
     filterConfigs = [],
     shopPages = [],
+    availableFacets = {},
     fetcher,
 }: FilterEditorModalProps) {
     const [selectedPage, setSelectedPage] = useState("global");
@@ -167,6 +188,307 @@ export function FilterEditorModal({
         newRanges[index] = { ...newRanges[index], [field]: val };
         setData((prev) => ({ ...prev, priceRanges: newRanges }));
     };
+
+    // ---- Per-page sync (display only) ----------------------------------
+    // Mirror the live storefront: a category/colour/size shows here only when
+    // it has >0 active products on the selected page — the same gate
+    // shop.$category.tsx applies (count===0 -> hidden). `data` is NEVER pruned,
+    // so Save still posts the full config (incl. hidden entries) — non-destructive.
+    // `gate` is off only when no product data loaded at all (loader error /
+    // empty store) so the editor never looks like "everything disappeared".
+    const gate = Boolean(availableFacets && availableFacets.global);
+    const avail: FacetCounts = (availableFacets && availableFacets[selectedPage]) || {
+        categories: {},
+        colors: {},
+        sizes: {},
+    };
+    // Counts replicate the storefront's dual slug-OR-label match
+    // (shop.$category.tsx: p.category === slug || p.category === label).
+    const catCount = (key: string) =>
+        (avail.categories[key] || 0) +
+        (data.categories[key] ? avail.categories[data.categories[key]] || 0 : 0);
+    const colorCount = (key: string) =>
+        (avail.colors[key] || 0) + (data.colors[key] ? avail.colors[data.colors[key]] || 0 : 0);
+    const sizeCount = (size: string) => avail.sizes[size] || 0;
+
+    const catEntries = Object.entries(data.categories);
+    const colorEntries = Object.entries(data.colors);
+    const sizeItems = (data.sizes || []).map((size, idx) => ({ size, idx }));
+    const presentCats = catEntries.filter(([k]) => !gate || catCount(k) > 0);
+    const hiddenCats = catEntries.filter(([k]) => gate && catCount(k) === 0);
+    const presentColors = colorEntries.filter(([k]) => !gate || colorCount(k) > 0);
+    const hiddenColors = colorEntries.filter(([k]) => gate && colorCount(k) === 0);
+    const presentSizes = sizeItems.filter(({ size }) => !gate || sizeCount(size) > 0);
+    const hiddenSizes = sizeItems.filter(({ size }) => gate && sizeCount(size) === 0);
+    const pageTitle = shopPages.find((p) => p.slug === selectedPage)?.title ?? selectedPage;
+    // Grammatical context for the "no products here" copy — "global" is the
+    // master vocabulary (all pages), not a single page.
+    const noProductsWhere =
+        selectedPage === "global" ? "у жодному розділі" : `на сторінці «${pageTitle}»`;
+
+    const countPill = (n: number) => (
+        <span
+            title="товарів на цій сторінці"
+            style={{
+                marginLeft: "8px",
+                fontSize: "10px",
+                color: "#5eead4",
+                background: "rgba(94,234,212,0.1)",
+                border: "1px solid rgba(94,234,212,0.25)",
+                borderRadius: "6px",
+                padding: "1px 7px",
+                whiteSpace: "nowrap",
+                fontWeight: 600,
+                textTransform: "none",
+            }}
+        >
+            {n} {tovarWord(n)}
+        </span>
+    );
+
+    const hiddenDisclosure = (count: number, cols: string, children: ReactNode) =>
+        count === 0 ? null : (
+            <details style={{ marginTop: "4px", marginBottom: "8px" }}>
+                <summary
+                    style={{
+                        cursor: "pointer",
+                        color: "#64748b",
+                        fontSize: "12px",
+                        padding: "8px 0",
+                        userSelect: "none",
+                    }}
+                >
+                    Налаштовано, але немає товарів {noProductsWhere} ({count})
+                </summary>
+                <div
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: cols,
+                        gap: "16px",
+                        marginTop: "12px",
+                    }}
+                >
+                    {children}
+                </div>
+            </details>
+        );
+
+    const emptyNote = () =>
+        gate ? (
+            <p
+                style={{
+                    color: "#64748b",
+                    fontSize: "13px",
+                    fontStyle: "italic",
+                    margin: "0 0 16px",
+                }}
+            >
+                Поки немає товарів цієї групи {noProductsWhere}.
+            </p>
+        ) : null;
+
+    const categoryCard = (key: string, label: string, muted: boolean) => (
+        <div
+            key={key}
+            style={{
+                background: "rgba(255,255,255,0.03)",
+                padding: "16px",
+                borderRadius: "16px",
+                border: "1px solid rgba(255,255,255,0.05)",
+                position: "relative",
+                opacity: muted ? 0.5 : 1,
+            }}
+        >
+            <button
+                onClick={() => removeCategory(key)}
+                style={{
+                    position: "absolute",
+                    top: "12px",
+                    right: "12px",
+                    background: "none",
+                    border: "none",
+                    color: "#ef4444",
+                    cursor: "pointer",
+                    opacity: 0.6,
+                }}
+            >
+                ✕
+            </button>
+            <div
+                style={{
+                    fontSize: "10px",
+                    color: "#475569",
+                    marginBottom: "8px",
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                }}
+            >
+                ID: {key}
+                {!ALLOWED_CATEGORY_SLUGS.has(key) && (
+                    <span
+                        style={{
+                            color: "#fbbf24",
+                            background: "rgba(251, 191, 36, 0.12)",
+                            border: "1px solid rgba(251, 191, 36, 0.3)",
+                            borderRadius: "6px",
+                            padding: "1px 6px",
+                            textTransform: "none",
+                            fontWeight: 600,
+                        }}
+                    >
+                        немає в каталозі
+                    </span>
+                )}
+                {!muted && countPill(catCount(key))}
+            </div>
+            <input
+                type="text"
+                value={label}
+                onChange={(e) => updateLabel("categories", key, e.target.value)}
+                style={{
+                    width: "100%",
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "#fff",
+                    fontSize: "14px",
+                    borderRadius: "8px",
+                    padding: "8px 12px",
+                }}
+            />
+        </div>
+    );
+
+    const colorCard = (key: string, label: string, muted: boolean) => (
+        <div
+            key={key}
+            style={{
+                background: "rgba(255,255,255,0.03)",
+                padding: "16px",
+                borderRadius: "16px",
+                border: "1px solid rgba(255,255,255,0.05)",
+                display: "flex",
+                gap: "12px",
+                alignItems: "center",
+                position: "relative",
+                opacity: muted ? 0.5 : 1,
+            }}
+        >
+            <button
+                onClick={() => removeColor(key)}
+                style={{
+                    position: "absolute",
+                    top: "12px",
+                    right: "12px",
+                    background: "none",
+                    border: "none",
+                    color: "#ef4444",
+                    cursor: "pointer",
+                    opacity: 0.6,
+                }}
+            >
+                ✕
+            </button>
+            <div
+                style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    background: key === "other" ? "linear-gradient(45deg, red, blue)" : key,
+                    border: "2px solid rgba(255,255,255,0.2)",
+                    boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                    flexShrink: 0,
+                }}
+            ></div>
+            <div style={{ flex: 1 }}>
+                <div
+                    style={{
+                        fontSize: "9px",
+                        color: "#475569",
+                        textTransform: "uppercase",
+                        marginBottom: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: "6px",
+                    }}
+                >
+                    Key: {key}
+                    {!muted && countPill(colorCount(key))}
+                </div>
+                <input
+                    type="text"
+                    value={label}
+                    onChange={(e) => updateLabel("colors", key, e.target.value)}
+                    style={{
+                        width: "100%",
+                        background: "transparent",
+                        border: "none",
+                        color: "#fff",
+                        fontSize: "14px",
+                        borderBottom: "1px solid rgba(255,255,255,0.1)",
+                        outline: "none",
+                    }}
+                />
+            </div>
+        </div>
+    );
+
+    const sizeCard = (size: string, idx: number, muted: boolean) => (
+        <div
+            key={idx}
+            style={{
+                background: "rgba(255,255,255,0.03)",
+                padding: "12px",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.05)",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                position: "relative",
+                opacity: muted ? 0.5 : 1,
+            }}
+        >
+            <input
+                type="text"
+                value={size}
+                onChange={(e) => {
+                    const newSizes = [...data.sizes];
+                    newSizes[idx] = e.target.value;
+                    setData((prev) => ({ ...prev, sizes: newSizes }));
+                }}
+                style={{
+                    flex: 1,
+                    background: "transparent",
+                    border: "none",
+                    color: "#fff",
+                    fontSize: "14px",
+                    outline: "none",
+                    textAlign: "center",
+                    minWidth: "0",
+                }}
+            />
+            <button
+                onClick={() => {
+                    const newSizes = data.sizes.filter((_, i: number) => i !== idx);
+                    setData((prev) => ({ ...prev, sizes: newSizes }));
+                }}
+                style={{
+                    background: "none",
+                    border: "none",
+                    color: "#ef4444",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    opacity: 0.5,
+                }}
+            >
+                ✕
+            </button>
+        </div>
+    );
 
     return (
         <>
@@ -319,6 +641,7 @@ export function FilterEditorModal({
                                 </h4>
                             </div>
 
+                            {presentCats.length === 0 && emptyNote()}
                             <div
                                 style={{
                                     display: "grid",
@@ -327,83 +650,17 @@ export function FilterEditorModal({
                                     marginBottom: "20px",
                                 }}
                             >
-                                {Object.entries(data.categories).map(([key, label]) => (
-                                    <div
-                                        key={key}
-                                        style={{
-                                            background: "rgba(255,255,255,0.03)",
-                                            padding: "16px",
-                                            borderRadius: "16px",
-                                            border: "1px solid rgba(255,255,255,0.05)",
-                                            position: "relative",
-                                        }}
-                                    >
-                                        <button
-                                            onClick={() => removeCategory(key)}
-                                            style={{
-                                                position: "absolute",
-                                                top: "12px",
-                                                right: "12px",
-                                                background: "none",
-                                                border: "none",
-                                                color: "#ef4444",
-                                                cursor: "pointer",
-                                                opacity: 0.6,
-                                            }}
-                                        >
-                                            ✕
-                                        </button>
-                                        <div
-                                            style={{
-                                                fontSize: "10px",
-                                                color: "#475569",
-                                                marginBottom: "8px",
-                                                textTransform: "uppercase",
-                                                fontWeight: 600,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: "8px",
-                                            }}
-                                        >
-                                            ID: {key}
-                                            {/* Surface drift: a key not in the taxonomy catalog
-                                                (e.g. legacy sets/jackets) is flagged so the
-                                                operator can prune it. */}
-                                            {!ALLOWED_CATEGORY_SLUGS.has(key) && (
-                                                <span
-                                                    style={{
-                                                        color: "#fbbf24",
-                                                        background: "rgba(251, 191, 36, 0.12)",
-                                                        border: "1px solid rgba(251, 191, 36, 0.3)",
-                                                        borderRadius: "6px",
-                                                        padding: "1px 6px",
-                                                        textTransform: "none",
-                                                        fontWeight: 600,
-                                                    }}
-                                                >
-                                                    немає в каталозі
-                                                </span>
-                                            )}
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={label}
-                                            onChange={(e) =>
-                                                updateLabel("categories", key, e.target.value)
-                                            }
-                                            style={{
-                                                width: "100%",
-                                                background: "rgba(255,255,255,0.05)",
-                                                border: "1px solid rgba(255,255,255,0.1)",
-                                                color: "#fff",
-                                                fontSize: "14px",
-                                                borderRadius: "8px",
-                                                padding: "8px 12px",
-                                            }}
-                                        />
-                                    </div>
+                                {presentCats.map(([key, label]) => (
+                                    <Fragment key={key}>{categoryCard(key, label, false)}</Fragment>
                                 ))}
                             </div>
+                            {hiddenDisclosure(
+                                hiddenCats.length,
+                                "repeat(auto-fill, minmax(260px, 1fr))",
+                                hiddenCats.map(([key, label]) => (
+                                    <Fragment key={key}>{categoryCard(key, label, true)}</Fragment>
+                                )),
+                            )}
 
                             <div
                                 style={{
@@ -495,6 +752,7 @@ export function FilterEditorModal({
                                 КОЛЬОРИ
                             </h4>
 
+                            {presentColors.length === 0 && emptyNote()}
                             <div
                                 style={{
                                     display: "grid",
@@ -503,80 +761,17 @@ export function FilterEditorModal({
                                     marginBottom: "20px",
                                 }}
                             >
-                                {Object.entries(data.colors).map(([key, label]) => (
-                                    <div
-                                        key={key}
-                                        style={{
-                                            background: "rgba(255,255,255,0.03)",
-                                            padding: "16px",
-                                            borderRadius: "16px",
-                                            border: "1px solid rgba(255,255,255,0.05)",
-                                            display: "flex",
-                                            gap: "12px",
-                                            alignItems: "center",
-                                            position: "relative",
-                                        }}
-                                    >
-                                        <button
-                                            onClick={() => removeColor(key)}
-                                            style={{
-                                                position: "absolute",
-                                                top: "12px",
-                                                right: "12px",
-                                                background: "none",
-                                                border: "none",
-                                                color: "#ef4444",
-                                                cursor: "pointer",
-                                                opacity: 0.6,
-                                            }}
-                                        >
-                                            ✕
-                                        </button>
-                                        <div
-                                            style={{
-                                                width: "32px",
-                                                height: "32px",
-                                                borderRadius: "50%",
-                                                background:
-                                                    key === "other"
-                                                        ? "linear-gradient(45deg, red, blue)"
-                                                        : key,
-                                                border: "2px solid rgba(255,255,255,0.2)",
-                                                boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
-                                                flexShrink: 0,
-                                            }}
-                                        ></div>
-                                        <div style={{ flex: 1 }}>
-                                            <div
-                                                style={{
-                                                    fontSize: "9px",
-                                                    color: "#475569",
-                                                    textTransform: "uppercase",
-                                                    marginBottom: "4px",
-                                                }}
-                                            >
-                                                Key: {key}
-                                            </div>
-                                            <input
-                                                type="text"
-                                                value={label}
-                                                onChange={(e) =>
-                                                    updateLabel("colors", key, e.target.value)
-                                                }
-                                                style={{
-                                                    width: "100%",
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    color: "#fff",
-                                                    fontSize: "14px",
-                                                    borderBottom: "1px solid rgba(255,255,255,0.1)",
-                                                    outline: "none",
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
+                                {presentColors.map(([key, label]) => (
+                                    <Fragment key={key}>{colorCard(key, label, false)}</Fragment>
                                 ))}
                             </div>
+                            {hiddenDisclosure(
+                                hiddenColors.length,
+                                "repeat(auto-fill, minmax(260px, 1fr))",
+                                hiddenColors.map(([key, label]) => (
+                                    <Fragment key={key}>{colorCard(key, label, true)}</Fragment>
+                                )),
+                            )}
 
                             <div
                                 style={{
@@ -676,7 +871,7 @@ export function FilterEditorModal({
                             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                                 {data.priceRanges.map((range, idx: number) => (
                                     <div
-                                        key={range.id}
+                                        key={range.id ?? idx}
                                         style={{
                                             background: "rgba(255,255,255,0.03)",
                                             padding: "20px",
@@ -829,6 +1024,7 @@ export function FilterEditorModal({
                                 </h4>
                             </div>
 
+                            {presentSizes.length === 0 && emptyNote()}
                             <div
                                 style={{
                                     display: "grid",
@@ -837,60 +1033,17 @@ export function FilterEditorModal({
                                     marginBottom: "20px",
                                 }}
                             >
-                                {(data.sizes || []).map((size: string, idx: number) => (
-                                    <div
-                                        key={idx}
-                                        style={{
-                                            background: "rgba(255,255,255,0.03)",
-                                            padding: "12px",
-                                            borderRadius: "12px",
-                                            border: "1px solid rgba(255,255,255,0.05)",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: "8px",
-                                            position: "relative",
-                                        }}
-                                    >
-                                        <input
-                                            type="text"
-                                            value={size}
-                                            onChange={(e) => {
-                                                const newSizes = [...data.sizes];
-                                                newSizes[idx] = e.target.value;
-                                                setData((prev) => ({ ...prev, sizes: newSizes }));
-                                            }}
-                                            style={{
-                                                flex: 1,
-                                                background: "transparent",
-                                                border: "none",
-                                                color: "#fff",
-                                                fontSize: "14px",
-                                                outline: "none",
-                                                textAlign: "center",
-                                                minWidth: "0",
-                                            }}
-                                        />
-                                        <button
-                                            onClick={() => {
-                                                const newSizes = data.sizes.filter(
-                                                    (_, i: number) => i !== idx,
-                                                );
-                                                setData((prev) => ({ ...prev, sizes: newSizes }));
-                                            }}
-                                            style={{
-                                                background: "none",
-                                                border: "none",
-                                                color: "#ef4444",
-                                                cursor: "pointer",
-                                                fontSize: "12px",
-                                                opacity: 0.5,
-                                            }}
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
+                                {presentSizes.map(({ size, idx }) => (
+                                    <Fragment key={idx}>{sizeCard(size, idx, false)}</Fragment>
                                 ))}
                             </div>
+                            {hiddenDisclosure(
+                                hiddenSizes.length,
+                                "repeat(auto-fill, minmax(130px, 1fr))",
+                                hiddenSizes.map(({ size, idx }) => (
+                                    <Fragment key={idx}>{sizeCard(size, idx, true)}</Fragment>
+                                )),
+                            )}
 
                             <div
                                 style={{

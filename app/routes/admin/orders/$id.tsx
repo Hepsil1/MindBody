@@ -14,12 +14,30 @@ import {
     isOrderStatus,
     isPaymentStatus,
     canTransition,
+    canTransitionPayment,
     allowedNext,
 } from "../../../utils/statuses";
 import { useState } from "react";
 import { ConfirmDialog } from "../../../components/admin/ConfirmDialog";
 import { actionOk, actionError as actionErr } from "../../../utils/action-result.server";
 import { useActionToast } from "../../../components/admin/useActionToast";
+
+// Delivery/payment method codes (validation.ts defaults) -> Ukrainian labels
+// for the admin order view. Fall back to the raw stored value, then a default.
+const DELIVERY_METHOD_LABELS: Record<string, string> = {
+    novaposhta: "Нова Пошта",
+    ukrposhta: "Укрпошта",
+    pickup: "Самовивіз",
+};
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+    cod: "Накладений платіж",
+    card: "Картка онлайн",
+    iban: "Переказ на IBAN",
+};
+const deliveryMethodLabel = (m?: string | null) =>
+    (m && DELIVERY_METHOD_LABELS[m]) || m || "Нова Пошта";
+const paymentMethodLabel = (m?: string | null) =>
+    (m && PAYMENT_METHOD_LABELS[m]) || m || "Накладений платіж";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
     // Defense-in-depth: this endpoint returns full customer PII, so guard it in
@@ -44,6 +62,29 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         throw new Response("Order not found", { status: 404 });
     }
 
+    // Fulfillment fields (shipping destination + delivery/payment method +
+    // comment) live outside the generated Prisma client until a clean generate
+    // (raw-SQL, locale pattern). Read them so the operator can actually ship the
+    // order. Best-effort: a pre-migration DB degrades to nulls, not a 500.
+    const shipRows = await prisma.$queryRaw<
+        Array<{
+            shippingCity: string | null;
+            shippingWarehouse: string | null;
+            deliveryMethod: string | null;
+            paymentMethod: string | null;
+            comment: string | null;
+        }>
+    >`SELECT "shippingCity", "shippingWarehouse", "deliveryMethod", "paymentMethod", "comment" FROM "Order" WHERE "id" = ${params.id} LIMIT 1`.catch(
+        () => [],
+    );
+    const fulfillment = shipRows[0] ?? {
+        shippingCity: null,
+        shippingWarehouse: null,
+        deliveryMethod: null,
+        paymentMethod: null,
+        comment: null,
+    };
+
     const historyRows = await prisma.orderStatusHistory.findMany({
         where: { orderId: params.id },
         orderBy: { createdAt: "asc" },
@@ -64,6 +105,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         // every money field to a plain number at the loader boundary.
         order: {
             ...order,
+            ...fulfillment,
             total: Number(order.total),
             items: order.items.map((item) => ({
                 ...item,
@@ -162,6 +204,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
             });
             if (!cur) return actionErr("Замовлення не знайдено");
             if (cur.paymentStatus === paymentStatus) return actionOk();
+            // Payment only moves forward (pending→paid→refunded) — blocks an
+            // illegal paid→pending→delete audit-trail bypass.
+            if (!canTransitionPayment(cur.paymentStatus, paymentStatus)) {
+                return actionErr("Недопустимий перехід статусу оплати");
+            }
             await prisma.$transaction(async (tx) => {
                 await tx.order.update({ where: { id }, data: { paymentStatus } });
                 await writeOrderHistory(
@@ -718,7 +765,9 @@ export default function AdminOrderDetails() {
                                 <span>{itemsSubtotal.toLocaleString("uk-UA")} ₴</span>
                             </div>
                             <div className="summary-row">
-                                <span style={{ color: "#94a3b8" }}>Доставка (Нова Пошта)</span>
+                                <span style={{ color: "#94a3b8" }}>
+                                    Доставка ({deliveryMethodLabel(order.deliveryMethod)})
+                                </span>
                                 <span style={{ color: "#94a3b8" }}>За тарифами перевізника</span>
                             </div>
                             <div className="summary-row total">
@@ -791,7 +840,9 @@ export default function AdminOrderDetails() {
                         </h3>
                         <div className="info-row">
                             <span className="info-label">Спосіб оплати</span>
-                            <span className="info-value">Накладений платіж</span>
+                            <span className="info-value">
+                                {paymentMethodLabel(order.paymentMethod)}
+                            </span>
                         </div>
                         <div className="info-row">
                             <span className="info-label">Статус оплати</span>
@@ -847,12 +898,28 @@ export default function AdminOrderDetails() {
                         </h3>
                         <div className="info-row">
                             <span className="info-label">Спосіб</span>
-                            <span className="info-value">Нова Пошта</span>
+                            <span className="info-value">
+                                {deliveryMethodLabel(order.deliveryMethod)}
+                            </span>
+                        </div>
+                        <div className="info-row">
+                            <span className="info-label">Місто</span>
+                            <span className="info-value">{order.shippingCity || "—"}</span>
+                        </div>
+                        <div className="info-row">
+                            <span className="info-label">Відділення</span>
+                            <span className="info-value">{order.shippingWarehouse || "—"}</span>
                         </div>
                         <div className="info-row">
                             <span className="info-label">Вартість</span>
                             <span className="info-value">За тарифами перевізника</span>
                         </div>
+                        {order.comment ? (
+                            <div className="info-row">
+                                <span className="info-label">Коментар</span>
+                                <span className="info-value">{order.comment}</span>
+                            </div>
+                        ) : null}
                     </div>
                 </div>
             </div>

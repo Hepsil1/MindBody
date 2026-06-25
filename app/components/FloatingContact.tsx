@@ -41,6 +41,10 @@ export default function FloatingContact() {
     const isPDP = /^\/product\//.test(location.pathname);
     const isCheckout = location.pathname === "/checkout";
     const hideOnSticky = isPDP || isCheckout;
+    // The premium brand-story page carries every channel in its own contact
+    // section, so the saturated messenger cluster is suppressed there to keep
+    // the editorial register clean (owner decision, 2026-06).
+    const isAbout = /^\/(en\/|ru\/|uk\/)?about\/?$/.test(location.pathname);
 
     // Restore user's last collapse preference. Default is expanded
     // (no localStorage entry = false) so first-time visitors always
@@ -78,6 +82,8 @@ export default function FloatingContact() {
             return next;
         });
     };
+
+    if (isAbout) return null;
 
     return (
         <div

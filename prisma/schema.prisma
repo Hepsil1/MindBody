@@ -67,30 +67,39 @@ model Customer {
 }
 
 model Order {
-  id               String               @id @default(uuid())
-  orderNumber      Int                  @unique
-  customerId       String
-  status           String               @default("pending")
-  paymentStatus    String               @default("pending")
-  total            Decimal
+  id                String               @id @default(uuid())
+  orderNumber       Int                  @unique
+  customerId        String
+  status            String               @default("pending")
+  paymentStatus     String               @default("pending")
+  total             Decimal
   // Promo snapshot — so a placed order always reflects the discount it was
   // created with, independent of later promo edits/deletes (audit + disputes).
-  appliedPromoCode String?
-  discountAmount   Decimal?             @default(0)
+  appliedPromoCode  String?
+  discountAmount    Decimal?             @default(0)
   // Checkout idempotency: the client sends a stable key per checkout attempt;
   // a retry with the same key returns the existing order instead of creating a
   // duplicate. Nullable + @unique → many NULLs allowed (legacy/no-key orders).
-  idempotencyKey   String?              @unique
+  idempotencyKey    String?              @unique
   // Best-effort confirmation email outcome: "sent" | "failed" | null (not attempted).
-  emailStatus      String?
+  emailStatus       String?
   // Storefront language the order was placed from (uk | en | ru) — picks the
   // confirmation-email language. Raw-SQL written until a clean generate.
-  locale           String               @default("uk")
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  customer         Customer             @relation(fields: [customerId], references: [id])
-  items            OrderItem[]
-  statusHistory    OrderStatusHistory[]
+  locale            String               @default("uk")
+  // Fulfillment fields collected at checkout — needed so the admin can ship the
+  // order (Nova Poshta city + warehouse, delivery/payment method, customer
+  // comment). Raw-SQL written/read until a clean generate (locale pattern).
+  // Nullable for legacy orders placed before these columns existed.
+  shippingCity      String?
+  shippingWarehouse String?
+  deliveryMethod    String?
+  paymentMethod     String?
+  comment           String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  customer          Customer             @relation(fields: [customerId], references: [id])
+  items             OrderItem[]
+  statusHistory     OrderStatusHistory[]
 
   @@index([customerId])
   @@index([createdAt])

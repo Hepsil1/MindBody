@@ -21,6 +21,9 @@ export const CONSENT_EVENT = "mb-cookies-accepted";
 // Vite inlines these at build time. `as string | undefined` keeps the
 // types honest when the variable is absent — the rest of the file treats
 // "" and undefined identically (truthy check).
+// Measurement ID — the data-stream destination. The actual gtag.js + config +
+// Consent Mode default live in a STATIC <head> tag (app/root.tsx); this module
+// only upgrades consent on banner-accept and fires custom events.
 const GA4_ID = (import.meta.env.VITE_GA4_ID || "") as string;
 const META_PIXEL_ID = (import.meta.env.VITE_META_PIXEL_ID || "") as string;
 
@@ -38,7 +41,9 @@ declare global {
     }
 }
 
-let loaded = false;
+let gaLoaded = false;
+let pixelLoaded = false;
+let consentGranted = false;
 
 export function hasConsent(): boolean {
     if (typeof window === "undefined") return false;
@@ -52,34 +57,48 @@ export function hasConsent(): boolean {
     }
 }
 
-function injectScript(src: string) {
-    const s = document.createElement("script");
-    s.async = true;
-    s.src = src;
-    document.head.appendChild(s);
+function bootstrapGtag() {
+    // The static <head> tag (app/root.tsx) already defines these before
+    // hydration; this is a defensive fallback so event helpers never throw if
+    // they somehow run first.
+    window.dataLayer = window.dataLayer || [];
+    if (!window.gtag) {
+        window.gtag = function gtag(...args: unknown[]) {
+            window.dataLayer?.push(args);
+        };
+    }
 }
 
+// GA4 is installed STATICALLY in the document <head> (see app/root.tsx): the
+// gtag.js loader, Consent Mode default (denied → cookieless), and gtag('config')
+// all run there, before hydration, so Google's crawler/tag-detector see the tag
+// in the served HTML and data collection starts immediately. This module no
+// longer injects gtag.js; it only makes sure gtag() exists for the event
+// helpers below and lets grantConsent() upgrade Consent Mode on banner-accept.
 function loadGA4() {
-    if (!GA4_ID) return;
-    injectScript(`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`);
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function gtag(...args: unknown[]) {
-        window.dataLayer?.push(args);
-    };
-    window.gtag("js", new Date());
-    window.gtag("config", GA4_ID, {
-        // We fire view_item/begin_checkout/etc. ourselves with rich
-        // params, so let GA do the easy one (page_view) automatically.
-        send_page_view: true,
-        // GA4 by default ANONYMIZES IPs for EU; we make it explicit
-        // because the audience is UA-only and we want it to stay that
-        // way regardless of any GA4 default flip.
-        anonymize_ip: true,
+    if (gaLoaded || !GA4_ID) return;
+    gaLoaded = true;
+    bootstrapGtag();
+}
+
+// Upgrade Consent Mode to granted (analytics + ads cookies) and bring up the
+// Meta Pixel, which has no cookieless mode and so only loads after consent.
+function grantConsent() {
+    if (consentGranted) return;
+    consentGranted = true;
+    bootstrapGtag();
+    window.gtag?.("consent", "update", {
+        ad_storage: "granted",
+        ad_user_data: "granted",
+        ad_personalization: "granted",
+        analytics_storage: "granted",
     });
+    loadMetaPixel();
 }
 
 function loadMetaPixel() {
-    if (!META_PIXEL_ID) return;
+    if (pixelLoaded || !META_PIXEL_ID) return;
+    pixelLoaded = true;
     // Standard fbq bootstrap, lifted from Meta's own snippet. The IIFE
     // creates the queue function before the actual library loads so any
     // synchronous .fbq() calls below get buffered correctly.
@@ -115,17 +134,27 @@ function loadMetaPixel() {
 }
 
 /**
- * Idempotent — safe to call from both consent-accept and first-load
- * paths. Subsequent calls are a fast no-op.
+ * Mount entry point — runs on every page load. Brings up GA4 immediately
+ * under Consent Mode (default denied → cookieless, tag is detectable). If the
+ * visitor already accepted on a previous visit, upgrade to granted at once.
+ * Idempotent; subsequent calls are fast no-ops.
  */
 export function ensureAnalyticsLoaded() {
     if (typeof window === "undefined") return;
-    if (loaded) return;
-    if (!hasConsent()) return;
     if (!GA4_ID && !META_PIXEL_ID) return; // nothing to load
-    loaded = true;
     loadGA4();
-    loadMetaPixel();
+    if (hasConsent()) grantConsent();
+}
+
+/**
+ * Called when the cookie banner's accept event fires. Upgrades consent to
+ * granted (cookies on) and loads the Meta Pixel.
+ */
+export function onConsentAccepted() {
+    if (typeof window === "undefined") return;
+    if (!GA4_ID && !META_PIXEL_ID) return;
+    loadGA4();
+    grantConsent();
 }
 
 // ─── Event helpers ────────────────────────────────────────────────────

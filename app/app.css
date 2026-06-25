@@ -192,6 +192,20 @@ body {
     overflow-x: hidden;
 }
 
+/* Lenis smooth-scroll (home + /about via useSmoothScroll). Lenis adds these
+   classes to <html>; the override neutralises the native `scroll-behavior:
+   smooth` above, which would otherwise fight Lenis's JS smoothing. */
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+    overflow: clip;
+}
+
 a {
     color: inherit;
     text-decoration: none;
@@ -867,7 +881,9 @@ h3 {
     /* Batch 38 atom 3: 16→20 on mobile, 20→24 on desktop.  Brings the
        swatch up to the design-system contract (24 desktop) and stops
        it reading as a pixel-dot at mobile sizes.  Hit target via
-       ::before pseudo stays ≥32px on mobile / ≥36 desktop. */
+       ::before pseudo stays ≥32px on mobile / ≥36 desktop.
+       Now an <a> (each colour links to the PDP on that colour); hovering
+       previews the colour's photos right on the card. */
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -877,15 +893,17 @@ h3 {
     display: inline-block;
     cursor: pointer;
     flex-shrink: 0;
+    position: relative;
+    text-decoration: none;
     transition:
         box-shadow 0.2s ease,
         transform 0.2s ease;
 }
 /* CSS replacement for framer-motion whileHover/whileTap on interactive swatches */
-button.product-card__swatch:hover {
+.product-card__swatch:hover {
     transform: scale(1.15);
 }
-button.product-card__swatch:active {
+.product-card__swatch:active {
     transform: scale(0.92);
 }
 @media (min-width: 768px) {
@@ -894,28 +912,25 @@ button.product-card__swatch:active {
         height: 24px;
     }
 }
-button.product-card__swatch {
-    /* Larger hit target on touch devices than visual size */
-    position: relative;
-}
-button.product-card__swatch::before {
+.product-card__swatch::before {
     /* Invisible hit target overlay — 32×32 mobile / 36×36 desktop */
     content: "";
     position: absolute;
     inset: -6px;
     border-radius: 50%;
 }
-button.product-card__swatch:hover {
+.product-card__swatch:hover {
     box-shadow:
         0 0 0 1.5px var(--color-bg-white),
         0 0 0 2.5px var(--color-text-primary);
 }
-button.product-card__swatch.is-selected {
+/* Active = the colour currently previewed on the card (last hovered swatch). */
+.product-card__swatch.is-active {
     box-shadow:
         0 0 0 1.5px var(--color-bg-white),
         0 0 0 2.5px var(--color-primary);
 }
-button.product-card__swatch:focus-visible {
+.product-card__swatch:focus-visible {
     outline: none;
     box-shadow:
         0 0 0 1.5px var(--color-bg-white),
@@ -16648,4 +16663,180 @@ select {
     font-size: 0.9rem;
     line-height: 1.5;
     color: var(--color-text-secondary);
+}
+
+/* ── Wishlist auth gate modal ───────────────────────────────────────────── */
+@keyframes wish-auth-heart-beat {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    30% {
+        transform: scale(1.18);
+    }
+    60% {
+        transform: scale(0.94);
+    }
+}
+@keyframes wish-auth-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+@keyframes wish-auth-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.wish-auth-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(15, 23, 23, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: wish-auth-fade-in 0.2s ease;
+}
+
+.wish-auth-modal {
+    position: relative;
+    background: var(--color-bg, #faf7f4);
+    border-radius: 24px;
+    padding: 44px 36px 36px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.12),
+        0 1px 4px rgba(0, 0, 0, 0.06);
+    animation: wish-auth-slide-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    outline: none;
+}
+
+.wish-auth-modal__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--color-text-secondary, #666);
+    transition:
+        background 0.18s,
+        color 0.18s;
+}
+.wish-auth-modal__close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--color-text, #1a1a1a);
+}
+
+.wish-auth-modal__heart {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(42, 90, 90, 0.08);
+    color: var(--color-primary, #2a5a5a);
+    margin-bottom: 20px;
+    animation: wish-auth-heart-beat 1.4s ease 0.3s both;
+}
+
+.wish-auth-modal__title {
+    margin: 0 0 10px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--color-text, #1a1a1a);
+    letter-spacing: -0.01em;
+}
+
+.wish-auth-modal__desc {
+    margin: 0 0 28px;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--color-text-secondary, #666);
+}
+
+.wish-auth-modal__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.wish-auth-modal__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        filter 0.18s,
+        opacity 0.18s,
+        transform 0.12s;
+    border: 2px solid transparent;
+}
+.wish-auth-modal__btn:active {
+    transform: scale(0.98);
+}
+
+.wish-auth-modal__btn--primary {
+    background: var(--color-primary, #2a5a5a);
+    color: #fff;
+    border-color: var(--color-primary, #2a5a5a);
+}
+.wish-auth-modal__btn--primary:hover {
+    filter: brightness(1.1);
+}
+
+.wish-auth-modal__btn--outline {
+    background: transparent;
+    color: var(--color-primary, #2a5a5a);
+    border-color: var(--color-primary, #2a5a5a);
+}
+.wish-auth-modal__btn--outline:hover {
+    background: rgba(42, 90, 90, 0.06);
+}
+
+.wish-auth-modal__hint {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary, #999);
+}
+
+@media (max-width: 480px) {
+    .wish-auth-modal {
+        padding: 40px 24px 28px;
+        border-radius: 20px;
+    }
+    .wish-auth-modal__title {
+        font-size: 1.2rem;
+    }
 }

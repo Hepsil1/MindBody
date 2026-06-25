@@ -18,7 +18,10 @@ const ALLOWED_INPUT_FORMATS = new Set(["jpeg", "png", "webp", "avif", "gif", "ti
  * NEVER falls back to base64 — this prevents multi-MB strings
  * from being stored in the database, which kills query performance.
  */
-export async function uploadFile(file: FormDataEntryValue | null): Promise<string | null> {
+export async function uploadFile(
+    file: FormDataEntryValue | null,
+    opts: { hq?: boolean } = {},
+): Promise<string | null> {
     if (!file || (file instanceof File && file.size === 0)) return null;
     if (!(file instanceof Blob)) return null;
 
@@ -70,7 +73,7 @@ export async function uploadFile(file: FormDataEntryValue | null): Promise<strin
         // ~1-3 s of admin upload time per photo — the buyers' bandwidth
         // is worth more than the admin's wait. Failure inside is logged
         // and non-fatal (master alone still works).
-        await generateUploadVariants(filePath, publicUrl);
+        await generateUploadVariants(filePath, publicUrl, { hq: opts.hq });
 
         const sizeKB = (buffer.length / 1024).toFixed(0);
         console.log(`✅ Uploaded: ${publicUrl} (${sizeKB} KB)`);
@@ -94,9 +97,12 @@ export type UploadOutcome =
  * (status:"error" — abort the save). uploadFile returns null for BOTH cases,
  * which let callers silently persist a record with a missing image.
  */
-export async function uploadFileChecked(file: FormDataEntryValue | null): Promise<UploadOutcome> {
+export async function uploadFileChecked(
+    file: FormDataEntryValue | null,
+    opts: { hq?: boolean } = {},
+): Promise<UploadOutcome> {
     if (!file || (file instanceof File && file.size === 0)) return { status: "empty" };
-    const path = await uploadFile(file);
+    const path = await uploadFile(file, opts);
     return path
         ? { status: "ok", path }
         : {

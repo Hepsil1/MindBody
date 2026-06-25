@@ -28,6 +28,7 @@ import {
     isOrderStatus,
     isPaymentStatus,
     canTransition,
+    canTransitionPayment,
     allowedNext,
 } from "../../../utils/statuses";
 import { cancelOrder, writeOrderHistory } from "../../../services/order.server";
@@ -166,6 +167,8 @@ export async function action({ request }: Route.ActionArgs) {
             if (!cur) return actionError("Замовлення не знайдено");
             if (cur.paymentStatus === paymentStatus)
                 return actionOk(undefined, { type: "info", message: "Без змін" });
+            if (!canTransitionPayment(cur.paymentStatus, paymentStatus))
+                return actionError("Недопустимий перехід статусу оплати");
             await prisma.$transaction(async (tx) => {
                 await tx.order.update({ where: { id }, data: { paymentStatus } });
                 await writeOrderHistory(
@@ -188,6 +191,8 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     const { where, orderBy, skip, take, state } = buildListQuery<Prisma.OrderWhereInput>(
         request,
         ORDER_LIST,

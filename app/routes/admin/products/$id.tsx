@@ -292,10 +292,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
             if (!name) problems.push("вкажіть назву");
             if (!Number.isFinite(priceNum) || priceNum <= 0)
                 problems.push("ціна має бути більшою за 0");
+            // Sanity ceiling — a mistyped price (an extra few zeros) would
+            // otherwise save silently and wreck the cart total / JSON-LD.
+            // ₴5M is far above any real activewear item.
+            if (Number.isFinite(priceNum) && priceNum > 5_000_000)
+                problems.push("ціна виглядає помилковою");
+            if (Number.isFinite(comparePriceNum) && comparePriceNum > 5_000_000)
+                problems.push("стара ціна виглядає помилковою");
             if (!shopPageSlug || !SHOP_SLUGS.includes(shopPageSlug))
                 problems.push("оберіть розділ магазину");
             if (!category) problems.push("оберіть категорію");
             if (cleanImages.length === 0) problems.push("додайте хоча б одне зображення");
+            if (cleanImages.length > 20) problems.push("забагато зображень (максимум 20)");
 
             // Category must be a known slug (no Cyrillic labels) AND valid for
             // the chosen shop — the (shop, category) pair gate the fabric/sleeve
@@ -310,6 +318,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
             }
             if (problems.length > 0) {
                 return { error: `Не вдалося зберегти: ${problems.join(", ")}.` };
+            }
+
+            // SKU uniqueness — a duplicate article breaks order-line identity
+            // and the inventory-movement journal (both key on SKU). Checked
+            // only when an SKU is provided (it's optional).
+            if (sku) {
+                const dupe = await prisma.product.findFirst({
+                    where: { sku, id: { not: id } },
+                    select: { name: true },
+                });
+                if (dupe) {
+                    return {
+                        error: `Артикул (SKU) «${sku}» вже належить товару «${dupe.name}». Вкажіть унікальний.`,
+                    };
+                }
             }
 
             const status = PRODUCT_STATUSES.includes(statusRaw) ? statusRaw : "draft";
@@ -551,62 +574,77 @@ async function ensureUniqueSlug(name: string, id: string): Promise<string> {
 }
 
 // --- Error Boundary ---
+// The owner is non-technical — never dump a raw message/stack (it leaks server
+// paths and is meaningless to them). Show a calm, localized message + a way
+// back. The full error is kept in console.error for triage, and the stack is
+// only rendered in dev (gated by import.meta.env.DEV) so prod stays clean.
 export function ErrorBoundary({ error }: { error: unknown }) {
     console.error("ErrorBoundary caught error in AdminProductEdit:", error);
 
-    let errorDetails = "";
-    if (isRouteErrorResponse(error)) {
-        errorDetails = `HTTP Error ${error.status} ${error.statusText}\nData: ${JSON.stringify(error.data)}`;
-    } else if (error instanceof Error) {
-        errorDetails = `${error.message}\n${error.stack}`;
-    } else if (typeof error === "object" && error !== null) {
-        // Try to stringify safely, handling circular references or proxy objects
-        try {
-            const cache = new Set();
-            errorDetails = JSON.stringify(
-                error,
-                (key, value) => {
-                    if (typeof value === "object" && value !== null) {
-                        if (cache.has(value)) {
-                            return "[Circular]";
-                        }
-                        cache.add(value);
-                    }
-                    return value;
-                },
-                2,
-            );
-        } catch (e) {
-            errorDetails = `Failed to stringify error object: ${String(e)}`;
-        }
-    } else {
-        errorDetails = String(error);
-    }
+    const is404 = isRouteErrorResponse(error) && error.status === 404;
 
     return (
         <div
             style={{
-                padding: "40px",
-                background: "#0f1115",
-                color: "white",
                 minHeight: "100vh",
-                fontFamily: "sans-serif",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "24px",
+                background: "var(--bg-page, #0f1115)",
+                color: "#e2e8f0",
+                fontFamily: "system-ui, sans-serif",
             }}
         >
-            <h1 style={{ color: "#ef4444" }}>Помилка на сторінці редагування товару</h1>
-            <pre
+            <div
                 style={{
-                    background: "#1c1f26",
-                    padding: "20px",
-                    borderRadius: "8px",
-                    overflowX: "auto",
-                    marginTop: "20px",
-                    color: "#f1f5f9",
-                    fontSize: "14px",
+                    maxWidth: "440px",
+                    textAlign: "center",
+                    background: "var(--bg-card, #161b22)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: "16px",
+                    padding: "40px 32px",
                 }}
             >
-                {errorDetails}
-            </pre>
+                <h1 style={{ fontSize: "22px", margin: "0 0 12px" }}>
+                    {is404 ? "Товар не знайдено" : "Щось пішло не так"}
+                </h1>
+                <p style={{ color: "#94a3b8", fontSize: "14px", margin: "0 0 24px" }}>
+                    {is404
+                        ? "Можливо, товар було видалено або посилання застаріле."
+                        : "Не вдалося завантажити сторінку редагування товару. Спробуйте ще раз або поверніться до списку."}
+                </p>
+                <Link
+                    to="/admin/products"
+                    style={{
+                        display: "inline-block",
+                        padding: "10px 20px",
+                        borderRadius: "10px",
+                        background: "var(--accent-primary, #5eead4)",
+                        color: "#06231f",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                    }}
+                >
+                    До списку товарів
+                </Link>
+                {import.meta.env.DEV && error instanceof Error && error.stack && (
+                    <pre
+                        style={{
+                            textAlign: "left",
+                            background: "#1c1f26",
+                            padding: "16px",
+                            borderRadius: "8px",
+                            overflowX: "auto",
+                            marginTop: "24px",
+                            color: "#f1f5f9",
+                            fontSize: "12px",
+                        }}
+                    >
+                        {error.stack}
+                    </pre>
+                )}
+            </div>
         </div>
     );
 }
@@ -730,9 +768,13 @@ export default function AdminProductEdit() {
         // Append all simple fields
         Object.entries(formData).forEach(([key, value]) => {
             if (key === "inventory") {
-                // Convert Map to List for storage
+                // Convert Map to List for storage. Keys are `${color}_${size}`
+                // and colors/sizes may themselves contain "_" (e.g.
+                // light_blue_M) — split on the FIRST underscore only.
                 const inventoryList = Object.entries(value).map(([id, stock]) => {
-                    const [color, size] = id.split("_");
+                    const i = id.indexOf("_");
+                    const color = id.slice(0, i);
+                    const size = id.slice(i + 1);
                     return { color, size, stock };
                 });
                 data.append(key, JSON.stringify(inventoryList));
@@ -774,7 +816,12 @@ export default function AdminProductEdit() {
             if (removing) {
                 inventory = Object.fromEntries(
                     Object.entries(prev.inventory).filter(([key]) => {
-                        const [color, size] = key.split("_");
+                        // `${color}_${size}` — split on the FIRST "_" so a
+                        // color/size containing "_" (light_blue_M) isn't
+                        // corrupted.
+                        const i = key.indexOf("_");
+                        const color = key.slice(0, i);
+                        const size = key.slice(i + 1);
                         return field === "colors" ? color !== item : size !== item;
                     }),
                 );
@@ -1156,42 +1203,74 @@ export default function AdminProductEdit() {
                             <div className="form-group">
                                 <label className="form-label">Доступні кольори (оберіть всі)</label>
                                 <div className="color-grid">
-                                    {filterConfig?.colors &&
-                                        Object.entries(filterConfig.colors).map(
-                                            ([key, label]: [string, any]) => (
-                                                <div
-                                                    key={key}
-                                                    onClick={() => toggleArrayItem("colors", key)}
-                                                    className={`color-option ${formData.colors.includes(key) ? "active" : ""}`}
-                                                    style={{
-                                                        background:
-                                                            key === "other"
-                                                                ? "linear-gradient(45deg, #eee, #999)"
-                                                                : key,
-                                                    }}
-                                                    title={label as string}
-                                                >
-                                                    {formData.colors.includes(key) && (
-                                                        <div className="check-mark">✓</div>
-                                                    )}
-                                                </div>
+                                    {(() => {
+                                        const paletteColors = filterConfig?.colors ?? {};
+                                        const known = new Set(Object.keys(paletteColors));
+                                        // UNION saved colors that aren't in this
+                                        // page's palette so an off-palette saved
+                                        // value still renders a removable swatch
+                                        // (otherwise it can't be unchecked).
+                                        const extras = formData.colors.filter((c) => !known.has(c));
+                                        const entries: Array<[string, string]> = [
+                                            ...Object.entries(paletteColors).map(
+                                                ([k, l]) => [k, String(l)] as [string, string],
                                             ),
-                                        )}
+                                            ...extras.map(
+                                                (c) =>
+                                                    [c, `${getColorLabel(c)} (поза каталогом)`] as [
+                                                        string,
+                                                        string,
+                                                    ],
+                                            ),
+                                        ];
+                                        return entries.map(([key, label]) => (
+                                            <div
+                                                key={key}
+                                                onClick={() => toggleArrayItem("colors", key)}
+                                                className={`color-option ${formData.colors.includes(key) ? "active" : ""}`}
+                                                style={{
+                                                    background:
+                                                        key === "other"
+                                                            ? "linear-gradient(45deg, #eee, #999)"
+                                                            : known.has(key)
+                                                              ? key
+                                                              : getColorHex(key),
+                                                }}
+                                                title={label}
+                                            >
+                                                {formData.colors.includes(key) && (
+                                                    <div className="check-mark">✓</div>
+                                                )}
+                                            </div>
+                                        ));
+                                    })()}
                                 </div>
                             </div>
 
                             <div className="form-group">
                                 <label className="form-label">Доступні розміри</label>
                                 <div className="size-grid">
-                                    {(filterConfig?.sizes || []).map((size: string) => (
-                                        <div
-                                            key={size}
-                                            onClick={() => toggleArrayItem("sizes", size)}
-                                            className={`size-option ${formData.sizes.includes(size) ? "active" : ""}`}
-                                        >
-                                            {size}
-                                        </div>
-                                    ))}
+                                    {(() => {
+                                        const paletteSizes = filterConfig?.sizes || [];
+                                        const known = new Set(paletteSizes);
+                                        // UNION saved sizes off this page's palette
+                                        // so they stay visible and removable.
+                                        const extras = formData.sizes.filter((s) => !known.has(s));
+                                        return [...paletteSizes, ...extras].map((size: string) => (
+                                            <div
+                                                key={size}
+                                                onClick={() => toggleArrayItem("sizes", size)}
+                                                className={`size-option ${formData.sizes.includes(size) ? "active" : ""}`}
+                                                title={
+                                                    known.has(size)
+                                                        ? undefined
+                                                        : `${size} (поза каталогом)`
+                                                }
+                                            >
+                                                {size}
+                                            </div>
+                                        ));
+                                    })()}
                                 </div>
                             </div>
 

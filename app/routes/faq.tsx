@@ -3,6 +3,12 @@ import { LLink, useI18n } from "../i18n";
 import { localeFromParamSafe, localizePath, OG_LOCALE, type Locale } from "../i18n/config";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
 
+// Extensionless SSR routes ship no Cache-Control unless the route opts in
+// (Caddy's @html matcher only covers / and *.html). Match / and /about.
+export function headers() {
+    return { "Cache-Control": "no-cache" };
+}
+
 interface FaqItem {
     q: string;
     a: string;
@@ -40,7 +46,7 @@ const CONTENT: Record<Locale, FaqContent> = {
             },
             {
                 q: "Як довго триває доставка?",
-                a: "Нова Пошта — 1-3 дні по Україні, Укрпошта — 3-7 днів. Доставка завжди за тарифами перевізника, оплата при отриманні.",
+                a: "Нова Пошта — 1-3 дні по Україні, Укрпошта — 3-7 днів. Доставка за тарифами перевізника, оплата при отриманні.",
             },
             {
                 q: "Чи можна повернути товар?",
@@ -94,7 +100,7 @@ const CONTENT: Record<Locale, FaqContent> = {
             },
             {
                 q: "How long does delivery take?",
-                a: "Nova Poshta — 1-3 days across Ukraine, Ukrposhta — 3-7 days. Delivery is always at the carrier's rates, paid on receipt.",
+                a: "Nova Poshta — 1-3 days across Ukraine, Ukrposhta — 3-7 days. Delivery at the carrier's rates, paid on receipt.",
             },
             {
                 q: "Can I return an item?",
@@ -148,7 +154,7 @@ const CONTENT: Record<Locale, FaqContent> = {
             },
             {
                 q: "Как долго длится доставка?",
-                a: "Новая Почта — 1-3 дня по Украине, Укрпочта — 3-7 дней. Доставка всегда по тарифам перевозчика, оплата при получении.",
+                a: "Новая Почта — 1-3 дня по Украине, Укрпочта — 3-7 дней. Доставка по тарифам перевозчика, оплата при получении.",
             },
             {
                 q: "Можно ли вернуть товар?",

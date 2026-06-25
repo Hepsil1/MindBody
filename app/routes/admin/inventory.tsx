@@ -1,6 +1,7 @@
 import { Link, useLoaderData, useNavigation } from "react-router";
 import type { Route } from "./+types/inventory";
 import { prisma } from "../../db.server";
+import { requireAdmin } from "../../utils/admin-guard.server";
 import { paginate } from "../../utils/admin-list.server";
 import {
     AdminToolbar,
@@ -41,6 +42,10 @@ interface MovementRow {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
+    // Defense-in-depth: the _layout loader already redirects unauthenticated
+    // requests, but guard here too (consistency with orders/$id, customers/$id).
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     const sp = new URL(request.url).searchParams;
     const q = (sp.get("q") ?? "").trim();
     const reasonRaw = sp.get("reason") ?? "";

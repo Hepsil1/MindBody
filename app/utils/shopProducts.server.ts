@@ -25,6 +25,11 @@ export interface ShopProductCard {
     image: string;
     image2: string | undefined;
     images: string[];
+    /** Per-colour gallery override {color: [urls]}. Lets the catalog card swap
+        its photos when a swatch is hovered — "each colour is its own product".
+        Empty object when the product has no per-colour photos (degrades to the
+        shared `images`, i.e. swatches just preview nothing extra). */
+    colorImages: Record<string, string[]>;
     category: string | undefined;
     fabric: string | undefined;
     sleeve: string | undefined;
@@ -142,6 +147,7 @@ async function loadShopDataUncached(
                     fabric: true,
                     sleeve: true,
                     images: true,
+                    colorImages: true,
                     colors: true,
                     sizes: true,
                     inventory: true,
@@ -167,6 +173,20 @@ async function loadShopDataUncached(
 
     const products: ShopProductCard[] = rawProducts.map((p) => {
         const images = parseJson<string[]>(p.images, []);
+        // Per-colour galleries: keep only entries that are non-empty string
+        // arrays, so a malformed/partial tag never feeds a blank src to the card.
+        const rawColorImages = parseJson<Record<string, string[]>>(p.colorImages, {});
+        const colorImages: Record<string, string[]> = {};
+        for (const key of Object.keys(rawColorImages)) {
+            const urls = rawColorImages[key];
+            if (
+                Array.isArray(urls) &&
+                urls.length > 0 &&
+                urls.every((u) => typeof u === "string" && u)
+            ) {
+                colorImages[key] = urls;
+            }
+        }
         const price = Number(p.price);
         const comparePrice = Number(p.comparePrice) || 0;
         const isSale = comparePrice > price && price > 0;
@@ -187,6 +207,7 @@ async function loadShopDataUncached(
             image: images[0] || "/brand-sun.png",
             image2: images[1] || undefined,
             images,
+            colorImages,
             category: p.category ?? undefined,
             fabric: p.fabric ?? undefined,
             sleeve: p.sleeve ?? undefined,

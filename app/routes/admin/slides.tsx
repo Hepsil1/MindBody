@@ -2,7 +2,7 @@ import type { Route } from "./+types/slides";
 import { prisma } from "../../db.server";
 import { useState, useRef, useEffect } from "react";
 import { useLoaderData, useFetcher, Link, useSearchParams } from "react-router";
-import { validateFilterConfig } from "../../utils/filters";
+import { validateFilterConfig, deriveAvailableFacets } from "../../utils/filters";
 import { FilterEditorModal } from "../../components/admin/FilterEditorModal";
 import { AboutSlidesModal } from "../../components/admin/AboutSlidesModal";
 import { SlideManagerPanel } from "../../components/admin/editor/SlideManagerPanel";
@@ -31,19 +31,42 @@ export async function loader({ request }: Route.LoaderArgs) {
     if (denied) return denied;
     try {
         // Run all queries in parallel for speed
-        const [allSlides, categories, shopPages, filterConfigs, siteSettings] = await Promise.all([
-            prisma.slide.findMany({ orderBy: { order: "asc" } }),
-            prisma.category.findMany({ orderBy: { order: "asc" } }),
-            prisma.shopPage.findMany(),
-            prisma.filterConfig.findMany(),
-            getSiteSettings(),
-        ]);
+        const [allSlides, categories, shopPages, filterConfigs, siteSettings, facetRows] =
+            await Promise.all([
+                prisma.slide.findMany({ orderBy: { order: "asc" } }),
+                prisma.category.findMany({ orderBy: { order: "asc" } }),
+                prisma.shopPage.findMany(),
+                prisma.filterConfig.findMany(),
+                getSiteSettings(),
+                // Real per-page facets so «Керування фільтрами» mirrors the live
+                // store (shopPageSlug + status are indexed; ~47 rows = negligible).
+                prisma.product
+                    .findMany({
+                        where: { status: "active", shopPageSlug: { not: null } },
+                        select: {
+                            shopPageSlug: true,
+                            category: true,
+                            colors: true,
+                            sizes: true,
+                        },
+                    })
+                    .catch(() => []),
+            ]);
 
         // Slide.page is NOT NULL (default 'home'), so a simple equality split works.
         const slides = allSlides.filter((s) => s.page === "home");
         const aboutSlides = allSlides.filter((s) => s.page === "about");
+        const availableFacets = deriveAvailableFacets(facetRows);
 
-        return { slides, categories, shopPages, filterConfigs, aboutSlides, siteSettings };
+        return {
+            slides,
+            categories,
+            shopPages,
+            filterConfigs,
+            aboutSlides,
+            siteSettings,
+            availableFacets,
+        };
     } catch (error) {
         console.error("Loader error:", error);
         return {
@@ -53,6 +76,7 @@ export async function loader({ request }: Route.LoaderArgs) {
             filterConfigs: [],
             aboutSlides: [],
             siteSettings: DEFAULT_SITE_SETTINGS,
+            availableFacets: {},
         };
     }
 }
@@ -93,7 +117,9 @@ export async function action({ request }: Route.ActionArgs) {
         current: string,
         label: string,
     ): Promise<string> => {
-        const outcome = await uploadFileChecked(file);
+        // Slides are full-bleed hero showcases — use the high-quality image
+        // tier (AVIF q90 / WebP q92) so smooth sky/skin gradients don't band.
+        const outcome = await uploadFileChecked(file, { hq: true });
         if (outcome.status === "error") throw new Error(`${label}: ${outcome.reason}`);
         return outcome.status === "ok" ? outcome.path : current;
     };
@@ -218,6 +244,19 @@ export async function action({ request }: Route.ActionArgs) {
             const title = (formData.get("title") as string) || "";
             const subtitle = (formData.get("subtitle") as string) || null;
             const link = (formData.get("link") as string) || "";
+            // Category links render directly on the homepage — reject typos that
+            // ship a dead card. Accept absolute http(s) or a whitelisted internal path.
+            const linkOk =
+                !link ||
+                /^https?:\/\//.test(link) ||
+                link === "/" ||
+                /^\/(about|contacts)(\/|$)/.test(link) ||
+                (link.startsWith("/shop") &&
+                    (link === "/shop" ||
+                        SHOP_SLUGS.some(
+                            (s) => link === `/shop/${s}` || link.startsWith(`/shop/${s}/`),
+                        )));
+            if (!linkOk) return actionError("Невалідне посилання категорії");
             const buttonText = (formData.get("buttonText") as string) || "Переглянути все";
             const imagePos = normalizePos(formData.get("imagePos"), "center center");
 
@@ -454,8 +493,15 @@ type ActivePanel =
  * post bridge messages back here.
  */
 export default function AdminVisualEditor() {
-    const { slides, categories, shopPages, filterConfigs, aboutSlides, siteSettings } =
-        useLoaderData<typeof loader>();
+    const {
+        slides,
+        categories,
+        shopPages,
+        filterConfigs,
+        aboutSlides,
+        siteSettings,
+        availableFacets,
+    } = useLoaderData<typeof loader>();
     const fetcher = useFetcher<typeof action>();
 
     const [activePanel, setActivePanel] = useState<ActivePanel>(null);
@@ -1197,6 +1243,7 @@ export default function AdminVisualEditor() {
                     onClose={closePanel}
                     filterConfigs={filterConfigs}
                     shopPages={shopPages}
+                    availableFacets={availableFacets}
                     fetcher={fetcher}
                 />
             )}

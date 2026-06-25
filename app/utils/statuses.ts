@@ -89,6 +89,22 @@ export function canTransition(from: string, to: string): boolean {
     return ORDER_TRANSITIONS[from].includes(to);
 }
 
+/** Legal payment-status transitions — payment only moves forward (pending → paid
+    → refunded), never backward, so a paid→pending→delete audit-trail bypass is
+    blocked. Mirrors ORDER_TRANSITIONS/canTransition for order status. */
+export const PAYMENT_TRANSITIONS: Record<PaymentStatus, PaymentStatus[]> = {
+    pending: ["paid", "refunded"],
+    paid: ["refunded"],
+    refunded: [],
+};
+
+/** Whether `from → to` is a legal payment transition (same → same is allowed). */
+export function canTransitionPayment(from: string, to: string): boolean {
+    if (from === to) return true;
+    if (!isPaymentStatus(from) || !isPaymentStatus(to)) return false;
+    return PAYMENT_TRANSITIONS[from].includes(to);
+}
+
 /** Current status followed by its legal next states — for a constrained dropdown. */
 export function allowedNext(from: string): OrderStatus[] {
     if (!isOrderStatus(from)) return [...ORDER_STATUSES];

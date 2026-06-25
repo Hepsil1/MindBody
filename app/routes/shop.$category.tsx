@@ -448,15 +448,21 @@ export default function ShopCategory() {
         if (selectedPriceRange) {
             const range = priceRanges.find((r) => r.id === selectedPriceRange);
             if (range) {
-                result = result.filter((p) => p.price >= range.min && p.price <= range.max);
+                result = result.filter((p) => {
+                    // On-sale cards carry the HIGH was-price in `price` (for the
+                    // strikethrough UI) and the real low price in `sale_price`.
+                    // Bucket by the price the customer actually pays.
+                    const eff = p.sale_price ?? p.price;
+                    return eff >= range.min && eff <= range.max;
+                });
             }
         }
         switch (sortBy) {
             case "price-asc":
-                result.sort((a, b) => a.price - b.price);
+                result.sort((a, b) => (a.sale_price ?? a.price) - (b.sale_price ?? b.price));
                 break;
             case "price-desc":
-                result.sort((a, b) => b.price - a.price);
+                result.sort((a, b) => (b.sale_price ?? b.price) - (a.sale_price ?? a.price));
                 break;
             case "newest":
                 break;

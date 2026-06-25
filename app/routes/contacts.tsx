@@ -4,6 +4,12 @@ import { useSiteSettings } from "../utils/site-settings";
 import { useI18n, LLink } from "../i18n";
 import "../styles/contacts.css";
 
+// Extensionless SSR routes ship no Cache-Control unless the route opts in
+// (Caddy's @html matcher only covers / and *.html). Match / and /about.
+export function headers() {
+    return { "Cache-Control": "no-cache" };
+}
+
 // Page prose lives inline per locale (not in the t() dictionary).
 // The `uk` variant is the canonical text — keep it byte-identical.
 const CONTENT = {

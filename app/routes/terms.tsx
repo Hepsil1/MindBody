@@ -4,6 +4,12 @@ import { LLink, useI18n } from "../i18n";
 import { localeFromParamSafe, localizePath, OG_LOCALE, type Locale } from "../i18n/config";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
 
+// Extensionless SSR routes ship no Cache-Control unless the route opts in
+// (Caddy's @html matcher only covers / and *.html). Match / and /about.
+export function headers() {
+    return { "Cache-Control": "no-cache" };
+}
+
 type Inline = string | { to: string; label: string } | { email: string };
 
 interface Section {
@@ -96,7 +102,7 @@ const CONTENT: Record<Locale, PageContent> = {
                     [
                         "Доставка здійснюється Новою Поштою та Укрпоштою по всій Україні. Деталі — на сторінці ",
                         { to: "/delivery", label: "«Доставка та оплата»" },
-                        ". Доставка завжди за тарифами перевізника.",
+                        ". Доставка — за тарифами перевізника, оплата при отриманні.",
                     ],
                 ],
             },
@@ -188,7 +194,7 @@ const CONTENT: Record<Locale, PageContent> = {
                     [
                         "Delivery across Ukraine is provided by Nova Poshta and Ukrposhta. For details, see the ",
                         { to: "/delivery", label: "Delivery and Payment" },
-                        " page. Delivery is always at the carrier's rates.",
+                        " page. Delivery is charged at the carrier's rates, paid on receipt.",
                     ],
                 ],
             },
@@ -280,7 +286,7 @@ const CONTENT: Record<Locale, PageContent> = {
                     [
                         "Доставка осуществляется Новой Почтой и Укрпочтой по всей Украине. Подробности — на странице ",
                         { to: "/delivery", label: "«Доставка и оплата»" },
-                        ". Доставка всегда по тарифам перевозчика.",
+                        ". Доставка — по тарифам перевозчика, оплата при получении.",
                     ],
                 ],
             },

@@ -78,6 +78,66 @@ export function parseAndMergeFilterConfig(
     };
 }
 
+/** Per-page facet counts (categories/colors/sizes -> product count). */
+export interface FacetCounts {
+    categories: Record<string, number>;
+    colors: Record<string, number>;
+    sizes: Record<string, number>;
+}
+
+/**
+ * Single source of truth for "what filters actually exist on each shop page",
+ * so the admin «Керування фільтрами» editor mirrors the live storefront (a
+ * facet with 0 products on a page is hidden there too). Counts the RAW stored
+ * values (slug OR legacy label form) — the consumer reconciles slug-vs-label at
+ * display time. A "global" bucket sums across all pages = the master vocabulary.
+ * Pure (no DB / no server-only imports) so it is safe to import from a route
+ * file without dragging server code into the client bundle.
+ */
+export function deriveAvailableFacets(
+    rows: Array<{
+        shopPageSlug: string | null;
+        category: string | null;
+        colors: string | null;
+        sizes: string | null;
+    }>,
+): Record<string, FacetCounts> {
+    const parseArr = (s: string | null): string[] => {
+        if (!s) return [];
+        try {
+            const v = JSON.parse(s);
+            return Array.isArray(v) ? v : [];
+        } catch {
+            return [];
+        }
+    };
+    const out: Record<string, FacetCounts> = {};
+    const ensure = (slug: string): FacetCounts => {
+        out[slug] ??= { categories: {}, colors: {}, sizes: {} };
+        return out[slug];
+    };
+    const bump = (bucket: Record<string, number>, key: unknown) => {
+        if (typeof key !== "string" || !key) return;
+        bucket[key] = (bucket[key] || 0) + 1;
+    };
+    const global = ensure("global");
+    for (const r of rows) {
+        if (!r.shopPageSlug) continue;
+        const page = ensure(r.shopPageSlug);
+        bump(page.categories, r.category);
+        bump(global.categories, r.category);
+        for (const c of parseArr(r.colors)) {
+            bump(page.colors, c);
+            bump(global.colors, c);
+        }
+        for (const s of parseArr(r.sizes)) {
+            bump(page.sizes, s);
+            bump(global.sizes, s);
+        }
+    }
+    return out;
+}
+
 // Write-time validation for the admin filter editor. The READ path
 // (parseAndMergeFilterConfig) is intentionally lenient (falls back to defaults on
 // bad data), which meant the editor could silently persist malformed JSON and the

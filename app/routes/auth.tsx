@@ -25,7 +25,9 @@ export default function Auth() {
         const r = searchParams.get("redirect");
         return r && r.startsWith("/") && !r.startsWith("//") ? r : "/profile";
     })();
-    const [mode, setMode] = useState<AuthMode>("login");
+    const [mode, setMode] = useState<AuthMode>(
+        searchParams.get("mode") === "register" ? "register" : "login",
+    );
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");

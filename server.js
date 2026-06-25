@@ -124,6 +124,15 @@ app.use((req, res, next) => {
     globalThis.__requestALS.run({ requestId }, next);
 });
 
+// The bundled `mime@1.6.0` (via send/express.static) has no entry for AVIF, so
+// it falls back to application/octet-stream — wrong for the /uploads, /brand,
+// /generalpics responsive variants (and the preloaded LCP hero). Vite copies
+// public/ INTO build/client, so the build-dir layer below serves those files —
+// the helper must run on EVERY static layer, not just the public one.
+const setStaticTypes = (res, filePath) => {
+    if (filePath.endsWith(".avif")) res.setHeader("Content-Type", "image/avif");
+};
+
 // Three static layers — same ordering and options as @react-router/serve.
 // build.publicPath defaults to "/", build.assetsBuildDirectory points at
 // `build/client` after a production build.
@@ -132,10 +141,14 @@ app.use(
     express.static(path.default.join(build.assetsBuildDirectory, "assets"), {
         immutable: true,
         maxAge: "1y",
+        setHeaders: setStaticTypes,
     }),
 );
-app.use(build.publicPath, express.static(build.assetsBuildDirectory));
-app.use(express.static("public", { maxAge: "1h" }));
+app.use(
+    build.publicPath,
+    express.static(build.assetsBuildDirectory, { setHeaders: setStaticTypes }),
+);
+app.use(express.static("public", { maxAge: "1h", setHeaders: setStaticTypes }));
 
 // Quiet-404 filter — runs AFTER static so we only catch real misses:
 // bot probes (/.env, /wp-admin, etc.) and stale chunk requests from

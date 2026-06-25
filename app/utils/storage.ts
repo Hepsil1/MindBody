@@ -93,6 +93,41 @@ export const StorageUtils = {
         window.dispatchEvent(new Event(EVENTS.CART_UPDATED));
     },
 
+    /**
+     * Reconcile cart line prices against an authoritative {id: price} map of
+     * ACTIVE products (from /api/cart/prices). The cart stores the price at
+     * add-to-cart time, which goes stale on any admin price edit/sale; left
+     * unreconciled it makes checkout silently fail the server's price cross-
+     * check. Lines whose id is ABSENT from the map are no longer purchasable
+     * (draft/archived/deleted) and are dropped. Persists + notifies only when
+     * something actually changed. Returns a summary so the caller can inform
+     * the shopper.
+     */
+    reconcilePrices: (priceMap: Record<string, number>): { updated: number; removed: number } => {
+        const cart = StorageUtils.getCart();
+        let updated = 0;
+        let removed = 0;
+        const next: CartItem[] = [];
+        for (const item of cart) {
+            const current = priceMap[String(item.id)];
+            if (current === undefined) {
+                removed++;
+                continue; // product gone/inactive — drop the line
+            }
+            if (current !== item.price) {
+                updated++;
+                next.push({ ...item, price: current });
+            } else {
+                next.push(item);
+            }
+        }
+        if (updated > 0 || removed > 0) {
+            localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(next));
+            window.dispatchEvent(new Event(EVENTS.CART_UPDATED));
+        }
+        return { updated, removed };
+    },
+
     // WISHLIST METHODS
     getWishlist: (): WishlistItem[] => {
         try {

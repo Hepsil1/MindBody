@@ -24,6 +24,13 @@ const WIDTHS = [400, 800, 1200, 1600, 2400];
 const WEBP_QUALITY = 82;
 const AVIF_QUALITY = 80; // visually ≈ WebP q=85 at 25-30% smaller
 const AVIF_EFFORT = 6;
+// HERO/SLIDE tier. Slides are full-bleed showcases, often over smooth sky/skin
+// gradients where AVIF q80 bands visibly. Bumping AVIF→90 / WebP→92 removes the
+// banding; the size cost only applies to the handful of hero images, not the
+// product catalogue (which stays on the standard tier above).
+const HQ_AVIF_QUALITY = 90;
+const HQ_WEBP_QUALITY = 92;
+const HQ_AVIF_EFFORT = 7;
 const LQIP_WIDTH = 20;
 const LQIP_HEIGHT = 26; // 3:4 aspect — matches product photography
 const LQIP_QUALITY = 30;
@@ -41,8 +48,16 @@ const LQIP_BLUR = 2;
  * the master alone is still a working (if heavier) image, which is the
  * pre-this-change status quo. Errors are logged for the operator.
  */
-export async function generateUploadVariants(absWebpPath: string, publicUrl: string) {
+export async function generateUploadVariants(
+    absWebpPath: string,
+    publicUrl: string,
+    opts: { hq?: boolean } = {},
+) {
     try {
+        const avifQuality = opts.hq ? HQ_AVIF_QUALITY : AVIF_QUALITY;
+        const webpQuality = opts.hq ? HQ_WEBP_QUALITY : WEBP_QUALITY;
+        const avifEffort = opts.hq ? HQ_AVIF_EFFORT : AVIF_EFFORT;
+
         const img = sharp(absWebpPath);
         const meta = await img.metadata();
         const naturalWidth = meta.width ?? 0;
@@ -53,7 +68,7 @@ export async function generateUploadVariants(absWebpPath: string, publicUrl: str
         // AVIF master — <picture> lists AVIF first, so without this the
         // browser would pick a -2400w variant even on 4K screens.
         await sharp(absWebpPath)
-            .avif({ quality: AVIF_QUALITY, effort: AVIF_EFFORT })
+            .avif({ quality: avifQuality, effort: avifEffort })
             .toFile(`${base}.avif`);
 
         // Width variants in both formats. withoutEnlargement: a 1200px
@@ -62,11 +77,11 @@ export async function generateUploadVariants(absWebpPath: string, publicUrl: str
             if (w >= naturalWidth) continue;
             await sharp(absWebpPath)
                 .resize({ width: w, withoutEnlargement: true })
-                .webp({ quality: WEBP_QUALITY })
+                .webp({ quality: webpQuality })
                 .toFile(`${base}-${w}w.webp`);
             await sharp(absWebpPath)
                 .resize({ width: w, withoutEnlargement: true })
-                .avif({ quality: AVIF_QUALITY, effort: AVIF_EFFORT })
+                .avif({ quality: avifQuality, effort: avifEffort })
                 .toFile(`${base}-${w}w.avif`);
         }
 

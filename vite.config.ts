@@ -15,10 +15,14 @@ export default defineConfig({
     // react/react-dom here: deduping them broke the slides editor, which pulls in
     // storefront components, with a "null dispatcher" dual-React error.)
     resolve: {
-        dedupe: ["sonner"],
+        dedupe: ["sonner", "framer-motion"],
     },
     optimizeDeps: {
-        include: ["sonner"],
+        // Pre-bundle framer-motion too: otherwise Vite lazily optimizes it the
+        // first time a modal mounts <AnimatePresence> (ConfirmDialog), pulling a
+        // SECOND React copy into that chunk -> "useContext of null" dual-React
+        // crash in the slides editor. Dev-only; the Rollup build is unaffected.
+        include: ["sonner", "framer-motion"],
     },
 
     // Performance: enable CSS minification

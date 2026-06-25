@@ -26,6 +26,8 @@ const PROMO_LIST: ListSpec = {
 };
 
 export async function loader({ request }: Route.LoaderArgs) {
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
     const { where, orderBy, skip, take, state } = buildListQuery<Prisma.PromoCodeWhereInput>(
         request,
         PROMO_LIST,
@@ -91,6 +93,13 @@ export async function action({ request }: Route.ActionArgs) {
         if (discountType === "percent" && discountValue > 100)
             return actionError("Відсоткова знижка не може перевищувати 100%", {
                 fieldErrors: { discountValue: "Максимум 100%" },
+            });
+        // Friendly duplicate check before insert — turns the raw Prisma P2002
+        // (unique constraint on `code`) into a clear, field-scoped message.
+        const existing = await prisma.promoCode.findUnique({ where: { code } });
+        if (existing)
+            return actionError("Промокод з таким кодом вже існує", {
+                fieldErrors: { code: "Вже існує" },
             });
         return runAction("promo.create", async () => {
             await prisma.promoCode.create({

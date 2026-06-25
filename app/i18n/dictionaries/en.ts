@@ -7,6 +7,19 @@
  * lives at the bottom.
  */
 export const en: Record<string, string> = {
+    // --- wishlist auth gate ---
+    "Збережіть улюблені товари": "Save your favourites",
+    "Увійдіть або зареєструйтеся, щоб зберігати обране та повертатися до нього будь-коли":
+        "Sign in or create an account to save items and come back to them anytime",
+    "Товар буде збережено після входу": "The item will be saved after sign‑in",
+
+    // --- checkout: cart-price reconciliation ---
+    "Ціни в кошику оновлено до актуальних.": "Cart prices have been updated to the current ones.",
+    "Деякі товари більше недоступні — їх прибрано з кошика.":
+        "Some items are no longer available — they were removed from your cart.",
+    "Ціни оновилися. Кошик перераховано — перевірте суму та оформіть ще раз.":
+        "Prices have changed. Your cart was recalculated — check the total and place the order again.",
+
     // --- delivery (no free shipping — always carrier tariff) ---
     "За тарифами перевізника": "At carrier's rates",
     "Доставка за тарифами перевізника": "Delivery at the carrier's rates",
