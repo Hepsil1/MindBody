@@ -214,6 +214,16 @@ model FilterConfig {
   updatedAt DateTime @updatedAt
 }
 
+// Editable shop taxonomy (shop -> category -> {label, fabrics[], sleeves[]}),
+// stored as one JSON blob. When absent/empty the code falls back to the
+// hardcoded DEFAULT_TAXONOMY (app/utils/taxonomy.ts), so the menu/filters never
+// break. Read into the active taxonomy at startup + refreshed on admin save.
+model TaxonomyConfig {
+  id        String   @id @default("default")
+  config    String
+  updatedAt DateTime @updatedAt
+}
+
 model Review {
   id         String   @id @default(uuid())
   productId  String

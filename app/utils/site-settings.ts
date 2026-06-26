@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { useRouteLoaderData } from "react-router";
+import {
+    DEFAULT_TAXONOMY,
+    DEFAULT_FABRIC_LABELS,
+    DEFAULT_SLEEVE_LABELS,
+    type ShopTaxonomy,
+} from "./taxonomy";
 
 /**
  * Owner-editable site content (client-safe module — types, defaults, Zod
@@ -97,12 +103,27 @@ export const navFeaturedSchema = z.object({
 });
 export type NavFeaturedSettings = z.infer<typeof navFeaturedSchema>;
 
+// Per-section NAV presentation: the header pill word, nav order, show/hide.
+// Slug stays fixed (URLs/SEO). The hero title/tagline lives on the ShopPage row
+// (edited in the hero editor), so it is intentionally NOT duplicated here.
+export const shopMetaItemSchema = z.object({
+    navLabel: z.string().trim().min(1).max(24), // header pill word, e.g. "YOGA"
+    hidden: z.boolean().optional(), // hide from the nav (page still reachable)
+});
+export type ShopMetaItem = z.infer<typeof shopMetaItemSchema>;
+export const shopMetaSchema = z.object({
+    items: z.record(z.string(), shopMetaItemSchema),
+    order: z.array(z.string()).optional(), // slug display order in the nav
+});
+export type ShopMetaSettings = z.infer<typeof shopMetaSchema>;
+
 export interface SiteSettings {
     contacts: ContactsSettings;
     homeFeatures: HomeFeaturesSettings;
     homeStats: HomeStatsSettings;
     homeBrandWorld: HomeBrandWorldSettings;
     navFeatured: NavFeaturedSettings;
+    shopMeta: ShopMetaSettings;
 }
 
 /** Per-key Zod schema — the action validates value JSON against these. */
@@ -112,6 +133,7 @@ export const SITE_SETTING_SCHEMAS = {
     homeStats: homeStatsSchema,
     homeBrandWorld: homeBrandWorldSchema,
     navFeatured: navFeaturedSchema,
+    shopMeta: shopMetaSchema,
 } as const;
 
 export type SiteSettingKey = keyof typeof SITE_SETTING_SCHEMAS;
@@ -203,6 +225,19 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
             },
         },
     },
+    // Mirrors the previously-hardcoded NAV labels (Header.tsx) + natural
+    // SHOP_SLUGS order. The owner edits these; the header falls back here.
+    shopMeta: {
+        order: ["yoga", "sport", "dance", "casual", "kids", "yogatools"],
+        items: {
+            yoga: { navLabel: "YOGA" },
+            sport: { navLabel: "SPORT" },
+            dance: { navLabel: "DANCE" },
+            casual: { navLabel: "CASUAL" },
+            kids: { navLabel: "KIDS" },
+            yogatools: { navLabel: "YOGATOOLS" },
+        },
+    },
 };
 
 /**
@@ -272,7 +307,42 @@ export function useSiteSettings(): SiteSettings {
  * everything from the static taxonomy, the same behaviour the site had
  * before the F-024 fix.
  */
+/** Per-section nav labels / hero copy / order / visibility (from the root
+    loader site settings). Falls back to the built-in defaults. */
+export function useShopMeta(): ShopMetaSettings {
+    return useSiteSettings().shopMeta;
+}
+
 export function useMegaCounts(): Record<string, number> {
     const data = useRouteLoaderData("root") as { megaCounts?: Record<string, number> } | undefined;
     return data?.megaCounts ?? {};
+}
+
+/**
+ * Active shop taxonomy (categories + fabric/sleeve per shop), provided by the
+ * root loader from the DB config. Used by the mega-menu so an admin edit
+ * reflects on SSR AND after client navigation — both render from this same
+ * serialized object, avoiding a hydration mismatch. Falls back to the
+ * hardcoded DEFAULT_TAXONOMY when root data is unavailable.
+ */
+export function useTaxonomy(): ShopTaxonomy {
+    const data = useRouteLoaderData("root") as { taxonomy?: ShopTaxonomy } | undefined;
+    return data?.taxonomy ?? DEFAULT_TAXONOMY;
+}
+
+/** Editable fabric/sleeve vocabulary (code → label), from the root loader.
+    Lets the menu + admin editor show admin-renamed labels and custom codes.
+    Falls back to the hardcoded defaults. */
+export interface VocabLabels {
+    fabricLabels: Record<string, string>;
+    sleeveLabels: Record<string, string>;
+}
+export function useVocab(): VocabLabels {
+    const data = useRouteLoaderData("root") as { vocab?: VocabLabels } | undefined;
+    return (
+        data?.vocab ?? {
+            fabricLabels: DEFAULT_FABRIC_LABELS,
+            sleeveLabels: DEFAULT_SLEEVE_LABELS,
+        }
+    );
 }

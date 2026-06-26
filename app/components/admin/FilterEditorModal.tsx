@@ -1,22 +1,35 @@
-import { useState, useEffect, useRef, Fragment, type ReactNode } from "react";
-import type { FetcherWithComponents } from "react-router";
+import { useState, useEffect, useRef, Fragment, type ReactNode, type CSSProperties } from "react";
+import { useFetcher, type FetcherWithComponents } from "react-router";
 import type { ShopPage, FilterConfig } from "@prisma/client";
-import { parseAndMergeFilterConfig } from "../../utils/filters";
-import { knownCategorySlugsFor, ALLOWED_CATEGORY_SLUGS } from "../../utils/categoryMap";
-import { useDirty } from "./useDirty";
+import { parseAndMergeFilterConfig, type MergedFilterConfig } from "../../utils/filters";
+import { useTaxonomy, useVocab, useShopMeta, useSiteSettings } from "../../utils/site-settings";
+import {
+    SHOP_SLUGS,
+    fabricLabel,
+    sleeveLabel,
+    DEFAULT_FABRIC_LABELS,
+    DEFAULT_SLEEVE_LABELS,
+    type ShopTaxonomy,
+    type SubcategoryDef,
+} from "../../utils/taxonomy";
+import { FilePickerField } from "./FilePickerField";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { useModalA11y } from "./useModalA11y";
 
 /**
- * Filter Editor Modal — extracted from app/routes/admin/slides.tsx
- * to keep the visual editor route file scannable. Owns the full
- * categories/colors/sizes/priceRanges editing UI for the global
- * filter config plus optional per-shop overrides.
+ * «Меню та фільтри магазину» — master-detail editor for the whole storefront menu
+ * and product filters, all in one place.
+ *
+ *   LEFT RAIL: the 6 top-level sections (reorder / rename the nav word / hide) +
+ *   «Загальні фільтри» + «Словник» (fabric/sleeve vocabulary).
+ *   DETAIL: for a section — its mega-menu featured card, its menu categories
+ *   (with fabric/sleeve pills), and its product filters; for «Загальні» — the
+ *   default colors/sizes/prices; for «Словник» — editable fabric/sleeve labels.
+ *
+ * Structural keys (shop slug, category slug, fabric/sleeve code) are immutable —
+ * only display values change — so edits can never orphan a product or a URL.
  */
-/** Per-page facet counts (categories/colors/sizes -> product count), built
-    server-side by deriveAvailableFacets. Keyed by shop slug, plus a "global"
-    union bucket. Drives which filters the editor SHOWS so it mirrors the live
-    storefront (a facet with 0 products on a page is hidden there too). */
+
 type FacetCounts = {
     categories: Record<string, number>;
     colors: Record<string, number>;
@@ -32,7 +45,9 @@ interface FilterEditorModalProps {
     fetcher: FetcherWithComponents<unknown>;
 }
 
-/** Ukrainian plural for "товар" (1 товар / 2-4 товари / 5+ товарів). */
+type Scope = { kind: "section"; slug: string } | { kind: "global" } | { kind: "vocab" };
+
+/** Ukrainian plural for "товар". */
 function tovarWord(n: number): string {
     const d = n % 10;
     const dd = n % 100;
@@ -40,6 +55,101 @@ function tovarWord(n: number): string {
     if (d >= 2 && d <= 4 && (dd < 12 || dd > 14)) return "товари";
     return "товарів";
 }
+
+const CYR_MAP: Record<string, string> = {
+    а: "a",
+    б: "b",
+    в: "v",
+    г: "h",
+    ґ: "g",
+    д: "d",
+    е: "e",
+    є: "ie",
+    ж: "zh",
+    з: "z",
+    и: "y",
+    і: "i",
+    ї: "i",
+    й: "i",
+    к: "k",
+    л: "l",
+    м: "m",
+    н: "n",
+    о: "o",
+    п: "p",
+    р: "r",
+    с: "s",
+    т: "t",
+    у: "u",
+    ф: "f",
+    х: "kh",
+    ц: "ts",
+    ч: "ch",
+    ш: "sh",
+    щ: "shch",
+    ь: "",
+    ю: "iu",
+    я: "ia",
+    ъ: "",
+    ы: "y",
+    э: "e",
+    ё: "e",
+};
+function slugify(s: string): string {
+    return s
+        .toLowerCase()
+        .trim()
+        .split("")
+        .map((c) => (c in CYR_MAP ? CYR_MAP[c] : c))
+        .join("")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+// ---- inline style tokens ---------------------------------------------------
+const sInput: CSSProperties = {
+    background: "#0f1216",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "#fff",
+    borderRadius: "8px",
+    padding: "10px 14px",
+    fontSize: "13px",
+    outline: "none",
+};
+const sCard: CSSProperties = {
+    background: "rgba(255,255,255,0.03)",
+    padding: "16px",
+    borderRadius: "16px",
+    border: "1px solid rgba(255,255,255,0.06)",
+};
+const sPrimaryBtn: CSSProperties = {
+    padding: "0 20px",
+    height: "40px",
+    background: "var(--accent-primary)",
+    color: "#000",
+    border: "none",
+    borderRadius: "8px",
+    fontWeight: 700,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+};
+const sIconBtn: CSSProperties = {
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    color: "#94a3b8",
+    cursor: "pointer",
+    borderRadius: "8px",
+    width: "30px",
+    height: "30px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "13px",
+    flexShrink: 0,
+};
+
+const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
 
 export function FilterEditorModal({
     isOpen,
@@ -49,34 +159,77 @@ export function FilterEditorModal({
     availableFacets = {},
     fetcher,
 }: FilterEditorModalProps) {
-    const [selectedPage, setSelectedPage] = useState("global");
+    // ---- live data seeds (from root loader) --------------------------------
+    const liveTaxonomy = useTaxonomy();
+    const liveVocab = useVocab();
+    const liveShopMeta = useShopMeta();
+    const { navFeatured } = useSiteSettings();
 
-    const [data, setData] = useState(() => {
-        const globalRow = filterConfigs.find((c) => c.id === "global");
-        return parseAndMergeFilterConfig(globalRow?.config);
-    });
-    // Snapshot of the config as last loaded for `selectedPage` — the dirty check
-    // and the "discard unsaved changes?" guard compare `data` against this.
-    const [initialData, setInitialData] = useState(data);
+    const sectionOrder = [
+        ...(liveShopMeta.order ?? []).filter((s) => SHOP_SLUGS.includes(s)),
+        ...SHOP_SLUGS.filter((s) => !(liveShopMeta.order ?? []).includes(s)),
+    ];
 
+    const [scope, setScope] = useState<Scope>({ kind: "section", slug: sectionOrder[0] });
+
+    // ---- editable state (deep copies) --------------------------------------
+    const [taxonomy, setTaxonomy] = useState<ShopTaxonomy>(() => clone(liveTaxonomy));
+    const [fabricLabels, setFabricLabels] = useState<Record<string, string>>(() =>
+        clone(liveVocab.fabricLabels),
+    );
+    const [sleeveLabels, setSleeveLabels] = useState<Record<string, string>>(() =>
+        clone(liveVocab.sleeveLabels),
+    );
+    const [shopMeta, setShopMeta] = useState(() => clone(liveShopMeta));
+    const [filtersByPage, setFiltersByPage] = useState<Record<string, MergedFilterConfig>>({});
+
+    // Initial snapshots for dirty-tracking. State (not a ref) so they can be read
+    // during render; set once and never replaced. Filters seed lazily per page.
+    const [initialSnap] = useState(() => ({
+        taxonomy: JSON.stringify(liveTaxonomy),
+        fabricLabels: JSON.stringify(liveVocab.fabricLabels),
+        sleeveLabels: JSON.stringify(liveVocab.sleeveLabels),
+        shopMeta: JSON.stringify(liveShopMeta),
+    }));
+    const [initialFilters, setInitialFilters] = useState<Record<string, string>>({});
+
+    // Filter page for the current scope (section slug, or "global"; vocab = none).
+    const filterPage =
+        scope.kind === "section" ? scope.slug : scope.kind === "global" ? "global" : null;
+    // Seed the active page's filter config lazily, recording its initial JSON.
     useEffect(() => {
-        const configRow = filterConfigs.find((c) => c.id === selectedPage);
+        if (!filterPage || filtersByPage[filterPage]) return;
+        const row = filterConfigs.find((c) => c.id === filterPage);
         const globalRow = filterConfigs.find((c) => c.id === "global");
-        // Per-shop config overrides global; fall back to global, then defaults.
-        const loaded = parseAndMergeFilterConfig(configRow?.config || globalRow?.config);
-        setData(loaded);
-        setInitialData(loaded);
-    }, [selectedPage, filterConfigs]);
+        const seeded = parseAndMergeFilterConfig(row?.config || globalRow?.config);
+        setInitialFilters((prev) => ({ ...prev, [filterPage]: JSON.stringify(seeded) }));
+        setFiltersByPage((prev) => ({ ...prev, [filterPage]: seeded }));
+    }, [filterPage, filterConfigs, filtersByPage]);
 
+    const data = filterPage ? filtersByPage[filterPage] : undefined;
+    const setData = (updater: (prev: MergedFilterConfig) => MergedFilterConfig) => {
+        if (!filterPage) return;
+        setFiltersByPage((prev) => ({ ...prev, [filterPage]: updater(prev[filterPage]) }));
+    };
+
+    // ---- dirty tracking ----------------------------------------------------
+    const taxonomyDirty = JSON.stringify(taxonomy) !== initialSnap.taxonomy;
+    const vocabDirty =
+        JSON.stringify(fabricLabels) !== initialSnap.fabricLabels ||
+        JSON.stringify(sleeveLabels) !== initialSnap.sleeveLabels;
+    const shopMetaDirty = JSON.stringify(shopMeta) !== initialSnap.shopMeta;
+    const dirtyFilterPages = Object.keys(filtersByPage).filter(
+        (p) => JSON.stringify(filtersByPage[p]) !== (initialFilters[p] ?? ""),
+    );
+    const dirty = taxonomyDirty || vocabDirty || shopMetaDirty || dirtyFilterPages.length > 0;
+    const invalidRange = Object.values(filtersByPage).some((cfg) =>
+        cfg.priceRanges.some((r) => Number(r.min) > Number(r.max)),
+    );
+
+    // ---- submit lifecycle --------------------------------------------------
     const closeOnSuccess = useRef(false);
     const saving = fetcher.state !== "idle";
     const [submitError, setSubmitError] = useState<string | null>(null);
-
-    // Close ONLY after the server confirms success. The previous code called
-    // onClose() immediately on submit ("for simplicity we close now"), so a
-    // rejected save (e.g. a price range with min>max) closed the modal and the
-    // operator never connected the error to their edit. Now: stay open while
-    // saving; on success close; on failure keep open and show the reason inline.
     useEffect(() => {
         if (fetcher.state !== "idle" || !closeOnSuccess.current) return;
         closeOnSuccess.current = false;
@@ -85,152 +238,202 @@ export function FilterEditorModal({
         else setSubmitError(res?.error ?? "Не вдалося зберегти зміни.");
     }, [fetcher.state, fetcher.data, onClose]);
 
-    const handleSave = () => {
-        setSubmitError(null);
-        const formData = new FormData();
-        formData.append("intent", "update_filters");
-        formData.append("pageSlug", selectedPage);
-        formData.append("config", JSON.stringify(data));
-        closeOnSuccess.current = true;
-        fetcher.submit(formData, { method: "post" });
-    };
-
-    // Client-side guards (the server still enforces both):
-    //  - invalidRange disables Save + shows a hint, so the operator fixes a
-    //    min>max range before a round-trip instead of after a rejected save.
-    //  - dirty + a ConfirmDialog stop an accidental close from silently dropping
-    //    unsaved edits.
-    const invalidRange = data.priceRanges.some((r) => Number(r.min) > Number(r.max));
-    const dirty = useDirty(data, initialData);
     const [showDiscard, setShowDiscard] = useState(false);
-    const requestClose = () => {
-        if (dirty) setShowDiscard(true);
-        else onClose();
-    };
-    // Focus trap + Escape-to-close; suspended while the discard ConfirmDialog
-    // (which has its own trap) is open.
+    const requestClose = () => (dirty ? setShowDiscard(true) : onClose());
     const dialogRef = useRef<HTMLDivElement>(null);
     useModalA11y(dialogRef, requestClose, !showDiscard);
 
-    // Category Logic. New categories are picked from the taxonomy catalog for
-    // the current page, minus the ones already in the config.
-    const [newCatKey, setNewCatKey] = useState("");
-    const [newCatLabel, setNewCatLabel] = useState("");
-    const availableCatalogCats = knownCategorySlugsFor(selectedPage).filter(
-        (c) => !(c.slug in data.categories),
-    );
-    const addCategory = () => {
-        if (!newCatKey || !newCatLabel) return;
-        setData((prev) => ({
-            ...prev,
-            categories: { ...prev.categories, [newCatKey]: newCatLabel },
-        }));
-        setNewCatKey("");
-        setNewCatLabel("");
-    };
-    const removeCategory = (key: string) => {
-        const newCats = { ...data.categories };
-        delete newCats[key];
-        setData((prev) => ({ ...prev, categories: newCats }));
+    const handleSave = () => {
+        setSubmitError(null);
+        const fd = new FormData();
+        fd.append("intent", "update_store");
+        if (taxonomyDirty || vocabDirty) {
+            fd.append("taxonomy", JSON.stringify({ shops: taxonomy, fabricLabels, sleeveLabels }));
+        }
+        if (shopMetaDirty) fd.append("shopMeta", JSON.stringify(shopMeta));
+        if (dirtyFilterPages.length) {
+            const filters: Record<string, MergedFilterConfig> = {};
+            for (const p of dirtyFilterPages) filters[p] = filtersByPage[p];
+            fd.append("filters", JSON.stringify(filters));
+        }
+        closeOnSuccess.current = true;
+        fetcher.submit(fd, { method: "post" });
     };
 
-    // Color Logic
-    const [newColorKey, setNewColorKey] = useState("");
+    // ---- taxonomy (categories) handlers ------------------------------------
+    const activeShop = scope.kind === "section" ? scope.slug : "";
+    const shopSubs: Array<[string, SubcategoryDef]> = activeShop
+        ? Object.entries(taxonomy[activeShop] ?? {})
+        : [];
+    const patchShop = (
+        mut: (subs: Record<string, SubcategoryDef>) => Record<string, SubcategoryDef>,
+    ) => setTaxonomy((prev) => ({ ...prev, [activeShop]: mut({ ...(prev[activeShop] ?? {}) }) }));
+    const renameCategory = (slug: string, label: string) =>
+        patchShop((subs) => ({ ...subs, [slug]: { ...subs[slug], label } }));
+    const toggleAxis = (slug: string, axis: "fabrics" | "sleeves", code: string) =>
+        patchShop((subs) => {
+            const def = { ...subs[slug] };
+            const cur = def[axis] ?? [];
+            const next = cur.includes(code) ? cur.filter((c) => c !== code) : [...cur, code];
+            if (next.length) def[axis] = next;
+            else delete def[axis];
+            return { ...subs, [slug]: def };
+        });
+    const removeCategory = (slug: string) =>
+        patchShop((subs) => {
+            const next = { ...subs };
+            delete next[slug];
+            return next;
+        });
+    const moveCategory = (slug: string, dir: -1 | 1) =>
+        patchShop((subs) => {
+            const entries = Object.entries(subs);
+            const i = entries.findIndex(([s]) => s === slug);
+            const j = i + dir;
+            if (i < 0 || j < 0 || j >= entries.length) return subs;
+            [entries[i], entries[j]] = [entries[j], entries[i]];
+            return Object.fromEntries(entries);
+        });
+
+    const [newCatLabel, setNewCatLabel] = useState("");
+    const [newCatSlug, setNewCatSlug] = useState("");
+    const [newCatSlugTouched, setNewCatSlugTouched] = useState(false);
+    const [taxoError, setTaxoError] = useState<string | null>(null);
+    const effNewSlug = newCatSlugTouched ? newCatSlug.trim() : slugify(newCatLabel);
+    const addCategory = () => {
+        const label = newCatLabel.trim();
+        if (!label) return setTaxoError("Вкажіть назву категорії.");
+        if (!effNewSlug || !SLUG_RE.test(effNewSlug))
+            return setTaxoError("Код категорії: лише латиниця, цифри та дефіс (напр. leggings).");
+        if (taxonomy[activeShop]?.[effNewSlug])
+            return setTaxoError(`Категорія з кодом «${effNewSlug}» вже існує.`);
+        patchShop((subs) => ({ ...subs, [effNewSlug]: { label } }));
+        setNewCatLabel("");
+        setNewCatSlug("");
+        setNewCatSlugTouched(false);
+        setTaxoError(null);
+    };
+
+    // ---- section (shopMeta) handlers ---------------------------------------
+    const setNavLabel = (slug: string, navLabel: string) =>
+        setShopMeta((prev) => ({
+            ...prev,
+            items: { ...prev.items, [slug]: { ...prev.items[slug], navLabel } },
+        }));
+    const toggleHidden = (slug: string) =>
+        setShopMeta((prev) => ({
+            ...prev,
+            items: {
+                ...prev.items,
+                [slug]: { ...prev.items[slug], hidden: !prev.items[slug]?.hidden },
+            },
+        }));
+    const moveSection = (slug: string, dir: -1 | 1) =>
+        setShopMeta((prev) => {
+            const order = [...sectionOrder];
+            const i = order.indexOf(slug);
+            const j = i + dir;
+            if (i < 0 || j < 0 || j >= order.length) return prev;
+            [order[i], order[j]] = [order[j], order[i]];
+            return { ...prev, order };
+        });
+    const liveOrder = [
+        ...(shopMeta.order ?? []).filter((s) => SHOP_SLUGS.includes(s)),
+        ...SHOP_SLUGS.filter((s) => !(shopMeta.order ?? []).includes(s)),
+    ];
+
+    // ---- vocabulary («Словник») handlers -----------------------------------
+    const renameVocab = (axis: "fabric" | "sleeve", code: string, label: string) =>
+        (axis === "fabric" ? setFabricLabels : setSleeveLabels)((prev) => ({
+            ...prev,
+            [code]: label,
+        }));
+    const removeVocab = (axis: "fabric" | "sleeve", code: string) =>
+        (axis === "fabric" ? setFabricLabels : setSleeveLabels)((prev) => {
+            const next = { ...prev };
+            delete next[code];
+            return next;
+        });
+    const [newVocab, setNewVocab] = useState({
+        fabric: { code: "", label: "" },
+        sleeve: { code: "", label: "" },
+    });
+    const [vocabError, setVocabError] = useState<string | null>(null);
+    const [confirmRemoveCode, setConfirmRemoveCode] = useState<{
+        axis: "fabric" | "sleeve";
+        code: string;
+    } | null>(null);
+    const addVocab = (axis: "fabric" | "sleeve") => {
+        const { code, label } = newVocab[axis];
+        const c = code.trim() || slugify(label);
+        if (!label.trim()) return setVocabError("Вкажіть назву.");
+        if (!c || !SLUG_RE.test(c))
+            return setVocabError("Код: лише латиниця, цифри та дефіс (напр. wool).");
+        const map = axis === "fabric" ? fabricLabels : sleeveLabels;
+        if (map[c]) return setVocabError(`Код «${c}» вже існує.`);
+        renameVocab(axis, c, label.trim());
+        setNewVocab((p) => ({ ...p, [axis]: { code: "", label: "" } }));
+        setVocabError(null);
+    };
+
+    // ---- filters (colors/sizes/prices) handlers ----------------------------
+    const [newColorHex, setNewColorHex] = useState("#888888");
     const [newColorLabel, setNewColorLabel] = useState("");
     const addColor = () => {
-        if (!newColorKey || !newColorLabel) return;
+        if (!newColorHex || !newColorLabel.trim()) return;
         setData((prev) => ({
             ...prev,
-            colors: { ...prev.colors, [newColorKey]: newColorLabel },
+            colors: { ...prev.colors, [newColorHex]: newColorLabel.trim() },
         }));
-        setNewColorKey("");
         setNewColorLabel("");
     };
-    const removeColor = (key: string) => {
-        const newColors = { ...data.colors };
-        delete newColors[key];
-        setData((prev) => ({ ...prev, colors: newColors }));
-    };
-
-    // Size Logic
+    const removeColor = (key: string) =>
+        setData((prev) => {
+            const next = { ...prev.colors };
+            delete next[key];
+            return { ...prev, colors: next };
+        });
     const [newSize, setNewSize] = useState("");
     const addSize = () => {
-        if (!newSize) return;
-        setData((prev) => ({
-            ...prev,
-            sizes: [...(prev.sizes || []), newSize],
-        }));
+        if (!newSize.trim()) return;
+        setData((prev) => ({ ...prev, sizes: [...(prev.sizes || []), newSize.trim()] }));
         setNewSize("");
     };
-
-    // Price Logic
-    const addPriceRange = () => {
-        const newRange = { id: `range-${Date.now()}`, label: "Новий діапазон", min: 0, max: 1000 };
+    const addPriceRange = () =>
         setData((prev) => ({
             ...prev,
-            priceRanges: [...prev.priceRanges, newRange],
+            priceRanges: [
+                ...prev.priceRanges,
+                {
+                    id: `range-${prev.priceRanges.length}-${Math.round(prev.priceRanges.reduce((a, r) => a + r.max, 1))}`,
+                    label: "Новий діапазон",
+                    min: 0,
+                    max: 1000,
+                },
+            ],
         }));
-    };
-    const removePriceRange = (idx: number) => {
-        const newRanges = data.priceRanges.filter((_, i: number) => i !== idx);
-        setData((prev) => ({ ...prev, priceRanges: newRanges }));
-    };
 
-    const updateLabel = (type: "categories" | "colors", key: string, val: string) => {
-        setData((prev) => ({
-            ...prev,
-            [type]: { ...prev[type], [key]: val },
-        }));
-    };
-
-    const updatePriceRange = (index: number, field: string, val: string | number) => {
-        const newRanges = [...data.priceRanges];
-        newRanges[index] = { ...newRanges[index], [field]: val };
-        setData((prev) => ({ ...prev, priceRanges: newRanges }));
-    };
-
-    // ---- Per-page sync (display only) ----------------------------------
-    // Mirror the live storefront: a category/colour/size shows here only when
-    // it has >0 active products on the selected page — the same gate
-    // shop.$category.tsx applies (count===0 -> hidden). `data` is NEVER pruned,
-    // so Save still posts the full config (incl. hidden entries) — non-destructive.
-    // `gate` is off only when no product data loaded at all (loader error /
-    // empty store) so the editor never looks like "everything disappeared".
+    // ---- facet counts (display) --------------------------------------------
     const gate = Boolean(availableFacets && availableFacets.global);
-    const avail: FacetCounts = (availableFacets && availableFacets[selectedPage]) || {
+    const avail: FacetCounts = (filterPage && availableFacets[filterPage]) || {
         categories: {},
         colors: {},
         sizes: {},
     };
-    // Counts replicate the storefront's dual slug-OR-label match
-    // (shop.$category.tsx: p.category === slug || p.category === label).
     const catCount = (key: string) =>
         (avail.categories[key] || 0) +
-        (data.categories[key] ? avail.categories[data.categories[key]] || 0 : 0);
+        (taxonomy[activeShop]?.[key]?.label
+            ? avail.categories[taxonomy[activeShop]![key].label] || 0
+            : 0);
     const colorCount = (key: string) =>
-        (avail.colors[key] || 0) + (data.colors[key] ? avail.colors[data.colors[key]] || 0 : 0);
+        (avail.colors[key] || 0) + (data?.colors[key] ? avail.colors[data.colors[key]] || 0 : 0);
     const sizeCount = (size: string) => avail.sizes[size] || 0;
 
-    const catEntries = Object.entries(data.categories);
-    const colorEntries = Object.entries(data.colors);
-    const sizeItems = (data.sizes || []).map((size, idx) => ({ size, idx }));
-    const presentCats = catEntries.filter(([k]) => !gate || catCount(k) > 0);
-    const hiddenCats = catEntries.filter(([k]) => gate && catCount(k) === 0);
-    const presentColors = colorEntries.filter(([k]) => !gate || colorCount(k) > 0);
-    const hiddenColors = colorEntries.filter(([k]) => gate && colorCount(k) === 0);
-    const presentSizes = sizeItems.filter(({ size }) => !gate || sizeCount(size) > 0);
-    const hiddenSizes = sizeItems.filter(({ size }) => gate && sizeCount(size) === 0);
-    const pageTitle = shopPages.find((p) => p.slug === selectedPage)?.title ?? selectedPage;
-    // Grammatical context for the "no products here" copy — "global" is the
-    // master vocabulary (all pages), not a single page.
-    const noProductsWhere =
-        selectedPage === "global" ? "у жодному розділі" : `на сторінці «${pageTitle}»`;
-
+    // ---- small UI helpers --------------------------------------------------
     const countPill = (n: number) => (
         <span
-            title="товарів на цій сторінці"
+            title="товарів тут"
             style={{
-                marginLeft: "8px",
                 fontSize: "10px",
                 color: "#5eead4",
                 background: "rgba(94,234,212,0.1)",
@@ -239,150 +442,325 @@ export function FilterEditorModal({
                 padding: "1px 7px",
                 whiteSpace: "nowrap",
                 fontWeight: 600,
-                textTransform: "none",
             }}
         >
             {n} {tovarWord(n)}
         </span>
     );
-
-    const hiddenDisclosure = (count: number, cols: string, children: ReactNode) =>
-        count === 0 ? null : (
-            <details style={{ marginTop: "4px", marginBottom: "8px" }}>
-                <summary
-                    style={{
-                        cursor: "pointer",
-                        color: "#64748b",
-                        fontSize: "12px",
-                        padding: "8px 0",
-                        userSelect: "none",
-                    }}
-                >
-                    Налаштовано, але немає товарів {noProductsWhere} ({count})
-                </summary>
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: cols,
-                        gap: "16px",
-                        marginTop: "12px",
-                    }}
-                >
-                    {children}
-                </div>
-            </details>
-        );
-
-    const emptyNote = () =>
-        gate ? (
-            <p
-                style={{
-                    color: "#64748b",
-                    fontSize: "13px",
-                    fontStyle: "italic",
-                    margin: "0 0 16px",
-                }}
-            >
-                Поки немає товарів цієї групи {noProductsWhere}.
-            </p>
-        ) : null;
-
-    const categoryCard = (key: string, label: string, muted: boolean) => (
-        <div
+    const pill = (active: boolean, label: string, onClick: () => void, key: string) => (
+        <button
             key={key}
+            type="button"
+            onClick={onClick}
+            aria-pressed={active}
             style={{
-                background: "rgba(255,255,255,0.03)",
-                padding: "16px",
-                borderRadius: "16px",
-                border: "1px solid rgba(255,255,255,0.05)",
-                position: "relative",
-                opacity: muted ? 0.5 : 1,
+                padding: "5px 12px",
+                borderRadius: "999px",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                border: active
+                    ? "1px solid var(--accent-primary)"
+                    : "1px solid rgba(255,255,255,0.14)",
+                background: active ? "rgba(94,234,212,0.15)" : "transparent",
+                color: active ? "#5eead4" : "#94a3b8",
             }}
         >
-            <button
-                onClick={() => removeCategory(key)}
+            {active ? "✓ " : ""}
+            {label}
+        </button>
+    );
+    const sectionTitle = (txt: string, extra?: ReactNode) => (
+        <div
+            style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "14px",
+            }}
+        >
+            <h4
                 style={{
-                    position: "absolute",
-                    top: "12px",
-                    right: "12px",
-                    background: "none",
-                    border: "none",
-                    color: "#ef4444",
-                    cursor: "pointer",
-                    opacity: 0.6,
-                }}
-            >
-                ✕
-            </button>
-            <div
-                style={{
-                    fontSize: "10px",
-                    color: "#475569",
-                    marginBottom: "8px",
+                    color: "var(--accent-primary)",
+                    fontSize: "12px",
                     textTransform: "uppercase",
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: "8px",
+                    letterSpacing: "2px",
+                    margin: 0,
+                    borderLeft: "3px solid var(--accent-primary)",
+                    paddingLeft: "12px",
                 }}
             >
-                ID: {key}
-                {!ALLOWED_CATEGORY_SLUGS.has(key) && (
-                    <span
-                        style={{
-                            color: "#fbbf24",
-                            background: "rgba(251, 191, 36, 0.12)",
-                            border: "1px solid rgba(251, 191, 36, 0.3)",
-                            borderRadius: "6px",
-                            padding: "1px 6px",
-                            textTransform: "none",
-                            fontWeight: 600,
-                        }}
-                    >
-                        немає в каталозі
-                    </span>
-                )}
-                {!muted && countPill(catCount(key))}
-            </div>
-            <input
-                type="text"
-                value={label}
-                onChange={(e) => updateLabel("categories", key, e.target.value)}
-                style={{
-                    width: "100%",
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: "#fff",
-                    fontSize: "14px",
-                    borderRadius: "8px",
-                    padding: "8px 12px",
-                }}
-            />
+                {txt}
+            </h4>
+            {extra}
         </div>
     );
 
-    const colorCard = (key: string, label: string, muted: boolean) => (
+    const railItem = (
+        active: boolean,
+        dirtyDot: boolean,
+        onClick: () => void,
+        children: ReactNode,
+        extra?: ReactNode,
+    ) => (
+        <div
+            onClick={onClick}
+            style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 12px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                background: active ? "rgba(94,234,212,0.12)" : "transparent",
+                border: active ? "1px solid var(--accent-primary)" : "1px solid transparent",
+                color: active ? "#fff" : "#cbd5e1",
+                fontSize: "13px",
+                fontWeight: 600,
+            }}
+        >
+            <span
+                style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}
+            >
+                {children}
+            </span>
+            {dirtyDot && (
+                <span
+                    title="Незбережені зміни"
+                    style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: "50%",
+                        background: "#fbbf24",
+                        flexShrink: 0,
+                    }}
+                />
+            )}
+            {extra}
+        </div>
+    );
+
+    // ---- detail: category card ---------------------------------------------
+    const fabricCodes = Object.keys(fabricLabels);
+    const sleeveCodes = Object.keys(sleeveLabels);
+    const fLabel = (c: string) => fabricLabels[c] ?? fabricLabel(c);
+    const sLabel = (c: string) => sleeveLabels[c] ?? sleeveLabel(c);
+    const sectionTitleOf = (slug: string) => shopPages.find((p) => p.slug === slug)?.title ?? slug;
+
+    const categoryCard = (slug: string, def: SubcategoryDef, idx: number, total: number) => {
+        const fabrics = def.fabrics ?? [];
+        const sleeves = def.sleeves ?? [];
+        const preview = [shopMeta.items[activeShop]?.navLabel || activeShop, def.label || "—"];
+        if (fabrics.length) preview.push(fabrics.map(fLabel).join("/"));
+        if (sleeves.length) preview.push(sleeves.map(sLabel).join("/"));
+        return (
+            <div key={slug} style={{ ...sCard, padding: "16px" }}>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                    <input
+                        value={def.label}
+                        onChange={(e) => renameCategory(slug, e.target.value)}
+                        placeholder="Назва категорії"
+                        aria-label="Назва категорії"
+                        style={{
+                            ...sInput,
+                            flex: 1,
+                            fontSize: "15px",
+                            fontWeight: 600,
+                            background: "rgba(255,255,255,0.05)",
+                        }}
+                    />
+                    <span
+                        title="Адреса (незмінна)"
+                        style={{ fontSize: "11px", color: "#475569", fontFamily: "monospace" }}
+                    >
+                        /{slug}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => moveCategory(slug, -1)}
+                        disabled={idx === 0}
+                        aria-label="Вгору"
+                        style={{ ...sIconBtn, opacity: idx === 0 ? 0.3 : 1 }}
+                    >
+                        ↑
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => moveCategory(slug, 1)}
+                        disabled={idx === total - 1}
+                        aria-label="Вниз"
+                        style={{ ...sIconBtn, opacity: idx === total - 1 ? 0.3 : 1 }}
+                    >
+                        ↓
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => removeCategory(slug)}
+                        aria-label="Видалити"
+                        style={{ ...sIconBtn, color: "#ef4444" }}
+                    >
+                        ✕
+                    </button>
+                </div>
+                <div
+                    style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "18px",
+                        marginTop: "12px",
+                        alignItems: "center",
+                    }}
+                >
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        <span style={{ fontSize: "11px", color: "#64748b", minWidth: "56px" }}>
+                            Тканина
+                        </span>
+                        {fabricCodes.map((c) =>
+                            pill(
+                                fabrics.includes(c),
+                                fLabel(c),
+                                () => toggleAxis(slug, "fabrics", c),
+                                `f-${c}`,
+                            ),
+                        )}
+                    </div>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        <span style={{ fontSize: "11px", color: "#64748b", minWidth: "44px" }}>
+                            Рукав
+                        </span>
+                        {sleeveCodes.map((c) =>
+                            pill(
+                                sleeves.includes(c),
+                                sLabel(c),
+                                () => toggleAxis(slug, "sleeves", c),
+                                `s-${c}`,
+                            ),
+                        )}
+                    </div>
+                    {gate && catCount(slug) > 0 && countPill(catCount(slug))}
+                </div>
+                <div style={{ marginTop: "10px", fontSize: "11px", color: "#475569" }}>
+                    У меню: <span style={{ color: "#64748b" }}>{preview.join("  ›  ")}</span>
+                </div>
+            </div>
+        );
+    };
+
+    // ---- detail: featured card (own multipart fetcher) ---------------------
+    const featuredFetcher = useFetcher();
+    const featuredSaving = featuredFetcher.state !== "idle";
+    // A render FUNCTION (not a nested component) so the uncontrolled multipart
+    // form keeps its DOM state across parent re-renders.
+    const renderFeatured = (slug: string) => {
+        const item = navFeatured.items[slug];
+        return (
+            <div style={{ ...sCard, marginBottom: "22px" }}>
+                {sectionTitle("Картка мега-меню")}
+                <p style={{ color: "#64748b", fontSize: "12px", margin: "-6px 0 14px" }}>
+                    Велике фото, назва й бейдж у випадному меню цього розділу.
+                </p>
+                <featuredFetcher.Form
+                    method="post"
+                    encType="multipart/form-data"
+                    style={{
+                        display: "flex",
+                        gap: "16px",
+                        alignItems: "flex-start",
+                        flexWrap: "wrap",
+                    }}
+                >
+                    <input type="hidden" name="intent" value="update_nav_featured" />
+                    <input type="hidden" name={`${slug}_currentImage`} value={item?.image ?? ""} />
+                    <div
+                        style={{
+                            width: 84,
+                            height: 105,
+                            borderRadius: 10,
+                            overflow: "hidden",
+                            background: "#000",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            flexShrink: 0,
+                        }}
+                    >
+                        {item?.image && (
+                            <img
+                                src={item.image}
+                                alt=""
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                        )}
+                    </div>
+                    <div
+                        style={{
+                            flex: "1 1 240px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                        }}
+                    >
+                        <FilePickerField name={`${slug}_image_file`} label="Замінити фото" />
+                        <input
+                            name={`${slug}_title`}
+                            defaultValue={item?.title ?? ""}
+                            placeholder="Назва (напр. Yoga Колекція)"
+                            style={sInput}
+                        />
+                        <input
+                            name={`${slug}_badge`}
+                            defaultValue={item?.badge ?? ""}
+                            placeholder="Бейдж (напр. YOGA)"
+                            style={sInput}
+                        />
+                        <button
+                            type="submit"
+                            disabled={featuredSaving}
+                            style={{
+                                ...sPrimaryBtn,
+                                alignSelf: "flex-start",
+                                opacity: featuredSaving ? 0.5 : 1,
+                            }}
+                        >
+                            {featuredSaving ? "Збереження…" : "Оновити фото картки"}
+                        </button>
+                    </div>
+                </featuredFetcher.Form>
+            </div>
+        );
+    };
+
+    // ---- detail: filters (colors/sizes/prices) -----------------------------
+    const colorCard = (key: string, label: string) => (
         <div
             key={key}
             style={{
-                background: "rgba(255,255,255,0.03)",
-                padding: "16px",
-                borderRadius: "16px",
-                border: "1px solid rgba(255,255,255,0.05)",
+                ...sCard,
                 display: "flex",
                 gap: "12px",
                 alignItems: "center",
                 position: "relative",
-                opacity: muted ? 0.5 : 1,
             }}
         >
             <button
                 onClick={() => removeColor(key)}
+                aria-label="Видалити"
                 style={{
                     position: "absolute",
-                    top: "12px",
-                    right: "12px",
+                    top: 10,
+                    right: 10,
                     background: "none",
                     border: "none",
                     color: "#ef4444",
@@ -394,35 +772,38 @@ export function FilterEditorModal({
             </button>
             <div
                 style={{
-                    width: "32px",
-                    height: "32px",
+                    width: 32,
+                    height: 32,
                     borderRadius: "50%",
-                    background: key === "other" ? "linear-gradient(45deg, red, blue)" : key,
+                    background: key === "other" ? "linear-gradient(45deg,red,blue)" : key,
                     border: "2px solid rgba(255,255,255,0.2)",
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
                     flexShrink: 0,
                 }}
-            ></div>
-            <div style={{ flex: 1 }}>
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                     style={{
                         fontSize: "9px",
                         color: "#475569",
                         textTransform: "uppercase",
-                        marginBottom: "4px",
+                        marginBottom: 4,
                         display: "flex",
+                        gap: 6,
                         alignItems: "center",
                         flexWrap: "wrap",
-                        gap: "6px",
                     }}
                 >
-                    Key: {key}
-                    {!muted && countPill(colorCount(key))}
+                    <span style={{ fontFamily: "monospace" }}>{key}</span>
+                    {gate && colorCount(key) > 0 && countPill(colorCount(key))}
                 </div>
                 <input
-                    type="text"
                     value={label}
-                    onChange={(e) => updateLabel("colors", key, e.target.value)}
+                    onChange={(e) =>
+                        setData((prev) => ({
+                            ...prev,
+                            colors: { ...prev.colors, [key]: e.target.value },
+                        }))
+                    }
                     style={{
                         width: "100%",
                         background: "transparent",
@@ -436,59 +817,363 @@ export function FilterEditorModal({
             </div>
         </div>
     );
+    const renderFilters = (label: string) =>
+        data && (
+            <div>
+                {scope.kind === "section" && (
+                    <p style={{ color: "#64748b", fontSize: "12px", margin: "0 0 16px" }}>
+                        Фільтри для розділу «{label}». За замовчуванням успадковані із «Загальних».
+                    </p>
+                )}
+                {/* Colors */}
+                <div style={{ marginBottom: 32 }}>
+                    {sectionTitle("Кольори")}
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
+                            gap: 14,
+                            marginBottom: 14,
+                        }}
+                    >
+                        {Object.entries(data.colors).map(([k, v]) => colorCard(k, v))}
+                    </div>
+                    <div
+                        style={{
+                            background: "rgba(94,234,212,0.05)",
+                            padding: 14,
+                            borderRadius: 14,
+                            border: "1px dashed rgba(94,234,212,0.3)",
+                            display: "flex",
+                            gap: 12,
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                        }}
+                    >
+                        <input
+                            type="color"
+                            value={newColorHex}
+                            onChange={(e) => setNewColorHex(e.target.value)}
+                            aria-label="Колір"
+                            style={{
+                                width: 44,
+                                height: 40,
+                                padding: 0,
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                borderRadius: 8,
+                                background: "transparent",
+                                cursor: "pointer",
+                            }}
+                        />
+                        <input
+                            placeholder="Назва (напр. Бірюзовий)"
+                            value={newColorLabel}
+                            onChange={(e) => setNewColorLabel(e.target.value)}
+                            style={{ ...sInput, flex: "1 1 180px" }}
+                        />
+                        <button onClick={addColor} style={sPrimaryBtn}>
+                            Додати
+                        </button>
+                    </div>
+                </div>
+                {/* Prices */}
+                <div style={{ marginBottom: 32 }}>
+                    {sectionTitle(
+                        "Діапазони цін",
+                        <button
+                            onClick={addPriceRange}
+                            style={{
+                                ...sIconBtn,
+                                width: "auto",
+                                padding: "0 14px",
+                                color: "var(--accent-primary)",
+                                borderColor: "var(--accent-primary)",
+                            }}
+                        >
+                            + Додати
+                        </button>,
+                    )}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        {data.priceRanges.map((range, idx) => (
+                            <div
+                                key={range.id ?? idx}
+                                style={{
+                                    ...sCard,
+                                    display: "grid",
+                                    gridTemplateColumns: "2fr 1fr 1fr 40px",
+                                    gap: 14,
+                                    alignItems: "center",
+                                }}
+                            >
+                                <input
+                                    value={range.label}
+                                    placeholder="Назва"
+                                    onChange={(e) =>
+                                        setData((prev) => {
+                                            const r = [...prev.priceRanges];
+                                            r[idx] = { ...r[idx], label: e.target.value };
+                                            return { ...prev, priceRanges: r };
+                                        })
+                                    }
+                                    style={{
+                                        width: "100%",
+                                        background: "transparent",
+                                        border: "none",
+                                        color: "#fff",
+                                        fontSize: 15,
+                                        fontWeight: 600,
+                                        outline: "none",
+                                        borderBottom: "1px solid rgba(255,255,255,0.1)",
+                                    }}
+                                />
+                                <input
+                                    type="number"
+                                    value={range.min}
+                                    aria-label="Від"
+                                    onChange={(e) =>
+                                        setData((prev) => {
+                                            const r = [...prev.priceRanges];
+                                            r[idx] = {
+                                                ...r[idx],
+                                                min: parseInt(e.target.value) || 0,
+                                            };
+                                            return { ...prev, priceRanges: r };
+                                        })
+                                    }
+                                    style={{ ...sInput, width: "100%", padding: 10 }}
+                                />
+                                <input
+                                    type="number"
+                                    value={range.max}
+                                    aria-label="До"
+                                    onChange={(e) =>
+                                        setData((prev) => {
+                                            const r = [...prev.priceRanges];
+                                            r[idx] = {
+                                                ...r[idx],
+                                                max: parseInt(e.target.value) || 0,
+                                            };
+                                            return { ...prev, priceRanges: r };
+                                        })
+                                    }
+                                    style={{ ...sInput, width: "100%", padding: 10 }}
+                                />
+                                <button
+                                    onClick={() =>
+                                        setData((prev) => ({
+                                            ...prev,
+                                            priceRanges: prev.priceRanges.filter(
+                                                (_, i) => i !== idx,
+                                            ),
+                                        }))
+                                    }
+                                    aria-label="Видалити"
+                                    style={{
+                                        height: 40,
+                                        width: 40,
+                                        background: "rgba(239,68,68,0.1)",
+                                        border: "none",
+                                        color: "#ef4444",
+                                        borderRadius: 10,
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                {/* Sizes */}
+                <div>
+                    {sectionTitle("Розміри")}
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fill,minmax(110px,1fr))",
+                            gap: 10,
+                            marginBottom: 14,
+                        }}
+                    >
+                        {(data.sizes || []).map((size, idx) => (
+                            <div
+                                key={idx}
+                                style={{
+                                    ...sCard,
+                                    padding: 10,
+                                    borderRadius: 12,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 8,
+                                }}
+                            >
+                                <input
+                                    value={size}
+                                    onChange={(e) =>
+                                        setData((prev) => {
+                                            const s = [...prev.sizes];
+                                            s[idx] = e.target.value;
+                                            return { ...prev, sizes: s };
+                                        })
+                                    }
+                                    style={{
+                                        flex: 1,
+                                        background: "transparent",
+                                        border: "none",
+                                        color: "#fff",
+                                        fontSize: 14,
+                                        outline: "none",
+                                        textAlign: "center",
+                                        minWidth: 0,
+                                    }}
+                                />
+                                <button
+                                    onClick={() =>
+                                        setData((prev) => ({
+                                            ...prev,
+                                            sizes: prev.sizes.filter((_, i) => i !== idx),
+                                        }))
+                                    }
+                                    aria-label="Видалити"
+                                    style={{
+                                        background: "none",
+                                        border: "none",
+                                        color: "#ef4444",
+                                        cursor: "pointer",
+                                        fontSize: 12,
+                                        opacity: 0.5,
+                                    }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                    <div
+                        style={{
+                            background: "rgba(94,234,212,0.05)",
+                            padding: 14,
+                            borderRadius: 14,
+                            border: "1px dashed rgba(94,234,212,0.3)",
+                            display: "flex",
+                            gap: 12,
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        <input
+                            placeholder="Новий розмір (напр. XXL)"
+                            value={newSize}
+                            onChange={(e) => setNewSize(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && addSize()}
+                            style={{ ...sInput, flex: "1 1 180px" }}
+                        />
+                        <button onClick={addSize} style={sPrimaryBtn}>
+                            Додати
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
 
-    const sizeCard = (size: string, idx: number, muted: boolean) => (
-        <div
-            key={idx}
-            style={{
-                background: "rgba(255,255,255,0.03)",
-                padding: "12px",
-                borderRadius: "12px",
-                border: "1px solid rgba(255,255,255,0.05)",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                position: "relative",
-                opacity: muted ? 0.5 : 1,
-            }}
-        >
-            <input
-                type="text"
-                value={size}
-                onChange={(e) => {
-                    const newSizes = [...data.sizes];
-                    newSizes[idx] = e.target.value;
-                    setData((prev) => ({ ...prev, sizes: newSizes }));
-                }}
-                style={{
-                    flex: 1,
-                    background: "transparent",
-                    border: "none",
-                    color: "#fff",
-                    fontSize: "14px",
-                    outline: "none",
-                    textAlign: "center",
-                    minWidth: "0",
-                }}
-            />
-            <button
-                onClick={() => {
-                    const newSizes = data.sizes.filter((_, i: number) => i !== idx);
-                    setData((prev) => ({ ...prev, sizes: newSizes }));
-                }}
-                style={{
-                    background: "none",
-                    border: "none",
-                    color: "#ef4444",
-                    cursor: "pointer",
-                    fontSize: "12px",
-                    opacity: 0.5,
-                }}
-            >
-                ✕
-            </button>
-        </div>
-    );
+    // ---- detail: vocabulary list -------------------------------------------
+    const vocabList = (axis: "fabric" | "sleeve") => {
+        const map = axis === "fabric" ? fabricLabels : sleeveLabels;
+        const defaults = axis === "fabric" ? DEFAULT_FABRIC_LABELS : DEFAULT_SLEEVE_LABELS;
+        return (
+            <div style={{ marginBottom: 28 }}>
+                {sectionTitle(axis === "fabric" ? "Тканина" : "Рукав")}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {Object.entries(map).map(([code, label]) => (
+                        <div
+                            key={code}
+                            style={{
+                                ...sCard,
+                                display: "flex",
+                                gap: 10,
+                                alignItems: "center",
+                                padding: 12,
+                            }}
+                        >
+                            <span
+                                style={{
+                                    fontFamily: "monospace",
+                                    fontSize: 12,
+                                    color: "#475569",
+                                    minWidth: 90,
+                                }}
+                            >
+                                {code}
+                            </span>
+                            <input
+                                value={label}
+                                onChange={(e) => renameVocab(axis, code, e.target.value)}
+                                aria-label={`Назва ${code}`}
+                                style={{ ...sInput, flex: 1, background: "rgba(255,255,255,0.05)" }}
+                            />
+                            {code in defaults ? (
+                                <span
+                                    style={{ fontSize: 10, color: "#475569", whiteSpace: "nowrap" }}
+                                >
+                                    вбудований
+                                </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmRemoveCode({ axis, code })}
+                                    aria-label="Видалити"
+                                    style={{ ...sIconBtn, color: "#ef4444" }}
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+                <div
+                    style={{
+                        background: "rgba(94,234,212,0.05)",
+                        padding: 14,
+                        borderRadius: 14,
+                        border: "1px dashed rgba(94,234,212,0.3)",
+                        display: "flex",
+                        gap: 12,
+                        flexWrap: "wrap",
+                        marginTop: 12,
+                    }}
+                >
+                    <input
+                        placeholder="Назва (напр. Шерсть)"
+                        value={newVocab[axis].label}
+                        onChange={(e) => {
+                            setNewVocab((p) => ({
+                                ...p,
+                                [axis]: { ...p[axis], label: e.target.value },
+                            }));
+                            setVocabError(null);
+                        }}
+                        style={{ ...sInput, flex: "2 1 160px" }}
+                    />
+                    <input
+                        placeholder="код (wool)"
+                        value={newVocab[axis].code}
+                        onChange={(e) => {
+                            setNewVocab((p) => ({
+                                ...p,
+                                [axis]: { ...p[axis], code: e.target.value },
+                            }));
+                            setVocabError(null);
+                        }}
+                        style={{ ...sInput, flex: "1 1 120px", fontFamily: "monospace" }}
+                    />
+                    <button onClick={() => addVocab(axis)} style={sPrimaryBtn}>
+                        Додати
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    const dirtyPagesSet = new Set(dirtyFilterPages);
 
     return (
         <>
@@ -502,97 +1187,52 @@ export function FilterEditorModal({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    padding: "20px",
+                    padding: 20,
                 }}
             >
                 <style
                     dangerouslySetInnerHTML={{
-                        __html: `
-                @keyframes modalSlideUp {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-            `,
+                        __html: `@keyframes modalUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`,
                     }}
                 />
                 <div
                     ref={dialogRef}
                     role="dialog"
                     aria-modal="true"
-                    aria-label="Керування фільтрами"
+                    aria-label="Меню та фільтри магазину"
                     style={{
                         width: "100%",
-                        maxWidth: "900px",
-                        maxHeight: "90vh",
+                        maxWidth: 1080,
+                        height: "92vh",
                         background: "#0f1216",
-                        borderRadius: "24px",
+                        borderRadius: 24,
                         border: "1px solid rgba(255,255,255,0.1)",
                         display: "flex",
                         flexDirection: "column",
                         boxShadow: "0 50px 100px rgba(0,0,0,0.6)",
                         overflow: "hidden",
-                        animation: "modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                        animation: "modalUp .3s cubic-bezier(.16,1,.3,1)",
                     }}
                 >
                     {/* Header */}
                     <div
                         style={{
-                            padding: "24px 32px",
+                            padding: "20px 28px",
                             borderBottom: "1px solid rgba(255,255,255,0.08)",
+                            background: "#161b22",
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            background: "#161b22",
                         }}
                     >
-                        <div style={{ display: "flex", gap: "32px", alignItems: "center" }}>
-                            <div>
-                                <h3
-                                    style={{
-                                        margin: 0,
-                                        color: "#fff",
-                                        fontSize: "18px",
-                                        fontWeight: 700,
-                                    }}
-                                >
-                                    Керування фільтрами
-                                </h3>
-                                <p
-                                    style={{
-                                        margin: "4px 0 0",
-                                        color: "#64748b",
-                                        fontSize: "13px",
-                                    }}
-                                >
-                                    Повне налаштування категорій, кольорів та цін.
-                                </p>
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                <span style={{ color: "#94a3b8", fontSize: "13px" }}>
-                                    Для сторінки:
-                                </span>
-                                <select
-                                    value={selectedPage}
-                                    onChange={(e) => setSelectedPage(e.target.value)}
-                                    aria-label="Сторінка, для якої редагуються фільтри"
-                                    style={{
-                                        background: "#0f1216",
-                                        border: "1px solid rgba(255,255,255,0.1)",
-                                        color: "#fff",
-                                        padding: "8px 12px",
-                                        borderRadius: "8px",
-                                        outline: "none",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    <option value="global">Всі сторінки (Global)</option>
-                                    {(shopPages || []).map((p) => (
-                                        <option key={p.slug} value={p.slug}>
-                                            {p.title ? `${p.title} (${p.slug})` : p.slug}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                        <div>
+                            <h3 style={{ margin: 0, color: "#fff", fontSize: 18, fontWeight: 700 }}>
+                                Меню та фільтри магазину
+                            </h3>
+                            <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 13 }}>
+                                Розділи меню, категорії, тканина/рукав та фільтри — все в одному
+                                місці.
+                            </p>
                         </div>
                         <button
                             type="button"
@@ -603,525 +1243,461 @@ export function FilterEditorModal({
                                 background: "rgba(255,255,255,0.05)",
                                 border: "none",
                                 cursor: "pointer",
-                                padding: "10px",
-                                borderRadius: "12px",
+                                padding: 10,
+                                borderRadius: 12,
                             }}
                         >
                             ✕
                         </button>
                     </div>
 
-                    {/* Body */}
-                    <div
-                        className="admin-scroll-custom"
-                        style={{ flex: 1, overflowY: "auto", padding: "32px" }}
-                    >
-                        {/* Categories */}
-                        <div style={{ marginBottom: "48px" }}>
+                    {/* Body: rail + detail */}
+                    <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+                        {/* RAIL */}
+                        <div
+                            className="admin-scroll-custom"
+                            style={{
+                                width: 232,
+                                flexShrink: 0,
+                                borderRight: "1px solid rgba(255,255,255,0.08)",
+                                overflowY: "auto",
+                                padding: "16px 12px",
+                                background: "#0c0f13",
+                            }}
+                        >
                             <div
                                 style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    marginBottom: "24px",
-                                }}
-                            >
-                                <h4
-                                    style={{
-                                        color: "var(--accent-primary)",
-                                        fontSize: "12px",
-                                        textTransform: "uppercase",
-                                        letterSpacing: "2px",
-                                        margin: 0,
-                                        borderLeft: "3px solid var(--accent-primary)",
-                                        paddingLeft: "12px",
-                                    }}
-                                >
-                                    КАТЕГОРІЇ
-                                </h4>
-                            </div>
-
-                            {presentCats.length === 0 && emptyNote()}
-                            <div
-                                style={{
-                                    display: "grid",
-                                    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-                                    gap: "16px",
-                                    marginBottom: "20px",
-                                }}
-                            >
-                                {presentCats.map(([key, label]) => (
-                                    <Fragment key={key}>{categoryCard(key, label, false)}</Fragment>
-                                ))}
-                            </div>
-                            {hiddenDisclosure(
-                                hiddenCats.length,
-                                "repeat(auto-fill, minmax(260px, 1fr))",
-                                hiddenCats.map(([key, label]) => (
-                                    <Fragment key={key}>{categoryCard(key, label, true)}</Fragment>
-                                )),
-                            )}
-
-                            <div
-                                style={{
-                                    background: "rgba(94, 234, 212, 0.05)",
-                                    padding: "20px",
-                                    borderRadius: "16px",
-                                    border: "1px dashed rgba(94, 234, 212, 0.3)",
-                                    display: "flex",
-                                    gap: "12px",
-                                }}
-                            >
-                                {/* New category is PICKED from the taxonomy catalog (single
-                                    source of truth) rather than free-typed — picking a slug
-                                    prefills its catalog label, which the operator can still
-                                    edit. Slugs already present are filtered out. */}
-                                <select
-                                    value={newCatKey}
-                                    onChange={(e) => {
-                                        const slug = e.target.value;
-                                        setNewCatKey(slug);
-                                        const found = availableCatalogCats.find(
-                                            (c) => c.slug === slug,
-                                        );
-                                        if (found && !newCatLabel) setNewCatLabel(found.label);
-                                    }}
-                                    aria-label="Категорія з каталогу"
-                                    style={{
-                                        flex: 1,
-                                        background: "#0f1216",
-                                        border: "1px solid rgba(255,255,255,0.1)",
-                                        color: "#fff",
-                                        borderRadius: "8px",
-                                        padding: "10px 14px",
-                                        fontSize: "13px",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    <option value="">— оберіть категорію —</option>
-                                    {availableCatalogCats.map((c) => (
-                                        <option key={c.slug} value={c.slug}>
-                                            {c.label} ({c.slug})
-                                        </option>
-                                    ))}
-                                </select>
-                                <input
-                                    placeholder="Назва (напр. Комбінезони)"
-                                    value={newCatLabel}
-                                    onChange={(e) => setNewCatLabel(e.target.value)}
-                                    style={{
-                                        flex: 2,
-                                        background: "#0f1216",
-                                        border: "1px solid rgba(255,255,255,0.1)",
-                                        color: "#fff",
-                                        borderRadius: "8px",
-                                        padding: "10px 14px",
-                                        fontSize: "13px",
-                                    }}
-                                />
-                                <button
-                                    onClick={addCategory}
-                                    style={{
-                                        padding: "0 20px",
-                                        background: "var(--accent-primary)",
-                                        color: "#000",
-                                        border: "none",
-                                        borderRadius: "8px",
-                                        fontWeight: 700,
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    Додати
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Colors */}
-                        <div style={{ marginBottom: "48px" }}>
-                            <h4
-                                style={{
-                                    color: "var(--accent-primary)",
-                                    fontSize: "12px",
+                                    fontSize: 10,
                                     textTransform: "uppercase",
-                                    letterSpacing: "2px",
-                                    marginBottom: "24px",
-                                    borderLeft: "3px solid var(--accent-primary)",
-                                    paddingLeft: "12px",
+                                    letterSpacing: 1,
+                                    color: "#475569",
+                                    fontWeight: 700,
+                                    padding: "4px 12px 8px",
                                 }}
                             >
-                                КОЛЬОРИ
-                            </h4>
-
-                            {presentColors.length === 0 && emptyNote()}
-                            <div
-                                style={{
-                                    display: "grid",
-                                    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-                                    gap: "16px",
-                                    marginBottom: "20px",
-                                }}
-                            >
-                                {presentColors.map(([key, label]) => (
-                                    <Fragment key={key}>{colorCard(key, label, false)}</Fragment>
-                                ))}
+                                Розділи (верхнє меню)
                             </div>
-                            {hiddenDisclosure(
-                                hiddenColors.length,
-                                "repeat(auto-fill, minmax(260px, 1fr))",
-                                hiddenColors.map(([key, label]) => (
-                                    <Fragment key={key}>{colorCard(key, label, true)}</Fragment>
-                                )),
-                            )}
-
-                            <div
-                                style={{
-                                    background: "rgba(94, 234, 212, 0.05)",
-                                    padding: "20px",
-                                    borderRadius: "16px",
-                                    border: "1px dashed rgba(94, 234, 212, 0.3)",
-                                    display: "flex",
-                                    gap: "12px",
-                                }}
-                            >
-                                <input
-                                    placeholder="CSS колір (напр. #FF0000)"
-                                    value={newColorKey}
-                                    onChange={(e) => setNewColorKey(e.target.value)}
-                                    style={{
-                                        flex: 1,
-                                        background: "#0f1216",
-                                        border: "1px solid rgba(255,255,255,0.1)",
-                                        color: "#fff",
-                                        borderRadius: "8px",
-                                        padding: "10px 14px",
-                                        fontSize: "13px",
-                                    }}
-                                />
-                                <input
-                                    placeholder="Назва (напр. Яскравий червоний)"
-                                    value={newColorLabel}
-                                    onChange={(e) => setNewColorLabel(e.target.value)}
-                                    style={{
-                                        flex: 2,
-                                        background: "#0f1216",
-                                        border: "1px solid rgba(255,255,255,0.1)",
-                                        color: "#fff",
-                                        borderRadius: "8px",
-                                        padding: "10px 14px",
-                                        fontSize: "13px",
-                                    }}
-                                />
-                                <button
-                                    onClick={addColor}
-                                    style={{
-                                        padding: "0 20px",
-                                        background: "var(--accent-primary)",
-                                        color: "#000",
-                                        border: "none",
-                                        borderRadius: "8px",
-                                        fontWeight: 700,
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    Додати
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Price Ranges */}
-                        <div style={{ marginBottom: "48px" }}>
-                            <div
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    marginBottom: "24px",
-                                }}
-                            >
-                                <h4
-                                    style={{
-                                        color: "var(--accent-primary)",
-                                        fontSize: "12px",
-                                        textTransform: "uppercase",
-                                        letterSpacing: "2px",
-                                        margin: 0,
-                                        borderLeft: "3px solid var(--accent-primary)",
-                                        paddingLeft: "12px",
-                                    }}
-                                >
-                                    ДІАПАЗОНИ ЦІН
-                                </h4>
-                                <button
-                                    onClick={addPriceRange}
-                                    style={{
-                                        padding: "6px 16px",
-                                        background: "rgba(94, 234, 212, 0.1)",
-                                        border: "1px solid var(--accent-primary)",
-                                        color: "var(--accent-primary)",
-                                        borderRadius: "8px",
-                                        fontSize: "11px",
-                                        fontWeight: 700,
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    + ДОДАТИ
-                                </button>
-                            </div>
-
-                            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                                {data.priceRanges.map((range, idx: number) => (
-                                    <div
-                                        key={range.id ?? idx}
-                                        style={{
-                                            background: "rgba(255,255,255,0.03)",
-                                            padding: "20px",
-                                            borderRadius: "20px",
-                                            border: "1px solid rgba(255,255,255,0.05)",
-                                            display: "grid",
-                                            gridTemplateColumns: "2fr 1fr 1fr 40px",
-                                            gap: "24px",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <div>
-                                            <div
-                                                style={{
-                                                    fontSize: "10px",
-                                                    color: "#475569",
-                                                    marginBottom: "6px",
-                                                    textTransform: "uppercase",
-                                                }}
-                                            >
-                                                Назва діапазону
-                                            </div>
-                                            <input
-                                                type="text"
-                                                value={range.label}
-                                                placeholder="Напр: Доступні ціни"
-                                                onChange={(e) =>
-                                                    updatePriceRange(idx, "label", e.target.value)
-                                                }
-                                                style={{
-                                                    width: "100%",
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    color: "#fff",
-                                                    fontSize: "15px",
-                                                    fontWeight: 600,
-                                                    outline: "none",
-                                                    borderBottom: "1px solid rgba(255,255,255,0.1)",
-                                                }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <div
-                                                style={{
-                                                    fontSize: "10px",
-                                                    color: "#475569",
-                                                    marginBottom: "6px",
-                                                    textTransform: "uppercase",
-                                                }}
-                                            >
-                                                Від (₴)
-                                            </div>
-                                            <input
-                                                type="number"
-                                                value={range.min}
-                                                onChange={(e) =>
-                                                    updatePriceRange(
-                                                        idx,
-                                                        "min",
-                                                        parseInt(e.target.value) || 0,
-                                                    )
-                                                }
-                                                style={{
-                                                    width: "100%",
-                                                    background: "rgba(255,255,255,0.05)",
-                                                    border: "1px solid rgba(255,255,255,0.1)",
-                                                    color: "#fff",
-                                                    padding: "10px",
-                                                    borderRadius: "10px",
-                                                    fontSize: "14px",
-                                                }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <div
-                                                style={{
-                                                    fontSize: "10px",
-                                                    color: "#475569",
-                                                    marginBottom: "6px",
-                                                    textTransform: "uppercase",
-                                                }}
-                                            >
-                                                До (₴)
-                                            </div>
-                                            <input
-                                                type="number"
-                                                value={range.max}
-                                                onChange={(e) =>
-                                                    updatePriceRange(
-                                                        idx,
-                                                        "max",
-                                                        parseInt(e.target.value) || 0,
-                                                    )
-                                                }
-                                                style={{
-                                                    width: "100%",
-                                                    background: "rgba(255,255,255,0.05)",
-                                                    border: "1px solid rgba(255,255,255,0.1)",
-                                                    color: "#fff",
-                                                    padding: "10px",
-                                                    borderRadius: "10px",
-                                                    fontSize: "14px",
-                                                }}
-                                            />
-                                        </div>
-                                        <button
-                                            onClick={() => removePriceRange(idx)}
+                            {liveOrder.map((slug, idx) => {
+                                const meta = shopMeta.items[slug];
+                                const initShopMeta = JSON.parse(initialSnap.shopMeta);
+                                const isDirty =
+                                    (shopMetaDirty &&
+                                        JSON.stringify(shopMeta.items[slug]) !==
+                                            JSON.stringify(initShopMeta.items?.[slug])) ||
+                                    (shopMetaDirty &&
+                                        (shopMeta.order ?? []).join() !==
+                                            (initShopMeta.order ?? []).join()) ||
+                                    taxonomyDirtyForShop(slug, taxonomy, initialSnap.taxonomy) ||
+                                    dirtyPagesSet.has(slug);
+                                return railItem(
+                                    scope.kind === "section" && scope.slug === slug,
+                                    isDirty,
+                                    () => setScope({ kind: "section", slug }),
+                                    <>
+                                        <span
                                             style={{
-                                                height: "40px",
-                                                width: "40px",
-                                                background: "rgba(239, 68, 68, 0.1)",
-                                                border: "none",
-                                                color: "#ef4444",
-                                                borderRadius: "10px",
-                                                cursor: "pointer",
                                                 display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
+                                                flexDirection: "column",
+                                                gap: 2,
                                             }}
                                         >
-                                            ✕
+                                            <span style={{ opacity: meta?.hidden ? 0.45 : 1 }}>
+                                                {meta?.navLabel || slug}
+                                            </span>
+                                        </span>
+                                    </>,
+                                    <span style={{ display: "flex", gap: 2 }}>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                moveSection(slug, -1);
+                                            }}
+                                            disabled={idx === 0}
+                                            aria-label="Вгору"
+                                            style={{
+                                                ...sIconBtn,
+                                                width: 24,
+                                                height: 24,
+                                                opacity: idx === 0 ? 0.3 : 1,
+                                            }}
+                                        >
+                                            ↑
                                         </button>
-                                    </div>
-                                ))}
-                            </div>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                moveSection(slug, 1);
+                                            }}
+                                            disabled={idx === liveOrder.length - 1}
+                                            aria-label="Вниз"
+                                            style={{
+                                                ...sIconBtn,
+                                                width: 24,
+                                                height: 24,
+                                                opacity: idx === liveOrder.length - 1 ? 0.3 : 1,
+                                            }}
+                                        >
+                                            ↓
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleHidden(slug);
+                                            }}
+                                            aria-label={meta?.hidden ? "Показати" : "Сховати"}
+                                            title={meta?.hidden ? "Прихований" : "Показаний"}
+                                            style={{
+                                                ...sIconBtn,
+                                                width: 24,
+                                                height: 24,
+                                                color: meta?.hidden ? "#64748b" : "#5eead4",
+                                            }}
+                                        >
+                                            {meta?.hidden ? "🚫" : "👁"}
+                                        </button>
+                                    </span>,
+                                );
+                            })}
+                            <div
+                                style={{
+                                    height: 1,
+                                    background: "rgba(255,255,255,0.08)",
+                                    margin: "12px 8px",
+                                }}
+                            />
+                            {railItem(
+                                scope.kind === "global",
+                                dirtyPagesSet.has("global"),
+                                () => setScope({ kind: "global" }),
+                                <>⚙ Загальні фільтри</>,
+                            )}
+                            {railItem(
+                                scope.kind === "vocab",
+                                vocabDirty,
+                                () => setScope({ kind: "vocab" }),
+                                <>🔤 Словник</>,
+                            )}
+                            <p
+                                style={{
+                                    fontSize: 11,
+                                    color: "#475569",
+                                    padding: "12px 12px 0",
+                                    lineHeight: 1.5,
+                                }}
+                            >
+                                Розділи фіксовані — щоб додати/прибрати розділ, зверніться до
+                                розробника. Назву, порядок і видимість можна змінювати тут.
+                            </p>
                         </div>
 
-                        {/* Sizes Management */}
-                        <div>
-                            <div
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    marginBottom: "24px",
-                                }}
-                            >
-                                <h4
-                                    style={{
-                                        color: "var(--accent-primary)",
-                                        fontSize: "12px",
-                                        textTransform: "uppercase",
-                                        letterSpacing: "2px",
-                                        margin: 0,
-                                        borderLeft: "3px solid var(--accent-primary)",
-                                        paddingLeft: "12px",
-                                    }}
-                                >
-                                    РОЗМІРИ
-                                </h4>
-                            </div>
+                        {/* DETAIL */}
+                        <div
+                            className="admin-scroll-custom"
+                            style={{
+                                flex: 1,
+                                overflowY: "auto",
+                                padding: "24px 28px",
+                                minWidth: 0,
+                            }}
+                        >
+                            {scope.kind === "section" && (
+                                <div>
+                                    {/* Section header */}
+                                    <div
+                                        style={{
+                                            ...sCard,
+                                            marginBottom: 22,
+                                            display: "flex",
+                                            gap: 14,
+                                            alignItems: "center",
+                                            flexWrap: "wrap",
+                                        }}
+                                    >
+                                        <div style={{ flex: "1 1 220px" }}>
+                                            <label
+                                                style={{
+                                                    fontSize: 11,
+                                                    color: "#64748b",
+                                                    display: "block",
+                                                    marginBottom: 6,
+                                                }}
+                                            >
+                                                Назва в меню
+                                            </label>
+                                            <input
+                                                value={shopMeta.items[scope.slug]?.navLabel ?? ""}
+                                                onChange={(e) =>
+                                                    setNavLabel(scope.slug, e.target.value)
+                                                }
+                                                placeholder="напр. YOGA"
+                                                style={{
+                                                    ...sInput,
+                                                    width: "100%",
+                                                    fontSize: 16,
+                                                    fontWeight: 700,
+                                                    background: "rgba(255,255,255,0.05)",
+                                                }}
+                                            />
+                                        </div>
+                                        <label
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 8,
+                                                color: "#cbd5e1",
+                                                fontSize: 13,
+                                                cursor: "pointer",
+                                                marginTop: 18,
+                                            }}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={!shopMeta.items[scope.slug]?.hidden}
+                                                onChange={() => toggleHidden(scope.slug)}
+                                            />
+                                            Показувати в меню
+                                        </label>
+                                        <span
+                                            style={{
+                                                fontSize: 11,
+                                                color: "#475569",
+                                                marginTop: 18,
+                                            }}
+                                        >
+                                            Адреса: /shop/{scope.slug}
+                                        </span>
+                                    </div>
 
-                            {presentSizes.length === 0 && emptyNote()}
-                            <div
-                                style={{
-                                    display: "grid",
-                                    gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
-                                    gap: "12px",
-                                    marginBottom: "20px",
-                                }}
-                            >
-                                {presentSizes.map(({ size, idx }) => (
-                                    <Fragment key={idx}>{sizeCard(size, idx, false)}</Fragment>
-                                ))}
-                            </div>
-                            {hiddenDisclosure(
-                                hiddenSizes.length,
-                                "repeat(auto-fill, minmax(130px, 1fr))",
-                                hiddenSizes.map(({ size, idx }) => (
-                                    <Fragment key={idx}>{sizeCard(size, idx, true)}</Fragment>
-                                )),
+                                    {renderFeatured(scope.slug)}
+
+                                    {/* Categories */}
+                                    {sectionTitle(`Категорії меню · ${sectionTitleOf(scope.slug)}`)}
+                                    <p
+                                        style={{
+                                            color: "#64748b",
+                                            fontSize: 13,
+                                            margin: "-6px 0 18px",
+                                            lineHeight: 1.5,
+                                        }}
+                                    >
+                                        Формують меню сайту. Тканина та рукав стають підпунктами
+                                        категорії. ↑/↓ — порядок у меню.
+                                    </p>
+                                    {shopSubs.length === 0 && (
+                                        <p
+                                            style={{
+                                                color: "#64748b",
+                                                fontSize: 13,
+                                                fontStyle: "italic",
+                                                marginBottom: 16,
+                                            }}
+                                        >
+                                            У цьому розділі ще немає категорій. Додайте першу нижче.
+                                        </p>
+                                    )}
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: 14,
+                                            marginBottom: 18,
+                                        }}
+                                    >
+                                        {shopSubs.map(([slug, def], idx) => (
+                                            <Fragment key={slug}>
+                                                {categoryCard(slug, def, idx, shopSubs.length)}
+                                            </Fragment>
+                                        ))}
+                                    </div>
+                                    <div
+                                        style={{
+                                            background: "rgba(94,234,212,0.05)",
+                                            padding: 16,
+                                            borderRadius: 14,
+                                            border: "1px dashed rgba(94,234,212,0.3)",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                fontSize: 11,
+                                                color: "#5eead4",
+                                                textTransform: "uppercase",
+                                                letterSpacing: 1,
+                                                marginBottom: 12,
+                                                fontWeight: 700,
+                                            }}
+                                        >
+                                            + Нова категорія
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                gap: 12,
+                                                flexWrap: "wrap",
+                                                alignItems: "flex-start",
+                                            }}
+                                        >
+                                            <input
+                                                placeholder="Назва (напр. Легінси)"
+                                                value={newCatLabel}
+                                                onChange={(e) => {
+                                                    setNewCatLabel(e.target.value);
+                                                    setTaxoError(null);
+                                                }}
+                                                onKeyDown={(e) =>
+                                                    e.key === "Enter" && addCategory()
+                                                }
+                                                style={{ ...sInput, flex: "2 1 200px" }}
+                                            />
+                                            <div style={{ flex: "1 1 150px" }}>
+                                                <input
+                                                    placeholder="код (leggings)"
+                                                    value={effNewSlug}
+                                                    onChange={(e) => {
+                                                        setNewCatSlug(e.target.value);
+                                                        setNewCatSlugTouched(true);
+                                                        setTaxoError(null);
+                                                    }}
+                                                    aria-label="Код"
+                                                    style={{
+                                                        ...sInput,
+                                                        width: "100%",
+                                                        fontFamily: "monospace",
+                                                    }}
+                                                />
+                                                <div
+                                                    style={{
+                                                        fontSize: 10,
+                                                        color: "#475569",
+                                                        marginTop: 4,
+                                                    }}
+                                                >
+                                                    /shop/{scope.slug}/{effNewSlug || "…"}
+                                                </div>
+                                            </div>
+                                            <button onClick={addCategory} style={sPrimaryBtn}>
+                                                Додати
+                                            </button>
+                                        </div>
+                                        {taxoError && (
+                                            <p
+                                                role="alert"
+                                                style={{
+                                                    color: "#fca5a5",
+                                                    fontSize: 12,
+                                                    margin: "10px 0 0",
+                                                }}
+                                            >
+                                                {taxoError}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Filters */}
+                                    <details style={{ marginTop: 28 }}>
+                                        <summary
+                                            style={{
+                                                cursor: "pointer",
+                                                color: "var(--accent-primary)",
+                                                fontSize: 12,
+                                                textTransform: "uppercase",
+                                                letterSpacing: 2,
+                                                padding: "8px 0",
+                                                userSelect: "none",
+                                            }}
+                                        >
+                                            Фільтри товарів цього розділу
+                                        </summary>
+                                        <div style={{ marginTop: 16 }}>
+                                            {renderFilters(sectionTitleOf(scope.slug))}
+                                        </div>
+                                    </details>
+                                </div>
                             )}
 
-                            <div
-                                style={{
-                                    background: "rgba(94, 234, 212, 0.05)",
-                                    padding: "16px",
-                                    borderRadius: "16px",
-                                    border: "1px dashed rgba(94, 234, 212, 0.3)",
-                                    display: "flex",
-                                    gap: "12px",
-                                }}
-                            >
-                                <input
-                                    placeholder="Новий розмір (напр. XXL або 44)"
-                                    value={newSize}
-                                    onChange={(e) => setNewSize(e.target.value)}
-                                    onKeyPress={(e) => e.key === "Enter" && addSize()}
-                                    style={{
-                                        flex: 1,
-                                        background: "#0f1216",
-                                        border: "1px solid rgba(255,255,255,0.1)",
-                                        color: "#fff",
-                                        borderRadius: "8px",
-                                        padding: "10px 14px",
-                                        fontSize: "13px",
-                                    }}
-                                />
-                                <button
-                                    onClick={addSize}
-                                    style={{
-                                        padding: "0 20px",
-                                        background: "var(--accent-primary)",
-                                        color: "#000",
-                                        border: "none",
-                                        borderRadius: "8px",
-                                        fontWeight: 700,
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    Додати
-                                </button>
-                            </div>
+                            {scope.kind === "global" && (
+                                <div>
+                                    {sectionTitle("Загальні фільтри за замовчуванням")}
+                                    <p
+                                        style={{
+                                            color: "#64748b",
+                                            fontSize: 13,
+                                            margin: "-6px 0 18px",
+                                        }}
+                                    >
+                                        Застосовуються до всіх розділів, де не задано власні
+                                        фільтри.
+                                    </p>
+                                    {renderFilters("Усі розділи")}
+                                </div>
+                            )}
+
+                            {scope.kind === "vocab" && (
+                                <div>
+                                    {sectionTitle("Словник: тканина та рукав")}
+                                    <p
+                                        style={{
+                                            color: "#64748b",
+                                            fontSize: 13,
+                                            margin: "-6px 0 18px",
+                                            lineHeight: 1.5,
+                                        }}
+                                    >
+                                        Назви тканини та рукава, що показуються в меню й фільтрах.
+                                        Можна перейменувати або додати свої. Код (латиниця) —
+                                        незмінний.
+                                    </p>
+                                    {vocabList("fabric")}
+                                    {vocabList("sleeve")}
+                                    {vocabError && (
+                                        <p role="alert" style={{ color: "#fca5a5", fontSize: 12 }}>
+                                            {vocabError}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Footer */}
                     <div
                         style={{
-                            padding: "24px 32px",
+                            padding: "18px 28px",
                             background: "#161b22",
                             borderTop: "1px solid rgba(255,255,255,0.08)",
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            gap: "16px",
+                            gap: 16,
                         }}
                     >
                         <span
                             role="alert"
                             style={{
                                 flex: 1,
-                                minHeight: "18px",
-                                color: "#fca5a5",
-                                fontSize: "13px",
+                                minHeight: 18,
+                                color: submitError ? "#fca5a5" : "#64748b",
+                                fontSize: 13,
                                 fontWeight: 500,
                             }}
                         >
                             {submitError ??
                                 (invalidRange
                                     ? "Перевірте діапазони цін: «від» не може бути більшим за «до»."
-                                    : "")}
+                                    : dirty
+                                      ? "Є незбережені зміни."
+                                      : "")}
                         </span>
-                        <div style={{ display: "flex", gap: "16px" }}>
+                        <div style={{ display: "flex", gap: 12 }}>
                             <button
                                 onClick={requestClose}
                                 disabled={saving}
                                 style={{
                                     padding: "12px 24px",
-                                    borderRadius: "12px",
+                                    borderRadius: 12,
                                     background: "transparent",
                                     border: "1px solid rgba(255,255,255,0.1)",
                                     color: "#94a3b8",
@@ -1133,17 +1709,18 @@ export function FilterEditorModal({
                             </button>
                             <button
                                 onClick={handleSave}
-                                disabled={saving || invalidRange}
+                                disabled={saving || invalidRange || !dirty}
                                 style={{
                                     padding: "12px 32px",
-                                    borderRadius: "12px",
+                                    borderRadius: 12,
                                     background: "var(--accent-primary)",
                                     color: "#000",
                                     border: "none",
-                                    cursor: saving || invalidRange ? "default" : "pointer",
+                                    cursor:
+                                        saving || invalidRange || !dirty ? "default" : "pointer",
                                     fontWeight: 700,
-                                    opacity: saving || invalidRange ? 0.5 : 1,
-                                    boxShadow: "0 10px 20px rgba(94, 234, 212, 0.2)",
+                                    opacity: saving || invalidRange || !dirty ? 0.5 : 1,
+                                    boxShadow: "0 10px 20px rgba(94,234,212,0.2)",
                                 }}
                             >
                                 {saving ? "Збереження…" : "Зберегти зміни"}
@@ -1155,7 +1732,7 @@ export function FilterEditorModal({
             <ConfirmDialog
                 open={showDiscard}
                 title="Відхилити зміни?"
-                body="Незбережені зміни у фільтрах буде втрачено."
+                body="Незбережені зміни буде втрачено."
                 confirmLabel="Відхилити"
                 cancelLabel="Залишитись"
                 onConfirm={() => {
@@ -1164,6 +1741,29 @@ export function FilterEditorModal({
                 }}
                 onCancel={() => setShowDiscard(false)}
             />
+            <ConfirmDialog
+                open={!!confirmRemoveCode}
+                title="Видалити код?"
+                body="Товари, у яких вибрано цей код, залишаться без нього в меню. Видаляйте лише якщо ним ще ніхто не користується."
+                confirmLabel="Видалити"
+                cancelLabel="Скасувати"
+                onConfirm={() => {
+                    if (confirmRemoveCode)
+                        removeVocab(confirmRemoveCode.axis, confirmRemoveCode.code);
+                    setConfirmRemoveCode(null);
+                }}
+                onCancel={() => setConfirmRemoveCode(null)}
+            />
         </>
     );
+}
+
+/** Did this shop's category tree change vs the initial snapshot? (for the rail dirty-dot) */
+function taxonomyDirtyForShop(slug: string, taxonomy: ShopTaxonomy, initialJSON: string): boolean {
+    try {
+        const init = JSON.parse(initialJSON) as ShopTaxonomy;
+        return JSON.stringify(taxonomy[slug] ?? {}) !== JSON.stringify(init[slug] ?? {});
+    } catch {
+        return false;
+    }
 }

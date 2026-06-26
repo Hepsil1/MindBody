@@ -70,11 +70,27 @@ export function parseAndMergeFilterConfig(
         }
     }
 
+    // Backfill a stable `id` on every price range. Older stored configs (and
+    // manually-seeded ones) may have ranges without an id; the strict write
+    // validator (validateFilterConfig) requires `id`, so without this the editor
+    // could LOAD such a config but never save it — the Save silently failed with
+    // "priceRanges.0.id: expected string". Deterministic (`range-<i>`) so the
+    // dirty check stays stable across reloads.
+    const rawRanges = parsedConfig.priceRanges || DEFAULT_FILTER_CONFIG.priceRanges;
+    const priceRanges = (
+        Array.isArray(rawRanges) ? rawRanges : DEFAULT_FILTER_CONFIG.priceRanges
+    ).map((r, i) => ({
+        id: r && typeof r.id === "string" && r.id.length ? r.id : `range-${i}`,
+        label: r?.label ?? "",
+        min: typeof r?.min === "number" ? r.min : 0,
+        max: typeof r?.max === "number" ? r.max : 0,
+    }));
+
     return {
         categories: parsedConfig.categories || DEFAULT_FILTER_CONFIG.categories,
         colors: parsedConfig.colors || DEFAULT_FILTER_CONFIG.colors,
         sizes: parsedConfig.sizes || DEFAULT_FILTER_CONFIG.sizes,
-        priceRanges: parsedConfig.priceRanges || DEFAULT_FILTER_CONFIG.priceRanges,
+        priceRanges,
     };
 }
 

@@ -3,7 +3,13 @@ import { useState, useEffect, useRef } from "react";
 import { StorageUtils } from "../utils/storage";
 import { AuthUtils, type User } from "../utils/auth";
 import { useDebounce } from "../hooks/useDebounce";
-import { useSiteSettings, useMegaCounts } from "../utils/site-settings";
+import {
+    useSiteSettings,
+    useMegaCounts,
+    useTaxonomy,
+    useVocab,
+    useShopMeta,
+} from "../utils/site-settings";
 import { LLink, LNavLink, plural, useI18n, useMoney } from "../i18n";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import CartDrawer from "./CartDrawer";
@@ -81,12 +87,37 @@ export function Header() {
     // F-024 — counts loaded by root.tsx; empty map (loading/error) just
     // means MegaMenu renders everything, never less.
     const megaCounts = useMegaCounts();
+    // Active taxonomy from the root loader (DB config) — same object SSR + client,
+    // so an admin edit reflects in the menu without a hydration mismatch.
+    const taxonomy = useTaxonomy();
+    // Editable fabric/sleeve labels (admin renames + custom codes) — threaded so
+    // the menu reflects them identically on SSR + client.
+    const vocab = useVocab();
     const { t, lp, locale } = useI18n();
     const money = useMoney();
-    const navItems = NAV.map((item) => ({
-        ...item,
-        featured: navFeatured.items[item.shop] ?? item.featured,
-    }));
+    // Section presentation (admin-editable): nav order, the pill label, and
+    // show/hide. Slugs/featured fall back to the hardcoded NAV. A hidden section
+    // is dropped from the menu but its /shop/<slug> page stays reachable.
+    const shopMeta = useShopMeta();
+    const navByShop = new Map(NAV.map((n) => [n.shop, n]));
+    const metaOrder = (shopMeta.order ?? []).filter((s) => navByShop.has(s));
+    const orderedSlugs = [
+        ...metaOrder,
+        ...NAV.map((n) => n.shop).filter((s) => !metaOrder.includes(s)),
+    ];
+    const navItems = orderedSlugs
+        .map((slug) => {
+            const base = navByShop.get(slug);
+            if (!base) return null;
+            const meta = shopMeta.items[slug];
+            if (meta?.hidden) return null;
+            return {
+                ...base,
+                label: meta?.navLabel || base.label,
+                featured: navFeatured.items[slug] ?? base.featured,
+            };
+        })
+        .filter((x): x is { shop: string; label: string; featured: MegaFeatured } => x !== null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     // Mobile-only: which category's subcategory accordion is expanded in the drawer.
     const [expandedShop, setExpandedShop] = useState<string | null>(null);
@@ -502,6 +533,8 @@ export function Header() {
                                     <MegaMenu
                                         shop={item.shop}
                                         featured={item.featured}
+                                        taxonomy={taxonomy}
+                                        vocab={vocab}
                                         onNavigate={() => setIsMenuOpen(false)}
                                         counts={megaCounts}
                                     />
@@ -655,6 +688,8 @@ export function Header() {
                     shown={megaShown}
                     morph={megaMorph}
                     id="header-mega-panel"
+                    taxonomy={taxonomy}
+                    vocab={vocab}
                     onNavigate={() => {
                         setIsMenuOpen(false);
                         closeMega();

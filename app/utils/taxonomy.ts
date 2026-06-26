@@ -22,10 +22,12 @@ export type SleeveSlug = "long" | "short" | "sleeveless" | "velo";
 
 export interface SubcategoryDef {
     label: string;
-    /** Fabric lines offered for this subcategory (Level 3). Omit if N/A. */
-    fabrics?: FabricSlug[];
+    /** Fabric lines offered for this subcategory (Level 3). Omit if N/A.
+     *  Widened to string[] so the admin can introduce custom fabric CODES
+     *  beyond the two built-ins; the built-in slugs above stay the default. */
+    fabrics?: string[];
     /** Sleeve cuts offered for this subcategory (Level 4). Omit if N/A. */
-    sleeves?: SleeveSlug[];
+    sleeves?: string[];
 }
 
 /** shop slug → (subcategory slug → definition) */
@@ -33,7 +35,7 @@ export type ShopTaxonomy = Record<string, Record<string, SubcategoryDef>>;
 
 const FULL_SLEEVES: SleeveSlug[] = ["long", "short", "sleeveless", "velo"];
 
-export const TAXONOMY: ShopTaxonomy = {
+export const DEFAULT_TAXONOMY: ShopTaxonomy = {
     yoga: {
         jumpsuit: { label: "Комбінезони", fabrics: ["sport", "cotton"], sleeves: FULL_SLEEVES },
         leggings: { label: "Легінси", fabrics: ["sport", "cotton"] },
@@ -81,23 +83,67 @@ export const TAXONOMY: ShopTaxonomy = {
     },
 };
 
-export const FABRIC_LABELS: Record<FabricSlug, string> = {
+// ---- DB-backed active taxonomy --------------------------------------------
+// DEFAULT_TAXONOMY above is the permanent fallback. An admin can edit the
+// taxonomy (categories + fabric/sleeve per shop), stored as JSON in the DB;
+// `TAXONOMY` is the ACTIVE one — starts as the default, replaced at runtime by
+// setActiveTaxonomy() once the DB config loads. A missing/empty/malformed row
+// falls back to the default, so the menu/filters never break.
+export let TAXONOMY: ShopTaxonomy = DEFAULT_TAXONOMY;
+
+/** Swap in the active taxonomy from the DB config (null/empty → default), then
+    re-derive the categoryMap-level lookups. The dynamic import avoids a static
+    circular dependency. Awaitable so the server can set it before serving and
+    the client before hydration. */
+export async function setActiveTaxonomy(t: ShopTaxonomy | null | undefined): Promise<void> {
+    TAXONOMY = t && typeof t === "object" && Object.keys(t).length > 0 ? t : DEFAULT_TAXONOMY;
+    const m = await import("./categoryMap");
+    m.refreshTaxonomyDerived();
+}
+
+// Built-in fabric/sleeve vocabulary — the permanent fallback. The admin can
+// rename these labels and add new CODES via the editor; overrides live in the
+// TaxonomyConfig envelope and are merged in by setVocabLabels() at load. Slugs
+// (keys) are immutable structural glue (URLs + Product.fabric/sleeve rows); only
+// labels are editable + new codes appendable.
+export const DEFAULT_FABRIC_LABELS: Record<string, string> = {
     sport: "Sport",
     cotton: "Cotton",
 };
 
-export const SLEEVE_LABELS: Record<SleeveSlug, string> = {
+export const DEFAULT_SLEEVE_LABELS: Record<string, string> = {
     long: "Рукав",
     short: "Короткий рукав",
     sleeveless: "Без рукава",
     velo: "Velo",
 };
 
-export const ALLOWED_FABRICS: ReadonlySet<string> = new Set(Object.keys(FABRIC_LABELS));
-export const ALLOWED_SLEEVES: ReadonlySet<string> = new Set(Object.keys(SLEEVE_LABELS));
+// Mutable `let` (ESM live bindings) — every importer sees the merged labels after
+// setVocabLabels() runs, with no consumer changes (same pattern as TAXONOMY).
+export let FABRIC_LABELS: Record<string, string> = { ...DEFAULT_FABRIC_LABELS };
+export let SLEEVE_LABELS: Record<string, string> = { ...DEFAULT_SLEEVE_LABELS };
+export let ALLOWED_FABRICS: ReadonlySet<string> = new Set(Object.keys(FABRIC_LABELS));
+export let ALLOWED_SLEEVES: ReadonlySet<string> = new Set(Object.keys(SLEEVE_LABELS));
 
-/** Top-level shop slugs, in display order. */
-export const SHOP_SLUGS: string[] = Object.keys(TAXONOMY);
+/** Merge admin label/code overrides over the built-in vocabulary (null → reset
+    to defaults). Defaults always survive, so a missing/partial config degrades
+    cleanly. Refreshes the ALLOWED_* sets so new codes validate. */
+export function setVocabLabels(
+    fabricLabels?: Record<string, string> | null,
+    sleeveLabels?: Record<string, string> | null,
+): void {
+    const fl = fabricLabels && typeof fabricLabels === "object" ? fabricLabels : {};
+    const sl = sleeveLabels && typeof sleeveLabels === "object" ? sleeveLabels : {};
+    FABRIC_LABELS = { ...DEFAULT_FABRIC_LABELS, ...fl };
+    SLEEVE_LABELS = { ...DEFAULT_SLEEVE_LABELS, ...sl };
+    ALLOWED_FABRICS = new Set(Object.keys(FABRIC_LABELS));
+    ALLOWED_SLEEVES = new Set(Object.keys(SLEEVE_LABELS));
+}
+
+/** Top-level shop slugs, in display order. Fixed set (the editor manages the
+    categories WITHIN each shop, not the shops themselves), so derive from the
+    default — stable regardless of the active taxonomy. */
+export const SHOP_SLUGS: string[] = Object.keys(DEFAULT_TAXONOMY);
 
 /** Subcategory def for a (shop, sub) pair, or undefined. */
 export function getSubcategoryDef(shop: string, sub: string): SubcategoryDef | undefined {
@@ -110,33 +156,33 @@ export function subcategoriesFor(shop: string): Array<[string, SubcategoryDef]> 
 }
 
 /** Fabrics offered for a (shop, sub) — empty when none. */
-export function fabricsFor(shop: string, sub: string): FabricSlug[] {
+export function fabricsFor(shop: string, sub: string): string[] {
     return TAXONOMY[shop]?.[sub]?.fabrics ?? [];
 }
 
 /** Sleeves offered for a (shop, sub) — empty when none. */
-export function sleevesFor(shop: string, sub: string): SleeveSlug[] {
+export function sleevesFor(shop: string, sub: string): string[] {
     return TAXONOMY[shop]?.[sub]?.sleeves ?? [];
 }
 
 /** Union of fabrics across all subcats of a shop (for the shop-root page). */
-export function fabricsForShop(shop: string): FabricSlug[] {
-    const set = new Set<FabricSlug>();
+export function fabricsForShop(shop: string): string[] {
+    const set = new Set<string>();
     Object.values(TAXONOMY[shop] ?? {}).forEach((d) => d.fabrics?.forEach((f) => set.add(f)));
     return [...set];
 }
 
 /** Union of sleeves across all subcats of a shop. */
-export function sleevesForShop(shop: string): SleeveSlug[] {
-    const set = new Set<SleeveSlug>();
+export function sleevesForShop(shop: string): string[] {
+    const set = new Set<string>();
     Object.values(TAXONOMY[shop] ?? {}).forEach((d) => d.sleeves?.forEach((s) => set.add(s)));
     return [...set];
 }
 
 export function fabricLabel(slug: string): string {
-    return FABRIC_LABELS[slug as FabricSlug] ?? slug;
+    return FABRIC_LABELS[slug] ?? slug;
 }
 
 export function sleeveLabel(slug: string): string {
-    return SLEEVE_LABELS[slug as SleeveSlug] ?? slug;
+    return SLEEVE_LABELS[slug] ?? slug;
 }

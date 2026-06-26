@@ -20,6 +20,7 @@ import { SiteSettingListPanel } from "../../components/admin/editor/SiteSettingL
 import { NavFeaturedPanel } from "../../components/admin/editor/NavFeaturedPanel";
 import { useActionToast } from "../../components/admin/useActionToast";
 import { SHOP_SLUGS } from "../../utils/taxonomy";
+import { saveTaxonomyConfig, validateTaxonomy } from "../../utils/taxonomy-config.server";
 import { SHOP_PAGE_OPTIONS, shopPageTitle } from "../../utils/shop-pages";
 import { SITE_SETTING_KEYS, type SiteSettingKey } from "../../utils/site-settings";
 import { EDITOR_SETTINGS_SECTIONS, type EditorSettingsSection } from "../../utils/editor-bridge";
@@ -325,6 +326,109 @@ export async function action({ request }: Route.ActionArgs) {
             return saved();
         }
 
+        if (intent === "update_store") {
+            // Combined save from the redesigned store editor: the menu structure
+            // (taxonomy — one global JSON) + the selected page's filter config
+            // (colors / sizes / prices). One round-trip → one success/error.
+            const pageSlug = (formData.get("pageSlug") as string) || "global";
+            if (pageSlug !== "global" && !SHOP_SLUGS.includes(pageSlug)) {
+                return actionError(`Невідома сторінка "${pageSlug}".`);
+            }
+
+            // 1) Menu structure (taxonomy). Sent only when the operator touched
+            // it, so a filters-only save never rewrites the menu.
+            const taxonomyRaw = formData.get("taxonomy");
+            if (typeof taxonomyRaw === "string" && taxonomyRaw.length > 0) {
+                let parsed: unknown;
+                try {
+                    parsed = JSON.parse(taxonomyRaw);
+                } catch {
+                    return actionError("Структура меню пошкоджена (некоректний JSON).");
+                }
+                const valid = validateTaxonomy(parsed);
+                if (!valid.ok) return actionError(valid.error);
+                try {
+                    await saveTaxonomyConfig(valid.value);
+                } catch (e) {
+                    console.error("TaxonomyConfig update failed:", e);
+                    return actionError("Не вдалося зберегти структуру меню.");
+                }
+                // Taxonomy drives every shop's menu + category filters → clear all.
+                for (const s of SHOP_SLUGS) invalidatePrefix(`shop:${s}`);
+            }
+
+            // 2) Section presentation (nav label / order / visibility).
+            const shopMetaRaw = formData.get("shopMeta");
+            if (typeof shopMetaRaw === "string" && shopMetaRaw.length > 0) {
+                const res = await saveSiteSetting("shopMeta", shopMetaRaw);
+                if (!res.ok) return actionError(res.error);
+                // Nav order/labels are read by the Header from siteSettings — no
+                // shop product cache to clear, but the menu re-renders on reload.
+            }
+
+            // 3) Per-page filter configs (colors / sizes / prices). The editor
+            // posts a {pageSlug: config} map so several pages persist at once.
+            const filtersRaw = formData.get("filters");
+            if (typeof filtersRaw === "string" && filtersRaw.length > 0) {
+                let map: unknown;
+                try {
+                    map = JSON.parse(filtersRaw);
+                } catch {
+                    return actionError("Фільтри пошкоджені (некоректний JSON).");
+                }
+                if (!map || typeof map !== "object" || Array.isArray(map)) {
+                    return actionError("Некоректний формат фільтрів.");
+                }
+                for (const [slug, cfg] of Object.entries(map as Record<string, unknown>)) {
+                    if (slug !== "global" && !SHOP_SLUGS.includes(slug)) {
+                        return actionError(`Невідома сторінка "${slug}".`);
+                    }
+                    const cfgJson = JSON.stringify(cfg);
+                    const valid = validateFilterConfig(cfgJson);
+                    if (!valid.ok) return actionError(valid.error);
+                    try {
+                        await prisma.filterConfig.upsert({
+                            where: { id: slug },
+                            update: { config: cfgJson },
+                            create: { id: slug, config: cfgJson },
+                        });
+                    } catch (e) {
+                        console.error("FilterConfig update failed:", e);
+                        return actionError("Не вдалося зберегти фільтри.");
+                    }
+                    if (slug === "global") {
+                        for (const s of SHOP_SLUGS) invalidatePrefix(`shop:${s}`);
+                    } else {
+                        invalidatePrefix(`shop:${slug}`);
+                    }
+                }
+            }
+
+            // Legacy single-config path (kept for any older caller).
+            const config = formData.get("config");
+            if (typeof config === "string" && config.length > 0) {
+                const valid = validateFilterConfig(config);
+                if (!valid.ok) return actionError(valid.error);
+                try {
+                    await prisma.filterConfig.upsert({
+                        where: { id: pageSlug },
+                        update: { config },
+                        create: { id: pageSlug, config },
+                    });
+                } catch (e) {
+                    console.error("FilterConfig update failed:", e);
+                    return actionError("Не вдалося зберегти фільтри.");
+                }
+                if (pageSlug === "global") {
+                    for (const s of SHOP_SLUGS) invalidatePrefix(`shop:${s}`);
+                } else {
+                    invalidatePrefix(`shop:${pageSlug}`);
+                }
+            }
+
+            return saved();
+        }
+
         // About Slides actions - use Slide model with page: "about"
         if (intent === "create_about_slide") {
             const name = ((formData.get("name") as string) || "").trim() || "About Slide";
@@ -444,8 +548,16 @@ export async function action({ request }: Route.ActionArgs) {
         // (kept) + badge + title, then persists through saveSiteSetting (which
         // Zod-validates the shape).
         if (intent === "update_nav_featured") {
-            const items: Record<string, { image: string; badge?: string; title: string }> = {};
+            // Merge per-slug: only rebuild slugs PRESENT in this form (detected via
+            // the `{slug}_currentImage` hidden field), keep the rest. Lets both the
+            // full NavFeaturedPanel (all slugs) and the per-section editor (one
+            // slug) post without wiping the others.
+            const existing = (await getSiteSettings()).navFeatured.items;
+            const items: Record<string, { image: string; badge?: string; title: string }> = {
+                ...existing,
+            };
             for (const slug of SHOP_SLUGS) {
+                if (!formData.has(`${slug}_currentImage`)) continue;
                 const title = (formData.get(`${slug}_title`) as string)?.trim() || "";
                 const badge = (formData.get(`${slug}_badge`) as string)?.trim() || "";
                 let image = (formData.get(`${slug}_currentImage`) as string) || "";
@@ -1103,6 +1215,13 @@ export default function AdminVisualEditor() {
                                     >
                                         Категорії
                                     </button>
+                                    <button
+                                        type="button"
+                                        style={TOOLBAR_BUTTON_STYLE}
+                                        onClick={() => setActivePanel({ kind: "filters" })}
+                                    >
+                                        Меню та фільтри
+                                    </button>
                                 </>
                             )}
                             {currentView === "shop" && (
@@ -1158,7 +1277,7 @@ export default function AdminVisualEditor() {
                                         style={TOOLBAR_BUTTON_STYLE}
                                         onClick={() => setActivePanel({ kind: "filters" })}
                                     >
-                                        Фільтри
+                                        Меню та фільтри
                                     </button>
                                 </>
                             )}

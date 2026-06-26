@@ -1,6 +1,18 @@
-import { subcategoriesFor, fabricLabel, sleeveLabel } from "../utils/taxonomy";
+import {
+    fabricLabel,
+    sleeveLabel,
+    type ShopTaxonomy,
+    type SubcategoryDef,
+} from "../utils/taxonomy";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import { LLink, useI18n } from "../i18n";
+
+/** Editable fabric/sleeve labels (code → label), passed from the root loader so
+ *  the menu reflects admin renames + custom codes identically on SSR + client. */
+export interface MenuVocab {
+    fabricLabels: Record<string, string>;
+    sleeveLabels: Record<string, string>;
+}
 
 export interface MegaFeatured {
     image: string;
@@ -22,8 +34,8 @@ export interface MegaNavItem {
  * heuristic) collapsed sub-heavy sections like CASUAL (8 plain groups)
  * into a single viewport-tall column.
  */
-function megaColsFor(shop: string): 1 | 2 | 3 {
-    const rows = subcategoriesFor(shop).reduce((n, [, d]) => {
+function megaColsFor(subs: Array<[string, SubcategoryDef]>): 1 | 2 | 3 {
+    const rows = subs.reduce((n, [, d]) => {
         const f = d.fabrics?.length ?? 0;
         const s = d.sleeves?.length ?? 0;
         return n + 1 + (f > 0 ? f * (1 + s) : s);
@@ -34,6 +46,11 @@ function megaColsFor(shop: string): 1 | 2 | 3 {
 interface MegaMenuContentProps {
     shop: string;
     featured: MegaFeatured;
+    /** Active taxonomy (from the root loader → DB config). Drives the
+     *  category → fabric → sleeve depth so an admin edit reflects here. */
+    taxonomy: ShopTaxonomy;
+    /** Active fabric/sleeve labels (admin-editable). */
+    vocab: MenuVocab;
     /** Called on any link click (closes the panel / the mobile drawer). */
     onNavigate?: () => void;
     /**
@@ -53,8 +70,19 @@ interface MegaMenuContentProps {
  * so they land on a pre-filtered shop page, e.g.
  * /shop/yoga/jumpsuit?fabric=sport&sleeve=long.
  */
-export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenuContentProps) {
+export function MegaMenuContent({
+    shop,
+    featured,
+    taxonomy,
+    vocab,
+    onNavigate,
+    counts,
+}: MegaMenuContentProps) {
     const { t } = useI18n();
+    // Prefer the admin-edited label (incl. custom codes); fall back to the
+    // built-in label, then the raw slug. Same object SSR + client → no mismatch.
+    const fLabel = (f: string) => t(vocab.fabricLabels[f] ?? fabricLabel(f));
+    const sLabel = (s: string) => t(vocab.sleeveLabels[s] ?? sleeveLabel(s));
     // F-024 — when counts are loaded, hide branches with no products.
     // No counts (yet) → behave as before (no filtering), so a slow DB
     // never blanks out the navigation.
@@ -64,7 +92,7 @@ export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenu
         const key = parts.join("/");
         return (counts![key] ?? 0) > 0;
     };
-    const subs = subcategoriesFor(shop).filter(([sub]) => has(shop, sub));
+    const subs = Object.entries(taxonomy[shop] ?? {}).filter(([sub]) => has(shop, sub));
 
     return (
         <div className="mega-menu__inner">
@@ -113,7 +141,7 @@ export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenu
                                                   className="mega-menu__sublink mega-menu__sublink--fabric"
                                                   onClick={onNavigate}
                                               >
-                                                  {t(fabricLabel(f))}
+                                                  {fLabel(f)}
                                               </LLink>
                                               {sleevesForFabric.map((s) => (
                                                   <LLink
@@ -123,7 +151,7 @@ export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenu
                                                       className="mega-menu__sublink mega-menu__sublink--sleeve"
                                                       onClick={onNavigate}
                                                   >
-                                                      {t(sleeveLabel(s))}
+                                                      {sLabel(s)}
                                                   </LLink>
                                               ))}
                                           </div>
@@ -137,7 +165,7 @@ export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenu
                                           className="mega-menu__sublink mega-menu__sublink--sleeve"
                                           onClick={onNavigate}
                                       >
-                                          {t(sleeveLabel(s))}
+                                          {sLabel(s)}
                                       </LLink>
                                   ))}
                         </div>
@@ -183,6 +211,8 @@ export function MegaMenuContent({ shop, featured, onNavigate, counts }: MegaMenu
 interface MegaMenuProps {
     shop: string;
     featured: MegaFeatured;
+    taxonomy: ShopTaxonomy;
+    vocab: MenuVocab;
     onNavigate?: () => void;
     counts?: Record<string, number>;
 }
@@ -194,12 +224,21 @@ interface MegaMenuProps {
  * per-item :hover/:focus-within panels pinned open after SPA clicks —
  * focus stayed on the link — and crossfaded over each other in transit.)
  */
-export default function MegaMenu({ shop, featured, onNavigate, counts }: MegaMenuProps) {
+export default function MegaMenu({
+    shop,
+    featured,
+    taxonomy,
+    vocab,
+    onNavigate,
+    counts,
+}: MegaMenuProps) {
     return (
         <div className="mega-menu">
             <MegaMenuContent
                 shop={shop}
                 featured={featured}
+                taxonomy={taxonomy}
+                vocab={vocab}
                 onNavigate={onNavigate}
                 counts={counts}
             />
@@ -218,6 +257,8 @@ interface MegaPanelProps {
      *  animating during the open fade. */
     morph: boolean;
     id: string;
+    taxonomy: ShopTaxonomy;
+    vocab: MenuVocab;
     onNavigate?: () => void;
     onPanelEnter?: (e: React.PointerEvent) => void;
     onPanelLeave?: (e: React.PointerEvent) => void;
@@ -237,12 +278,14 @@ export function MegaPanel({
     shown,
     morph,
     id,
+    taxonomy,
+    vocab,
     onNavigate,
     onPanelEnter,
     onPanelLeave,
     counts,
 }: MegaPanelProps) {
-    const cols = megaColsFor(shown);
+    const cols = megaColsFor(Object.entries(taxonomy[shown] ?? {}));
     const open = active !== null;
 
     return (
@@ -265,6 +308,8 @@ export function MegaPanel({
                         <MegaMenuContent
                             shop={item.shop}
                             featured={item.featured}
+                            taxonomy={taxonomy}
+                            vocab={vocab}
                             onNavigate={onNavigate}
                             counts={counts}
                         />

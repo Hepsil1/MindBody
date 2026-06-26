@@ -23,8 +23,9 @@ import {
     fabricLabel,
     sleeveLabel,
     SHOP_SLUGS,
-    subcategoriesFor,
 } from "../../../utils/taxonomy";
+import { useTaxonomy, useVocab } from "../../../utils/site-settings";
+import { loadActiveTaxonomy } from "../../../utils/taxonomy-config.server";
 import { slugify } from "../../../utils/slugify";
 import { getColorHex, getColorLabel } from "../../../utils/colors";
 import { publishChecklist, publishBlockers } from "../../../utils/productQuality";
@@ -234,6 +235,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 export async function action({ request, params }: ActionFunctionArgs) {
     const denied = await requireAdmin(request);
     if (denied) return denied;
+    // Validate fabric/sleeve against the ACTIVE (admin-edited) taxonomy, not the
+    // hardcoded default — a custom category's fabrics would otherwise be stripped.
+    await loadActiveTaxonomy();
     try {
         const formData = await request.formData();
         const intent = formData.get("intent");
@@ -654,6 +658,11 @@ export default function AdminProductEdit() {
     const { product, filterConfigs, shopPages, isNew } = useLoaderData<typeof loader>();
     const fetcher = useFetcher();
     const navigate = useNavigate();
+    // Active taxonomy (root loader → DB config) so admin-added categories +
+    // their fabric/sleeve options appear here immediately.
+    const taxonomy = useTaxonomy();
+    // Editable fabric/sleeve labels (admin-renamed + custom codes).
+    const vocab = useVocab();
 
     // Initial State
     const [formData, setFormData] = useState<ProductForm>(() => {
@@ -981,7 +990,9 @@ export default function AdminProductEdit() {
                                             shop (single source of truth) — never a
                                             cross-shop FilterConfig blob. */}
                                         {(() => {
-                                            const subs = subcategoriesFor(formData.shopPageSlug);
+                                            const subs = Object.entries(
+                                                taxonomy[formData.shopPageSlug] ?? {},
+                                            );
                                             const known = new Set(subs.map(([s]) => s));
                                             const opts = subs.map(([slug, def]) => (
                                                 <option key={slug} value={slug}>
@@ -1014,14 +1025,12 @@ export default function AdminProductEdit() {
                                 Shown only when the chosen category offers them
                                 (see app/utils/taxonomy.ts). */}
                             {(() => {
-                                const fabrics = fabricsFor(
-                                    formData.shopPageSlug,
-                                    formData.category,
-                                );
-                                const sleeves = sleevesFor(
-                                    formData.shopPageSlug,
-                                    formData.category,
-                                );
+                                const fabrics =
+                                    taxonomy[formData.shopPageSlug]?.[formData.category]?.fabrics ??
+                                    [];
+                                const sleeves =
+                                    taxonomy[formData.shopPageSlug]?.[formData.category]?.sleeves ??
+                                    [];
                                 if (!fabrics.length && !sleeves.length) return null;
                                 return (
                                     <div className="ad-field-grid">
@@ -1041,7 +1050,8 @@ export default function AdminProductEdit() {
                                                     <option value="">—</option>
                                                     {fabrics.map((f) => (
                                                         <option key={f} value={f}>
-                                                            {fabricLabel(f)}
+                                                            {vocab.fabricLabels[f] ??
+                                                                fabricLabel(f)}
                                                         </option>
                                                     ))}
                                                 </select>
@@ -1063,7 +1073,8 @@ export default function AdminProductEdit() {
                                                     <option value="">—</option>
                                                     {sleeves.map((s) => (
                                                         <option key={s} value={s}>
-                                                            {sleeveLabel(s)}
+                                                            {vocab.sleeveLabels[s] ??
+                                                                sleeveLabel(s)}
                                                         </option>
                                                     ))}
                                                 </select>

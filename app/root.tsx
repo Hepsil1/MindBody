@@ -17,6 +17,10 @@ import { getSiteSettings } from "./utils/site-settings.server";
 import { getMegaCounts } from "./utils/mega-counts.server";
 import { getUsdRate } from "./utils/currency.server";
 import {
+    getActiveTaxonomyForClient,
+    getActiveVocabForClient,
+} from "./utils/taxonomy-config.server";
+import {
     HTML_LANG,
     LOCALES,
     localeFromCookieHeader,
@@ -104,17 +108,23 @@ export async function loader({ request }: Route.LoaderArgs) {
     // F-024 — load alongside siteSettings so the Header sees both as a
     // single root loaderData object. Parallelised because the queries are
     // independent. usdRate powers the $ prices on /en and /ru.
-    const [siteSettings, megaCounts, usdRate] = await Promise.all([
+    // getActiveTaxonomyForClient() both LOADS the DB taxonomy into the server's
+    // active TAXONOMY (so the SSR mega-menu / shop filters / slug validation use
+    // the edited structure) AND returns it for the client — passed down so the
+    // mega-menu renders identically on SSR and after hydration (no mismatch).
+    const [siteSettings, megaCounts, usdRate, taxonomy, vocab] = await Promise.all([
         getSiteSettings(),
         getMegaCounts(),
         getUsdRate(),
+        getActiveTaxonomyForClient(),
+        getActiveVocabForClient(),
     ]);
 
     // First visit (no remembered language) → offer the language gate once.
     const showLanguageGate =
         cookieLocale === null && !isbot(request.headers.get("user-agent") ?? "");
 
-    return { siteSettings, megaCounts, usdRate, showLanguageGate };
+    return { siteSettings, megaCounts, usdRate, showLanguageGate, taxonomy, vocab };
 }
 
 // Wrapper component that can use hooks

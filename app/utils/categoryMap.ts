@@ -33,8 +33,7 @@ const LEGACY_BY_SHOP: Record<string, string[]> = {
     yogatools: ["tools"],
 };
 
-/** slug → Ukrainian label, derived from TAXONOMY (first occurrence wins) + legacy. */
-export const CATEGORY_MAP: Record<string, string> = (() => {
+function deriveCategoryMap(): Record<string, string> {
     const map: Record<string, string> = {};
     for (const subs of Object.values(TAXONOMY)) {
         for (const [slug, def] of Object.entries(subs)) {
@@ -42,17 +41,9 @@ export const CATEGORY_MAP: Record<string, string> = (() => {
         }
     }
     return { ...map, ...LEGACY_LABELS };
-})();
+}
 
-/**
- * Per-shop whitelist of allowed subcategory slugs. Used by the
- * /shop/:category/:subcategory route to validate that a given combination
- * is real (e.g. /shop/yoga/pole-sets must 301 → /shop/yoga because
- * pole-sets only exists for dance).
- *
- * Source of truth: TAXONOMY + the LEGACY_BY_SHOP back-compat list.
- */
-export const CATEGORY_BY_SHOP_PAGE: Record<string, string[]> = (() => {
+function deriveCategoryByShop(): Record<string, string[]> {
     const out: Record<string, string[]> = {};
     for (const [shop, subs] of Object.entries(TAXONOMY)) {
         const legacy = LEGACY_BY_SHOP[shop] ?? [];
@@ -63,10 +54,34 @@ export const CATEGORY_BY_SHOP_PAGE: Record<string, string[]> = (() => {
         if (!out[shop]) out[shop] = [...legacy];
     }
     return out;
-})();
+}
+
+// Mutable `let` exports (ESM live bindings) so every importer automatically sees
+// the refreshed values after setActiveTaxonomy() swaps the active taxonomy — no
+// consumer changes needed.
+
+/** slug → Ukrainian label, derived from TAXONOMY (first occurrence wins) + legacy. */
+export let CATEGORY_MAP: Record<string, string> = deriveCategoryMap();
+
+/**
+ * Per-shop whitelist of allowed subcategory slugs. Used by the
+ * /shop/:category/:subcategory route to validate that a given combination
+ * is real (e.g. /shop/yoga/pole-sets must 301 → /shop/yoga because
+ * pole-sets only exists for dance). Source: TAXONOMY + LEGACY_BY_SHOP.
+ */
+export let CATEGORY_BY_SHOP_PAGE: Record<string, string[]> = deriveCategoryByShop();
 
 /** Set of every slug we accept anywhere (for fast O(1) validation in actions). */
-export const ALLOWED_CATEGORY_SLUGS: ReadonlySet<string> = new Set(Object.keys(CATEGORY_MAP));
+export let ALLOWED_CATEGORY_SLUGS: ReadonlySet<string> = new Set(Object.keys(CATEGORY_MAP));
+
+/** Re-derive the TAXONOMY-dependent lookups after the active taxonomy changes.
+    Called by taxonomy.setActiveTaxonomy() (via dynamic import to break the
+    static circular dependency). */
+export function refreshTaxonomyDerived(): void {
+    CATEGORY_MAP = deriveCategoryMap();
+    CATEGORY_BY_SHOP_PAGE = deriveCategoryByShop();
+    ALLOWED_CATEGORY_SLUGS = new Set(Object.keys(CATEGORY_MAP));
+}
 
 /**
  * Ordered {slug, label} catalog categories for a filter-editor page.
