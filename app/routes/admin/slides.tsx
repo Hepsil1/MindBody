@@ -3,6 +3,7 @@ import { prisma } from "../../db.server";
 import { useState, useRef, useEffect } from "react";
 import { useLoaderData, useFetcher, Link, useSearchParams } from "react-router";
 import { validateFilterConfig, deriveAvailableFacets } from "../../utils/filters";
+import { getMegaCounts } from "../../utils/mega-counts.server";
 import { FilterEditorModal } from "../../components/admin/FilterEditorModal";
 import { AboutSlidesModal } from "../../components/admin/AboutSlidesModal";
 import { SlideManagerPanel } from "../../components/admin/editor/SlideManagerPanel";
@@ -32,27 +33,37 @@ export async function loader({ request }: Route.LoaderArgs) {
     if (denied) return denied;
     try {
         // Run all queries in parallel for speed
-        const [allSlides, categories, shopPages, filterConfigs, siteSettings, facetRows] =
-            await Promise.all([
-                prisma.slide.findMany({ orderBy: { order: "asc" } }),
-                prisma.category.findMany({ orderBy: { order: "asc" } }),
-                prisma.shopPage.findMany(),
-                prisma.filterConfig.findMany(),
-                getSiteSettings(),
-                // Real per-page facets so «Керування фільтрами» mirrors the live
-                // store (shopPageSlug + status are indexed; ~47 rows = negligible).
-                prisma.product
-                    .findMany({
-                        where: { status: "active", shopPageSlug: { not: null } },
-                        select: {
-                            shopPageSlug: true,
-                            category: true,
-                            colors: true,
-                            sizes: true,
-                        },
-                    })
-                    .catch(() => []),
-            ]);
+        const [
+            allSlides,
+            categories,
+            shopPages,
+            filterConfigs,
+            siteSettings,
+            facetRows,
+            megaCounts,
+        ] = await Promise.all([
+            prisma.slide.findMany({ orderBy: { order: "asc" } }),
+            prisma.category.findMany({ orderBy: { order: "asc" } }),
+            prisma.shopPage.findMany(),
+            prisma.filterConfig.findMany(),
+            getSiteSettings(),
+            // Real per-page facets so «Керування фільтрами» mirrors the live
+            // store (shopPageSlug + status are indexed; ~47 rows = negligible).
+            prisma.product
+                .findMany({
+                    where: { status: "active", shopPageSlug: { not: null } },
+                    select: {
+                        shopPageSlug: true,
+                        category: true,
+                        colors: true,
+                        sizes: true,
+                    },
+                })
+                .catch(() => []),
+            // Per shop/category/fabric/sleeve product counts (cache-backed) so the
+            // editor can show how many products each menu pill actually has.
+            getMegaCounts().catch(() => ({})),
+        ]);
 
         // Slide.page is NOT NULL (default 'home'), so a simple equality split works.
         const slides = allSlides.filter((s) => s.page === "home");
@@ -67,6 +78,7 @@ export async function loader({ request }: Route.LoaderArgs) {
             aboutSlides,
             siteSettings,
             availableFacets,
+            megaCounts,
         };
     } catch (error) {
         console.error("Loader error:", error);
@@ -78,6 +90,7 @@ export async function loader({ request }: Route.LoaderArgs) {
             aboutSlides: [],
             siteSettings: DEFAULT_SITE_SETTINGS,
             availableFacets: {},
+            megaCounts: {},
         };
     }
 }
@@ -613,6 +626,7 @@ export default function AdminVisualEditor() {
         aboutSlides,
         siteSettings,
         availableFacets,
+        megaCounts,
     } = useLoaderData<typeof loader>();
     const fetcher = useFetcher<typeof action>();
 
@@ -1363,6 +1377,7 @@ export default function AdminVisualEditor() {
                     filterConfigs={filterConfigs}
                     shopPages={shopPages}
                     availableFacets={availableFacets}
+                    megaCounts={megaCounts}
                     fetcher={fetcher}
                 />
             )}

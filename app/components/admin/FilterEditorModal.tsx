@@ -42,6 +42,9 @@ interface FilterEditorModalProps {
     filterConfigs?: Pick<FilterConfig, "id" | "config">[];
     shopPages?: Pick<ShopPage, "slug" | "title">[];
     availableFacets?: Record<string, FacetCounts>;
+    /** Per shop/category/fabric/sleeve product counts (getMegaCounts) — drives the
+     *  "N товарів" badges so the menu↔product binding is visible. */
+    megaCounts?: Record<string, number>;
     fetcher: FetcherWithComponents<unknown>;
 }
 
@@ -157,6 +160,7 @@ export function FilterEditorModal({
     filterConfigs = [],
     shopPages = [],
     availableFacets = {},
+    megaCounts = {},
     fetcher,
 }: FilterEditorModalProps) {
     // ---- live data seeds (from root loader) --------------------------------
@@ -420,11 +424,29 @@ export function FilterEditorModal({
         colors: {},
         sizes: {},
     };
-    const catCount = (key: string) =>
-        (avail.categories[key] || 0) +
-        (taxonomy[activeShop]?.[key]?.label
-            ? avail.categories[taxonomy[activeShop]![key].label] || 0
-            : 0);
+    // ---- product counts per fabric/sleeve, from getMegaCounts -----------------
+    // getMegaCounts keys: `${shop}/${cat}`, `${shop}/${cat}/${fabric}`,
+    // `${shop}/${cat}/${fabric}/${sleeve}`, `${shop}/${cat}/_/${sleeve}` (no fabric).
+    // These prove the menu↔product binding (a pill's count = real tagged products).
+    const catTotal = (cat: string) => megaCounts[`${activeShop}/${cat}`] || 0;
+    const fabricCount = (cat: string, code: string) =>
+        megaCounts[`${activeShop}/${cat}/${code}`] || 0;
+    // A sleeve has no single rollup key in fabric-bearing categories, so sum the
+    // fabric-agnostic leaf (`_`) PLUS every `${fabric}/${code}` leaf.
+    const sleeveCount = (cat: string, code: string) => {
+        let n = megaCounts[`${activeShop}/${cat}/_/${code}`] || 0;
+        const prefix = `${activeShop}/${cat}/`;
+        const suffix = `/${code}`;
+        for (const k in megaCounts) {
+            if (k.startsWith(prefix) && k.endsWith(suffix) && !k.startsWith(`${prefix}_/`)) {
+                const mid = k.slice(prefix.length, k.length - suffix.length);
+                if (mid && !mid.includes("/")) n += megaCounts[k];
+            }
+        }
+        return n;
+    };
+    const axisCount = (axis: "fabrics" | "sleeves", cat: string, code: string) =>
+        axis === "fabrics" ? fabricCount(cat, code) : sleeveCount(cat, code);
     const colorCount = (key: string) =>
         (avail.colors[key] || 0) + (data?.colors[key] ? avail.colors[data.colors[key]] || 0 : 0);
     const sizeCount = (size: string) => avail.sizes[size] || 0;
@@ -497,6 +519,7 @@ export function FilterEditorModal({
     );
 
     const railItem = (
+        keyId: string,
         active: boolean,
         dirtyDot: boolean,
         onClick: () => void,
@@ -504,6 +527,7 @@ export function FilterEditorModal({
         extra?: ReactNode,
     ) => (
         <div
+            key={keyId}
             onClick={onClick}
             style={{
                 display: "flex",
@@ -547,9 +571,95 @@ export function FilterEditorModal({
     const sLabel = (c: string) => sleeveLabels[c] ?? sleeveLabel(c);
     const sectionTitleOf = (slug: string) => shopPages.find((p) => p.slug === slug)?.title ?? slug;
 
+    // One fabric/sleeve axis row: pills + per-pill product-count badge + «порожнє»
+    // note (a menu link with no products) + opportunity chips (products exist but
+    // the pill is OFF → one click shows it in the menu).
+    const axisRow = (
+        slug: string,
+        axis: "fabrics" | "sleeves",
+        label: string,
+        minW: number,
+        codes: string[],
+        active: string[],
+        labelFn: (c: string) => string,
+    ) => {
+        const total = catTotal(slug);
+        const hiddenUsed = codes.filter((c) => !active.includes(c) && axisCount(axis, slug, c) > 0);
+        return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div
+                    style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}
+                >
+                    <span style={{ fontSize: "11px", color: "#64748b", minWidth: `${minW}px` }}>
+                        {label}
+                    </span>
+                    {codes.map((c) => {
+                        const on = active.includes(c);
+                        const n = axisCount(axis, slug, c);
+                        return (
+                            <span
+                                key={`${axis}-${c}`}
+                                style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+                            >
+                                {pill(
+                                    on,
+                                    labelFn(c),
+                                    () => toggleAxis(slug, axis, c),
+                                    `${axis}-${c}`,
+                                )}
+                                {n > 0 && countPill(n)}
+                                {on && n === 0 && total > 0 && (
+                                    <span
+                                        title="Посилання є в меню, але товарів із цією ознакою поки немає"
+                                        style={{ fontSize: "10px", color: "#fbbf24" }}
+                                    >
+                                        порожнє
+                                    </span>
+                                )}
+                            </span>
+                        );
+                    })}
+                </div>
+                {hiddenUsed.map((c) => {
+                    const n = axisCount(axis, slug, c);
+                    return (
+                        <button
+                            key={`opp-${axis}-${c}`}
+                            type="button"
+                            onClick={() => toggleAxis(slug, axis, c)}
+                            style={{
+                                alignSelf: "flex-start",
+                                padding: "3px 10px",
+                                borderRadius: "999px",
+                                fontSize: "11px",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                border: "1px solid var(--accent-primary)",
+                                background: "rgba(94,234,212,0.1)",
+                                color: "#5eead4",
+                            }}
+                        >
+                            {labelFn(c)}: є {n} {tovarWord(n)} — показати в меню
+                        </button>
+                    );
+                })}
+            </div>
+        );
+    };
+
     const categoryCard = (slug: string, def: SubcategoryDef, idx: number, total: number) => {
         const fabrics = def.fabrics ?? [];
         const sleeves = def.sleeves ?? [];
+        // Codes that have tagged products but aren't enabled in the menu (across
+        // both axes) — drive the bulk «show all that exist» button.
+        const hiddenUsed: Array<["fabrics" | "sleeves", string]> = [
+            ...fabricCodes
+                .filter((c) => !fabrics.includes(c) && fabricCount(slug, c) > 0)
+                .map((c): ["fabrics", string] => ["fabrics", c]),
+            ...sleeveCodes
+                .filter((c) => !sleeves.includes(c) && sleeveCount(slug, c) > 0)
+                .map((c): ["sleeves", string] => ["sleeves", c]),
+        ];
         const preview = [shopMeta.items[activeShop]?.navLabel || activeShop, def.label || "—"];
         if (fabrics.length) preview.push(fabrics.map(fLabel).join("/"));
         if (sleeves.length) preview.push(sleeves.map(sLabel).join("/"));
@@ -605,56 +715,58 @@ export function FilterEditorModal({
                 <div
                     style={{
                         display: "flex",
-                        flexWrap: "wrap",
-                        gap: "18px",
+                        flexDirection: "column",
+                        gap: "12px",
                         marginTop: "12px",
-                        alignItems: "center",
                     }}
                 >
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            flexWrap: "wrap",
-                        }}
-                    >
-                        <span style={{ fontSize: "11px", color: "#64748b", minWidth: "56px" }}>
-                            Тканина
-                        </span>
-                        {fabricCodes.map((c) =>
-                            pill(
-                                fabrics.includes(c),
-                                fLabel(c),
-                                () => toggleAxis(slug, "fabrics", c),
-                                `f-${c}`,
-                            ),
-                        )}
-                    </div>
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            flexWrap: "wrap",
-                        }}
-                    >
-                        <span style={{ fontSize: "11px", color: "#64748b", minWidth: "44px" }}>
-                            Рукав
-                        </span>
-                        {sleeveCodes.map((c) =>
-                            pill(
-                                sleeves.includes(c),
-                                sLabel(c),
-                                () => toggleAxis(slug, "sleeves", c),
-                                `s-${c}`,
-                            ),
-                        )}
-                    </div>
-                    {gate && catCount(slug) > 0 && countPill(catCount(slug))}
+                    {axisRow(slug, "fabrics", "Тканина", 56, fabricCodes, fabrics, fLabel)}
+                    {axisRow(slug, "sleeves", "Рукав", 44, sleeveCodes, sleeves, sLabel)}
+                    {hiddenUsed.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() =>
+                                hiddenUsed.forEach(([axis, c]) => toggleAxis(slug, axis, c))
+                            }
+                            style={{
+                                ...sIconBtn,
+                                alignSelf: "flex-start",
+                                width: "auto",
+                                padding: "0 14px",
+                                color: "var(--accent-primary)",
+                                borderColor: "var(--accent-primary)",
+                            }}
+                        >
+                            ✓ Показати все, що є в товарах
+                        </button>
+                    )}
                 </div>
-                <div style={{ marginTop: "10px", fontSize: "11px", color: "#475569" }}>
-                    У меню: <span style={{ color: "#64748b" }}>{preview.join("  ›  ")}</span>
+                <div
+                    style={{
+                        marginTop: "10px",
+                        fontSize: "11px",
+                        color: "#475569",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: "8px",
+                    }}
+                >
+                    <span>
+                        У меню: <span style={{ color: "#64748b" }}>{preview.join("  ›  ")}</span>
+                        {catTotal(slug) > 0 && (
+                            <span style={{ color: "#5eead4", marginLeft: "8px" }}>
+                                · {catTotal(slug)} {tovarWord(catTotal(slug))}
+                            </span>
+                        )}
+                    </span>
+                    <a
+                        href={`/admin/products?category=${slug}`}
+                        style={{ color: "#5eead4", textDecoration: "none", whiteSpace: "nowrap" }}
+                    >
+                        Керувати товарами цієї категорії →
+                    </a>
                 </div>
             </div>
         );
@@ -1290,6 +1402,7 @@ export function FilterEditorModal({
                                     taxonomyDirtyForShop(slug, taxonomy, initialSnap.taxonomy) ||
                                     dirtyPagesSet.has(slug);
                                 return railItem(
+                                    slug,
                                     scope.kind === "section" && scope.slug === slug,
                                     isDirty,
                                     () => setScope({ kind: "section", slug }),
@@ -1369,12 +1482,14 @@ export function FilterEditorModal({
                                 }}
                             />
                             {railItem(
+                                "__global",
                                 scope.kind === "global",
                                 dirtyPagesSet.has("global"),
                                 () => setScope({ kind: "global" }),
                                 <>⚙ Загальні фільтри</>,
                             )}
                             {railItem(
+                                "__vocab",
                                 scope.kind === "vocab",
                                 vocabDirty,
                                 () => setScope({ kind: "vocab" }),
@@ -1479,13 +1594,59 @@ export function FilterEditorModal({
                                         style={{
                                             color: "#64748b",
                                             fontSize: 13,
-                                            margin: "-6px 0 18px",
+                                            margin: "-6px 0 10px",
                                             lineHeight: 1.5,
                                         }}
                                     >
-                                        Формують меню сайту. Тканина та рукав стають підпунктами
-                                        категорії. ↑/↓ — порядок у меню.
+                                        Ці категорії формують меню сайту.{" "}
+                                        <b style={{ color: "#94a3b8" }}>
+                                            Тканина й рукав — це посилання-фільтри в меню
+                                        </b>
+                                        , а не самі товари: товар з'являється під ними сам, коли ви
+                                        познач́ите йому тканину/рукав у картці товару. ↑/↓ — порядок.
                                     </p>
+                                    <details style={{ marginBottom: 16 }}>
+                                        <summary
+                                            style={{
+                                                cursor: "pointer",
+                                                color: "#5eead4",
+                                                fontSize: 12,
+                                                userSelect: "none",
+                                                padding: "4px 0",
+                                            }}
+                                        >
+                                            Як це працює? (меню ↔ товари)
+                                        </summary>
+                                        <div
+                                            style={{
+                                                ...sCard,
+                                                fontSize: 13,
+                                                color: "#94a3b8",
+                                                lineHeight: 1.6,
+                                                marginTop: 8,
+                                            }}
+                                        >
+                                            <div style={{ marginBottom: 6 }}>
+                                                <b style={{ color: "#5eead4" }}>1.</b> Увімкніть
+                                                пілюлю тут — у меню з'явиться посилання-фільтр
+                                                (напр. «Sport», «Довгий рукав»).
+                                            </div>
+                                            <div style={{ marginBottom: 6 }}>
+                                                <b style={{ color: "#5eead4" }}>2.</b> У картці
+                                                товару виберіть ту саму тканину/рукав — товар сам
+                                                потрапить під це посилання.
+                                            </div>
+                                            <div style={{ marginBottom: 6 }}>
+                                                <b style={{ color: "#5eead4" }}>3.</b> Покупець
+                                                бачить і посилання, і товари під ним.
+                                            </div>
+                                            <div style={{ color: "#fbbf24" }}>
+                                                Пілюля сама по собі не додає товарів — лише
+                                                показує/ховає посилання. Цифри «N товарів» біля
+                                                пілюль показують, скільки товарів уже прив'язано.
+                                            </div>
+                                        </div>
+                                    </details>
                                     {shopSubs.length === 0 && (
                                         <p
                                             style={{
