@@ -91,16 +91,15 @@ export function validateTaxonomy(
     const sleeveClean = cleanLabelMap(sleeveRaw, "рукав");
     if (!sleeveClean.ok) return sleeveClean;
 
-    // Allowed codes = built-ins ∪ submitted vocabulary keys, so a freshly-added
-    // code passes the per-category check below.
-    const allowedFabrics = new Set([
-        ...Object.keys(DEFAULT_FABRIC_LABELS),
-        ...Object.keys(fabricClean.map),
-    ]);
-    const allowedSleeves = new Set([
-        ...Object.keys(DEFAULT_SLEEVE_LABELS),
-        ...Object.keys(sleeveClean.map),
-    ]);
+    // The submitted vocabulary is authoritative: allowed codes = its keys (so a
+    // freshly-added code passes AND a deleted one is stripped from categories).
+    // Only when NO vocabulary is submitted do we fall back to the built-ins.
+    const allowedFabrics = Object.keys(fabricClean.map).length
+        ? new Set(Object.keys(fabricClean.map))
+        : new Set(Object.keys(DEFAULT_FABRIC_LABELS));
+    const allowedSleeves = Object.keys(sleeveClean.map).length
+        ? new Set(Object.keys(sleeveClean.map))
+        : new Set(Object.keys(DEFAULT_SLEEVE_LABELS));
 
     if (!treeRaw || typeof treeRaw !== "object" || Array.isArray(treeRaw)) {
         return { ok: false, error: "Структура розділів має бути об'єктом." };

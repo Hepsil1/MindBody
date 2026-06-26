@@ -125,17 +125,19 @@ export let SLEEVE_LABELS: Record<string, string> = { ...DEFAULT_SLEEVE_LABELS };
 export let ALLOWED_FABRICS: ReadonlySet<string> = new Set(Object.keys(FABRIC_LABELS));
 export let ALLOWED_SLEEVES: ReadonlySet<string> = new Set(Object.keys(SLEEVE_LABELS));
 
-/** Merge admin label/code overrides over the built-in vocabulary (null → reset
-    to defaults). Defaults always survive, so a missing/partial config degrades
-    cleanly. Refreshes the ALLOWED_* sets so new codes validate. */
+/** Apply the saved fabric/sleeve vocabulary. The saved map is AUTHORITATIVE —
+    the editor always posts the FULL intended set, so a built-in the owner renamed
+    or DELETED is honored exactly (no silent merge-back of defaults). Falls back to
+    the built-in defaults only when no vocabulary is saved (legacy/empty config).
+    Refreshes the ALLOWED_* sets so new codes validate and deleted ones don't. */
 export function setVocabLabels(
     fabricLabels?: Record<string, string> | null,
     sleeveLabels?: Record<string, string> | null,
 ): void {
-    const fl = fabricLabels && typeof fabricLabels === "object" ? fabricLabels : {};
-    const sl = sleeveLabels && typeof sleeveLabels === "object" ? sleeveLabels : {};
-    FABRIC_LABELS = { ...DEFAULT_FABRIC_LABELS, ...fl };
-    SLEEVE_LABELS = { ...DEFAULT_SLEEVE_LABELS, ...sl };
+    const has = (m: unknown): m is Record<string, string> =>
+        !!m && typeof m === "object" && !Array.isArray(m) && Object.keys(m).length > 0;
+    FABRIC_LABELS = has(fabricLabels) ? { ...fabricLabels } : { ...DEFAULT_FABRIC_LABELS };
+    SLEEVE_LABELS = has(sleeveLabels) ? { ...sleeveLabels } : { ...DEFAULT_SLEEVE_LABELS };
     ALLOWED_FABRICS = new Set(Object.keys(FABRIC_LABELS));
     ALLOWED_SLEEVES = new Set(Object.keys(SLEEVE_LABELS));
 }

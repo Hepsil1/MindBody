@@ -352,12 +352,36 @@ export function FilterEditorModal({
             ...prev,
             [code]: label,
         }));
-    const removeVocab = (axis: "fabric" | "sleeve", code: string) =>
+    const removeVocab = (axis: "fabric" | "sleeve", code: string) => {
         (axis === "fabric" ? setFabricLabels : setSleeveLabels)((prev) => {
             const next = { ...prev };
             delete next[code];
             return next;
         });
+        // Cascade: drop the code from every category that used it, so the menu and
+        // the validator never reference a vocabulary entry that no longer exists.
+        const taxoAxis = axis === "fabric" ? "fabrics" : "sleeves";
+        setTaxonomy((prev) => {
+            const next: ShopTaxonomy = {};
+            for (const [shop, subs] of Object.entries(prev)) {
+                const ns: Record<string, SubcategoryDef> = {};
+                for (const [cat, def] of Object.entries(subs)) {
+                    const arr = def[taxoAxis];
+                    if (arr?.includes(code)) {
+                        const filtered = arr.filter((c) => c !== code);
+                        const nd = { ...def };
+                        if (filtered.length) nd[taxoAxis] = filtered;
+                        else delete nd[taxoAxis];
+                        ns[cat] = nd;
+                    } else {
+                        ns[cat] = def;
+                    }
+                }
+                next[shop] = ns;
+            }
+            return next;
+        });
+    };
     const [newVocab, setNewVocab] = useState({
         fabric: { code: "", label: "" },
         sleeve: { code: "", label: "" },
@@ -1222,22 +1246,22 @@ export function FilterEditorModal({
                                 aria-label={`Назва ${code}`}
                                 style={{ ...sInput, flex: 1, background: "rgba(255,255,255,0.05)" }}
                             />
-                            {code in defaults ? (
+                            {code in defaults && (
                                 <span
+                                    title="Стандартна назва — можна перейменувати або видалити"
                                     style={{ fontSize: 10, color: "#475569", whiteSpace: "nowrap" }}
                                 >
-                                    вбудований
+                                    базова
                                 </span>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={() => setConfirmRemoveCode({ axis, code })}
-                                    aria-label="Видалити"
-                                    style={{ ...sIconBtn, color: "#ef4444" }}
-                                >
-                                    ✕
-                                </button>
                             )}
+                            <button
+                                type="button"
+                                onClick={() => setConfirmRemoveCode({ axis, code })}
+                                aria-label="Видалити"
+                                style={{ ...sIconBtn, color: "#ef4444" }}
+                            >
+                                ✕
+                            </button>
                         </div>
                     ))}
                 </div>
@@ -1493,7 +1517,7 @@ export function FilterEditorModal({
                                 scope.kind === "vocab",
                                 vocabDirty,
                                 () => setScope({ kind: "vocab" }),
-                                <>🔤 Словник</>,
+                                <>🔤 Тканина і рукав</>,
                             )}
                             <p
                                 style={{
@@ -1647,6 +1671,21 @@ export function FilterEditorModal({
                                             </div>
                                         </div>
                                     </details>
+                                    <button
+                                        type="button"
+                                        onClick={() => setScope({ kind: "vocab" })}
+                                        style={{
+                                            ...sIconBtn,
+                                            width: "auto",
+                                            padding: "8px 14px",
+                                            marginBottom: 18,
+                                            color: "var(--accent-primary)",
+                                            borderColor: "rgba(94,234,212,0.4)",
+                                            background: "rgba(94,234,212,0.06)",
+                                        }}
+                                    >
+                                        ✎ Перейменувати, додати або прибрати тканину/рукав →
+                                    </button>
                                     {shopSubs.length === 0 && (
                                         <p
                                             style={{
@@ -1798,7 +1837,7 @@ export function FilterEditorModal({
 
                             {scope.kind === "vocab" && (
                                 <div>
-                                    {sectionTitle("Словник: тканина та рукав")}
+                                    {sectionTitle("Тканина і рукав — назви")}
                                     <p
                                         style={{
                                             color: "#64748b",
@@ -1808,8 +1847,12 @@ export function FilterEditorModal({
                                         }}
                                     >
                                         Назви тканини та рукава, що показуються в меню й фільтрах.
-                                        Можна перейменувати або додати свої. Код (латиниця) —
-                                        незмінний.
+                                        Тут їх можна{" "}
+                                        <b style={{ color: "#94a3b8" }}>перейменувати</b>,{" "}
+                                        <b style={{ color: "#94a3b8" }}>додати свої</b> та{" "}
+                                        <b style={{ color: "#94a3b8" }}>видалити</b>. Поле «код»
+                                        (латиниця) — технічна адреса, її змінювати не можна;
+                                        редагуйте назву зліва.
                                     </p>
                                     {vocabList("fabric")}
                                     {vocabList("sleeve")}
