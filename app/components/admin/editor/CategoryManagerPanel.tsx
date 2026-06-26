@@ -91,6 +91,28 @@ export function CategoryManagerPanel({ categories, fetcher, onClose }: CategoryM
                 className="custom-scrollbar"
                 style={{ flex: 1, overflowY: "auto", padding: "24px" }}
             >
+                {/* Quick edit (with live preview) is right here; add / delete / reorder
+                    open the full manager (more room than this narrow rail). */}
+                <a
+                    href="/admin/categories"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 8,
+                        padding: "10px 14px",
+                        marginBottom: 16,
+                        borderRadius: 10,
+                        border: "1px dashed rgba(94,234,212,0.4)",
+                        background: "rgba(94,234,212,0.06)",
+                        color: "var(--accent-primary)",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                    }}
+                >
+                    ➕ Додати або 🗑 видалити картку →
+                </a>
                 {categories.length === 0 && (
                     <div
                         style={{
@@ -104,8 +126,8 @@ export function CategoryManagerPanel({ categories, fetcher, onClose }: CategoryM
                             marginBottom: "16px",
                         }}
                     >
-                        Карток ще немає — на головній показуються стандартні. Додати чи прибрати
-                        картку можна в розділі «Картки головної» адмін-панелі.
+                        Карток ще немає — на головній показуються стандартні. Натисніть «Додати або
+                        видалити картку» вище, щоб створити першу.
                     </div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

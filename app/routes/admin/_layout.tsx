@@ -143,25 +143,11 @@ const navItems = [
     },
     // { to: "/admin/slides", icon: <Icons.Slides />, label: "Слайди" }, // Removed as requested
     { to: "/admin/products", icon: <Icons.Products />, label: "Товари" },
-    {
-        to: "/admin/categories",
-        icon: (
-            <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                width="20"
-                height="20"
-            >
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-        ),
-        label: "Картки головної",
-    },
+    // "Картки головної" (home banner cards) intentionally NOT in the sidebar —
+    // it cluttered the nav and duplicated the visual editor. Cards are edited
+    // inline in the visual editor («Режим редагування» → «Картки головної»); the
+    // full add/delete/reorder manager is still at /admin/categories, reached via
+    // a button inside that editor panel.
     {
         to: "/admin/inventory",
         icon: (
