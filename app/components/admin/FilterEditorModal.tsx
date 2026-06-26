@@ -12,6 +12,7 @@ import {
     type ShopTaxonomy,
     type SubcategoryDef,
 } from "../../utils/taxonomy";
+import { getColorHex, getColorLabel } from "../../utils/colors";
 import { FilePickerField } from "./FilePickerField";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { useModalA11y } from "./useModalA11y";
@@ -109,6 +110,29 @@ function slugify(s: string): string {
         .replace(/^-+|-+$/g, "");
 }
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+// Built-in colour palette (neutrals → warm → cool). Codes resolve to a hex +
+// Ukrainian name via utils/colors and match Product.colors / the product editor.
+const PALETTE: string[] = [
+    "black",
+    "white",
+    "gray",
+    "beige",
+    "cream",
+    "brown",
+    "red",
+    "pink",
+    "orange",
+    "yellow",
+    "green",
+    "mint",
+    "teal",
+    "blue",
+    "navy",
+    "purple",
+    "lavender",
+    "marsala",
+];
 
 // ---- inline style tokens ---------------------------------------------------
 const sInput: CSSProperties = {
@@ -405,16 +429,16 @@ export function FilterEditorModal({
     };
 
     // ---- filters (colors/sizes/prices) handlers ----------------------------
-    const [newColorHex, setNewColorHex] = useState("#888888");
-    const [newColorLabel, setNewColorLabel] = useState("");
-    const addColor = () => {
-        if (!newColorHex || !newColorLabel.trim()) return;
-        setData((prev) => ({
-            ...prev,
-            colors: { ...prev.colors, [newColorHex]: newColorLabel.trim() },
-        }));
-        setNewColorLabel("");
-    };
+    // Toggle a palette colour in/out of the filter. Keyed by its CODE (e.g.
+    // "black") so it matches Product.colors + the product editor's picker — a hex
+    // key would match no product (the old bug).
+    const toggleColor = (code: string) =>
+        setData((prev) => {
+            const next = { ...prev.colors };
+            if (code in next) delete next[code];
+            else next[code] = getColorLabel(code);
+            return { ...prev, colors: next };
+        });
     const removeColor = (key: string) =>
         setData((prev) => {
             const next = { ...prev.colors };
@@ -879,79 +903,94 @@ export function FilterEditorModal({
     };
 
     // ---- detail: filters (colors/sizes/prices) -----------------------------
-    const colorCard = (key: string, label: string) => (
-        <div
+    // A built-in palette colour as a toggle chip (swatch + Ukrainian name).
+    const colorChip = (code: string) => {
+        const on = !!data && code in data.colors;
+        const n = colorCount(code);
+        return (
+            <button
+                key={code}
+                type="button"
+                onClick={() => toggleColor(code)}
+                aria-pressed={on}
+                title={getColorLabel(code)}
+                style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 12px 6px 7px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    border: on
+                        ? "1px solid var(--accent-primary)"
+                        : "1px solid rgba(255,255,255,0.14)",
+                    background: on ? "rgba(94,234,212,0.12)" : "transparent",
+                    color: on ? "#fff" : "#94a3b8",
+                }}
+            >
+                <span
+                    style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        background: getColorHex(code),
+                        border: "1px solid rgba(255,255,255,0.3)",
+                        flexShrink: 0,
+                    }}
+                />
+                {getColorLabel(code)}
+                {on ? " ✓" : ""}
+                {gate && n > 0 ? (
+                    <span style={{ fontSize: 10, color: "#5eead4" }}>· {n}</span>
+                ) : null}
+            </button>
+        );
+    };
+    // A colour already saved that isn't in the built-in palette (legacy / custom) —
+    // shown so it isn't silently lost, with a one-click remove.
+    const extraColorChip = (key: string, label: string) => (
+        <span
             key={key}
             style={{
-                ...sCard,
-                display: "flex",
-                gap: "12px",
+                display: "inline-flex",
                 alignItems: "center",
-                position: "relative",
+                gap: 6,
+                padding: "5px 8px 5px 7px",
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.14)",
+                fontSize: 12,
+                color: "#cbd5e1",
             }}
         >
-            <button
-                onClick={() => removeColor(key)}
-                aria-label="Видалити"
+            <span
                 style={{
-                    position: "absolute",
-                    top: 10,
-                    right: 10,
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    background:
+                        key === "other" ? "linear-gradient(45deg,red,blue)" : getColorHex(key),
+                    border: "1px solid rgba(255,255,255,0.3)",
+                    flexShrink: 0,
+                }}
+            />
+            {label}
+            <button
+                type="button"
+                onClick={() => removeColor(key)}
+                aria-label="Прибрати"
+                style={{
                     background: "none",
                     border: "none",
                     color: "#ef4444",
                     cursor: "pointer",
-                    opacity: 0.6,
+                    fontSize: 12,
                 }}
             >
                 ✕
             </button>
-            <div
-                style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    background: key === "other" ? "linear-gradient(45deg,red,blue)" : key,
-                    border: "2px solid rgba(255,255,255,0.2)",
-                    flexShrink: 0,
-                }}
-            />
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                    style={{
-                        fontSize: "9px",
-                        color: "#475569",
-                        textTransform: "uppercase",
-                        marginBottom: 4,
-                        display: "flex",
-                        gap: 6,
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                    }}
-                >
-                    <span style={{ fontFamily: "monospace" }}>{key}</span>
-                    {gate && colorCount(key) > 0 && countPill(colorCount(key))}
-                </div>
-                <input
-                    value={label}
-                    onChange={(e) =>
-                        setData((prev) => ({
-                            ...prev,
-                            colors: { ...prev.colors, [key]: e.target.value },
-                        }))
-                    }
-                    style={{
-                        width: "100%",
-                        background: "transparent",
-                        border: "none",
-                        color: "#fff",
-                        fontSize: "14px",
-                        borderBottom: "1px solid rgba(255,255,255,0.1)",
-                        outline: "none",
-                    }}
-                />
-            </div>
-        </div>
+        </span>
     );
     const renderFilters = (label: string) =>
         data && (
@@ -961,56 +1000,38 @@ export function FilterEditorModal({
                         Фільтри для розділу «{label}». За замовчуванням успадковані із «Загальних».
                     </p>
                 )}
-                {/* Colors */}
+                {/* Colors — one-click palette (code-keyed, matches products) */}
                 <div style={{ marginBottom: 32 }}>
                     {sectionTitle("Кольори")}
-                    <div
+                    <p
                         style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
-                            gap: 14,
-                            marginBottom: 14,
+                            color: "#64748b",
+                            fontSize: 13,
+                            margin: "-6px 0 14px",
+                            lineHeight: 1.5,
                         }}
                     >
-                        {Object.entries(data.colors).map(([k, v]) => colorCard(k, v))}
+                        Натисніть колір, щоб показувати його у фільтрі на сторінці магазину (і
+                        пропонувати в картці товару). Натисніть ще раз — прибрати.
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                        {PALETTE.map((code) => colorChip(code))}
                     </div>
-                    <div
-                        style={{
-                            background: "rgba(94,234,212,0.05)",
-                            padding: 14,
-                            borderRadius: 14,
-                            border: "1px dashed rgba(94,234,212,0.3)",
-                            display: "flex",
-                            gap: 12,
-                            flexWrap: "wrap",
-                            alignItems: "center",
-                        }}
-                    >
-                        <input
-                            type="color"
-                            value={newColorHex}
-                            onChange={(e) => setNewColorHex(e.target.value)}
-                            aria-label="Колір"
-                            style={{
-                                width: 44,
-                                height: 40,
-                                padding: 0,
-                                border: "1px solid rgba(255,255,255,0.1)",
-                                borderRadius: 8,
-                                background: "transparent",
-                                cursor: "pointer",
-                            }}
-                        />
-                        <input
-                            placeholder="Назва (напр. Бірюзовий)"
-                            value={newColorLabel}
-                            onChange={(e) => setNewColorLabel(e.target.value)}
-                            style={{ ...sInput, flex: "1 1 180px" }}
-                        />
-                        <button onClick={addColor} style={sPrimaryBtn}>
-                            Додати
-                        </button>
-                    </div>
+                    {(() => {
+                        const extras = Object.entries(data.colors).filter(
+                            ([k]) => !PALETTE.includes(k),
+                        );
+                        return extras.length === 0 ? null : (
+                            <div style={{ marginTop: 14 }}>
+                                <div style={{ fontSize: 11, color: "#64748b", marginBottom: 6 }}>
+                                    Інші збережені кольори (поза палітрою):
+                                </div>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                    {extras.map(([k, v]) => extraColorChip(k, v))}
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
                 {/* Prices */}
                 <div style={{ marginBottom: 32 }}>
