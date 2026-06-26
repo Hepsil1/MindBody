@@ -160,7 +160,7 @@ const navItems = [
                 <rect x="14" y="14" width="7" height="7" rx="1" />
             </svg>
         ),
-        label: "Категорії",
+        label: "Картки головної",
     },
     {
         to: "/admin/inventory",

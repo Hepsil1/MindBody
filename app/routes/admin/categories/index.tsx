@@ -304,8 +304,12 @@ export default function AdminCategories() {
         <>
             <div className="admin-page-header cat-admin-header">
                 <div>
-                    <h1>Категорії головної</h1>
-                    <p>Картки колекцій на головній сторінці</p>
+                    <h1>Картки головної</h1>
+                    <p>
+                        Великі фото-банери на головній сторінці (ведуть у розділи магазину). Це
+                        <b> не категорії товарів</b> — категорії товарів налаштовуються в «Меню та
+                        фільтри магазину».
+                    </p>
                 </div>
                 <button
                     type="button"
@@ -315,7 +319,7 @@ export default function AdminCategories() {
                     }}
                     className={`admin-btn ${showCreate ? "admin-btn--secondary" : "admin-btn--primary"}`}
                 >
-                    {showCreate ? "Закрити" : "+ Додати категорію"}
+                    {showCreate ? "Закрити" : "+ Додати картку"}
                 </button>
             </div>
 
@@ -331,7 +335,7 @@ export default function AdminCategories() {
                 >
                     <input type="hidden" name="intent" value="create" />
                     <h3 style={{ margin: "0 0 16px", color: "var(--text-main)" }}>
-                        Нова категорія
+                        Нова картка головної
                     </h3>
                     <CategoryFields />
                     <div style={{ marginTop: "16px" }}>
@@ -351,7 +355,7 @@ export default function AdminCategories() {
                     className="admin-card"
                     style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}
                 >
-                    Категорій ще немає. Додайте першу.
+                    Карток головної ще немає. Додайте першу.
                 </div>
             ) : (
                 <div style={{ display: "grid", gap: "16px" }}>
@@ -473,10 +477,10 @@ export default function AdminCategories() {
 
             <ConfirmDialog
                 open={confirmDel !== null}
-                title="Видалити категорію?"
+                title="Видалити картку?"
                 body={
                     <>
-                        Категорію <strong>{confirmDel?.title}</strong> буде видалено з головної
+                        Картку <strong>{confirmDel?.title}</strong> буде видалено з головної
                         сторінки.
                     </>
                 }

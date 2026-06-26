@@ -38,7 +38,7 @@ export function CategoryManagerPanel({ categories, fetcher, onClose }: CategoryM
             ref={dialogRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Редагування категорій"
+            aria-label="Картки головної"
             style={{
                 position: "fixed",
                 top: "24px",
@@ -64,9 +64,14 @@ export function CategoryManagerPanel({ categories, fetcher, onClose }: CategoryM
                     alignItems: "center",
                 }}
             >
-                <h2 style={{ fontSize: "16px", fontWeight: 500, margin: 0, color: "#fff" }}>
-                    Редагування категорій
-                </h2>
+                <div>
+                    <h2 style={{ fontSize: "16px", fontWeight: 500, margin: 0, color: "#fff" }}>
+                        Картки головної
+                    </h2>
+                    <p style={{ fontSize: "11px", color: "#64748b", margin: "2px 0 0" }}>
+                        Фото-банери на головній. Не категорії товарів.
+                    </p>
+                </div>
                 <button
                     onClick={onClose}
                     aria-label="Закрити"
@@ -99,8 +104,8 @@ export function CategoryManagerPanel({ categories, fetcher, onClose }: CategoryM
                             marginBottom: "16px",
                         }}
                     >
-                        Категорій у базі немає — на головній показуються стандартні картки. Додайте
-                        категорії в розділі «Категорії» адмін-панелі.
+                        Карток ще немає — на головній показуються стандартні. Додати чи прибрати
+                        картку можна в розділі «Картки головної» адмін-панелі.
                     </div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
