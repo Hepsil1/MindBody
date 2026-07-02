@@ -166,16 +166,10 @@
         "tnum" 1,
         "lnum" 1;
 }
+/* Chapter numerals (01/02/03…) removed at the owner's request — the faint sun
+   bullet below stays as the quiet brand through-line, without the numbering. */
 .ab-kicker::before {
-    content: counter(ab-kicker, decimal-leading-zero);
-    font-family: var(--ab-font);
-    font-style: normal;
-    font-weight: 700;
-    font-size: 1.5rem;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    text-transform: none;
-    color: var(--ab-ink);
+    content: none;
 }
 .ab-kicker::after {
     content: "";
@@ -189,6 +183,62 @@
     opacity: 0.55;
     -webkit-mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
     mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
+}
+
+/* ── Floating brand marks — owner-visible atmosphere ──────────────────────────
+   The sun logo drifts slowly across the viewport as quiet brand texture — the
+   same mark as the home-page particles, but ALWAYS-ON (deliberately NOT gated
+   behind prefers-reduced-motion) so the owner sees it, and it runs on mobile
+   too (pure CSS, no JS/canvas). Dark ink at ~5% reads on the cream paper and
+   effectively disappears over the dark garment photos, so photos stay sharp.
+   pointer-events:none — purely decorative, never intercepts input. */
+.ab-floats {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+    contain: layout paint style;
+}
+.ab-float {
+    position: absolute;
+    display: block;
+    aspect-ratio: 1 / 1;
+    background: var(--ab-ink);
+    opacity: 0.055;
+    -webkit-mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
+    mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
+    will-change: transform;
+    animation: abDrift var(--dur, 42s) ease-in-out var(--delay, 0s) infinite alternate;
+}
+@keyframes abDrift {
+    from {
+        transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    }
+    to {
+        transform: translate3d(var(--dx, 40px), var(--dy, -60px), 0) rotate(var(--dr, 34deg))
+            scale(1.12);
+    }
+}
+@media (max-width: 768px) {
+    /* thin the field on phones (fewer layers to composite) + a touch fainter */
+    .ab-float {
+        opacity: 0.045;
+    }
+    .ab-float--m {
+        display: none;
+    }
+}
+/* Owner-visible: this decorative brand drift is intentional atmosphere, so it
+   deliberately survives the global prefers-reduced-motion killswitch (which
+   zeroes animation-duration + forces iteration-count:1 on every element). It's
+   slow and faint, so it stays comfortable even with reduce-motion on. Higher
+   specificity than the `*` rule, so these !important declarations win. */
+@media (prefers-reduced-motion: reduce) {
+    .ab-float {
+        animation-duration: var(--dur, 42s) !important;
+        animation-iteration-count: infinite !important;
+    }
 }
 
 /* the accent — DEFAULT is an Onest weight-beat (no serif, no underline). The
