@@ -745,9 +745,6 @@ export default function About() {
                                 </li>
                             ))}
                         </ul>
-                        <span className="ab-mark ab-mat__sun" data-reveal aria-hidden="true">
-                            <span className="ab-mark__img" />
-                        </span>
                     </div>
                 </div>
             </section>

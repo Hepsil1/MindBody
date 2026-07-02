@@ -71,8 +71,10 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         const particles: SunParticle[] = [];
         // Same physics/behaviour as home ("under"): free-floating in the
         // VIEWPORT, drifting + wrapping + repelling. Overlay just has more
-        // (smaller) suns and never pauses on scroll (see render() below).
+        // (smaller) suns, drifts noticeably slower (~40% speed — calm brand
+        // atmosphere, not busy motion), and never pauses on scroll (below).
         const numParticles = isMobile ? (overlay ? 9 : 5) : overlay ? 22 : 12;
+        const speedMul = overlay ? 0.4 : 1;
 
         let mouseX = -1000;
         let mouseY = -1000;
@@ -94,11 +96,11 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 particles.push({
                     x: Math.random() * width,
                     y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4),
-                    vy: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4),
+                    vx: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4) * speedMul,
+                    vy: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4) * speedMul,
                     size,
                     rotation: Math.random() * Math.PI * 2,
-                    rotSpeed: (Math.random() - 0.5) * (isMobile ? 0.003 : 0.005),
+                    rotSpeed: (Math.random() - 0.5) * (isMobile ? 0.003 : 0.005) * speedMul,
                     // Overlay sits on cream paper — colours need a bit more alpha
                     // to actually read as colours, still quiet.
                     alpha: overlay ? Math.random() * 0.12 + 0.08 : Math.random() * 0.08 + 0.02,
@@ -151,16 +153,17 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                     });
                 }
 
-                // Velocity damping
+                // Velocity damping (scaled by speedMul so overlay's slower
+                // particles settle into their own slower range, not home's).
                 const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-                const maxSpeed = isMobile ? 0.8 : 1.2;
-                const minSpeed = isMobile ? 0.08 : 0.15;
+                const maxSpeed = (isMobile ? 0.8 : 1.2) * speedMul;
+                const minSpeed = (isMobile ? 0.08 : 0.15) * speedMul;
                 if (speed > maxSpeed) {
                     p.vx *= 0.96;
                     p.vy *= 0.96;
                 } else if (speed < minSpeed) {
-                    p.vx += (Math.random() - 0.5) * 0.02;
-                    p.vy += (Math.random() - 0.5) * 0.02;
+                    p.vx += (Math.random() - 0.5) * 0.02 * speedMul;
+                    p.vy += (Math.random() - 0.5) * 0.02 * speedMul;
                 }
 
                 // Wrap around edges

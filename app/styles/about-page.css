@@ -683,30 +683,6 @@
     color: var(--ab-ink-soft);
     max-width: 28ch;
 }
-/* the LOGO peak — a big debossed sun pressed into the paper beside the real stitch */
-.ab-mat__sun {
-    position: absolute;
-    left: -6%;
-    bottom: -4%;
-    z-index: 0;
-    width: clamp(170px, 26vw, 350px);
-    aspect-ratio: 1;
-    pointer-events: none;
-    transform: rotate(-12deg) scale(0.965);
-    opacity: 0;
-    transition:
-        opacity 1s ease 0.3s,
-        transform 1.4s var(--ab-ease) 0.3s;
-}
-.ab-mat__sun.in {
-    opacity: 1;
-    transform: rotate(-12deg) scale(1);
-}
-/* FIX C — a low-alpha TEAL sun reads on cream (paper-on-paper did not). No deboss. */
-.ab-mat__sun .ab-mark__img {
-    background: color-mix(in srgb, var(--ab-teal) 22%, transparent);
-}
-
 /* ── 03 IN MOTION · 2 frames, the body draws a line ────────────────────── */
 .ab-flow__head {
     margin-bottom: var(--s-head);
@@ -1723,12 +1699,6 @@
     .ab-mat__media img {
         object-position: 50% 36%;
     }
-    .ab-mat__sun {
-        width: clamp(150px, 42vw, 220px);
-        left: auto;
-        right: -6%;
-        bottom: -2%;
-    }
     .ab-flow__pair {
         grid-template-columns: 1fr;
         gap: clamp(30px, 5vh, 46px);
@@ -1829,10 +1799,6 @@
     .ab .ab-lockup__word .ab-mark__img,
     .ab .ab-final__word .ab-mark__img {
         transition-duration: 0.7s !important;
-    }
-    /* the teal sun settle */
-    .ab .ab-mat__sun {
-        transition-duration: 1s, 1.4s !important;
     }
     /* hero ambient bloom fade (Layer-A) */
     .ab .ab-hero__bloom {
