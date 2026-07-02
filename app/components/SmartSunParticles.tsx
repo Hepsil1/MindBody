@@ -67,12 +67,12 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             alpha: number;
             /** index into `tinted` (overlay), or -1 = the original art */
             tint: number;
-            /** overlay-only: gentle sinusoidal sway (no direction changes) */
-            swayAmp: number;
-            swayFreq: number;
-            swayPhase: number;
         }
         const particles: SunParticle[] = [];
+        // Same physics/behaviour as home ("under"): free-floating in the
+        // VIEWPORT, drifting + wrapping + repelling. Overlay just has more
+        // (smaller) suns and never pauses on scroll (see render() below).
+        const numParticles = isMobile ? (overlay ? 9 : 5) : overlay ? 22 : 12;
 
         let mouseX = -1000;
         let mouseY = -1000;
@@ -80,114 +80,41 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         let isScrolling = false;
         let scrollTimeout: ReturnType<typeof setTimeout>;
 
-        // Overlay: the suns are anchored to the DOCUMENT (like the static logo
-        // pattern on home) — you scroll PAST them; they only sway gently in
-        // place. Track the document height so anchors (stored as fractions)
-        // stay spread over the whole page even as images/content load in.
-        let docH = 0;
-        let resizeObs: ResizeObserver | null = null;
-        if (overlay) {
-            docH = document.documentElement.scrollHeight;
-            if ("ResizeObserver" in window) {
-                resizeObs = new ResizeObserver(() => {
-                    docH = document.documentElement.scrollHeight;
-                });
-                resizeObs.observe(document.body);
-            }
-        }
-
         sunImage.onload = () => {
             if (overlay) buildTints();
-            docH = overlay ? document.documentElement.scrollHeight : 0;
-            // Overlay: one sun per ~half viewport of page height — evenly
-            // spread over the WHOLE document, never clustered. Home: as before.
-            const numParticles = overlay
-                ? Math.min(
-                      Math.max(Math.round(docH / (isMobile ? 620 : 520)), 8),
-                      isMobile ? 13 : 20,
-                  )
-                : isMobile
-                  ? 5
-                  : 12;
             for (let i = 0; i < numParticles; i++) {
-                // Overlay: SMALL suns, 28–86px desktop / 24–60px mobile.
+                // Overlay: SMALL suns, 34–90px desktop / 26–56px mobile.
                 const size = overlay
                     ? isMobile
-                        ? Math.random() * 36 + 24
-                        : Math.random() * 58 + 28
+                        ? Math.random() * 30 + 26
+                        : Math.random() * 56 + 34
                     : isMobile
                       ? Math.random() * 70 + 60
                       : Math.random() * 150 + 80;
                 particles.push({
-                    // Overlay: x/y are FRACTIONS of (viewport width, document
-                    // height). Golden-ratio sequence for x + evenly-strided y =
-                    // low-discrepancy spread, no clumps by construction.
-                    x: overlay ? 0.06 + ((i * 0.6180339887) % 1) * 0.88 : Math.random() * width,
-                    y: overlay
-                        ? (i + 0.2 + Math.random() * 0.6) / numParticles
-                        : Math.random() * height,
+                    x: Math.random() * width,
+                    y: Math.random() * height,
                     vx: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4),
                     vy: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4),
                     size,
                     rotation: Math.random() * Math.PI * 2,
-                    rotSpeed: overlay
-                        ? (Math.random() < 0.5 ? -1 : 1) * (0.02 + Math.random() * 0.04)
-                        : (Math.random() - 0.5) * (isMobile ? 0.003 : 0.005),
+                    rotSpeed: (Math.random() - 0.5) * (isMobile ? 0.003 : 0.005),
                     // Overlay sits on cream paper — colours need a bit more alpha
                     // to actually read as colours, still quiet.
                     alpha: overlay ? Math.random() * 0.12 + 0.08 : Math.random() * 0.08 + 0.02,
                     // Cycle through the brand tints so all colours are present.
                     tint: overlay && tinted.length > 0 ? i % tinted.length : -1,
-                    swayAmp: 8 + Math.random() * 10,
-                    swayFreq: 0.2 + Math.random() * 0.25,
-                    swayPhase: Math.random() * Math.PI * 2,
                 });
             }
             render();
         };
 
-        // Overlay: the suns LIVE AT FIXED SPOTS ON THE PAGE (document-anchored,
-        // like home's static logo pattern). Each frame we project their document
-        // position into the viewport (anchor − scrollY): scrolling moves PAST
-        // them, they never travel — only a slow in-place sway/bob + rotation.
-        // No scroll pause, dt-independent (time-based sines). Off-screen suns
-        // are culled. Mobile paints every 2nd frame (~30fps).
-        let frameToggle = false;
-        const renderOverlay = (ts: number) => {
-            animationFrameId = requestAnimationFrame(renderOverlay);
-            if (isMobile && (frameToggle = !frameToggle)) return;
-            const t = ts * 0.001;
-            const sy = window.scrollY;
-
-            ctx.clearRect(0, 0, width, height);
-            for (const p of particles) {
-                // document-space anchor (fractions → px) projected to viewport
-                const ay = p.y * docH - sy;
-                if (ay < -p.size || ay > height + p.size) continue; // culled
-                const ax = p.x * width;
-
-                const sway = Math.sin(t * p.swayFreq + p.swayPhase) * p.swayAmp;
-                const bob = Math.cos(t * p.swayFreq * 0.8 + p.swayPhase) * p.swayAmp * 0.6;
-                const rot = p.rotation + t * p.rotSpeed;
-
-                ctx.save();
-                ctx.translate(ax + sway, ay + bob);
-                ctx.rotate(rot);
-                ctx.globalAlpha = p.alpha;
-                const art = p.tint >= 0 ? tinted[p.tint] : sunImage;
-                ctx.drawImage(art, -p.size / 2, -p.size / 2, p.size, p.size);
-                ctx.restore();
-            }
-        };
-
         const render = () => {
-            if (overlay) {
-                animationFrameId = requestAnimationFrame(renderOverlay);
-                return;
-            }
             animationFrameId = requestAnimationFrame(render);
 
-            if (isScrolling) return;
+            // Overlay never pauses on scroll (the home backdrop's freeze read
+            // as lag on the long /about page); home keeps the original pause.
+            if (isScrolling && !overlay) return;
 
             ctx.clearRect(0, 0, width, height);
 
@@ -294,7 +221,6 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             }
             window.removeEventListener("scroll", handleScroll);
             clearTimeout(scrollTimeout);
-            resizeObs?.disconnect();
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
     }, [overlay]);
