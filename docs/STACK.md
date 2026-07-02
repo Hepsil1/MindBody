@@ -39,12 +39,12 @@ export default {
 вопрос:
 
 ```powershell
-curl https://saleid.icu | Select-String "og:title|canonical|application/ld\+json" -Context 0,1
+curl https://mindbody-sportwear.com | Select-String "og:title|canonical|application/ld\+json" -Context 0,1
 ```
 
 В ответе должно быть:
 
-- `<link rel="canonical" href="https://saleid.icu">`
+- `<link rel="canonical" href="https://mindbody-sportwear.com">`
 - `<meta property="og:title" content="MIND BODY — Спортивний одяг">`
 - `<script type="application/ld+json">{"@type":"Organization", ...}</script>`
 

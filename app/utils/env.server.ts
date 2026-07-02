@@ -20,10 +20,10 @@ const EnvSchema = z.object({
     SESSION_SECRET: z
         .string()
         .min(32, "SESSION_SECRET must be at least 32 chars (use crypto.randomBytes(48))"),
-    // SITE_URL is the canonical production domain. We deliberately do NOT
-    // hard-code an allow-list of accepted hostnames — the project sits on
-    // saleid.icu today and will move to its permanent domain later; both
-    // need to validate cleanly.
+    // SITE_URL is the canonical production domain (mindbody-sportwear.com
+    // since 2026-06-11; the saleid.icu launch placeholder was fully retired
+    // 2026-06-26). We deliberately do NOT hard-code an allow-list of accepted
+    // hostnames, so a future domain change still validates cleanly.
     SITE_URL: z
         .string()
         .url("SITE_URL must be a valid URL")

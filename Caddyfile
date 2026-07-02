@@ -16,31 +16,6 @@
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Legacy origin — saleid.icu was the launch placeholder; the brand permanently
-# moved to mindbody-sportwear.com on 2026-06-11. Everything on this hostname
-# now 301-redirects to the canonical origin, preserving the path so external
-# links (old Instagram posts, indexed Google results) land on the right page.
-# 308 → permanent (cacheable by intermediaries, including Cloudflare in front).
-#
-# DNS for saleid.icu still resolves via Cloudflare to this VPS, so removing
-# the upstream DNS records later (or letting the .icu domain expire) is the
-# clean way to finally retire this block. Until then, keep this block to capture
-# any traffic from old links — it's effectively free SEO equity transfer.
-# ─────────────────────────────────────────────────────────────────────────────
-saleid.icu, www.saleid.icu {
-	redir https://mindbody-sportwear.com{uri} permanent
-
-	# Even on a pure-redirect host we still want HSTS so browsers upgrade
-	# subsequent direct visits to HTTPS without round-tripping through 301.
-	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-
-	log {
-		output file c:\mindbody\caddy_access.log
-		format json
-	}
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Permanent domain. Both apex and www are listed so Let's Encrypt issues a
 # single certificate covering both names. The www→apex redirect inside the
 # block enforces a single canonical hostname for SEO (otherwise crawlers see

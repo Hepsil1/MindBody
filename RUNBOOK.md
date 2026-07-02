@@ -1,14 +1,14 @@
 # MindBody Operations Runbook
 
 Quick-reference for running, deploying, recovering, and rotating MindBody
-on the Windows VPS. This is the document I wish existed when saleid.icu
+on the Windows VPS. This is the document I wish existed when mindbody-sportwear.com
 showed an infinite loading screen on 2026-05-18 — keep it tidy.
 
 ---
 
 ## Architecture in one paragraph
 
-`saleid.icu` resolves via Cloudflare → Caddy (PM2 service `caddy`) on the
+`mindbody-sportwear.com` resolves via Cloudflare → Caddy (PM2 service `caddy`) on the
 VPS, which `reverse_proxy`s to a React Router 7 server on `localhost:3000`
 (PM2 service `mindbody`). The React Router server reads PostgreSQL via
 Prisma (`mindbody_db` on `localhost:5432`). Static client assets are
@@ -37,7 +37,7 @@ The script:
 2. `npx react-router build` (skips `prisma generate` because PM2 holds
    the Prisma DLL; generate manually after schema changes — see below).
 3. `pm2 restart mindbody --update-env`.
-4. Curls `https://saleid.icu`, parses `entry.client-*.js` out of the
+4. Curls `https://mindbody-sportwear.com`, parses `entry.client-*.js` out of the
    HTML, and confirms it returns 200. If not, you have an asset/manifest
    mismatch — re-run the script.
 
@@ -119,7 +119,7 @@ schtasks /create /tn "MindBody DB Backup" `
 ## Health check
 
 ```bash
-curl https://saleid.icu/api/health
+curl https://mindbody-sportwear.com/api/health
 # {"status":"ok","db":"ok","uptime_ms":12345,"ts":"..."}
 ```
 
@@ -172,7 +172,7 @@ npm run deploy        # builds + pm2 restart in one step
 pm2 restart caddy
 ```
 
-**Active security headers (verify with `curl -sI https://saleid.icu`):**
+**Active security headers (verify with `curl -sI https://mindbody-sportwear.com`):**
 
 - `strict-transport-security: max-age=31536000; includeSubDomains; preload`
 - `x-content-type-options: nosniff`
@@ -228,19 +228,22 @@ To rotate any key:
 
 ## Domains
 
-- `saleid.icu` — the active **temporary** domain. Caddy block in
-  `Caddyfile`. TLS via Cloudflare proxied. `SITE_URL`, `EMAIL_FROM`,
-  `GOOGLE_REDIRECT_URI`, and all sitemap/canonical/OG URLs point here.
+- `mindbody-sportwear.com` — the permanent domain since 2026-06-11. Caddy
+  block in `Caddyfile` (no Cloudflare proxy on this origin — Caddy itself
+  obtains/renews the cert via HTTP-01). `SITE_URL`, `GOOGLE_REDIRECT_URI`,
+  and all sitemap/canonical/OG URLs point here.
+- `mindbody-sportwear.com` — the old launch placeholder. Retired 2026-06-26: the Caddy
+  redirect block was removed (no more 301 from the old origin — deliberate
+  choice, trades old-link SEO equity for a clean cutover). DNS for it may
+  still point at this VPS until the owner removes the records at the
+  registrar/Cloudflare and lets the `.icu` domain lapse — that part is
+  outside this repo. **Known exception:** `EMAIL_FROM`/`EMAIL_REPLY_TO` in
+  `.env` are still `hello@mindbody-sportwear.com` on purpose — mindbody-sportwear.com
+  isn't yet verified as a sending domain in Resend (resend.com/domains).
+  Verify it, then update those two vars + the fallback in
+  `app/utils/email.server.ts`.
 
-When the permanent domain is ready, switching is a three-step change:
-
-1. Add the new Caddy block (and optionally a redirect from `saleid.icu`).
-2. Update `.env`: `SITE_URL`, `EMAIL_FROM`, `EMAIL_REPLY_TO`,
-   `GOOGLE_REDIRECT_URI`.
-3. `npm run deploy` (rebuild + pm2 restart).
-
-Search the codebase for `"https://saleid.icu"` to spot any remaining
-hard-coded fallbacks that should move to the new domain too.
+Search the codebase for `"mindbody-sportwear.com"` to check nothing new crept back in.
 
 ---
 
@@ -263,7 +266,7 @@ commit — never `--no-verify` or skip steps.
 
 ## Common incidents
 
-### Infinite loading screen on saleid.icu
+### Infinite loading screen on mindbody-sportwear.com
 
 Symptom: HTML loads, brand sun spinner spins forever, no errors visible.
 
@@ -275,8 +278,8 @@ Diagnosis:
 
 ```bash
 # Pull the entry chunk URL out of the HTML, then HEAD-request it.
-curl -s https://saleid.icu | grep -oE '/assets/entry\.client-[A-Za-z0-9_-]+\.js'
-curl -sI https://saleid.icu/assets/entry.client-XXX.js   # should be 200
+curl -s https://mindbody-sportwear.com | grep -oE '/assets/entry\.client-[A-Za-z0-9_-]+\.js'
+curl -sI https://mindbody-sportwear.com/assets/entry.client-XXX.js   # should be 200
 ```
 
 Fix: `npm run deploy`.

@@ -19,6 +19,11 @@ import { prisma } from "../db.server";
 import { HTML_LANG, localizePath, type Locale } from "../i18n/config";
 
 const apiKey = env.RESEND_API_KEY;
+// KNOWN LOOSE END (2026-06-26 domain retirement): still saleid.icu on purpose.
+// mindbody-sportwear.com is NOT yet verified as a sending domain in Resend
+// (resend.com/domains — DNS TXT/DKIM). Switching this before that's done would
+// break every transactional email (order confirmations). Once verified, update
+// EMAIL_FROM/EMAIL_REPLY_TO in .env (and this fallback) to @mindbody-sportwear.com.
 const FROM_EMAIL = env.EMAIL_FROM ?? "hello@saleid.icu";
 const FROM_NAME = env.EMAIL_FROM_NAME ?? "MIND BODY";
 const REPLY_TO = env.EMAIL_REPLY_TO ?? FROM_EMAIL;

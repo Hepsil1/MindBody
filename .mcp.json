@@ -3,7 +3,7 @@
   "_comment": "Project-scoped MCP servers for the MindBody design + audit workflow. Each future Claude Code session in this repo will get these tools after the user approves them once. None of these run on prod or touch user data — they're either browser-driving (chrome-devtools, playwright) or read-only documentation (context7).",
   "mcpServers": {
     "chrome-devtools": {
-      "_comment": "Google's headless-Chrome MCP. Lets us run Lighthouse audits, take screenshots, inspect computed CSS, watch network requests on any URL (including saleid.icu prod). The primary tool for design auditing.",
+      "_comment": "Google's headless-Chrome MCP. Lets us run Lighthouse audits, take screenshots, inspect computed CSS, watch network requests on any URL (including mindbody-sportwear.com prod). The primary tool for design auditing.",
       "command": "npx",
       "args": ["-y", "chrome-devtools-mcp@latest"]
     },
