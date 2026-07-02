@@ -221,8 +221,10 @@ To rotate any key:
 
 **Outstanding rotations:**
 
-- `RESEND_API_KEY` — comment in `.env` says "KEY EXPOSED IN CHAT,
-  ROTATE AFTER INTEGRATION" but never rotated. Do this when convenient.
+- `RESEND_API_KEY` — rotated 2026-07-02 (mindbody-sportwear.com domain setup),
+  but the new key was ALSO pasted in chat, so it's technically exposed again.
+  Once the domain shows "Verified" in Resend and email sending is confirmed
+  working end-to-end, generate one more fresh key and rotate a final time.
 
 ---
 
