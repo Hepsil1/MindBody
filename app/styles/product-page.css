@@ -12,149 +12,51 @@
     padding-bottom: 120px;
 }
 
-/* --- PDP breadcrumb bar — minimal premium, cream background ---
-   Previous design was a 190px teal banner with logo-sun watermark
-   + light-leak gradients. Felt heavy for what is just a breadcrumb +
-   product name. Premium e-commerce (Sezane, Cuyana, Polene) uses a
-   thin transparent strip before the gallery, not a full hero band. */
-.shop-hero-luxe.compact {
-    position: relative;
-    background: var(--color-bg-cream);
-    height: auto;
-    padding: 24px 0 16px;
+/* --- PDP breadcrumb — one quiet line, aligned with the product grid.
+   (The old "shop-hero-luxe compact" band was a tall near-empty strip with
+   the crumb floating against the right edge and the product name duplicated
+   in 20px serif. Sezane/Alo/COS pattern: a slim text line above the gallery,
+   nothing more.) --- */
+.pdp-crumb {
     display: flex;
     align-items: center;
-    overflow: hidden;
-    margin-bottom: 24px;
-    border-bottom: 1px solid var(--color-border-light);
-}
-
-/* Watermark / drift effects removed — they read as decoration noise
-   on this short band. */
-.shop-hero-luxe.compact::after,
-.shop-hero-luxe.compact .shop-hero-luxe__drift {
-    display: none;
-}
-
-/* Vibrant Light Leaks */
-.shop-hero-luxe__drift {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.shop-hero-luxe__drift::before {
-    content: "";
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    top: -200px;
-    left: -100px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-    filter: blur(100px);
-    mix-blend-mode: overlay;
-}
-
-.shop-hero-luxe__drift::after {
-    content: "";
-    position: absolute;
-    width: 400px;
-    height: 400px;
-    bottom: -100px;
-    right: 20%;
-    background: radial-gradient(circle, rgba(114, 47, 55, 0.2) 0%, transparent 70%);
-    filter: blur(80px);
-    mix-blend-mode: color-dodge;
-}
-
-/* Grain Texture — inline data URI instead of external URL */
-.luxe-grain {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.15;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    mix-blend-mode: overlay;
-}
-
-.hero-container {
-    width: 100%;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 20px;
-    z-index: 10;
-}
-
-/* --- Breadcrumb --- */
-.luxe-breadcrumb {
-    display: flex;
-    gap: 16px;
-    font-size: 11px;
+    gap: 10px;
+    /* clears the fixed header (top-bar + floating nav ≈ 118px) — the old hero
+       band absorbed this offset; now the crumb itself carries it */
+    padding: 132px 0 18px;
+    font-family: "Onest", var(--f-sans, "DM Sans", sans-serif);
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    letter-spacing: 0.2em;
-    align-items: center;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--color-text-secondary, #6b7280);
+    min-width: 0;
 }
-
-.luxe-breadcrumb a {
+.pdp-crumb a {
     color: inherit;
     text-decoration: none;
-    transition: color 0.3s ease;
-    font-family: var(--f-sans, "DM Sans", sans-serif);
-    font-weight: 500;
+    transition: color 0.2s ease;
+    white-space: nowrap;
 }
-
-.luxe-breadcrumb a:hover {
-    color: #fff;
+.pdp-crumb a:hover {
+    color: var(--color-primary, #2a5a5a);
 }
-
-.luxe-breadcrumb .sep {
-    opacity: 0.3;
+.pdp-crumb .sep {
+    opacity: 0.35;
 }
-
-.luxe-breadcrumb .current {
-    color: var(--color-text-primary);
-    font-family: "Cormorant Garamond", serif;
-    font-style: normal; /* roman, not italic — premium product naming */
-    font-weight: 500;
-    font-size: 20px;
+.pdp-crumb .current {
+    color: var(--c-text, #1a1a1a);
+    font-weight: 600;
+    letter-spacing: 0.04em;
     text-transform: none;
-    letter-spacing: 0;
-    padding-left: 12px;
-    border-left: 1px solid var(--color-border);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
-/* Override the previous cream-hero breadcrumb link color (white on dark)
-   now that hero is cream — links should be neutral with hover teal. */
-.shop-hero-luxe.compact .luxe-breadcrumb a {
-    color: var(--color-text-secondary);
-}
-.shop-hero-luxe.compact .luxe-breadcrumb a:hover {
-    color: var(--color-primary);
-}
-.shop-hero-luxe.compact .luxe-breadcrumb .sep {
-    color: var(--color-text-subtle);
-}
-
-/* Mobile PDP — stack the title on its own line. */
 @media (max-width: 600px) {
-    .shop-hero-luxe.compact {
-        padding: 16px 0 12px;
-        margin-bottom: 20px;
-    }
-    .luxe-breadcrumb {
-        flex-wrap: wrap;
-        gap: 4px 8px;
-        font-size: 10px;
-    }
-    .luxe-breadcrumb .sep {
-        display: none;
-    }
-    .luxe-breadcrumb .current {
-        flex-basis: 100%;
-        font-size: 22px;
-        padding-left: 0;
-        border-left: none;
-        margin-top: 6px;
+    .pdp-crumb {
+        padding: 84px 0 12px;
+        font-size: 10.5px;
+        gap: 8px;
     }
 }
 
@@ -295,24 +197,32 @@
     top: 40px;
 }
 
+/* Title + price — confident modern sans (Onest, the approved /about display
+   face) instead of the thin 400-weight serif: activewear PDPs (Alo, Nike,
+   Gymshark) lead with a bold sans product name and a price that doesn't
+   whisper. */
 .product-title {
-    font-family: var(--f-serif, "Cormorant Garamond", serif);
-    font-size: 42px;
-    font-weight: 400;
-    margin: 0 0 12px 0;
-    line-height: 1.1;
-    color: var(--c-primary, #2a5a5a);
+    font-family: "Onest", var(--f-sans, "DM Sans", sans-serif);
+    font-size: clamp(26px, 3.4vw, 36px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 10px 0;
+    line-height: 1.12;
+    color: var(--c-text, #1a1a1a);
 }
 
 .product-price-block {
-    font-family: var(--f-serif, "Cormorant Garamond", serif);
-    font-size: 22px;
-    color: #444;
+    font-family: "Onest", var(--f-sans, "DM Sans", sans-serif);
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--c-text, #1a1a1a);
 }
 
 .old-price {
-    font-size: 18px;
-    color: #999;
+    font-size: 17px;
+    font-weight: 500;
+    color: #9aa0a6;
     text-decoration: line-through;
     margin-left: 12px;
 }
@@ -513,59 +423,89 @@
     gap: 5px;
 }
 
-/* Actions */
+/* Actions — brand pill language (matches the site's «Переглянути все» /
+   sticky-CTA pills): equal 58px heights, radius 999, teal-tinted depth.
+   The old row mixed a 60px 8px-radius slab, a padding-sized outline box and
+   a square icon button — three different shapes at three different heights. */
 .actions-row {
     display: flex;
-    gap: 20px;
+    align-items: stretch;
+    gap: 12px;
     margin-bottom: 50px;
 }
 
 .btn-primary-add {
     flex: 1;
-    height: 60px;
+    min-width: 0;
+    height: 58px;
     background-color: var(--color-primary, #2a5a5a);
     color: #fff;
-    font-family: var(--f-sans, "DM Sans", sans-serif);
-    font-size: 14px;
+    font-family: "Onest", var(--f-sans, "DM Sans", sans-serif);
+    font-size: 13.5px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.12em;
     border: none;
-    border-radius: var(--radius-md, 8px);
+    border-radius: 999px;
     cursor: pointer;
+    box-shadow:
+        0 10px 24px rgba(42, 90, 90, 0.22),
+        0 2px 6px rgba(42, 90, 90, 0.14);
     transition:
-        background 0.3s,
-        transform 0.3s;
+        background 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
 }
 
 .btn-primary-add:hover {
     background-color: var(--color-primary-dark, #1e4444);
     transform: translateY(-2px);
+    box-shadow:
+        0 14px 30px rgba(42, 90, 90, 0.28),
+        0 3px 8px rgba(42, 90, 90, 0.16);
+}
+
+.btn-primary-add:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 14px rgba(42, 90, 90, 0.2);
+}
+
+.btn-primary-add:focus-visible,
+.btn-quick-buy:focus-visible,
+.btn-wishlist:focus-visible {
+    outline: 2px solid var(--color-primary, #2a5a5a);
+    outline-offset: 3px;
 }
 
 .btn-primary-add:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
 }
 
 .btn-wishlist {
-    width: 60px;
-    height: 60px;
-    border: 1px solid #e0e0e0;
-    border-radius: var(--radius-md, 8px);
-    background: transparent;
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+    border: 1.5px solid #e2ddd6;
+    border-radius: 50%;
+    background: #fff;
     color: var(--color-primary, #2a5a5a);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s;
+    transition:
+        border-color 0.25s ease,
+        background 0.25s ease,
+        transform 0.25s ease;
 }
 
 .btn-wishlist:hover {
     border-color: var(--c-primary, #2a5a5a);
-    background: rgba(42, 90, 90, 0.03);
+    background: rgba(42, 90, 90, 0.05);
+    transform: translateY(-2px);
 }
 
 /* Accordion */
@@ -650,13 +590,13 @@
 }
 
 .related-title {
-    font-family: var(--f-serif, "Cormorant Garamond", serif);
-    font-size: 36px;
-    font-weight: 300;
-    color: var(--c-primary, #2a5a5a);
+    font-family: "Onest", var(--f-sans, "DM Sans", sans-serif);
+    font-size: clamp(22px, 2.6vw, 30px);
+    font-weight: 700;
+    color: var(--c-text, #1a1a1a);
     margin: 0;
-    text-transform: uppercase;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+    text-transform: none;
 }
 
 .related-grid {
@@ -827,21 +767,37 @@
 
 /* --- Quick Buy --- */
 .btn-quick-buy {
-    padding: 14px 20px;
-    background: transparent;
-    border: 2px solid var(--color-primary, #2a5a5a);
+    height: 58px;
+    padding: 0 22px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1.5px solid var(--color-primary, #2a5a5a);
     color: var(--color-primary, #2a5a5a);
-    border-radius: var(--radius-md, 8px);
+    border-radius: 999px;
+    font-family: "Onest", var(--f-sans, "DM Sans", sans-serif);
     font-weight: 600;
     font-size: 13px;
     cursor: pointer;
     white-space: nowrap;
-    transition: all 0.2s;
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
 }
 
 .btn-quick-buy:hover {
     background: var(--color-primary, #2a5a5a);
     color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(42, 90, 90, 0.2);
+}
+
+.btn-quick-buy:active {
+    transform: translateY(0);
 }
 
 .quick-buy-overlay {
@@ -915,15 +871,21 @@
 
 .quick-buy-modal__submit {
     width: 100%;
-    padding: 14px;
+    padding: 16px;
     background: var(--color-primary, #2a5a5a);
     color: #fff;
     border: none;
-    border-radius: 12px;
-    font-size: 15px;
+    border-radius: 999px;
+    font-family: "Onest", var(--f-sans, "DM Sans", sans-serif);
+    font-size: 14px;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     cursor: pointer;
-    transition: opacity 0.2s;
+    box-shadow: 0 10px 24px rgba(42, 90, 90, 0.22);
+    transition:
+        filter 0.2s,
+        transform 0.2s;
 }
 
 .quick-buy-modal__submit:hover {
@@ -1056,9 +1018,10 @@
     }
 
     .mobile-sticky-cta__price {
-        font-family: var(--font-display, "Cormorant Garamond", serif);
-        font-size: 22px;
+        font-family: "Onest", "DM Sans", sans-serif;
+        font-size: 19px;
         font-weight: 700;
+        letter-spacing: -0.01em;
         color: #0d3838;
         white-space: nowrap;
     }

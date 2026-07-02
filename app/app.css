@@ -14375,9 +14375,10 @@ body:has(.filter-drawer-overlay) .floating-contact {
 }
 
 .reviews-header h3 {
-    font-family: "Cormorant Garamond", serif;
-    font-size: 1.6rem;
-    font-weight: 400;
+    font-family: "Onest", "DM Sans", sans-serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: #1a1a1a;
 }
 

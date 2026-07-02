@@ -493,24 +493,29 @@ export default function ProductDetail() {
         return variant?.stock || 0;
     };
 
-    // Helper: Check if a color is available for the selected size
+    // Helper: Check if a color is available for the selected size.
+    // When the product has NO per-variant inventory rows (e.g. just added with
+    // colours but stock not broken down yet), there's nothing to mark
+    // unavailable — every listed colour is selectable. `[].some()` returns
+    // `false` (not nullish), so the old `?? true` never caught the empty case
+    // and greyed out all colours, making a new product look broken. Mirror the
+    // `hasAnyStock` guard below.
     const isColorAvailable = (color: string): boolean => {
+        if (!product.inventory?.length) return true;
         if (!selectedSize)
-            return (
-                product.inventory?.some(
-                    (v: InventoryVariant) => v.color === color && (v.stock ?? 0) > 0,
-                ) ?? true
+            return product.inventory.some(
+                (v: InventoryVariant) => v.color === color && (v.stock ?? 0) > 0,
             );
         return getVariantStock(selectedSize, color) > 0;
     };
 
-    // Helper: Check if a size is available for the selected color
+    // Helper: Check if a size is available for the selected color (same
+    // empty-inventory rule as isColorAvailable above).
     const isSizeAvailable = (size: string): boolean => {
+        if (!product.inventory?.length) return true;
         if (!selectedColor)
-            return (
-                product.inventory?.some(
-                    (v: InventoryVariant) => v.size === size && (v.stock ?? 0) > 0,
-                ) ?? true
+            return product.inventory.some(
+                (v: InventoryVariant) => v.size === size && (v.stock ?? 0) > 0,
             );
         return getVariantStock(size, selectedColor) > 0;
     };
@@ -622,28 +627,29 @@ export default function ProductDetail() {
         <>
             {wishAuthOpen && <WishlistAuthModal onClose={() => setWishAuthOpen(false)} />}
             <main className="product-page-mindbody">
-                {/* --- COMPACT LUXE HERO (Atmospheric) --- */}
-                <div className="shop-hero-luxe compact">
-                    <div className="luxe-grain" />
-                    <div className="shop-hero-luxe__drift" />
-                    <div className="container hero-container">
-                        <nav className="luxe-breadcrumb">
-                            <LLink to="/">{t("Головна")}</LLink>
-                            <span className="sep">/</span>
-                            <LLink
-                                to={`/shop/${isRealShopSlug(product.shopPageSlug) ? product.shopPageSlug : "yoga"}`}
-                            >
-                                {isRealShopSlug(product.shopPageSlug)
-                                    ? t(shopPageTitle(product.shopPageSlug))
-                                    : t("Магазин")}
-                            </LLink>
-                            <span className="sep">/</span>
-                            <span className="current">{product.name}</span>
-                        </nav>
-                    </div>
-                </div>
-
                 <div className="container main-content-container">
+                    {/* Slim breadcrumb — aligned with the product grid. The old
+                        "shop-hero-luxe compact" band was a ~180px near-empty strip
+                        with the crumb floating right + the product name duplicated
+                        in 20px serif; premium PDPs (Sezane, Alo, COS) use exactly
+                        this: one quiet line above the gallery. */}
+                    <nav className="pdp-crumb" aria-label={t("Ви тут")}>
+                        <LLink to="/">{t("Головна")}</LLink>
+                        <span className="sep" aria-hidden="true">
+                            /
+                        </span>
+                        <LLink
+                            to={`/shop/${isRealShopSlug(product.shopPageSlug) ? product.shopPageSlug : "yoga"}`}
+                        >
+                            {isRealShopSlug(product.shopPageSlug)
+                                ? t(shopPageTitle(product.shopPageSlug))
+                                : t("Магазин")}
+                        </LLink>
+                        <span className="sep" aria-hidden="true">
+                            /
+                        </span>
+                        <span className="current">{product.name}</span>
+                    </nav>
                     <div className="product-layout">
                         {/* Atom M (P0): mobile-only swipe carousel — desktop
                         thumbs+main below stays hidden on mobile via CSS.
@@ -667,6 +673,15 @@ export default function ProductDetail() {
                                     {galleryImages.map((img: string, idx: number) => (
                                         <div key={idx} className="pdp-mobile-gallery__slide">
                                             <picture>
+                                                {/* AVIF first — matches the <link rel=preload> in meta()
+                                                    (which preloads the AVIF srcset). WebP-only here made
+                                                    that preload a guaranteed cache miss → the LCP image
+                                                    downloaded TWICE on mobile. */}
+                                                <source
+                                                    srcSet={buildAvifSrcset(img)}
+                                                    sizes="100vw"
+                                                    type="image/avif"
+                                                />
                                                 <source
                                                     srcSet={buildWebpSrcset(img)}
                                                     sizes="100vw"
@@ -731,11 +746,30 @@ export default function ProductDetail() {
                                     onClick={() => setZoomOpen(true)}
                                     style={{ cursor: "zoom-in" }}
                                 >
-                                    <img
-                                        src={galleryImages[activeImage] || galleryImages[0]}
-                                        alt={product.name}
-                                        className="main-img"
-                                    />
+                                    {/* Responsive variants (was a plain full-master <img>,
+                                        ~300-400 KB even on a 600px-wide column). The desktop
+                                        gallery column is ~44vw. */}
+                                    <picture>
+                                        <source
+                                            srcSet={buildAvifSrcset(
+                                                galleryImages[activeImage] || galleryImages[0],
+                                            )}
+                                            sizes="(max-width: 1024px) 92vw, 44vw"
+                                            type="image/avif"
+                                        />
+                                        <source
+                                            srcSet={buildWebpSrcset(
+                                                galleryImages[activeImage] || galleryImages[0],
+                                            )}
+                                            sizes="(max-width: 1024px) 92vw, 44vw"
+                                            type="image/webp"
+                                        />
+                                        <img
+                                            src={galleryImages[activeImage] || galleryImages[0]}
+                                            alt={product.name}
+                                            className="main-img"
+                                        />
+                                    </picture>
                                 </div>
                                 {/* Badge integrated into image */}
                                 {product.is_sale && product.discount_percent ? (
