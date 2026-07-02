@@ -131,11 +131,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 function AppContent({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const isAdminRoute = location.pathname.startsWith("/admin");
+    // /about (uk/en/ru) has an opaque cream page background that hides the z:-1
+    // backdrop canvas — switch the SAME particles to the overlay variant there
+    // (above the paper, mobile too, ignores reduce-motion: owner-visible).
+    const isAboutRoute = /\/about\/?$/.test(location.pathname);
     const rootData = useRouteLoaderData("root") as { showLanguageGate?: boolean } | undefined;
 
     return (
         <ToastProvider>
-            {!isAdminRoute && <SmartSunParticles />}
+            {!isAdminRoute && <SmartSunParticles variant={isAboutRoute ? "overlay" : "under"} />}
             <LoadingScreen />
             {!isAdminRoute && rootData?.showLanguageGate && <LanguageGate />}
             {!isAdminRoute && <Header />}

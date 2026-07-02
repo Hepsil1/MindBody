@@ -622,104 +622,6 @@ export default function About() {
                 <style>{`.ab--enter [data-hero-rise]{opacity:1!important;transform:none!important}.ab .ab-line>.l{transform:none!important}.ab-mark__img{opacity:1!important;filter:none!important;transform:none!important;clip-path:none!important}.ab-lockup__rule{opacity:1!important}.ab-hero__bloom{opacity:1!important}.ab-hero__media img,.ab-mat__media img,.ab-flow__media img,.ab-back__frame img,.ab-origin__media img,.ab-look__frame img,.ab-kids__show img,.ab-kids__duo img{transform:none!important;clip-path:none!important}.ab-kids__show,.ab-kids__duo .ab-look__frame,.ab-back__frame{opacity:1!important;transform:none!important}.ab [data-reveal]{opacity:1!important;transform:none!important;filter:none!important}`}</style>
             </noscript>
 
-            {/* Floating brand marks — quiet drifting sun logos as brand atmosphere.
-                Always-on (owner-visible under reduce-motion) + mobile; dark ink at
-                ~5% so it reads on the cream and vanishes over the dark photos. */}
-            <div className="ab-floats" aria-hidden="true">
-                {[
-                    {
-                        left: "5%",
-                        top: "14%",
-                        size: 130,
-                        dx: 46,
-                        dy: 64,
-                        dr: 30,
-                        dur: 40,
-                        delay: 0,
-                    },
-                    {
-                        left: "84%",
-                        top: "9%",
-                        size: 74,
-                        dx: -54,
-                        dy: 82,
-                        dr: -26,
-                        dur: 46,
-                        delay: -7,
-                        m: true,
-                    },
-                    {
-                        left: "43%",
-                        top: "33%",
-                        size: 50,
-                        dx: 64,
-                        dy: -46,
-                        dr: 44,
-                        dur: 52,
-                        delay: -15,
-                        m: true,
-                    },
-                    {
-                        left: "11%",
-                        top: "64%",
-                        size: 168,
-                        dx: 38,
-                        dy: -74,
-                        dr: -22,
-                        dur: 58,
-                        delay: -5,
-                    },
-                    {
-                        left: "72%",
-                        top: "56%",
-                        size: 98,
-                        dx: -46,
-                        dy: 56,
-                        dr: 36,
-                        dur: 44,
-                        delay: -21,
-                    },
-                    {
-                        left: "52%",
-                        top: "84%",
-                        size: 62,
-                        dx: 56,
-                        dy: -38,
-                        dr: -40,
-                        dur: 50,
-                        delay: -11,
-                        m: true,
-                    },
-                    {
-                        left: "91%",
-                        top: "80%",
-                        size: 116,
-                        dx: -36,
-                        dy: -64,
-                        dr: 24,
-                        dur: 54,
-                        delay: -25,
-                    },
-                ].map((f, i) => (
-                    <i
-                        key={i}
-                        className={"ab-float" + (f.m ? " ab-float--m" : "")}
-                        style={
-                            {
-                                left: f.left,
-                                top: f.top,
-                                width: `${f.size}px`,
-                                "--dx": `${f.dx}px`,
-                                "--dy": `${f.dy}px`,
-                                "--dr": `${f.dr}deg`,
-                                "--dur": `${f.dur}s`,
-                                "--delay": `${f.delay}s`,
-                            } as CSSProperties
-                        }
-                    />
-                ))}
-            </div>
-
             {/* 01 — HERO · СОНЦЕ СХОДИТЬ ЗІ СПИНИ — camera settles on an already-painted
                 frame, sun blooms between the shoulder blades, masked headline rises */}
             <section className="ab-hero" data-act="hero">
@@ -835,10 +737,7 @@ export default function About() {
                                     style={{ "--d": `${0.06 + i * 0.07}s` } as CSSProperties}
                                     key={d.n}
                                 >
-                                    <span
-                                        className="ab-mat__n"
-                                        aria-hidden="true"
-                                    >{`0${i + 1}`}</span>
+                                    <span className="ab-mat__n" aria-hidden="true" />
                                     <span>
                                         <span className="ab-mat__name">{d.n}</span>
                                         <span className="ab-mat__desc">{d.d}</span>
@@ -889,7 +788,7 @@ export default function About() {
                                 />
                             </span>
                             <figcaption className="ab-flow__cap">
-                                <span className="ab-flow__n" aria-hidden="true">{`0${i + 1}`}</span>
+                                <span className="ab-flow__n" aria-hidden="true" />
                                 <span className="ab-flow__name">{f.n}</span>
                                 <span className="ab-flow__line">{f.d}</span>
                             </figcaption>

@@ -15474,19 +15474,11 @@ body:has(.filter-drawer-overlay) .floating-contact {
 }
 
 /* ============================================================
-   PHASE 8 atom 1 — PARTICLES OFF MOBILE (<=768px)
-   Premium 2024 brands (Aesop, The Row, COS) keep mobile silent.
-   The .smart-sun-particles canvas already short-circuits its
-   useEffect on <=768px (no rAF loop, no listeners) — this rule
-   makes sure the empty canvas element doesn't even take a
-   compositor layer.  z-index:-1 + pointer-events:none meant it
-   was invisible already; display:none removes the cost entirely.
+   PARTICLES ON MOBILE — owner request 2026-06-26: the floating
+   brand suns now run on phones too (the component already has a
+   lighter mobile branch: 5 particles, smaller, slower, no mouse
+   physics). The old display:none kill for <=768px is gone.
    ============================================================ */
-@media (max-width: 768px) {
-    .smart-sun-particles {
-        display: none;
-    }
-}
 
 /* ============================================================
    PHASE 5e — CART DRAWER HIERARCHY (<=768px)

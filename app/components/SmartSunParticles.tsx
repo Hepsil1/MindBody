@@ -1,22 +1,28 @@
 import { useEffect, useRef } from "react";
 
-export default function SmartSunParticles() {
+interface SmartSunParticlesProps {
+    /**
+     * "under" (default) — the site-wide backdrop: fixed at z -1 behind the page,
+     * desktop-only, gated behind prefers-reduced-motion (the original behaviour).
+     * "overlay" — the /about brand atmosphere: sits ABOVE the page's opaque paper
+     * (z 1, still under the header/content stacking contexts that matter), runs on
+     * MOBILE too, and deliberately IGNORES prefers-reduced-motion so the owner
+     * (reduce-motion ON) sees the drift. Slightly more present alpha.
+     */
+    variant?: "under" | "overlay";
+}
+
+export default function SmartSunParticles({ variant = "under" }: SmartSunParticlesProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const overlay = variant === "overlay";
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        // Phase 8 atom 1: no particles on mobile.  Premium 2024
-        // pattern (Aesop, The Row, COS) is silence.  Also a perf
-        // win — no canvas paint, no rAF loop, no resize/scroll
-        // listeners.  The CSS rule in app.css also hides the
-        // canvas element entirely on <=768px so it never even
-        // takes a layer.
-        if (window.innerWidth <= 768) return;
-
-        // Respect user's motion preference
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        // Respect the user's motion preference — except the overlay variant,
+        // which is intentional owner-visible brand motion (slow + faint).
+        if (!overlay && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
@@ -60,7 +66,9 @@ export default function SmartSunParticles() {
                     size: isMobile ? Math.random() * 70 + 60 : Math.random() * 150 + 80,
                     rotation: Math.random() * Math.PI * 2,
                     rotSpeed: (Math.random() - 0.5) * (isMobile ? 0.003 : 0.005),
-                    alpha: Math.random() * 0.08 + 0.02,
+                    // Overlay (/about) sits on cream paper — a touch more present
+                    // so the drift actually reads as brand atmosphere.
+                    alpha: overlay ? Math.random() * 0.1 + 0.05 : Math.random() * 0.08 + 0.02,
                 });
             }
             render();
@@ -177,12 +185,12 @@ export default function SmartSunParticles() {
             clearTimeout(scrollTimeout);
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
-    }, []);
+    }, [overlay]);
 
     return (
         <canvas
             ref={canvasRef}
-            className="smart-sun-particles"
+            className={"smart-sun-particles" + (overlay ? " smart-sun-particles--overlay" : "")}
             style={{
                 position: "fixed",
                 top: 0,
@@ -190,7 +198,9 @@ export default function SmartSunParticles() {
                 width: "100%",
                 height: "100%",
                 pointerEvents: "none",
-                zIndex: -1,
+                // Overlay floats above the /about opaque paper (its ::before/::after
+                // ambiance layers are z1; content is in its own stacking contexts).
+                zIndex: overlay ? 1 : -1,
             }}
         />
     );

@@ -176,69 +176,14 @@
     position: absolute;
     left: 0;
     top: 50%;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     transform: translateY(-50%);
-    background: var(--ab-ink-faint);
-    opacity: 0.55;
+    /* the sun now LEADS the kicker (numerals removed) — teal + confident */
+    background: var(--ab-teal);
+    opacity: 0.8;
     -webkit-mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
     mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
-}
-
-/* ── Floating brand marks — owner-visible atmosphere ──────────────────────────
-   The sun logo drifts slowly across the viewport as quiet brand texture — the
-   same mark as the home-page particles, but ALWAYS-ON (deliberately NOT gated
-   behind prefers-reduced-motion) so the owner sees it, and it runs on mobile
-   too (pure CSS, no JS/canvas). Dark ink at ~5% reads on the cream paper and
-   effectively disappears over the dark garment photos, so photos stay sharp.
-   pointer-events:none — purely decorative, never intercepts input. */
-.ab-floats {
-    position: fixed;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    overflow: hidden;
-    contain: layout paint style;
-}
-.ab-float {
-    position: absolute;
-    display: block;
-    aspect-ratio: 1 / 1;
-    background: var(--ab-ink);
-    opacity: 0.055;
-    -webkit-mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
-    mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
-    will-change: transform;
-    animation: abDrift var(--dur, 42s) ease-in-out var(--delay, 0s) infinite alternate;
-}
-@keyframes abDrift {
-    from {
-        transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
-    }
-    to {
-        transform: translate3d(var(--dx, 40px), var(--dy, -60px), 0) rotate(var(--dr, 34deg))
-            scale(1.12);
-    }
-}
-@media (max-width: 768px) {
-    /* thin the field on phones (fewer layers to composite) + a touch fainter */
-    .ab-float {
-        opacity: 0.045;
-    }
-    .ab-float--m {
-        display: none;
-    }
-}
-/* Owner-visible: this decorative brand drift is intentional atmosphere, so it
-   deliberately survives the global prefers-reduced-motion killswitch (which
-   zeroes animation-duration + forces iteration-count:1 on every element). It's
-   slow and faint, so it stays comfortable even with reduce-motion on. Higher
-   specificity than the `*` rule, so these !important declarations win. */
-@media (prefers-reduced-motion: reduce) {
-    .ab-float {
-        animation-duration: var(--dur, 42s) !important;
-        animation-iteration-count: infinite !important;
-    }
 }
 
 /* the accent — DEFAULT is an Onest weight-beat (no serif, no underline). The
@@ -712,18 +657,17 @@
     padding-top: clamp(12px, 1.6vh, 18px);
     border-top: 1px solid var(--ab-border);
 }
+/* list markers: numerals (01/02/03) replaced by the brand sun — same quiet
+   through-line as the chapter kickers, per the owner's no-numbering request. */
 .ab-mat__n {
-    font-family: var(--ab-font);
-    font-style: normal;
-    font-weight: 700;
-    font-size: 1.2rem;
-    letter-spacing: -0.02em;
-    color: var(--ab-ink);
     flex: 0 0 auto;
-    min-width: 1.6em;
-    font-feature-settings:
-        "tnum" 1,
-        "lnum" 1;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    background: var(--ab-teal);
+    opacity: 0.8;
+    -webkit-mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
+    mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
 }
 .ab-mat__name {
     display: block;
@@ -760,7 +704,7 @@
 }
 /* FIX C — a low-alpha TEAL sun reads on cream (paper-on-paper did not). No deboss. */
 .ab-mat__sun .ab-mark__img {
-    background: color-mix(in srgb, var(--ab-teal) 14%, transparent);
+    background: color-mix(in srgb, var(--ab-teal) 22%, transparent);
 }
 
 /* ── 03 IN MOTION · 2 frames, the body draws a line ────────────────────── */
@@ -842,16 +786,15 @@
 .ab-flow__frame.in .ab-flow__line {
     transition-delay: 0.78s;
 }
+/* frame markers: numerals replaced by the brand sun (owner: no 01/02/03). */
 .ab-flow__n {
-    font-family: var(--ab-font);
-    font-style: normal;
-    font-weight: 700;
-    font-size: 1.3rem;
-    letter-spacing: -0.02em;
-    color: var(--ab-ink);
-    font-feature-settings:
-        "tnum" 1,
-        "lnum" 1;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background: var(--ab-teal);
+    opacity: 0.8;
+    -webkit-mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
+    mask: url(/pics/mind_body_logo_sun.png) center / contain no-repeat;
 }
 .ab-flow__name {
     font-weight: 700;
@@ -1100,7 +1043,7 @@
 }
 .ab-origin__sun .ab-mark__img {
     /* carry the visible-mark thesis — a quiet but real teal tint, not paper-on-paper */
-    background: color-mix(in srgb, var(--ab-teal) 8%, transparent);
+    background: color-mix(in srgb, var(--ab-teal) 14%, transparent);
 }
 .ab-origin__grid {
     position: relative;
