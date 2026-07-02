@@ -35,6 +35,27 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         const sunImage = new Image();
         sunImage.src = "/logo-sun.png";
 
+        // Overlay (/about): the suns come in the BRAND GARMENT COLOURS — teal,
+        // marsala/plum, warm ochre, soft lavender — tinted copies of the same
+        // line-art mark (source-in keeps the drawing, recolours the strokes).
+        // The "under" home backdrop keeps the original single-colour art.
+        const TINTS = ["#0f766e", "#722f37", "#b45309", "#8b7bb8"];
+        const tinted: HTMLCanvasElement[] = [];
+        const buildTints = () => {
+            for (const color of TINTS) {
+                const c = document.createElement("canvas");
+                c.width = sunImage.naturalWidth;
+                c.height = sunImage.naturalHeight;
+                const cctx = c.getContext("2d");
+                if (!cctx) continue;
+                cctx.drawImage(sunImage, 0, 0);
+                cctx.globalCompositeOperation = "source-in";
+                cctx.fillStyle = color;
+                cctx.fillRect(0, 0, c.width, c.height);
+                tinted.push(c);
+            }
+        };
+
         interface SunParticle {
             x: number;
             y: number;
@@ -44,10 +65,13 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             rotation: number;
             rotSpeed: number;
             alpha: number;
+            /** index into `tinted` (overlay), or -1 = the original art */
+            tint: number;
         }
         const particles: SunParticle[] = [];
-        // Mobile: fewer, smaller particles for battery & GPU savings
-        const numParticles = isMobile ? 5 : 12;
+        // Mobile: fewer, smaller particles for battery & GPU savings.
+        // Overlay: a couple more, since they're smaller.
+        const numParticles = isMobile ? (overlay ? 7 : 5) : overlay ? 14 : 12;
 
         let mouseX = -1000;
         let mouseY = -1000;
@@ -56,19 +80,30 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         let scrollTimeout: ReturnType<typeof setTimeout>;
 
         sunImage.onload = () => {
+            if (overlay) buildTints();
             for (let i = 0; i < numParticles; i++) {
+                // Overlay: smaller + a wider size spread (40–150px desktop,
+                // 34–92px mobile) so the field reads varied, not uniform.
+                const size = overlay
+                    ? isMobile
+                        ? Math.random() * 58 + 34
+                        : Math.random() * 110 + 40
+                    : isMobile
+                      ? Math.random() * 70 + 60
+                      : Math.random() * 150 + 80;
                 particles.push({
                     x: Math.random() * width,
                     y: Math.random() * height,
                     vx: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4),
                     vy: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.4),
-                    // Mobile: smaller particles (60-130px vs 80-230px desktop)
-                    size: isMobile ? Math.random() * 70 + 60 : Math.random() * 150 + 80,
+                    size,
                     rotation: Math.random() * Math.PI * 2,
                     rotSpeed: (Math.random() - 0.5) * (isMobile ? 0.003 : 0.005),
-                    // Overlay (/about) sits on cream paper — a touch more present
-                    // so the drift actually reads as brand atmosphere.
-                    alpha: overlay ? Math.random() * 0.1 + 0.05 : Math.random() * 0.08 + 0.02,
+                    // Overlay sits on cream paper — colours need a bit more alpha
+                    // to actually read as colours, still quiet.
+                    alpha: overlay ? Math.random() * 0.12 + 0.08 : Math.random() * 0.08 + 0.02,
+                    // Cycle through the brand tints so all colours are present.
+                    tint: overlay && tinted.length > 0 ? i % tinted.length : -1,
                 });
             }
             render();
@@ -137,7 +172,8 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 ctx.translate(p.x, p.y);
                 ctx.rotate(p.rotation);
                 ctx.globalAlpha = p.alpha;
-                ctx.drawImage(sunImage, -p.size / 2, -p.size / 2, p.size, p.size);
+                const art = p.tint >= 0 ? tinted[p.tint] : sunImage;
+                ctx.drawImage(art, -p.size / 2, -p.size / 2, p.size, p.size);
                 ctx.restore();
             });
         };
