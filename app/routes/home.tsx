@@ -826,6 +826,11 @@ export default function Home() {
         return () => mq.removeEventListener("change", apply);
     }, []);
 
+    // Ref mirror of the frame's in-viewport state (set by the observer right
+    // below) so the auto-cycle timer further down can skip ticking while the
+    // section is scrolled offscreen, without a second observer.
+    const frameInViewRef = useRef(false);
+
     // Desktop content-jank guard: a <video> keeps its decoder hot for as
     // long as it plays, regardless of visibility — and this section sits
     // several screens below the fold. Pause EVERY brand video while the
@@ -838,6 +843,7 @@ export default function Home() {
         if (!frame) return;
         const io = new IntersectionObserver(
             ([entry]) => {
+                frameInViewRef.current = entry.isIntersecting;
                 const vids = frame.querySelectorAll<HTMLVideoElement>("video");
                 if (!entry.isIntersecting) {
                     vids.forEach((v) => v.pause());
@@ -866,6 +872,48 @@ export default function Home() {
             v.pause();
         }
     };
+
+    // Auto-cycling feature spotlight — the old design only ever revealed a
+    // hover-video when a visitor explicitly hovered a feature, which most
+    // people scrolling past on a trackpad never discovered. This drives the
+    // exact same hover-video (via hoverVid above) automatically, dwelling on
+    // each feature in turn, so the list demonstrates its own interactivity.
+    // A real hover always wins immediately (native :hover CSS + this pauses
+    // the auto-cycle) and it resumes where it left off on mouseleave.
+    const AUTO_DWELL_MS = 4800;
+    const [liveFeature, setLiveFeature] = useState<number | null>(null);
+    const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
+    const [cycleKey, setCycleKey] = useState(0);
+    const hoveredFeatureRef = useRef<number | null>(null);
+    useEffect(() => {
+        hoveredFeatureRef.current = hoveredFeature;
+    }, [hoveredFeature]);
+
+    // Side effect layer: whenever the auto-cycle's target index changes,
+    // pause the previous clip and play the new one — reuses hoverVid so
+    // playback stays perfectly in sync with the same clips real hover uses.
+    const prevLiveRef = useRef<number | null>(null);
+    useEffect(() => {
+        const prev = prevLiveRef.current;
+        if (prev !== null && prev !== liveFeature) hoverVid(prev + 1, false);
+        if (liveFeature !== null && hoveredFeatureRef.current === null) {
+            hoverVid(liveFeature + 1, true);
+        }
+        prevLiveRef.current = liveFeature;
+    }, [liveFeature]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const interval = setInterval(() => {
+            // Skip a beat while a real hover is in progress or the section is
+            // scrolled offscreen — don't fight manual exploration, don't burn
+            // decode time on an invisible section.
+            if (hoveredFeatureRef.current !== null || !frameInViewRef.current) return;
+            setLiveFeature((prev) => (prev === null ? 0 : (prev + 1) % 4));
+            setCycleKey((k) => k + 1);
+        }, AUTO_DWELL_MS);
+        return () => clearInterval(interval);
+    }, []);
 
     // Scroll reveal animation
     useEffect(() => {
@@ -1250,30 +1298,43 @@ export default function Home() {
                                     {t("— і ти подаруєш собі крила")}
                                 </div>
                                 <div className="bw-v3-frame">
-                                    {/* 1. Sequential continuous playlist (3 videos) with smooth crossfade */}
+                                    {/* 1. Sequential continuous playlist (3 videos) with smooth crossfade.
+                                        WebM/VP9 source comes first — capable browsers (Chrome/Firefox/
+                                        Android) pick it and save 5-25% over the delivered H264 with no
+                                        visible quality loss; Safari/older browsers fall through to the
+                                        mp4. data-idx replaces the old src="..." selector in onEnded
+                                        below now that each clip is <source>-based, not a single src attr. */}
                                     {videoPlaylist.map((src, i) => (
                                         <video
                                             key={`p-${i}`}
                                             className={`bw-frame-img bw-playlist-vid ${currentPlaylistIdx === i ? "is-default-active" : ""}`}
-                                            src={src}
+                                            data-idx={i}
                                             poster={videoPosters[i]}
                                             autoPlay={i === 0}
                                             loop={false}
                                             muted
                                             playsInline
+                                            disablePictureInPicture
+                                            controlsList="nodownload nofullscreen noremoteplayback"
                                             preload={i === 0 ? "auto" : "metadata"}
                                             onEnded={() => {
                                                 const nextIdx = (i + 1) % videoPlaylist.length;
                                                 setCurrentPlaylistIdx(nextIdx);
                                                 const nextVid = document.querySelector(
-                                                    `.bw-playlist-vid[src="${videoPlaylist[nextIdx]}"]`,
+                                                    `.bw-playlist-vid[data-idx="${nextIdx}"]`,
                                                 ) as HTMLVideoElement;
                                                 if (nextVid) {
                                                     nextVid.currentTime = 0;
                                                     nextVid.play();
                                                 }
                                             }}
-                                        />
+                                        >
+                                            <source
+                                                src={src.replace(/\.mp4$/, ".webm")}
+                                                type="video/webm"
+                                            />
+                                            <source src={src} type="video/mp4" />
+                                        </video>
                                     ))}
 
                                     {/* 2. Hover-target videos (4 static repeating clips overlaid
@@ -1292,8 +1353,11 @@ export default function Home() {
                                         loop
                                         muted
                                         playsInline
+                                        disablePictureInPicture
+                                        controlsList="nodownload nofullscreen noremoteplayback"
                                         preload="metadata"
                                     >
+                                        <source src="/uploads/brand-hero.webm" type="video/webm" />
                                         <source src="/uploads/brand-hero.mp4" type="video/mp4" />
                                     </video>
                                     <video
@@ -1302,8 +1366,14 @@ export default function Home() {
                                         loop
                                         muted
                                         playsInline
+                                        disablePictureInPicture
+                                        controlsList="nodownload nofullscreen noremoteplayback"
                                         preload="metadata"
                                     >
+                                        <source
+                                            src="/uploads/brand-video-2.webm"
+                                            type="video/webm"
+                                        />
                                         <source src="/uploads/brand-video-2.mp4" type="video/mp4" />
                                     </video>
                                     <video
@@ -1312,8 +1382,14 @@ export default function Home() {
                                         loop
                                         muted
                                         playsInline
+                                        disablePictureInPicture
+                                        controlsList="nodownload nofullscreen noremoteplayback"
                                         preload="metadata"
                                     >
+                                        <source
+                                            src="/uploads/brand-video-3.webm"
+                                            type="video/webm"
+                                        />
                                         <source src="/uploads/brand-video-3.mp4" type="video/mp4" />
                                     </video>
                                     <video
@@ -1322,8 +1398,14 @@ export default function Home() {
                                         loop
                                         muted
                                         playsInline
+                                        disablePictureInPicture
+                                        controlsList="nodownload nofullscreen noremoteplayback"
                                         preload="metadata"
                                     >
+                                        <source
+                                            src="/uploads/brand-video-2.webm"
+                                            type="video/webm"
+                                        />
                                         <source src="/uploads/brand-video-2.mp4" type="video/mp4" />
                                     </video>
                                 </div>
@@ -1347,10 +1429,17 @@ export default function Home() {
                                 >
                                     {homeBrandWorld.items.map((feat, i) => {
                                         const num = String(i + 1).padStart(2, "0");
+                                        const isHovered = hoveredFeature === i;
+                                        // Suppress the auto-cycle's own highlight while any real
+                                        // hover is active — native :hover CSS already drives the
+                                        // visuals with zero latency, so .is-live only ever needs
+                                        // to reflect the timer when nothing is being hovered.
+                                        const isLive = hoveredFeature === null && liveFeature === i;
+                                        const showProgress = isHovered || isLive;
                                         return (
                                             <div
                                                 id={`bw-feat-item--${i + 1}`}
-                                                className={`bw-feat-item bw-feat-item--${i + 1}`}
+                                                className={`bw-feat-item bw-feat-item--${i + 1}${isLive ? " is-live" : ""}`}
                                                 key={i}
                                                 data-active={activeFeature === i ? "true" : "false"}
                                                 role="tabpanel"
@@ -1358,8 +1447,17 @@ export default function Home() {
                                                 // CSS already reveals hover-clip N on :hover;
                                                 // these start/stop its DECODER to match (the
                                                 // old always-on autoplay was the jank source).
-                                                onMouseEnter={() => hoverVid(i + 1, true)}
-                                                onMouseLeave={() => hoverVid(i + 1, false)}
+                                                // They also drive the auto-cycle's hover state so
+                                                // a real hover always takes priority over the timer.
+                                                onMouseEnter={() => {
+                                                    hoverVid(i + 1, true);
+                                                    setHoveredFeature(i);
+                                                    setCycleKey((k) => k + 1);
+                                                }}
+                                                onMouseLeave={() => {
+                                                    hoverVid(i + 1, false);
+                                                    setHoveredFeature(null);
+                                                }}
                                             >
                                                 <div className="bw-macro-number" data-text={num}>
                                                     {num}
@@ -1382,6 +1480,18 @@ export default function Home() {
                                                         </LLink>
                                                     )}
                                                 </div>
+                                                {/* Timed fill bar — the clearest signal that this
+                                                    list is interactive and about to advance on its
+                                                    own. `key` forces the CSS fill animation to
+                                                    restart every time this item becomes live/hovered. */}
+                                                {showProgress && (
+                                                    <div
+                                                        className="bw-feat-progress"
+                                                        key={cycleKey}
+                                                    >
+                                                        <div className="bw-feat-progress__fill" />
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}

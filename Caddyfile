@@ -45,9 +45,14 @@ mindbody-sportwear.com, www.mindbody-sportwear.com {
 	# revalidate instead of being cached immutably for a year (otherwise browsers
 	# and the Cloudflare edge serve the stale file with no conditional request).
 	# `not path /assets/*` leaves the hashed build assets on the immutable rule.
+	# `.mp4`/`.webm` were MISSING here (2026-07-04 fix) — the brand videos on
+	# home.tsx fell through to no explicit Cache-Control at all, so Cloudflare's
+	# edge substituted its own default (observed live: 4h, no stale-while-
+	# revalidate, frequent REVALIDATED round-trips) instead of the 24h+SWR every
+	# other static asset gets. Same treatment as images now.
 	@revalidate {
 		not path /assets/*
-		path *.webp *.avif *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.otf *.js *.css *.map
+		path *.webp *.avif *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.otf *.js *.css *.map *.mp4 *.webm
 	}
 	header @revalidate Cache-Control "public, max-age=86400, stale-while-revalidate=604800"
 
