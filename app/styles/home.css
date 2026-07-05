@@ -2078,11 +2078,8 @@
     z-index: 1; /* Always crossfade ON TOP of the previous video */
 }
 
-/* If the user hovers over ANY feature item on the right, fade down all playlist videos completely.
-   .is-live is the auto-cycle's JS-driven equivalent of :hover (Batch: video interaction redesign) —
-   it dwells on each feature in turn so the section demonstrates the hover/video link on its own. */
-.bw-v3-layout:has(.bw-feat-item:hover) .bw-playlist-vid,
-.bw-v3-layout:has(.bw-feat-item.is-live) .bw-playlist-vid {
+/* If the user hovers over ANY feature item on the right, fade down all playlist videos completely */
+.bw-v3-layout:has(.bw-feat-item:hover) .bw-playlist-vid {
     opacity: 0 !important;
 }
 
@@ -2096,23 +2093,19 @@
     pointer-events: none; /* Let hover pass through */
 }
 
-.bw-v3-layout:has(.bw-feat-item--1:hover) .bw-frame-hover-vid--1,
-.bw-v3-layout:has(.bw-feat-item--1.is-live) .bw-frame-hover-vid--1 {
+.bw-v3-layout:has(.bw-feat-item--1:hover) .bw-frame-hover-vid--1 {
     opacity: 1;
     transform: scale(1);
 }
-.bw-v3-layout:has(.bw-feat-item--2:hover) .bw-frame-hover-vid--2,
-.bw-v3-layout:has(.bw-feat-item--2.is-live) .bw-frame-hover-vid--2 {
+.bw-v3-layout:has(.bw-feat-item--2:hover) .bw-frame-hover-vid--2 {
     opacity: 1;
     transform: scale(1);
 }
-.bw-v3-layout:has(.bw-feat-item--3:hover) .bw-frame-hover-vid--3,
-.bw-v3-layout:has(.bw-feat-item--3.is-live) .bw-frame-hover-vid--3 {
+.bw-v3-layout:has(.bw-feat-item--3:hover) .bw-frame-hover-vid--3 {
     opacity: 1;
     transform: scale(1);
 }
-.bw-v3-layout:has(.bw-feat-item--4:hover) .bw-frame-hover-vid--4,
-.bw-v3-layout:has(.bw-feat-item--4.is-live) .bw-frame-hover-vid--4 {
+.bw-v3-layout:has(.bw-feat-item--4:hover) .bw-frame-hover-vid--4 {
     opacity: 1;
     transform: scale(1);
 }
@@ -2237,45 +2230,10 @@
     transform: translateX(4px);
 }
 
-/* Progress rail — the clearest possible "this is timed and about to change"
-   affordance. Fills over the same dwell each spotlight holds; the `key`
-   remount on the React side restarts the animation from 0 every time the
-   live/hovered feature changes (a plain CSS transition can't self-restart). */
-.bw-feat-progress {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -12px;
-    height: 2px;
-    background: rgba(0, 0, 0, 0.08);
-    border-radius: 2px;
-    overflow: hidden;
-}
-.bw-feat-progress__fill {
-    height: 100%;
-    width: 0%;
-    background: var(--color-primary, #2a5a5a);
-    border-radius: 2px;
-    animation: bwFeatProgressFill 4.8s linear forwards;
-}
-@keyframes bwFeatProgressFill {
-    from {
-        width: 0%;
-    }
-    to {
-        width: 100%;
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    .bw-feat-progress {
-        display: none;
-    }
-}
-
 /* === Responsive V3 === */
 @media (max-width: 1200px) {
     .bw-v3-frame-container {
-        flex: 0 0 440px;
+        flex: 0 0 380px;
     }
     .bw-v3-layout {
         gap: 40px;
