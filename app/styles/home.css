@@ -2230,6 +2230,30 @@
     transform: translateX(4px);
 }
 
+/* Quiet playlist-synced highlight (.is-sync, set from home.tsx): while the
+   ambient films crossfade on their own rhythm, ONE feature number slowly
+   fills teal in the same beat — a calm cue that the list and the frame are
+   one system. Deliberately minimal: no dimming of siblings, no transforms,
+   no timers — just the number fill + title tint the hover effect already
+   uses. Desktop-only: on mobile the playlist never plays (videos paused),
+   and the cards there have their own data-active treatment. */
+@media (min-width: 769px) {
+    .bw-feat-item.is-sync .bw-macro-number::before {
+        width: 100%;
+    }
+    .bw-feat-item.is-sync .bw-feat-title {
+        color: var(--color-primary, #2a5a5a);
+    }
+    /* The moment the visitor explores with the mouse, the ambient cue steps
+       aside — only the genuinely hovered item shows the filled state. */
+    .bw-macro-features:hover .bw-feat-item.is-sync:not(:hover) .bw-macro-number::before {
+        width: 0%;
+    }
+    .bw-macro-features:hover .bw-feat-item.is-sync:not(:hover) .bw-feat-title {
+        color: #111;
+    }
+}
+
 /* === Responsive V3 === */
 @media (max-width: 1200px) {
     .bw-v3-frame-container {

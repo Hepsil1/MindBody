@@ -673,6 +673,12 @@ export default function Home() {
     }, []);
 
     const [currentPlaylistIdx, setCurrentPlaylistIdx] = useState(0);
+    // Which of the 4 feature items is quietly highlighted (teal number fill)
+    // in step with the ambient playlist: it advances ONLY at the moment a
+    // film ends and the next one crossfades in (every ~24-32s), so the list
+    // breathes with motion the frame already has — no timers, no dimming,
+    // nothing jumps. A real hover still works exactly as before on top.
+    const [syncedFeature, setSyncedFeature] = useState(0);
     // Ref mirror for the section IntersectionObserver (mounted once) — it
     // must read the CURRENT playlist position when the section re-enters
     // the viewport, not the index captured at mount.
@@ -755,10 +761,17 @@ export default function Home() {
     // 1 phrase + button), features hidden, so cycling activeFeature had
     // no visible effect and just churned re-renders.  Desktop drives
     // activeFeature via the IntersectionObserver above.
+    // -hq files are the untouched original masters (~1.6 Mbps vs the ~1.0-1.2
+    // of the old re-compressed copies) — losslessly remuxed (faststart, audio
+    // track stripped; zero re-encode, zero quality loss vs the source). New
+    // filenames on purpose: the Cloudflare edge holds the old paths with a
+    // 7-day stale-while-revalidate, so reusing them would keep serving the
+    // softer copies for days. brand-video-2's master is corrupted (no moov
+    // atom), so it stays on the delivered version.
     const videoPlaylist = [
-        "/uploads/brand-hero.mp4",
+        "/uploads/brand-hero-hq.mp4",
         "/uploads/brand-video-2.mp4",
-        "/uploads/brand-video-3.mp4",
+        "/uploads/brand-video-3-hq.mp4",
     ];
     // Poster stills, one per film. The brand videos are 4.7–6.9 MB each — on
     // mobile data the <video> box used to sit BLANK for seconds while the
@@ -1294,7 +1307,7 @@ export default function Home() {
                                         playsInline
                                         preload="metadata"
                                     >
-                                        <source src="/uploads/brand-hero.mp4" type="video/mp4" />
+                                        <source src="/uploads/brand-hero-hq.mp4" type="video/mp4" />
                                     </video>
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--2"
@@ -1314,7 +1327,10 @@ export default function Home() {
                                         playsInline
                                         preload="metadata"
                                     >
-                                        <source src="/uploads/brand-video-3.mp4" type="video/mp4" />
+                                        <source
+                                            src="/uploads/brand-video-3-hq.mp4"
+                                            type="video/mp4"
+                                        />
                                     </video>
                                     <video
                                         className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--4"
@@ -1350,7 +1366,7 @@ export default function Home() {
                                         return (
                                             <div
                                                 id={`bw-feat-item--${i + 1}`}
-                                                className={`bw-feat-item bw-feat-item--${i + 1}`}
+                                                className={`bw-feat-item bw-feat-item--${i + 1}${syncedFeature === i ? " is-sync" : ""}`}
                                                 key={i}
                                                 data-active={activeFeature === i ? "true" : "false"}
                                                 role="tabpanel"
