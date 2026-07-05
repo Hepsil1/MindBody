@@ -40,11 +40,15 @@ interface Chapter {
 }
 
 // One caption per brand film. Kept in code (not props) because copy is
-// tied to the films themselves, not to the route data.
+// tied to the films themselves, not to the route data. There are 4 brand
+// videos now (one per admin-managed Brand World feature), so there are 4
+// chapters — `count` caps the player to min(videos, chapters), and a 4th
+// video with only 3 chapters would silently never appear on mobile.
 const CHAPTERS: Chapter[] = [
     { eyebrow: "01 — Рух", line: "Рух, що перетворює" },
     { eyebrow: "02 — Тканина", line: "Друга шкіра для кожного руху" },
     { eyebrow: "03 — Свобода", line: "Комфорт, що дарує крила" },
+    { eyebrow: "04 — Якість", line: "Створено з увагою до кожної деталі" },
 ];
 
 const HOLD_MS = 220; // press duration that counts as "hold to pause"

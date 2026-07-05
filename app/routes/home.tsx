@@ -672,13 +672,13 @@ export default function Home() {
         return () => el.removeEventListener("scroll", onScroll);
     }, []);
 
+    // The ambient playlist index doubles as the quiet feature highlight: since
+    // each of the 4 feature cards owns playlist[i], the currently-playing film's
+    // index IS the card to softly fill teal. It advances only when a film ends
+    // and the next crossfades in (every ~24-32s) — the list breathes with motion
+    // the frame already has, no timers, no dimming, nothing jumps. A real hover
+    // still works exactly as before on top.
     const [currentPlaylistIdx, setCurrentPlaylistIdx] = useState(0);
-    // Which of the 4 feature items is quietly highlighted (teal number fill)
-    // in step with the ambient playlist: it advances ONLY at the moment a
-    // film ends and the next one crossfades in (every ~24-32s), so the list
-    // breathes with motion the frame already has — no timers, no dimming,
-    // nothing jumps. A real hover still works exactly as before on top.
-    const [syncedFeature, setSyncedFeature] = useState(0);
     // Ref mirror for the section IntersectionObserver (mounted once) — it
     // must read the CURRENT playlist position when the section re-enters
     // the viewport, not the index captured at mount.
@@ -768,23 +768,36 @@ export default function Home() {
     // 7-day stale-while-revalidate, so reusing them would keep serving the
     // softer copies for days. brand-video-2's master is corrupted (no moov
     // atom), so it stays on the delivered version.
-    const videoPlaylist = [
+    // The 4 Brand World clips + poster stills are admin-managed (site settings →
+    // homeBrandWorld, edited in the video editor). Each of the 4 feature cards
+    // owns one clip: it plays BOTH in the ambient playlist rotation AND on that
+    // card's hover. Any slot the owner hasn't replaced yet falls back to the
+    // bundled brand films. Uploads are already server-normalized to web-tuned
+    // H.264 + faststart (video.server.ts), so nothing here re-processes.
+    //
+    // Posters matter: the clips are multi-MB, so the <video> box would sit BLANK
+    // for seconds on mobile data. A poster still (auto-extracted from the clip on
+    // upload, or the bundled studio shot) paints instantly and the film fades in
+    // over it once buffered. Same arrays feed the desktop frame and the mobile
+    // <BrandStories> player.
+    const BRAND_VIDEO_FALLBACKS = [
         "/uploads/brand-hero-hq.mp4",
         "/uploads/brand-video-2.mp4",
         "/uploads/brand-video-3-hq.mp4",
+        "/uploads/brand-video-2.mp4",
     ];
-    // Poster stills, one per film. The brand videos are 4.7–6.9 MB each — on
-    // mobile data the <video> box used to sit BLANK for seconds while the
-    // first byte arrived. A poster shows a sharp on-brand portrait photo
-    // instantly (these are 2000×3000 studio shots with variants + LQIP, the
-    // -1200w.webp is ~50–70 KB), so the section reads as premium immediately
-    // and the film fades in over it once buffered. Same posters feed the
-    // desktop frame and the mobile <BrandStories> player.
-    const videoPosters = [
+    const BRAND_POSTER_FALLBACKS = [
         "/generalpics/374_131123-1200w.webp",
         "/generalpics/347_131123-1200w.webp",
         "/generalpics/595_131123-1200w.webp",
+        "/generalpics/347_131123-1200w.webp",
     ];
+    const videoPlaylist = homeBrandWorld.items.map(
+        (it, i) => it.video || BRAND_VIDEO_FALLBACKS[i] || BRAND_VIDEO_FALLBACKS[0],
+    );
+    const videoPosters = homeBrandWorld.items.map(
+        (it, i) => it.poster || BRAND_POSTER_FALLBACKS[i] || BRAND_POSTER_FALLBACKS[0],
+    );
 
     /* ZENITH MAGNETIC LOGO LOGIC */
     const magneticRef = useRef<HTMLDivElement>(null);
@@ -1263,7 +1276,8 @@ export default function Home() {
                                     {t("— і ти подаруєш собі крила")}
                                 </div>
                                 <div className="bw-v3-frame">
-                                    {/* 1. Sequential continuous playlist (3 videos) with smooth crossfade */}
+                                    {/* 1. Sequential continuous playlist (4 videos, one per
+                                        feature) with smooth crossfade */}
                                     {videoPlaylist.map((src, i) => (
                                         <video
                                             key={`p-${i}`}
@@ -1277,6 +1291,9 @@ export default function Home() {
                                             preload={i === 0 ? "auto" : "metadata"}
                                             onEnded={() => {
                                                 const nextIdx = (i + 1) % videoPlaylist.length;
+                                                // Advances the crossfade AND the quiet feature
+                                                // highlight in one beat (currentPlaylistIdx drives
+                                                // both — see the .is-sync className below).
                                                 setCurrentPlaylistIdx(nextIdx);
                                                 const nextVid = document.querySelector(
                                                     `.bw-playlist-vid[src="${videoPlaylist[nextIdx]}"]`,
@@ -1299,49 +1316,24 @@ export default function Home() {
                                         pause on leave; the section observer pauses everything
                                         offscreen. Visuals are identical — playback just begins
                                         when a human can actually see it. */}
-                                    <video
-                                        className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--1"
-                                        poster={videoPosters[0]}
-                                        loop
-                                        muted
-                                        playsInline
-                                        preload="metadata"
-                                    >
-                                        <source src="/uploads/brand-hero-hq.mp4" type="video/mp4" />
-                                    </video>
-                                    <video
-                                        className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--2"
-                                        poster={videoPosters[1]}
-                                        loop
-                                        muted
-                                        playsInline
-                                        preload="metadata"
-                                    >
-                                        <source src="/uploads/brand-video-2.mp4" type="video/mp4" />
-                                    </video>
-                                    <video
-                                        className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--3"
-                                        poster={videoPosters[2]}
-                                        loop
-                                        muted
-                                        playsInline
-                                        preload="metadata"
-                                    >
-                                        <source
-                                            src="/uploads/brand-video-3-hq.mp4"
-                                            type="video/mp4"
-                                        />
-                                    </video>
-                                    <video
-                                        className="bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--4"
-                                        poster={videoPosters[1]}
-                                        loop
-                                        muted
-                                        playsInline
-                                        preload="metadata"
-                                    >
-                                        <source src="/uploads/brand-video-2.mp4" type="video/mp4" />
-                                    </video>
+                                    {/* Hover clip N = feature N's admin-managed video
+                                        (videoPlaylist[N-1]); poster likewise. Keyed by index
+                                        (not src — two slots may share a file by default, which
+                                        would collide); settings are read at page load, so a
+                                        swapped video arrives on a fresh mount anyway. */}
+                                    {[0, 1, 2, 3].map((n) => (
+                                        <video
+                                            key={n}
+                                            className={`bw-frame-img bw-frame-hover-vid bw-frame-hover-vid--${n + 1}`}
+                                            poster={videoPosters[n]}
+                                            loop
+                                            muted
+                                            playsInline
+                                            preload="metadata"
+                                        >
+                                            <source src={videoPlaylist[n]} type="video/mp4" />
+                                        </video>
+                                    ))}
                                 </div>
                             </div>
 
@@ -1366,7 +1358,7 @@ export default function Home() {
                                         return (
                                             <div
                                                 id={`bw-feat-item--${i + 1}`}
-                                                className={`bw-feat-item bw-feat-item--${i + 1}${syncedFeature === i ? " is-sync" : ""}`}
+                                                className={`bw-feat-item bw-feat-item--${i + 1}${currentPlaylistIdx === i ? " is-sync" : ""}`}
                                                 key={i}
                                                 data-active={activeFeature === i ? "true" : "false"}
                                                 role="tabpanel"

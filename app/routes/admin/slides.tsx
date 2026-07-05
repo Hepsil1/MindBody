@@ -19,6 +19,7 @@ import {
 import { ContactsSettingsPanel } from "../../components/admin/editor/ContactsSettingsPanel";
 import { SiteSettingListPanel } from "../../components/admin/editor/SiteSettingListPanel";
 import { NavFeaturedPanel } from "../../components/admin/editor/NavFeaturedPanel";
+import { BrandWorldPanel } from "../../components/admin/editor/BrandWorldPanel";
 import { useActionToast } from "../../components/admin/useActionToast";
 import { SHOP_SLUGS } from "../../utils/taxonomy";
 import { saveTaxonomyConfig, validateTaxonomy } from "../../utils/taxonomy-config.server";
@@ -96,6 +97,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 import { uploadFileChecked } from "../../utils/upload.server";
+import { processBrandVideo } from "../../utils/video.server";
 import { requireAdmin } from "../../utils/admin-guard.server";
 import { invalidateCache, invalidatePrefix } from "../../utils/cache.server";
 import { actionOk, actionError } from "../../utils/action-result.server";
@@ -585,6 +587,49 @@ export async function action({ request }: Route.ActionArgs) {
                 items[slug] = badge ? { image, badge, title } : { image, title };
             }
             const result = await saveSiteSetting("navFeatured", JSON.stringify({ items }));
+            if (!result.ok) return actionError(result.error);
+            return saved();
+        }
+
+        // Brand World — multipart (per-item optional video upload). Each of the 4
+        // items keeps title + desc (text) and owns one brand video + poster. An
+        // uploaded video is re-encoded server-side (processBrandVideo → web-tuned
+        // H.264 + poster still); with no file the current video/poster is kept.
+        // ffmpeg runs only for slots that actually got a new file, so a text-only
+        // save is instant. Persists through saveSiteSetting (Zod-validated shape).
+        if (intent === "update_brand_world") {
+            const existing = (await getSiteSettings()).homeBrandWorld.items;
+            const items: {
+                title: string;
+                desc: string;
+                video?: string;
+                poster?: string;
+            }[] = [];
+            for (let i = 0; i < 4; i++) {
+                const title = ((formData.get(`bw_${i}_title`) as string) || "").trim();
+                const desc = ((formData.get(`bw_${i}_desc`) as string) || "").trim();
+                if (!title || !desc) {
+                    return actionError(`Блок ${i + 1}: потрібні заголовок і опис.`);
+                }
+                let video =
+                    ((formData.get(`bw_${i}_currentVideo`) as string) || "").trim() ||
+                    existing[i]?.video ||
+                    "";
+                let poster =
+                    ((formData.get(`bw_${i}_currentPoster`) as string) || "").trim() ||
+                    existing[i]?.poster ||
+                    "";
+                const outcome = await processBrandVideo(formData.get(`bw_${i}_video_file`));
+                if (outcome.status === "error") {
+                    return actionError(`Блок ${i + 1}: ${outcome.reason}`);
+                }
+                if (outcome.status === "ok") {
+                    video = outcome.video;
+                    if (outcome.poster) poster = outcome.poster;
+                }
+                items.push({ title, desc, video, poster });
+            }
+            const result = await saveSiteSetting("homeBrandWorld", JSON.stringify({ items }));
             if (!result.ok) return actionError(result.error);
             return saved();
         }
@@ -1180,20 +1225,8 @@ export default function AdminVisualEditor() {
                                 />
                             )}
                             {settingsSection === "brandWorld" && (
-                                <SiteSettingListPanel
-                                    title="Brand World"
-                                    description="4 переваги у блоці з відео. Нумерація 01–04 і посилання «Каталог» фіксовані — редагуються заголовки й описи."
-                                    settingKey="homeBrandWorld"
-                                    items={siteSettings.homeBrandWorld.items}
-                                    fields={[
-                                        {
-                                            name: "title",
-                                            label: "Заголовок",
-                                            placeholder: "Дихаючі тканини",
-                                        },
-                                        { name: "desc", label: "Опис", type: "textarea" },
-                                    ]}
-                                    itemLabel={(i) => `Блок ${i + 1}`}
+                                <BrandWorldPanel
+                                    brandWorld={siteSettings.homeBrandWorld}
                                     fetcher={fetcher}
                                 />
                             )}

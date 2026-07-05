@@ -74,13 +74,23 @@ export const homeStatsSchema = z.object({
 });
 export type HomeStatsSettings = z.infer<typeof homeStatsSchema>;
 
-/** Brand World feature list — 4 items (title + desc), numbered 01–04 in code. */
+/**
+ * Brand World feature list — 4 items (title + desc), numbered 01–04 in code.
+ * Each item also owns ONE brand video + its poster still: the video plays both
+ * on that feature's hover AND in the ambient playlist rotation. `video`/`poster`
+ * are optional so old saved settings (text-only) still validate — home.tsx falls
+ * back to the bundled defaults for any empty slot. Both are server-written paths
+ * under /uploads (video, faststart H.264) or /generalpics (poster), produced by
+ * the admin video pipeline (video.server.ts); the admin never types them by hand.
+ */
 export const homeBrandWorldSchema = z.object({
     items: z
         .array(
             z.object({
                 title: z.string().trim().min(1).max(60),
                 desc: z.string().trim().min(1).max(160),
+                video: z.string().trim().max(300).optional(),
+                poster: z.string().trim().max(300).optional(),
             }),
         )
         .length(4),
@@ -184,18 +194,26 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
             {
                 title: "Дихаючі тканини",
                 desc: "Преміальні матеріали, що забезпечують ідеальну терморегуляцію.",
+                video: "/uploads/brand-hero-hq.mp4",
+                poster: "/generalpics/374_131123-1200w.webp",
             },
             {
                 title: "Ексклюзивний дизайн",
                 desc: "Естетика, що надихає навіть під час найважчих тренувань.",
+                video: "/uploads/brand-video-2.mp4",
+                poster: "/generalpics/347_131123-1200w.webp",
             },
             {
                 title: "Ідеальна посадка",
                 desc: "Анатомічний крій, що бездоганно підкреслює вашу фігуру.",
+                video: "/uploads/brand-video-3-hq.mp4",
+                poster: "/generalpics/595_131123-1200w.webp",
             },
             {
                 title: "Сертифікована якість",
                 desc: "100% контроль, створено з любов'ю та увагою до кожної деталі.",
+                video: "/uploads/brand-video-2.mp4",
+                poster: "/generalpics/347_131123-1200w.webp",
             },
         ],
     },

@@ -2319,24 +2319,9 @@
     z-index: 0;
 }
 
-/* Massive luxury typography watermark */
-.ig-hyper::after {
-    content: "MIND BODY";
-    position: absolute;
-    top: 45%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-family: "Cormorant Garamond", serif;
-    font-size: clamp(10rem, 20vw, 24rem);
-    font-weight: 300;
-    text-transform: uppercase;
-    color: #111;
-    opacity: 0.015;
-    white-space: nowrap;
-    letter-spacing: -0.02em;
-    pointer-events: none;
-    z-index: 0;
-}
+/* (Removed 2026-07-04 at owner's request: the giant "MIND BODY" typography
+   watermark behind the iPhone mockup is gone — the section reads cleaner
+   without it.) */
 
 /* Photo wall ├óΓé¼ΓÇ¥ HIDDEN */
 .ig-hyper__wall {
