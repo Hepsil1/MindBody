@@ -190,7 +190,6 @@ html {
 
 body {
     font-family: var(--font-body);
-    font-feature-settings: "tnum" 0;
     font-size: var(--text-base);
     line-height: var(--leading-relaxed);
     color: var(--color-text-primary);
@@ -212,8 +211,9 @@ a {
 }
 
 :focus-visible {
-    outline: 2px solid #1c1a17;
+    outline: 2px solid var(--focus-ring, #1c1a17);
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85);
 }
 
 @media (prefers-reduced-motion: reduce) {

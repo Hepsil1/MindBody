@@ -2343,12 +2343,6 @@
    without it.) */
 
 /* Photo wall ├óΓé¼ΓÇ¥ HIDDEN */
-.ig-hyper__wall {
-    display: none;
-}
-.ig-hyper__marquee {
-    display: none;
-}
 .ig-hyper__photo {
     display: none;
 }
@@ -2366,27 +2360,6 @@
 }
 
 /* Badge ├óΓé¼ΓÇ¥ minimalist */
-.ig-hyper__badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-.ig-hyper__badge-line {
-    width: 30px;
-    height: 1px;
-    background: #111;
-    opacity: 0.15;
-}
-.ig-hyper__badge-text {
-    font-family: "Manrope", sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4em;
-    color: #666;
-}
 
 /* Header */
 .ig-hyper__header {
@@ -2408,13 +2381,6 @@
     text-transform: uppercase;
     color: #8a7f6c;
     margin: 0 0 18px;
-}
-.ig-hyper__rec {
-    width: 7px;
-    height: 7px;
-    flex: 0 0 7px;
-    border-radius: 50%;
-    background: #285757;
 }
 /* Hairline letterbox rules framing the title */
 .ig-hyper__bar {
@@ -2534,14 +2500,6 @@
     50% {
         transform: translateY(calc(-50% - 12px));
     }
-}
-.ig-hyper__live-dot {
-    width: 8px;
-    height: 8px;
-    background: #e4405f;
-    border-radius: 50%;
-    animation: igLivePulse 2s infinite;
-    box-shadow: 0 0 12px rgba(228, 64, 95, 0.4);
 }
 
 /* CTA ├óΓé¼ΓÇ¥ Classic luxury fashion outline button */
@@ -2663,9 +2621,6 @@
 /* Motion — gated; base state stays VISIBLE so reduce-motion / no-JS shows the
    finished title card (avoids the recurrent freeze-invisible bug). */
 @media (prefers-reduced-motion: no-preference) {
-    .ig-hyper__rec {
-        animation: igRecPulse 2.4s ease-in-out infinite;
-    }
     .ig-hyper__beam {
         animation: igBeamDrift 16s ease-in-out infinite alternate;
     }
@@ -2953,10 +2908,6 @@
         font-size: 0.65rem;
         padding: 5px 10px;
         gap: 5px;
-    }
-    .ig-hyper__live-dot {
-        width: 6px;
-        height: 6px;
     }
 }
 
@@ -4218,9 +4169,6 @@
     }
     /* Phone mockup wrapper — was set to absurd height on mobile because
        desktop dimensions cascade down. Cap. */
-    .ig-premium__phone {
-        max-height: 580px !important;
-    }
 
     /* Batch 44 A2: Vanity stats counters hidden on mobile.
        4-digit "5 000+ клієнтів" + follower counts are SMB signal in
@@ -5122,7 +5070,7 @@
 }
 .look-stage__title {
     font-family: var(--font-display);
-    font-weight: 800;
+    font-weight: 700;
     font-size: clamp(2.4rem, 4.5vw, 4.2rem);
     line-height: 1.05;
     letter-spacing: -0.02em;

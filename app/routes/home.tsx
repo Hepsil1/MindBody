@@ -67,31 +67,6 @@ function formatFollowers(n: number, locale: "uk" | "en" | "ru"): string {
     return locale === "ru" ? `${v} тыс.` : `${v} тис.`;
 }
 
-// Render a raw IG bio: keep line breaks, turn @mentions into links to the real
-// profiles. (Bio URLs are surfaced separately as the clickable external link.)
-function renderBioLines(bio: string) {
-    return bio.split("\n").map((line, li) => (
-        <Fragment key={li}>
-            {li > 0 && <br />}
-            {line.split(/(@[A-Za-z0-9._]+)/g).map((part, pi) =>
-                part.startsWith("@") && part.length > 1 ? (
-                    <a
-                        key={pi}
-                        href={`https://www.instagram.com/${part.slice(1)}/`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ig-ui-mention"
-                    >
-                        {part}
-                    </a>
-                ) : (
-                    <Fragment key={pi}>{part}</Fragment>
-                ),
-            )}
-        </Fragment>
-    ));
-}
-
 // Home category card — covers DB rows and the hard-coded fallback alike.
 interface HomeCategoryCard {
     id: string;
