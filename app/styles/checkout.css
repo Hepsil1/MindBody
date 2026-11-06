@@ -156,6 +156,25 @@
     }
 }
 
+.checkout-trust-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-family: var(--font-body, "Manrope", sans-serif);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #5c5852;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.checkout-trust-badge__icon {
+    flex-shrink: 0;
+    color: #5c5852;
+}
+
 .checkout-page-light .cart-breadcrumb a,
 .checkout-page-light .cart-breadcrumb button {
     color: #777;

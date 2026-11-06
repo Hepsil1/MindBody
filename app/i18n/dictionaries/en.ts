@@ -16,6 +16,8 @@ export const en: Record<string, string> = {
     // --- checkout: cart-price reconciliation ---
     "Крок {n} з {total} · {label}": "Step {n} of {total} · {label}",
     "Етапи замовлення": "Order steps",
+    "Оплата при отриманні · Повернення 14 днів": "Payment on delivery · 14-day returns",
+    "Безпечна оплата · Повернення 14 днів": "Secure payment · 14-day returns",
     "Ціни в кошику оновлено до актуальних.": "Cart prices have been updated to the current ones.",
     "Деякі товари більше недоступні — їх прибрано з кошика.":
         "Some items are no longer available — they were removed from your cart.",
