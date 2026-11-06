@@ -1036,16 +1036,7 @@ export default function ProductDetail() {
                                                 })}
                                             </div>
                                             {sizeError && (
-                                                <p
-                                                    role="alert"
-                                                    style={{
-                                                        color: "#dc2626",
-                                                        fontSize: "13px",
-                                                        marginTop: "8px",
-                                                        fontWeight: 500,
-                                                        lineHeight: 1.3,
-                                                    }}
-                                                >
+                                                <p role="alert" className="selector-error">
                                                     {t("Спершу оберіть розмір")}
                                                 </p>
                                             )}
@@ -1182,7 +1173,6 @@ export default function ProductDetail() {
                                             (!isInStock && product.inventory?.length > 0)
                                         }
                                         aria-disabled={product.sizes.length > 0 && !selectedSize}
-                                        aria-live="polite"
                                         style={{
                                             opacity:
                                                 !isInStock && product.inventory?.length > 0
@@ -1492,15 +1482,17 @@ export default function ProductDetail() {
                 only disabled state is genuinely-blocked (OOS / just-added);
                 an unset size routes through the handler so the size selector
                 pulses + the toast nudges. */}
-                <div className={`mobile-sticky-cta${isPrimaryCtaVisible ? " is-hidden" : ""}`}>
-                    <div className="mobile-sticky-cta__price">{money(product.price)}</div>
+                <div
+                    className={`mobile-sticky-cta${isPrimaryCtaVisible ? " is-hidden" : ""}`}
+                    aria-hidden={isPrimaryCtaVisible}
+                >
                     <button
                         type="button"
                         className="mobile-sticky-cta__btn"
                         onClick={addToCart}
                         disabled={justAdded || (!isInStock && product.inventory?.length > 0)}
                         aria-disabled={product.sizes.length > 0 && !selectedSize}
-                        aria-live="polite"
+                        tabIndex={isPrimaryCtaVisible ? -1 : 0}
                     >
                         {justAdded
                             ? t("✓ Додано")
