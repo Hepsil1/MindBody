@@ -345,7 +345,13 @@ export default function Checkout() {
             // DOM has the new aria-invalid + error spans before we query.
             requestAnimationFrame(() => {
                 const firstErrorField = Object.keys(newErrors)[0];
-                const el = document.getElementById(firstErrorField);
+                const targetId =
+                    customerInfo.delivery === "ukrposhta" && firstErrorField === "city"
+                        ? "city-ukr"
+                        : customerInfo.delivery === "ukrposhta" && firstErrorField === "warehouse"
+                          ? "warehouse-ukr"
+                          : firstErrorField;
+                const el = document.getElementById(targetId);
                 if (el) {
                     el.scrollIntoView({ behavior: "smooth", block: "center" });
                     (el as HTMLInputElement).focus({ preventScroll: true });
@@ -828,9 +834,17 @@ export default function Checkout() {
                                             placeholder={t("Ваше повне ім'я")}
                                             autoComplete="name"
                                             required
+                                            aria-invalid={errors.name ? "true" : undefined}
+                                            aria-describedby={
+                                                errors.name ? "name-error" : undefined
+                                            }
                                         />
                                         {errors.name && (
-                                            <span className="field-error-text" role="alert">
+                                            <span
+                                                id="name-error"
+                                                className="field-error-text"
+                                                role="alert"
+                                            >
                                                 {errors.name}
                                             </span>
                                         )}
@@ -880,9 +894,17 @@ export default function Checkout() {
                                             autoComplete="tel"
                                             inputMode="tel"
                                             required
+                                            aria-invalid={errors.phone ? "true" : undefined}
+                                            aria-describedby={
+                                                errors.phone ? "phone-error" : undefined
+                                            }
                                         />
                                         {errors.phone && (
-                                            <span className="field-error-text" role="alert">
+                                            <span
+                                                id="phone-error"
+                                                className="field-error-text"
+                                                role="alert"
+                                            >
                                                 {errors.phone}
                                             </span>
                                         )}
@@ -983,9 +1005,17 @@ export default function Checkout() {
                                                         "Почніть вводити назву міста...",
                                                     )}
                                                     autoComplete="off"
+                                                    aria-invalid={errors.city ? "true" : undefined}
+                                                    aria-describedby={
+                                                        errors.city ? "city-error" : undefined
+                                                    }
                                                 />
                                                 {errors.city && (
-                                                    <span className="field-error-text" role="alert">
+                                                    <span
+                                                        id="city-error"
+                                                        className="field-error-text"
+                                                        role="alert"
+                                                    >
                                                         {errors.city}
                                                     </span>
                                                 )}
@@ -1044,9 +1074,21 @@ export default function Checkout() {
                                                     }
                                                     disabled={!customerInfo.cityRef}
                                                     autoComplete="off"
+                                                    aria-invalid={
+                                                        errors.warehouse ? "true" : undefined
+                                                    }
+                                                    aria-describedby={
+                                                        errors.warehouse
+                                                            ? "warehouse-error"
+                                                            : undefined
+                                                    }
                                                 />
                                                 {errors.warehouse && (
-                                                    <span className="field-error-text" role="alert">
+                                                    <span
+                                                        id="warehouse-error"
+                                                        className="field-error-text"
+                                                        role="alert"
+                                                    >
                                                         {errors.warehouse}
                                                     </span>
                                                 )}
@@ -1100,9 +1142,17 @@ export default function Checkout() {
                                                         }))
                                                     }
                                                     placeholder={t("Введіть назву міста")}
+                                                    aria-invalid={errors.city ? "true" : undefined}
+                                                    aria-describedby={
+                                                        errors.city ? "city-ukr-error" : undefined
+                                                    }
                                                 />
                                                 {errors.city && (
-                                                    <span className="field-error-text" role="alert">
+                                                    <span
+                                                        id="city-ukr-error"
+                                                        className="field-error-text"
+                                                        role="alert"
+                                                    >
                                                         {errors.city}
                                                     </span>
                                                 )}
@@ -1122,9 +1172,21 @@ export default function Checkout() {
                                                         }))
                                                     }
                                                     placeholder={t("вул. Хрещатик, 1 або 01001")}
+                                                    aria-invalid={
+                                                        errors.warehouse ? "true" : undefined
+                                                    }
+                                                    aria-describedby={
+                                                        errors.warehouse
+                                                            ? "warehouse-ukr-error"
+                                                            : undefined
+                                                    }
                                                 />
                                                 {errors.warehouse && (
-                                                    <span className="field-error-text" role="alert">
+                                                    <span
+                                                        id="warehouse-ukr-error"
+                                                        className="field-error-text"
+                                                        role="alert"
+                                                    >
                                                         {errors.warehouse}
                                                     </span>
                                                 )}
@@ -1488,6 +1550,7 @@ export default function Checkout() {
                                         >
                                             <input
                                                 type="text"
+                                                className="checkout-promo-input"
                                                 value={promoCode}
                                                 onChange={(e) =>
                                                     setPromoCode(e.target.value.toUpperCase())
@@ -1495,10 +1558,9 @@ export default function Checkout() {
                                                 placeholder={t("Промокод")}
                                                 style={{
                                                     flex: 1,
-                                                    padding: "8px 12px",
+                                                    padding: "10px 12px",
                                                     border: "1px solid #e0e0e0",
                                                     borderRadius: "8px",
-                                                    fontSize: "13px",
                                                     textTransform: "uppercase",
                                                     letterSpacing: "0.05em",
                                                 }}

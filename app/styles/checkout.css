@@ -432,4 +432,14 @@
         text-decoration: underline;
         text-underline-offset: 3px;
     }
+
+    /* iOS Auto-Zoom Prevention: Guarantee all form controls are >= 16px on mobile */
+    .checkout-form input[type="text"],
+    .checkout-form input[type="email"],
+    .checkout-form input[type="tel"],
+    .checkout-form textarea,
+    .checkout-form select,
+    .checkout-promo-input {
+        font-size: 16px !important;
+    }
 }
