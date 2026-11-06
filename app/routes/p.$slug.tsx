@@ -457,6 +457,25 @@ export default function ProductDetail() {
     // "Додати в кошик" didn't do anything.
     const sizesGroupRef = useRef<HTMLDivElement | null>(null);
     const [sizeFlash, setSizeFlash] = useState(false);
+    const [sizeError, setSizeError] = useState(false);
+    const primaryCtaRef = useRef<HTMLButtonElement | null>(null);
+    const [isPrimaryCtaVisible, setIsPrimaryCtaVisible] = useState(true);
+
+    useEffect(() => {
+        const el = primaryCtaRef.current;
+        if (!el || typeof IntersectionObserver === "undefined") {
+            setIsPrimaryCtaVisible(false);
+            return;
+        }
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setIsPrimaryCtaVisible(entry.isIntersecting);
+            },
+            { threshold: 0.1 },
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
 
     // F-002 — funnel-step #1. Fire view_item exactly once per product
     // visit; the [product.id] dep covers PDP→PDP client navigations
@@ -541,14 +560,18 @@ export default function ProductDetail() {
 
     const addToCart = () => {
         if (product.sizes.length > 0 && !selectedSize) {
-            // F-029 — instead of just toasting and leaving the buyer to
-            // hunt for the size selector, take them there. Smooth-scroll
-            // with extra room above (so the section header is in view,
-            // not flush against the sticky header), flash for ~900 ms.
             const node = sizesGroupRef.current;
             if (node) {
-                node.scrollIntoView({ behavior: "smooth", block: "center" });
+                const prefersReduced =
+                    typeof window !== "undefined" &&
+                    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                node.scrollIntoView({
+                    behavior: prefersReduced ? "auto" : "smooth",
+                    block: "center",
+                });
                 setSizeFlash(true);
+                setSizeError(true);
+                node.focus({ preventScroll: true });
                 setTimeout(() => setSizeFlash(false), 900);
             }
             showToast(t("Спершу оберіть розмір"), "warning");
@@ -934,7 +957,9 @@ export default function ProductDetail() {
                                         <div
                                             className={`selector-group${sizeFlash ? " is-pulse" : ""}`}
                                             ref={sizesGroupRef}
+                                            tabIndex={-1}
                                             style={{
+                                                outline: "none",
                                                 transition:
                                                     "box-shadow 0.3s ease, background 0.3s ease",
                                                 boxShadow: sizeFlash
@@ -978,6 +1003,7 @@ export default function ProductDetail() {
                                                             className={`size-chip ${selectedSize === size ? "selected" : ""} ${!available ? "unavailable" : ""}`}
                                                             onClick={() => {
                                                                 setSelectedSize(size);
+                                                                setSizeError(false);
                                                                 // If the current colour isn't in stock
                                                                 // for this size, switch to one that is —
                                                                 // otherwise a buyable item wrongly reads
@@ -1009,6 +1035,20 @@ export default function ProductDetail() {
                                                     );
                                                 })}
                                             </div>
+                                            {sizeError && (
+                                                <p
+                                                    role="alert"
+                                                    style={{
+                                                        color: "#dc2626",
+                                                        fontSize: "13px",
+                                                        marginTop: "8px",
+                                                        fontWeight: 500,
+                                                        lineHeight: 1.3,
+                                                    }}
+                                                >
+                                                    {t("Спершу оберіть розмір")}
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -1134,12 +1174,14 @@ export default function ProductDetail() {
                                     broken. Disabled only persists for out-of-
                                     stock + just-added (handler-driven). */}
                                     <button
+                                        ref={primaryCtaRef}
                                         className="btn-primary-add"
                                         onClick={addToCart}
                                         disabled={
                                             justAdded ||
                                             (!isInStock && product.inventory?.length > 0)
                                         }
+                                        aria-disabled={product.sizes.length > 0 && !selectedSize}
                                         aria-live="polite"
                                         style={{
                                             opacity:
@@ -1153,7 +1195,9 @@ export default function ProductDetail() {
                                                 ? t("✓ Додано")
                                                 : !isInStock && product.inventory?.length > 0
                                                   ? t("Немає в наявності")
-                                                  : t("Додати в кошик")}
+                                                  : product.sizes.length > 0 && !selectedSize
+                                                    ? t("Оберіть розмір")
+                                                    : t("Додати в кошик")}
                                         </span>
                                     </button>
                                     <button
@@ -1448,20 +1492,23 @@ export default function ProductDetail() {
                 only disabled state is genuinely-blocked (OOS / just-added);
                 an unset size routes through the handler so the size selector
                 pulses + the toast nudges. */}
-                <div className="mobile-sticky-cta">
+                <div className={`mobile-sticky-cta${isPrimaryCtaVisible ? " is-hidden" : ""}`}>
                     <div className="mobile-sticky-cta__price">{money(product.price)}</div>
                     <button
                         type="button"
                         className="mobile-sticky-cta__btn"
                         onClick={addToCart}
                         disabled={justAdded || (!isInStock && product.inventory?.length > 0)}
+                        aria-disabled={product.sizes.length > 0 && !selectedSize}
                         aria-live="polite"
                     >
                         {justAdded
                             ? t("✓ Додано")
                             : !isInStock && product.inventory?.length > 0
                               ? t("Немає в наявності")
-                              : t("Додати в кошик")}
+                              : product.sizes.length > 0 && !selectedSize
+                                ? t("Оберіть розмір")
+                                : `${t("Додати в кошик")} · ${money(product.price)}`}
                     </button>
                 </div>
             </main>
