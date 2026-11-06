@@ -454,58 +454,103 @@ export default function Checkout() {
     };
 
     // Step indicator component
-    const StepIndicator = () => (
-        <div className="checkout-steps">
-            <div
-                className={`checkout-steps__item ${step === "cart" ? "active" : step === "info" || step === "success" ? "completed" : ""}`}
-            >
-                <div className="checkout-steps__circle">
-                    {step === "info" || step === "success" ? (
-                        <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                        >
-                            <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                    ) : (
-                        "1"
-                    )}
+    const StepIndicator = () => {
+        const stepNumber = step === "cart" ? 1 : step === "info" ? 2 : 3;
+        const stepLabel =
+            step === "cart" ? t("Кошик") : step === "info" ? t("Оформлення") : t("Готово");
+        const progressScale = stepNumber / 3;
+
+        return (
+            <div className="checkout-stepper-wrapper">
+                {/* Mobile compact stepper (< 768px): single line <= 40px + 2px progress bar */}
+                <div
+                    className="checkout-stepper-mobile"
+                    role="progressbar"
+                    aria-valuenow={stepNumber}
+                    aria-valuemin={1}
+                    aria-valuemax={3}
+                    aria-valuetext={t("Крок {n} з {total} · {label}", {
+                        n: stepNumber,
+                        total: 3,
+                        label: stepLabel,
+                    })}
+                >
+                    <div className="checkout-stepper-mobile__track" aria-hidden="true">
+                        <div
+                            className="checkout-stepper-mobile__bar"
+                            style={{ transform: `scaleX(${progressScale})` }}
+                        />
+                    </div>
+                    <div className="checkout-stepper-mobile__text" aria-hidden="true">
+                        {t("Крок {n} з {total} · {label}", {
+                            n: stepNumber,
+                            total: 3,
+                            label: stepLabel,
+                        })}
+                    </div>
                 </div>
-                <span className="checkout-steps__label">{t("Кошик")}</span>
+
+                {/* Desktop stepper (>= 768px) */}
+                <nav className="checkout-steps" aria-label={t("Етапи замовлення")}>
+                    <div
+                        className={`checkout-steps__item ${step === "cart" ? "active" : step === "info" || step === "success" ? "completed" : ""}`}
+                        aria-current={step === "cart" ? "step" : undefined}
+                    >
+                        <div className="checkout-steps__circle">
+                            {step === "info" || step === "success" ? (
+                                <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    aria-hidden="true"
+                                >
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            ) : (
+                                "1"
+                            )}
+                        </div>
+                        <span className="checkout-steps__label">{t("Кошик")}</span>
+                    </div>
+                    <div className="checkout-steps__line" aria-hidden="true" />
+                    <div
+                        className={`checkout-steps__item ${step === "info" ? "active" : step === "success" ? "completed" : ""}`}
+                        aria-current={step === "info" ? "step" : undefined}
+                    >
+                        <div className="checkout-steps__circle">
+                            {step === "success" ? (
+                                <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    aria-hidden="true"
+                                >
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            ) : (
+                                "2"
+                            )}
+                        </div>
+                        <span className="checkout-steps__label">{t("Оформлення")}</span>
+                    </div>
+                    <div className="checkout-steps__line" aria-hidden="true" />
+                    <div
+                        className={`checkout-steps__item ${step === "success" ? "active" : ""}`}
+                        aria-current={step === "success" ? "step" : undefined}
+                    >
+                        <div className="checkout-steps__circle">3</div>
+                        <span className="checkout-steps__label">{t("Готово")}</span>
+                    </div>
+                </nav>
             </div>
-            <div className="checkout-steps__line" />
-            <div
-                className={`checkout-steps__item ${step === "info" ? "active" : step === "success" ? "completed" : ""}`}
-            >
-                <div className="checkout-steps__circle">
-                    {step === "success" ? (
-                        <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                        >
-                            <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                    ) : (
-                        "2"
-                    )}
-                </div>
-                <span className="checkout-steps__label">{t("Оформлення")}</span>
-            </div>
-            <div className="checkout-steps__line" />
-            <div className={`checkout-steps__item ${step === "success" ? "active" : ""}`}>
-                <div className="checkout-steps__circle">3</div>
-                <span className="checkout-steps__label">{t("Готово")}</span>
-            </div>
-        </div>
-    );
+        );
+    };
 
     const Hero = ({
         title,

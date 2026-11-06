@@ -14,6 +14,8 @@ export const en: Record<string, string> = {
     "Товар буде збережено після входу": "The item will be saved after sign‑in",
 
     // --- checkout: cart-price reconciliation ---
+    "Крок {n} з {total} · {label}": "Step {n} of {total} · {label}",
+    "Етапи замовлення": "Order steps",
     "Ціни в кошику оновлено до актуальних.": "Cart prices have been updated to the current ones.",
     "Деякі товари більше недоступні — їх прибрано з кошика.":
         "Some items are no longer available — they were removed from your cart.",
