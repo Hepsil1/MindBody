@@ -302,8 +302,7 @@ export default function ProductCard({
                                         key={i}
                                         to={`${baseHref}?color=${encodeURIComponent(color)}`}
                                         prefetch="intent"
-                                        role="button"
-                                        aria-pressed={isActive}
+                                        aria-current={isActive ? "true" : undefined}
                                         className={cls}
                                         style={style}
                                         title={title}

@@ -598,10 +598,6 @@ h3 {
     transition: transform 120ms ease;
 }
 
-.product-card--sold-out {
-    /* Stage 3.1: OOS items stay fully clear and clickable without dimming the card */
-}
-
 .product-card__image-wrapper {
     position: relative;
     /* Batch 38 atom 2: unified to 3:4 on every breakpoint. The earlier
