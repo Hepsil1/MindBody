@@ -9,7 +9,7 @@ import ProductCard from "../components/ProductCard";
 import BrandStories from "../components/BrandStories";
 import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
-import { readIgCache } from "../services/instagram.server";
+import { readIgCache, checkImageVariantsExist } from "../services/instagram.server";
 import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
@@ -35,6 +35,7 @@ interface InstagramPost {
     mediaUrl: string;
     permalink: string;
     isVideo?: boolean;
+    hasVariants?: boolean;
 }
 
 // One story-highlight bubble (real cover + title).
@@ -42,6 +43,7 @@ interface InstagramHighlight {
     id: string;
     title: string;
     cover: string;
+    hasVariants?: boolean;
 }
 
 interface InstagramData {
@@ -469,8 +471,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                   fullName: ig.fullName,
                   biography: ig.biography,
                   externalUrl: ig.externalUrl,
-                  highlights: ig.highlights,
-                  posts: ig.posts,
+                  highlights: ig.highlights?.map((h) => ({
+                      ...h,
+                      hasVariants: checkImageVariantsExist(h.cover),
+                  })),
+                  posts: ig.posts.map((p) => ({
+                      ...p,
+                      hasVariants: checkImageVariantsExist(p.mediaUrl),
+                  })),
               }
             : {
                   // ── exact current hardcoded fallback (the curated grid) ──
@@ -485,31 +493,37 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                           id: "1",
                           mediaUrl: "/generalpics/333_131123.webp",
                           permalink: "https://www.instagram.com/mindbody_sportwear/",
+                          hasVariants: checkImageVariantsExist("/generalpics/333_131123.webp"),
                       },
                       {
                           id: "2",
                           mediaUrl: "/generalpics/347_131123.webp",
                           permalink: "https://www.instagram.com/mindbody_sportwear/",
+                          hasVariants: checkImageVariantsExist("/generalpics/347_131123.webp"),
                       },
                       {
                           id: "3",
                           mediaUrl: "/generalpics/374_131123.webp",
                           permalink: "https://www.instagram.com/mindbody_sportwear/",
+                          hasVariants: checkImageVariantsExist("/generalpics/374_131123.webp"),
                       },
                       {
                           id: "4",
                           mediaUrl: "/generalpics/595_131123.webp",
                           permalink: "https://www.instagram.com/mindbody_sportwear/",
+                          hasVariants: checkImageVariantsExist("/generalpics/595_131123.webp"),
                       },
                       {
                           id: "5",
                           mediaUrl: "/generalpics/588_131123.webp",
                           permalink: "https://www.instagram.com/mindbody_sportwear/",
+                          hasVariants: checkImageVariantsExist("/generalpics/588_131123.webp"),
                       },
                       {
                           id: "6",
                           mediaUrl: "/generalpics/602_131123.webp",
                           permalink: "https://www.instagram.com/mindbody_sportwear/",
+                          hasVariants: checkImageVariantsExist("/generalpics/602_131123.webp"),
                       },
                   ],
               };
@@ -655,11 +669,15 @@ export default function Home() {
     const igFullName = instagramData?.fullName || "MIND BODY sport wear";
     const hlToRender = igHighlights.length
         ? igHighlights
-        : ["SALE", "SALE FLUID", "SALE SET", "ВІДГУКИ 11"].map((title, i) => ({
-              id: `fb-${i}`,
-              title,
-              cover: postsToRender[i % postsToRender.length]?.mediaUrl || "/logo-sun.png",
-          }));
+        : ["SALE", "SALE FLUID", "SALE SET", "ВІДГУКИ 11"].map((title, i) => {
+              const matchedPost = postsToRender[i % postsToRender.length];
+              return {
+                  id: `fb-${i}`,
+                  title,
+                  cover: matchedPost?.mediaUrl || "/logo-sun.png",
+                  hasVariants: matchedPost?.hasVariants,
+              };
+          });
 
     // Make the in-phone feed scroll discoverable: hide the "swipe" hint once the
     // user has scrolled even a little.
@@ -1784,21 +1802,30 @@ export default function Home() {
                                                         >
                                                             <div className="ig-ui-hl-ring">
                                                                 <div className="ig-ui-hl-img">
-                                                                    <picture>
-                                                                        <source
-                                                                            srcSet={buildWebpSrcset(
-                                                                                hl.cover,
-                                                                            )}
-                                                                            sizes="64px"
-                                                                            type="image/webp"
-                                                                        />
+                                                                    {hl.hasVariants ? (
+                                                                        <picture>
+                                                                            <source
+                                                                                srcSet={buildWebpSrcset(
+                                                                                    hl.cover,
+                                                                                )}
+                                                                                sizes="64px"
+                                                                                type="image/webp"
+                                                                            />
+                                                                            <img
+                                                                                src={hl.cover}
+                                                                                alt={hl.title}
+                                                                                loading="lazy"
+                                                                                decoding="async"
+                                                                            />
+                                                                        </picture>
+                                                                    ) : (
                                                                         <img
                                                                             src={hl.cover}
                                                                             alt={hl.title}
                                                                             loading="lazy"
                                                                             decoding="async"
                                                                         />
-                                                                    </picture>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                             <span>{hl.title}</span>
@@ -1879,14 +1906,25 @@ export default function Home() {
                                                                 First row eager so the top paints
                                                                 instantly; alt="" → no "Post N" text
                                                                 flashes while a lazy tile loads. */}
-                                                            <picture>
-                                                                <source
-                                                                    srcSet={buildWebpSrcset(
-                                                                        post.mediaUrl,
-                                                                    )}
-                                                                    sizes="(max-width: 768px) 33vw, 120px"
-                                                                    type="image/webp"
-                                                                />
+                                                            {post.hasVariants ? (
+                                                                <picture>
+                                                                    <source
+                                                                        srcSet={buildWebpSrcset(
+                                                                            post.mediaUrl,
+                                                                        )}
+                                                                        sizes="(max-width: 768px) 33vw, 120px"
+                                                                        type="image/webp"
+                                                                    />
+                                                                    <img
+                                                                        src={post.mediaUrl}
+                                                                        alt=""
+                                                                        loading={
+                                                                            i < 9 ? "eager" : "lazy"
+                                                                        }
+                                                                        decoding="async"
+                                                                    />
+                                                                </picture>
+                                                            ) : (
                                                                 <img
                                                                     src={post.mediaUrl}
                                                                     alt=""
@@ -1895,7 +1933,7 @@ export default function Home() {
                                                                     }
                                                                     decoding="async"
                                                                 />
-                                                            </picture>
+                                                            )}
                                                             {post.isVideo && (
                                                                 <span
                                                                     className="ig-ui-reel-badge"

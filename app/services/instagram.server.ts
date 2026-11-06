@@ -2,7 +2,7 @@
 // NEVER makes a network call: a pure on-disk read with an in-process hot copy.
 // `.server.ts` → stripped from the client bundle, so the sessionid (read only
 // in the refresh module) can never reach the browser through here.
-import { promises as fs } from "fs";
+import { promises as fs, existsSync } from "fs";
 import path from "path";
 
 // The cache JSON + downloaded images live in one ignored dir (simplest pruning).
@@ -16,6 +16,7 @@ export interface IgHighlight {
     id: string; // slug derived from the title (stable filename key)
     title: string; // e.g. "SALE FLUID"
     cover: string; // "/instagram/hl_<slug>.webp" (LOCAL)
+    hasVariants?: boolean;
 }
 
 // On-disk shape: RAW numbers + LOCAL image urls. Locale-agnostic — the loader
@@ -37,6 +38,7 @@ export interface IgCache {
         mediaUrl: string; // "/instagram/<shortcode>.webp" (LOCAL master)
         permalink: string; // https://www.instagram.com/p/<shortcode>/ (or /reel/)
         isVideo: boolean; // reel/video → show the play badge
+        hasVariants?: boolean;
     }[];
 }
 
@@ -56,6 +58,24 @@ export function setSessionLikelyExpired(v: boolean) {
 export function setIgMemCache(c: IgCache) {
     _mem = c;
     _loaded = true;
+}
+
+const variantExistsCache = new Set<string>();
+export function checkImageVariantsExist(url?: string): boolean {
+    if (!url || typeof url !== "string" || !url.startsWith("/")) return false;
+    if (variantExistsCache.has(url)) return true;
+    try {
+        const cleanPath = url.split("?")[0].replace(/^\//, "");
+        const extMatch = cleanPath.match(/\.(webp|avif|jpg|jpeg|png)$/i);
+        if (!extMatch) return false;
+        const base = cleanPath.slice(0, -extMatch[0].length);
+        const variantDiskPath = path.resolve("public", `${base}-400w.webp`);
+        const exists = existsSync(variantDiskPath);
+        if (exists) variantExistsCache.add(url);
+        return exists;
+    } catch {
+        return false;
+    }
 }
 
 /** Pure file read. Returns null until the first successful scrape has run. */
