@@ -422,6 +422,7 @@
 .contacts-page {
     background: var(--color-bg-soft);
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .contacts-page .header__logo-img {

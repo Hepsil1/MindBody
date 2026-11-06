@@ -1,5 +1,6 @@
 .wishlist-page {
     min-height: 100vh;
+    min-height: 100dvh;
     background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
 }
 
@@ -33,6 +34,7 @@
 
 .wishlist-page {
     min-height: 100vh;
+    min-height: 100dvh;
     background: #f8f9fa;
     color: #1a1a1a;
 }

@@ -285,7 +285,7 @@ export default function CareGuide() {
                             style={{
                                 color: "#fff",
                                 marginBottom: "16px",
-                                fontFamily: "'Cormorant Garamond', serif",
+                                fontFamily: "var(--font-display, 'Onest', sans-serif)",
                             }}
                         >
                             {c.whyTitle}

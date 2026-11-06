@@ -66,22 +66,11 @@ export const links: Route.LinksFunction = () => [
        hit by warming up DNS + TCP + TLS handshake. */
     { rel: "preconnect", href: "https://api.novaposhta.ua", crossOrigin: "anonymous" },
     { rel: "preconnect", href: "https://api.telegram.org", crossOrigin: "anonymous" },
-    /* Fonts: Cormorant Garamond (display) + DM Sans (body) are used
-       site-wide.  Italiana is the eyebrow/label face — it is referenced by
-       --font-accent in app.css (and every .ab-eyebrow), so it MUST be
-       loaded or those labels silently fall back to Georgia (this was the
-       case after Batch 40 dropped it — re-added here).  Fraunces (variable,
-       opsz+wght) is used only on /about for the Latin wordmark + monumental
-       act numerals; its woff2 is fetched only when a page actually renders
-       those glyphs, so non-/about pages pay nothing. */
-    {
-        rel: "preload",
-        as: "style",
-        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600&family=Italiana&family=Fraunces:opsz,wght@9..144,300..600&family=Onest:wght@500;600;700;800&display=swap",
-    },
+    /* Fonts: Onest (display/headings 400-700) + Manrope (body/UI 400-700).
+       Clean single stylesheet as specified by Lead Architect (Stage 2.1). */
     {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600&family=Italiana&family=Fraunces:opsz,wght@9..144,300..600&family=Onest:wght@500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Onest:wght@400;500;600;700&display=swap&subset=cyrillic,latin",
     },
     { rel: "stylesheet", href: appCss },
     { rel: "stylesheet", href: cartStyles },
@@ -279,7 +268,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
     return (
         <ToastProvider>
-            <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+            <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
                 <Header />
                 <main
                     className="auth-page"

@@ -68,7 +68,7 @@
        on the body font with the same uppercase tracking that gave
        the original Tenor Sans look — premium minimalist label, no
        extra woff2 download. */
-    font-family: "DM Sans", system-ui, sans-serif;
+    font-family: "Manrope", system-ui, sans-serif;
     font-size: 1.1rem;
     font-weight: 500;
     letter-spacing: 2px;
@@ -199,7 +199,7 @@
        Cormorant Garamond, matching the product-card title pattern
        (Phase 5e) so cart items read in the same voice as everywhere
        else.  Item name + tracking now consistent with PDP. */
-    font-family: "Cormorant Garamond", Georgia, serif;
+    font-family: "Onest", sans-serif;
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.3px;

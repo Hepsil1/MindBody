@@ -297,7 +297,7 @@ export default function FAQ() {
                                             alignItems: "center",
                                             gap: "16px",
                                             cursor: "pointer",
-                                            fontFamily: "'DM Sans', sans-serif",
+                                            fontFamily: "var(--font-body, 'Manrope', sans-serif)",
                                             /* Atom K: was 17px/500 — read same weight as body
                                                paragraph.  18px/600 establishes question-as-heading. */
                                             fontSize: "18px",

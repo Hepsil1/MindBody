@@ -156,7 +156,7 @@ export function ShopBgEditorModal({ slug, shopPage, fetcher, onClose }: ShopBgEd
                                             letterSpacing: "0.15em",
                                             textTransform: "uppercase",
                                             color: "rgba(255,255,255,0.5)",
-                                            fontFamily: "DM Sans, sans-serif",
+                                            fontFamily: "var(--font-body, 'Manrope', sans-serif)",
                                         }}
                                     >
                                         <span>Головна</span>
@@ -196,7 +196,8 @@ export function ShopBgEditorModal({ slug, shopPage, fetcher, onClose }: ShopBgEd
                                                 letterSpacing: "0.25em",
                                                 color: "rgba(255,255,255,0.45)",
                                                 textTransform: "uppercase",
-                                                fontFamily: "DM Sans, sans-serif",
+                                                fontFamily:
+                                                    "var(--font-body, 'Manrope', sans-serif)",
                                             }}
                                         >
                                             колекція
@@ -224,7 +225,8 @@ export function ShopBgEditorModal({ slug, shopPage, fetcher, onClose }: ShopBgEd
                                                     letterSpacing: "0.3em",
                                                     color: "rgba(255,255,255,0.35)",
                                                     textTransform: "uppercase",
-                                                    fontFamily: "DM Sans, sans-serif",
+                                                    fontFamily:
+                                                        "var(--font-body, 'Manrope', sans-serif)",
                                                 }}
                                             >
                                                 mind body
@@ -256,7 +258,8 @@ export function ShopBgEditorModal({ slug, shopPage, fetcher, onClose }: ShopBgEd
                                                 letterSpacing: "0.15em",
                                                 color: "rgba(255,255,255,0.3)",
                                                 textTransform: "uppercase",
-                                                fontFamily: "DM Sans, sans-serif",
+                                                fontFamily:
+                                                    "var(--font-body, 'Manrope', sans-serif)",
                                             }}
                                         >
                                             {shopPageLabel(slug).tagline}

@@ -258,7 +258,7 @@ export default function ReturnPolicy() {
                                 <div
                                     style={{
                                         fontSize: "32px",
-                                        fontFamily: "'Cormorant Garamond', serif",
+                                        fontFamily: "var(--font-display, 'Onest', sans-serif)",
                                         color: "var(--color-primary)",
                                         marginBottom: "8px",
                                     }}

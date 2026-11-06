@@ -280,7 +280,7 @@ export default function Search() {
                                 background: "transparent",
                                 padding: "14px 20px",
                                 fontSize: "16px",
-                                fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
+                                fontFamily: "var(--font-body, 'Manrope', sans-serif)",
                             }}
                         />
                         <button
@@ -356,7 +356,7 @@ export default function Search() {
                                             borderRadius: "999px",
                                             cursor: "pointer",
                                             fontSize: "14px",
-                                            fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
+                                            fontFamily: "var(--font-body, 'Manrope', sans-serif)",
                                         }}
                                     >
                                         {t(tag)}
@@ -423,8 +423,7 @@ export default function Search() {
                                     <h3
                                         style={{
                                             marginBottom: "24px",
-                                            fontFamily:
-                                                "var(--font-display, 'Cormorant Garamond', serif)",
+                                            fontFamily: "var(--font-display, 'Onest', sans-serif)",
                                         }}
                                     >
                                         {t("Можливо, вам сподобається")}

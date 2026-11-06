@@ -109,7 +109,7 @@ export default function AdminLogin() {
                 background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
                 position: "relative",
                 overflow: "hidden",
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: 'var(--font-body, "Manrope", sans-serif)',
             }}
         >
             {/* Background decorative elements */}
@@ -147,7 +147,7 @@ export default function AdminLogin() {
                     top: "10%",
                     left: "8%",
                     fontSize: "120px",
-                    fontFamily: '"Cormorant Garamond", serif',
+                    fontFamily: 'var(--font-display, "Onest", sans-serif)',
                     fontWeight: 300,
                     color: "rgba(255,255,255,0.03)",
                     letterSpacing: "0.1em",
@@ -163,7 +163,7 @@ export default function AdminLogin() {
                     bottom: "15%",
                     right: "5%",
                     fontSize: "100px",
-                    fontFamily: '"Cormorant Garamond", serif',
+                    fontFamily: 'var(--font-display, "Onest", sans-serif)',
                     fontWeight: 300,
                     color: "rgba(255,255,255,0.03)",
                     letterSpacing: "0.1em",
@@ -217,7 +217,7 @@ export default function AdminLogin() {
                                 color: "#0f172a",
                                 fontSize: "32px",
                                 fontWeight: 700,
-                                fontFamily: '"DM Sans", sans-serif',
+                                fontFamily: 'var(--font-body, "Manrope", sans-serif)',
                             }}
                         >
                             M

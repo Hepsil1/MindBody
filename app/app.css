@@ -68,10 +68,11 @@
     );
     --gradient-values: linear-gradient(180deg, #051d1d 0%, #0a3d3d 100%);
 
-    /* === Typography - Premium Wellness Fonts === */
-    --font-display: "Cormorant Garamond", "Georgia", serif;
+    /* === Typography - Design System (Stage 2) === */
+    --font-display: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-heading: var(--font-display);
     --font-accent: "Italiana", "Georgia", serif;
-    --font-body: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
 
     --text-xs: 0.75rem;
     --text-sm: 0.875rem;
@@ -114,11 +115,14 @@
     --grid-columns: 12;
     --grid-gutter: 24px;
 
-    /* === Border Radius === */
-    --radius-sm: 4px;
-    --radius-md: 8px;
+    /* === Border Radius - Unified Scale (Stage 2) === */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
     --radius-lg: 16px;
     --radius-xl: 24px;
+    --radius-device: 44px;
+    --radius-pill: 999px;
     --radius-full: 9999px;
 
     /* === Shadows === */
@@ -171,6 +175,7 @@ html {
     font-size: 16px;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
     /* Clip horizontal overflow at the viewport-establishing element.
        body{overflow-x:hidden} below does NOT contain position:fixed
        off-canvas panels (CartDrawer slides off-screen via translateX) —
@@ -185,11 +190,39 @@ html {
 
 body {
     font-family: var(--font-body);
+    font-feature-settings: "tnum" 0;
     font-size: var(--text-base);
     line-height: var(--leading-relaxed);
     color: var(--color-text-primary);
     background-color: var(--color-bg-cream);
     overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+.display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+}
+
+button,
+a {
+    touch-action: manipulation;
+}
+
+:focus-visible {
+    outline: 2px solid #1c1a17;
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
 /* Lenis smooth-scroll (home + /about via useSmoothScroll). Lenis adds these
@@ -322,7 +355,7 @@ h3 {
     padding: 7px 22px;
     background: rgba(42, 90, 90, 0.06);
     color: var(--color-primary);
-    font-family: "DM Sans", sans-serif;
+    font-family: "Manrope", sans-serif;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.3em;
@@ -1294,7 +1327,7 @@ h3 {
     align-items: center;
     position: relative;
     z-index: 2000;
-    font-family: var(--font-body, "DM Sans", sans-serif);
+    font-family: var(--font-body, "Manrope", sans-serif);
     border-bottom: 1px solid rgba(42, 90, 90, 0.08);
 }
 
@@ -2304,7 +2337,7 @@ h3 {
 
 /* Simplified collection label - single line */
 .collection-header__label {
-    font-family: "Tenor Sans", "Cormorant Garamond", serif;
+    font-family: "Onest", sans-serif;
     font-size: 1.3rem;
     font-weight: 400;
     color: var(--color-primary);
@@ -3348,6 +3381,7 @@ h3 {
 
 .cart-page {
     min-height: 100vh;
+    min-height: 100dvh;
     background: #f8f9fa;
     /* Light, clean background */
     color: #1a1a1a;
@@ -4317,7 +4351,7 @@ h3 {
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--color-text-secondary, #6b7280);
-    font-family: "DM Sans", sans-serif;
+    font-family: "Manrope", sans-serif;
 }
 .cart-success__order-id {
     display: inline-flex;
@@ -4329,7 +4363,7 @@ h3 {
     border: 1px solid var(--color-border, #e8e5e1);
 }
 .cart-success__order-id strong {
-    font-family: "DM Sans", monospace;
+    font-family: "Manrope", monospace;
     font-size: 16px;
     font-weight: 600;
     color: var(--color-primary, #2a5a5a);
@@ -4574,6 +4608,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 
 .product-page {
     min-height: 100vh;
+    min-height: 100dvh;
     background: #fff;
     padding-top: 120px;
 }
@@ -5708,6 +5743,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 
 .shop-category-modern {
     min-height: 100vh;
+    min-height: 100dvh;
     background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
 }
 
@@ -6286,6 +6322,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 .hero-fullscreen {
     position: relative;
     height: 100vh;
+    height: 100dvh;
     /* dvh = dynamic viewport height: excludes the mobile browser address
        bar so the hero fills exactly the visible area (100vh overshoots
        on mobile). 100vh line above stays as the fallback. */
@@ -6531,6 +6568,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     display: grid;
     grid-template-columns: 1fr 1fr;
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .manifesto__visual {
@@ -9033,6 +9071,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 .auth-page {
     background: var(--color-bg-soft);
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 /* Auth Hero */
@@ -9436,6 +9475,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 .dashboard-page {
     background: var(--color-bg-soft);
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .dashboard-loading {
@@ -9444,6 +9484,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     align-items: center;
     justify-content: center;
     height: 100vh;
+    height: 100dvh;
     gap: 16px;
 }
 
@@ -10555,6 +10596,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 
 .shop-luxe {
     min-height: 100vh;
+    min-height: 100dvh;
     background: #ffffff;
     color: #1a1a1a;
     padding-bottom: 200px;
@@ -14248,7 +14290,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
 }
 
 .category-card-editorial__title {
-    font-family: var(--font-display, "Cormorant Garamond", serif);
+    font-family: var(--font-display, "Onest", serif);
     font-size: clamp(1.8rem, 2.5vw, 2.2rem);
     font-weight: 400;
     color: #fff;
@@ -14275,7 +14317,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
 }
 
 .category-card-editorial__subtitle {
-    font-family: var(--font-sans, "DM Sans", sans-serif);
+    font-family: var(--font-sans, "Manrope", sans-serif);
     font-size: 0.75rem;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.7);
@@ -14288,7 +14330,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
 }
 
 .category-card-editorial__link {
-    font-family: var(--font-sans, "DM Sans", sans-serif);
+    font-family: var(--font-sans, "Manrope", sans-serif);
     font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -14375,7 +14417,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
 }
 
 .reviews-header h3 {
-    font-family: "Onest", "DM Sans", sans-serif;
+    font-family: "Onest", "Manrope", sans-serif;
     font-size: 1.45rem;
     font-weight: 700;
     letter-spacing: -0.02em;
@@ -14602,7 +14644,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
 
 .collections-title {
     font-size: clamp(2.5rem, 6vw, 4.5rem) !important;
-    font-family: "Cormorant Garamond", serif !important;
+    font-family: "Onest", serif !important;
     font-weight: 300 !important;
     color: var(--color-text-primary) !important;
     line-height: 1.1 !important;
@@ -14616,7 +14658,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
     opacity: 0.75 !important;
     max-width: 500px;
     margin: 20px auto 0 !important;
-    font-family: "Cormorant Garamond", serif !important;
+    font-family: "Onest", serif !important;
     font-size: 1.35rem !important;
     font-style: italic !important;
     font-weight: 400 !important;
@@ -15079,7 +15121,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
     .mind-feedback__btn {
         padding: 14px 24px;
         height: auto;
-        font-family: var(--font-body, "DM Sans", sans-serif);
+        font-family: var(--font-body, "Manrope", sans-serif);
         font-size: 13px;
         font-weight: 700;
         letter-spacing: 0.4px;
@@ -15331,7 +15373,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
         font-weight: 600;
         letter-spacing: 0.01em;
         text-transform: none;
-        font-family: "Cormorant Garamond", Georgia, serif;
+        font-family: "Onest", sans-serif;
     }
     .product-card .product-card__price-main {
         font-size: 14px;
@@ -15395,7 +15437,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
     .header__nav-list::before {
         content: "КАТЕГОРІЇ";
         display: block;
-        font-family: "DM Sans", system-ui, sans-serif;
+        font-family: "Manrope", system-ui, sans-serif;
         font-size: 11px;
         font-weight: 600;
         letter-spacing: 0.2em;
@@ -15406,7 +15448,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
     .header__nav-extra::before {
         content: "АКАУНТ";
         display: block;
-        font-family: "DM Sans", system-ui, sans-serif;
+        font-family: "Manrope", system-ui, sans-serif;
         font-size: 11px;
         font-weight: 600;
         letter-spacing: 0.2em;
