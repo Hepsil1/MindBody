@@ -570,44 +570,36 @@ h3 {
 .product-card {
     position: relative;
     background: var(--color-bg-white);
-    /* Batch 53: the old 4px radius + 1px grey border + zero shadow read
-       as a default un-styled box ("недоработанные" — user). Premium
-       e-comm (Sézane / Cuyana) floats a softly-rounded white card off
-       the cream page with a gentle shadow, not a hard border frame.
-       14px radius, whisper border for definition, and a low resting
-       shadow that is visible even on mobile (where :hover never fires). */
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
     border: 1px solid var(--color-border-light);
     width: 100%;
-    /* No max-width — let the grid container control width */
     display: flex;
     flex-direction: column;
     box-shadow: 0 2px 10px rgba(26, 26, 26, 0.05);
+    -webkit-tap-highlight-color: transparent;
     transition:
         box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
         border-color 0.3s ease,
         transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
     .product-card:hover {
         border-color: var(--color-border);
-        /* CSS replacement for the old framer-motion y:-4 lift — the card
-           rises and casts a deeper, softer shadow. */
         box-shadow: 0 14px 30px rgba(26, 26, 26, 0.1);
         transform: translateY(-4px);
     }
 }
 
-/* Tap feedback (CSS replacement for framer-motion whileTap). :active fires
-   on touch + mouse-down; the tiny shrink reads as a press. */
+/* Tap feedback on touch + pointer */
 .product-card:active {
-    transform: scale(0.99);
+    transform: scale(0.985);
+    transition: transform 120ms ease;
 }
 
 .product-card--sold-out {
-    opacity: 0.6;
+    /* Stage 3.1: OOS items stay fully clear and clickable without dimming the card */
 }
 
 .product-card__image-wrapper {
@@ -756,11 +748,13 @@ h3 {
     position: absolute;
     top: 10px;
     right: 10px;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     padding: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.85);
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     display: flex;
@@ -770,44 +764,38 @@ h3 {
     border: none;
     cursor: pointer;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+    -webkit-tap-highlight-color: transparent;
     transition:
         background 0.2s ease,
         color 0.2s ease,
         transform 0.2s ease;
     z-index: 6;
 }
-/* Small 4px hit-area extension keeps total touch zone ≥44 with no
-   overshoot beyond the natural button bounds. */
 .product-card__heart-btn::before {
     content: "";
     position: absolute;
     inset: -2px;
     border-radius: 50%;
 }
-.product-card__heart-btn:hover {
-    background: var(--color-text-primary);
-    color: var(--color-bg-white);
-    /* CSS replacement for framer-motion whileHover scale 1.08 */
-    transform: scale(1.08);
+@media (hover: hover) and (pointer: fine) {
+    .product-card__heart-btn:hover {
+        background: var(--color-text-primary);
+        color: var(--color-bg-white);
+        transform: scale(1.06);
+    }
 }
 .product-card__heart-btn:active {
-    transform: scale(0.94);
+    transform: scale(0.92);
 }
 .product-card__heart-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
 }
 
 @media (min-width: 768px) {
     .product-card__heart-btn {
-        width: 44px;
-        height: 44px;
         top: 12px;
         right: 12px;
-    }
-    .product-card__heart-btn svg {
-        width: 20px;
-        height: 20px;
     }
 }
 
@@ -883,24 +871,23 @@ h3 {
 }
 .product-card__price {
     font-size: 14px;
-    font-weight: 500;
-    /* Batch 53: was --color-text-secondary (#555) which read washed-out
-       / unfinished. Crisp near-black price = "considered". The serif
-       title (15px/600 Cormorant) still leads the hierarchy over this
-       14px DM Sans price, so name-first is preserved. */
+    font-weight: 600;
     color: var(--color-text-primary);
     letter-spacing: 0.01em;
     line-height: 1.2;
+    font-variant-numeric: tabular-nums;
 }
 .product-card__price--sale {
     color: var(--color-marsala);
-    font-weight: 500;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 .product-card__price-old {
     font-size: 13px;
     font-weight: 400;
     color: var(--color-text-muted);
     text-decoration: line-through;
+    font-variant-numeric: tabular-nums;
 }
 
 /* === Color swatches — 24px touch-target, interactive === */
@@ -945,11 +932,14 @@ h3 {
         height: 24px;
     }
 }
+.product-card__swatch {
+    -webkit-tap-highlight-color: transparent;
+}
 .product-card__swatch::before {
-    /* Invisible hit target overlay — 32×32 mobile / 36×36 desktop */
+    /* Touch target overlay — ensures minimum 44×44px hit-area */
     content: "";
     position: absolute;
-    inset: -6px;
+    inset: -11px;
     border-radius: 50%;
 }
 .product-card__swatch:hover {

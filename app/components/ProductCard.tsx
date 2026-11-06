@@ -268,7 +268,7 @@ export default function ProductCard({
                     </h3>
 
                     <div className="product-card__price-row">
-                        {is_sale && sale_price ? (
+                        {is_sale && sale_price && sale_price < price ? (
                             <>
                                 <span className="product-card__price product-card__price--sale">
                                     {money(sale_price)}
@@ -302,6 +302,8 @@ export default function ProductCard({
                                         key={i}
                                         to={`${baseHref}?color=${encodeURIComponent(color)}`}
                                         prefetch="intent"
+                                        role="button"
+                                        aria-pressed={isActive}
                                         className={cls}
                                         style={style}
                                         title={title}
