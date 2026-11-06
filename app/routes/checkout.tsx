@@ -67,6 +67,7 @@ export default function Checkout() {
     const money = useMoney();
     const { showToast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isSubmittingRef = useRef(false);
     const [orderNumber, setOrderNumber] = useState("");
     // Stable idempotency key for the current checkout attempt. Reused across
     // retries/double-submits (so the server dedupes), reset after a successful order.
@@ -314,6 +315,7 @@ export default function Checkout() {
 
     const handleSubmitOrder = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmittingRef.current) return;
 
         const newErrors: Partial<Record<keyof CustomerInfo, string>> = {};
         if (!customerInfo.name.trim()) newErrors.name = t("Введіть ваше ім'я");
@@ -354,6 +356,7 @@ export default function Checkout() {
 
         setErrors({});
 
+        isSubmittingRef.current = true;
         setIsSubmitting(true);
 
         // Generate (once) a stable key for this checkout attempt so a network
@@ -449,6 +452,7 @@ export default function Checkout() {
             console.error("Order submit error:", error);
             showToast(t("Помилка з'єднання. Спробуйте ще раз."), "error");
         } finally {
+            isSubmittingRef.current = false;
             setIsSubmitting(false);
         }
     };
@@ -1197,10 +1201,9 @@ export default function Checkout() {
                                     type="submit"
                                     className="cart-btn cart-btn--primary cart-btn--full"
                                     disabled={isSubmitting}
+                                    aria-busy={isSubmitting ? "true" : undefined}
                                 >
-                                    {isSubmitting
-                                        ? t("Відправляємо...")
-                                        : t("Підтвердити замовлення")}
+                                    {isSubmitting ? t("Оформлюємо…") : t("Підтвердити замовлення")}
                                 </button>
                                 <div className="checkout-trust-badge">
                                     <svg
