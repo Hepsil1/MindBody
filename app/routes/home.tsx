@@ -67,6 +67,31 @@ function formatFollowers(n: number, locale: "uk" | "en" | "ru"): string {
     return locale === "ru" ? `${v} тыс.` : `${v} тис.`;
 }
 
+// Render a raw IG bio: keep line breaks, turn @mentions into links to the real
+// profiles. (Bio URLs are surfaced separately as the clickable external link.)
+function renderBioLines(bio: string) {
+    return bio.split("\n").map((line, li) => (
+        <Fragment key={li}>
+            {li > 0 && <br />}
+            {line.split(/(@[A-Za-z0-9._]+)/g).map((part, pi) =>
+                part.startsWith("@") && part.length > 1 ? (
+                    <a
+                        key={pi}
+                        href={`https://www.instagram.com/${part.slice(1)}/`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ig-ui-mention"
+                    >
+                        {part}
+                    </a>
+                ) : (
+                    <Fragment key={pi}>{part}</Fragment>
+                ),
+            )}
+        </Fragment>
+    ));
+}
+
 // Home category card — covers DB rows and the hard-coded fallback alike.
 interface HomeCategoryCard {
     id: string;
@@ -677,56 +702,32 @@ export default function Home() {
     const igProfilePic = instagramData?.profilePictureUrl || "/logo-sun.png";
     const igFollowers = instagramData?.followersCountDisplay ?? t("63,9 тис.");
 
-    const [activeLookIndex, setActiveLookIndex] = useState(0);
-    const [muted, setMuted] = useState(true);
-    const lookVideoRef = useRef<HTMLVideoElement>(null);
+    const postsToRender = instagramData?.posts?.length
+        ? instagramData.posts
+        : FALLBACK_INSTAGRAM_POSTS;
+    const igPostsCount = instagramData?.postsCountDisplay ?? "2168";
+    const igFollowing = instagramData?.followingCountDisplay ?? "1257";
+    const igHighlights = instagramData?.highlights ?? [];
+    const igBio = instagramData?.biography || "";
+    const igExternalUrl = instagramData?.externalUrl || "https://t.me/mindbody_sportwear";
+    const igExternalLabel = igExternalUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const igFullName = instagramData?.fullName || "MIND BODY sport wear";
+    const hlToRender = igHighlights.length
+        ? igHighlights
+        : ["SALE", "SALE FLUID", "SALE SET", "ВІДГУКИ 11"].map((title, i) => ({
+              id: `fb-${i}`,
+              title,
+              cover: postsToRender[i % postsToRender.length]?.mediaUrl || "/logo-sun.png",
+          }));
 
-    const looks = HOME_LOOKS.map((l) => ({
-        ...l,
-        product: lookProducts?.find((p) => p.slug === l.productSlug) ?? null,
-    })).filter((l): l is HomeLook & { product: HomeProductCard } => !!l.product);
-    const look = looks[Math.min(activeLookIndex, Math.max(0, looks.length - 1))];
-    const lookProduct = look?.product;
-    const lookPrice = lookProduct ? (lookProduct.sale_price ?? lookProduct.price) : 0;
-
-    const selectLook = useCallback((i: number) => {
-        setActiveLookIndex(i);
-        setMuted(true);
-    }, []);
-
-    // IntersectionObserver to only autoplay look video when in view
+    const igScrollRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        const v = lookVideoRef.current;
-        if (!v) return;
-        v.muted = muted;
-
-        const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-        if (mediaQuery.matches) {
-            v.pause();
-            return;
-        }
-
-        let observer: IntersectionObserver | null = null;
-        if ("IntersectionObserver" in window) {
-            observer = new IntersectionObserver(
-                ([entry]) => {
-                    if (entry.isIntersecting) {
-                        v.play().catch(() => {});
-                    } else {
-                        v.pause();
-                    }
-                },
-                { threshold: 0.25 },
-            );
-            observer.observe(v);
-        } else {
-            v.play().catch(() => {});
-        }
-
-        return () => {
-            observer?.disconnect();
-        };
-    }, [activeLookIndex, muted]);
+        const el = igScrollRef.current;
+        if (!el) return;
+        const onScroll = () => el.setAttribute("data-scrolled", el.scrollTop > 24 ? "1" : "0");
+        el.addEventListener("scroll", onScroll, { passive: true });
+        return () => el.removeEventListener("scroll", onScroll);
+    }, []);
 
     // The ambient playlist index doubles as the quiet feature highlight: since
     // each of the 4 feature cards owns playlist[i], the currently-playing film's
@@ -1469,188 +1470,619 @@ export default function Home() {
                     </div>
                 </section>
 
-                {/* Instagram Stage Section — Editorial 3-column + Minimal iPhone */}
-                {looks.length > 0 && look && lookProduct && (
-                    <div className="ig-hyper" id="instagram">
-                        <div className="ig-hyper__content container">
-                            <div className="look-stage">
-                                {/* LEFT — editorial accent */}
-                                <div className="look-stage__intro">
-                                    <p className="look-stage__kicker">
-                                        @{igUsername} · {igFollowers}
-                                    </p>
-                                    <h2 className="look-stage__title">{t("Естетика в русі")}</h2>
-                                    <p className="look-stage__lead">
-                                        {t(
-                                            "Образи з наших відео — з товарами, які можна одягнути вже сьогодні.",
-                                        )}
-                                    </p>
-                                    <a
-                                        href={`https://www.instagram.com/${igUsername}/`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="look-stage__follow"
-                                    >
-                                        {t("Стежити")}
-                                    </a>
-                                </div>
+                {/* APPROVED UNTOUCHABLE: Instagram iPhone — original live feed, followers, Dynamic Island */}
+                {/* Instagram Premium Section (Merged visually into the About section logic) */}
+                <div className="ig-hyper" id="instagram">
+                    {/* Cinematic atmosphere — does NOT touch the phone or floating
+                        logos: a teal projector beam behind the content (z below text,
+                        above the watermark) + a film-grain overlay added near the end. */}
+                    <div className="ig-hyper__beam" aria-hidden="true" />
 
-                                {/* CENTER — clean device */}
-                                <div className="look-stage__device">
-                                    <div className="look-phone">
-                                        <div className="look-phone__screen">
-                                            <video
-                                                key={look.id}
-                                                ref={lookVideoRef}
-                                                className="look-phone__video"
-                                                src={look.video}
-                                                poster={look.poster || lookProduct.image}
-                                                autoPlay
-                                                muted
-                                                loop
-                                                playsInline
-                                                preload="metadata"
-                                            />
-                                            <div className="look-phone__top">
-                                                <span className="look-phone__account">
-                                                    @{igUsername}
-                                                </span>
-                                                {look.hasAudio && (
-                                                    <button
-                                                        type="button"
-                                                        className="look-phone__sound"
-                                                        onClick={() => setMuted((m) => !m)}
-                                                        aria-pressed={!muted}
-                                                        aria-label={
-                                                            muted
-                                                                ? t("Увімкнути звук")
-                                                                : t("Вимкнути звук")
-                                                        }
+                    {/* The center content container */}
+                    <div className="ig-hyper__content container">
+                        <div className="ig-hyper__header">
+                            <p className="ig-hyper__kicker ig-hyper__reveal">
+                                <span className="ig-hyper__rec" aria-hidden="true" />
+                                {t("Прямий ефір")} · @mindbody_sportwear
+                            </p>
+                            <span className="ig-hyper__bar" aria-hidden="true" />
+                            <h2 className="ig-hyper__title">
+                                <span className="ig-line">
+                                    <span className="l">{t("Дивись, як ми")}</span>
+                                </span>
+                                <span className="ig-line">
+                                    <span className="l">{t("рухаємось")}</span>
+                                </span>
+                            </h2>
+                            <span className="ig-hyper__bar" aria-hidden="true" />
+                            <p className="ig-hyper__subtitle ig-hyper__reveal">
+                                {t(
+                                    "Тут немає постановки. Кожен кадр — сьогодні. Кожен рух — справжній. Сила в прямому ефірі.",
+                                )}
+                            </p>
+                        </div>
+
+                        <div className="ig-hyper__centerpiece">
+                            {/* The majestic iPhone mockup */}
+                            <div className="ig-premium__phone-wrap">
+                                <div className="ig-premium__phone-glow" />
+                                <div className="ig-premium__phone">
+                                    {/* Realistic iPhone Hardware Buttons */}
+                                    <div className="ig-premium__btn-action"></div>
+                                    <div className="ig-premium__btn-vol-up"></div>
+                                    <div className="ig-premium__btn-vol-down"></div>
+                                    <div className="ig-premium__btn-power"></div>
+
+                                    {/* Screen content */}
+                                    <div className="ig-premium__screen">
+                                        <div className="ig-ui-wrapper">
+                                            {/* iOS Status Bar */}
+                                            <div className="ig-ui-statusbar">
+                                                {/* Live clock in a decorative iOS-mockup status bar.
+                                                   The SSR-rendered minute can differ from the
+                                                   minute at client hydration, which produced an
+                                                   intermittent React #418 (text hydration mismatch)
+                                                   on the home route. suppressHydrationWarning is the
+                                                   documented fix for intentionally dynamic timestamp
+                                                   text: keep the live value, silence the expected diff. */}
+                                                <div
+                                                    className="ig-ui-time"
+                                                    suppressHydrationWarning
+                                                >
+                                                    {new Date().toLocaleTimeString("uk-UA", {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })}
+                                                </div>
+                                                <div className="ig-ui-island">
+                                                    <div className="ig-ui-island-cam"></div>
+                                                </div>
+                                                <div className="ig-ui-status-icons">
+                                                    <svg
+                                                        width="18"
+                                                        height="12"
+                                                        viewBox="0 0 18 12"
+                                                        fill="currentColor"
+                                                    >
+                                                        <rect
+                                                            x="1"
+                                                            y="8"
+                                                            width="3"
+                                                            height="4"
+                                                            rx="1"
+                                                        />
+                                                        <rect
+                                                            x="6"
+                                                            y="5"
+                                                            width="3"
+                                                            height="7"
+                                                            rx="1"
+                                                        />
+                                                        <rect
+                                                            x="11"
+                                                            y="2"
+                                                            width="3"
+                                                            height="10"
+                                                            rx="1"
+                                                        />
+                                                        <rect
+                                                            x="16"
+                                                            y="0"
+                                                            width="3"
+                                                            height="12"
+                                                            rx="1"
+                                                            fillOpacity="0.3"
+                                                        />
+                                                    </svg>
+                                                    <svg
+                                                        width="16"
+                                                        height="12"
+                                                        viewBox="0 0 16 12"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                    >
+                                                        <path d="M1 8.5C4.5 5.5 11.5 5.5 15 8.5" />
+                                                        <path d="M4 11C6.5 9 9.5 9 12 11" />
+                                                    </svg>
+                                                    <div
+                                                        style={{
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            gap: "4px",
+                                                        }}
+                                                    >
+                                                        <span
+                                                            style={{
+                                                                fontSize: "13px",
+                                                                fontWeight: 600,
+                                                                letterSpacing: "-0.5px",
+                                                            }}
+                                                        >
+                                                            28
+                                                        </span>
+                                                        <svg
+                                                            width="24"
+                                                            height="13"
+                                                            viewBox="0 0 24 13"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                        >
+                                                            <rect
+                                                                x="1"
+                                                                y="1"
+                                                                width="20"
+                                                                height="11"
+                                                                rx="3"
+                                                                strokeWidth="1"
+                                                                fill="rgba(255,255,255,0.15)"
+                                                                stroke="rgba(255,255,255,0.4)"
+                                                            />
+                                                            <rect
+                                                                x="3"
+                                                                y="3"
+                                                                width="7"
+                                                                height="7"
+                                                                rx="1"
+                                                                fill="currentColor"
+                                                                stroke="none"
+                                                            />
+                                                            <path
+                                                                d="M22 4.5v4"
+                                                                strokeWidth="2"
+                                                                strokeLinecap="round"
+                                                                stroke="rgba(255,255,255,0.4)"
+                                                            />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Top Navbar */}
+                                            <div className="ig-ui-topbar">
+                                                <div className="ig-ui-topleft">
+                                                    <svg
+                                                        width="24"
+                                                        height="24"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    >
+                                                        <path d="M15 18l-6-6 6-6" />
+                                                    </svg>
+                                                    <span className="ig-ui-username">
+                                                        {igUsername}
+                                                    </span>
+                                                </div>
+                                                <div className="ig-ui-topright">
+                                                    <svg
+                                                        width="24"
+                                                        height="24"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    >
+                                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                                    </svg>
+                                                    <svg
+                                                        width="24"
+                                                        height="24"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    >
+                                                        <circle cx="12" cy="12" r="1" />
+                                                        <circle cx="19" cy="12" r="1" />
+                                                        <circle cx="5" cy="12" r="1" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+
+                                            {/* Scrollable Content — data-lenis-prevent so the
+                                                page's Lenis smooth-scroll lets the NATIVE scroll
+                                                inside the phone work (wheel + touch). Without it
+                                                Lenis eats the gesture and scrolls the page. */}
+                                            <div
+                                                className="ig-ui-content"
+                                                data-lenis-prevent
+                                                ref={igScrollRef}
+                                            >
+                                                {/* Header: Avatar & Stats */}
+                                                <div className="ig-ui-header">
+                                                    <div className="ig-ui-avatar-wrap">
+                                                        <img
+                                                            src={igProfilePic}
+                                                            alt={igUsername}
+                                                            className="ig-ui-avatar"
+                                                        />
+                                                    </div>
+                                                    <div className="ig-ui-stats">
+                                                        <div className="ig-ui-stat">
+                                                            <span className="num">
+                                                                {igPostsCount}
+                                                            </span>
+                                                            <span className="lbl">
+                                                                {t("публікації")}
+                                                            </span>
+                                                        </div>
+                                                        <div className="ig-ui-stat">
+                                                            <span className="num">
+                                                                {igFollowers}
+                                                            </span>
+                                                            <span className="lbl">
+                                                                {t("підписники")}
+                                                            </span>
+                                                        </div>
+                                                        <div className="ig-ui-stat">
+                                                            <span className="num">
+                                                                {igFollowing}
+                                                            </span>
+                                                            <span className="lbl">
+                                                                {t("підписки")}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Bio Section */}
+                                                <div className="ig-ui-bio">
+                                                    <div className="ig-ui-name">{igFullName}</div>
+                                                    <div className="ig-ui-text">
+                                                        {igBio ? (
+                                                            renderBioLines(igBio)
+                                                        ) : (
+                                                            <>
+                                                                {t("Комбінезон твоєї мрії!✨")}
+                                                                <br />
+                                                                {t(
+                                                                    "Найбільший вибір,найкраща якість",
+                                                                )}
+                                                                <br />
+                                                                {t("для маленьких 👸")}{" "}
+                                                                <span className="ig-ui-mention">
+                                                                    @mindbody_kidswear
+                                                                </span>
+                                                                <br />
+                                                                {t("casual одяг")}{" "}
+                                                                <span className="ig-ui-mention">
+                                                                    @fluid_feel_free
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    <a
+                                                        href={igExternalUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="ig-ui-link"
                                                     >
                                                         <svg
-                                                            width="18"
-                                                            height="18"
+                                                            width="14"
+                                                            height="14"
                                                             viewBox="0 0 24 24"
                                                             fill="none"
                                                             stroke="currentColor"
                                                             strokeWidth="2"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            aria-hidden="true"
+                                                            style={{
+                                                                marginRight: "4px",
+                                                                verticalAlign: "-2px",
+                                                            }}
                                                         >
-                                                            <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                                                            {muted ? (
-                                                                <>
-                                                                    <line
-                                                                        x1="23"
-                                                                        y1="9"
-                                                                        x2="17"
-                                                                        y2="15"
-                                                                    />
-                                                                    <line
-                                                                        x1="17"
-                                                                        y1="9"
-                                                                        x2="23"
-                                                                        y2="15"
-                                                                    />
-                                                                </>
-                                                            ) : (
-                                                                <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" />
-                                                            )}
+                                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                                                         </svg>
-                                                    </button>
-                                                )}
+                                                        {igExternalLabel}
+                                                    </a>
+                                                </div>
+
+                                                {/* Action Buttons */}
+                                                <div className="ig-ui-actions">
+                                                    <div className="ig-ui-btn">
+                                                        {t("Ви підписані")}
+                                                        <svg
+                                                            width="12"
+                                                            height="12"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            style={{ marginLeft: "4px" }}
+                                                        >
+                                                            <path d="M6 9l6 6 6-6" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="ig-ui-btn">
+                                                        {t("Повідомлення")}
+                                                    </div>
+                                                    <div className="ig-ui-btn icon">
+                                                        <svg
+                                                            width="16"
+                                                            height="16"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                        >
+                                                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                                            <circle cx="8.5" cy="7" r="4" />
+                                                            <line x1="20" y1="8" x2="20" y2="14" />
+                                                            <line x1="23" y1="11" x2="17" y2="11" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+
+                                                {/* Highlights */}
+                                                <div className="ig-ui-highlights">
+                                                    {hlToRender.map((hl) => (
+                                                        <a
+                                                            key={hl.id}
+                                                            href={`https://www.instagram.com/${igUsername}/`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="ig-ui-highlight"
+                                                        >
+                                                            <div className="ig-ui-hl-ring">
+                                                                <div className="ig-ui-hl-img">
+                                                                    <picture>
+                                                                        <source
+                                                                            srcSet={buildWebpSrcset(
+                                                                                hl.cover,
+                                                                            )}
+                                                                            sizes="64px"
+                                                                            type="image/webp"
+                                                                        />
+                                                                        <img
+                                                                            src={hl.cover}
+                                                                            alt={hl.title}
+                                                                            loading="lazy"
+                                                                            decoding="async"
+                                                                        />
+                                                                    </picture>
+                                                                </div>
+                                                            </div>
+                                                            <span>{hl.title}</span>
+                                                        </a>
+                                                    ))}
+                                                </div>
+
+                                                {/* Tabs */}
+                                                <div className="ig-ui-tabs">
+                                                    <div className="ig-ui-tab active">
+                                                        <svg
+                                                            width="24"
+                                                            height="24"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="1.5"
+                                                        >
+                                                            <rect
+                                                                x="3"
+                                                                y="3"
+                                                                width="18"
+                                                                height="18"
+                                                                rx="2"
+                                                                ry="2"
+                                                            />
+                                                            <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="ig-ui-tab">
+                                                        <svg
+                                                            width="24"
+                                                            height="24"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="1.5"
+                                                        >
+                                                            <rect
+                                                                x="4"
+                                                                y="2"
+                                                                width="16"
+                                                                height="20"
+                                                                rx="2"
+                                                                ry="2"
+                                                            />
+                                                            <path d="M4 6h16M4 18h16M8 2v4M16 2v4M12 18v4" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="ig-ui-tab">
+                                                        <svg
+                                                            width="24"
+                                                            height="24"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="1.5"
+                                                        >
+                                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                                            <circle cx="12" cy="7" r="4" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+
+                                                {/* 3-Column Grid Feed */}
+                                                <div className="ig-ui-feed">
+                                                    {postsToRender.map((post, i) => (
+                                                        <a
+                                                            key={post.id}
+                                                            href={post.permalink}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="ig-ui-feed-post"
+                                                            aria-label={t("Допис в Instagram")}
+                                                        >
+                                                            {/* -400w variant served for the ~110px
+                                                                slots (sizes below), not the master.
+                                                                First row eager so the top paints
+                                                                instantly; alt="" → no "Post N" text
+                                                                flashes while a lazy tile loads. */}
+                                                            <picture>
+                                                                <source
+                                                                    srcSet={buildWebpSrcset(
+                                                                        post.mediaUrl,
+                                                                    )}
+                                                                    sizes="(max-width: 768px) 33vw, 120px"
+                                                                    type="image/webp"
+                                                                />
+                                                                <img
+                                                                    src={post.mediaUrl}
+                                                                    alt=""
+                                                                    loading={
+                                                                        i < 9 ? "eager" : "lazy"
+                                                                    }
+                                                                    decoding="async"
+                                                                />
+                                                            </picture>
+                                                            {post.isVideo && (
+                                                                <span
+                                                                    className="ig-ui-reel-badge"
+                                                                    aria-hidden="true"
+                                                                >
+                                                                    <svg
+                                                                        width="15"
+                                                                        height="15"
+                                                                        viewBox="0 0 24 24"
+                                                                        fill="#fff"
+                                                                    >
+                                                                        <path d="M8 5v14l11-7z" />
+                                                                    </svg>
+                                                                </span>
+                                                            )}
+                                                        </a>
+                                                    ))}
+                                                </div>
                                             </div>
 
-                                            <LLink
-                                                to={`/p/${lookProduct.slug}`}
-                                                className="look-hotspot"
-                                                style={{
-                                                    left: `${look.hotspot.x}%`,
-                                                    top: `${look.hotspot.y}%`,
-                                                }}
-                                                aria-label={`${t("Переглянути")} ${lookProduct.name} — ${money(lookPrice)}`}
-                                            >
-                                                <span
-                                                    className="look-hotspot__dot"
-                                                    aria-hidden="true"
-                                                />
-                                                <span className="look-hotspot__tag">
-                                                    {lookProduct.name} → {money(lookPrice)}
-                                                </span>
-                                            </LLink>
-                                        </div>
-                                    </div>
+                                            {/* Swipe-to-scroll affordance — fades once the
+                                                feed above is scrolled (data-scrolled toggled
+                                                by igScrollRef). */}
+                                            <div className="ig-ui-scroll-hint" aria-hidden="true">
+                                                <span>{t("Гортайте")}</span>
+                                                <svg
+                                                    width="15"
+                                                    height="15"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2.5"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <path d="M6 13l6 6 6-6" />
+                                                    <path d="M6 6l6 6 6-6" />
+                                                </svg>
+                                            </div>
 
-                                    {/* Look switcher */}
-                                    <div
-                                        className="look-strip"
-                                        role="tablist"
-                                        aria-label={t("Образи")}
-                                    >
-                                        {looks.map((l, i) => (
-                                            <button
-                                                key={l.id}
-                                                type="button"
-                                                role="tab"
-                                                aria-selected={i === activeLookIndex}
-                                                aria-label={l.product!.name}
-                                                className={`look-strip__item${i === activeLookIndex ? " is-active" : ""}`}
-                                                onClick={() => selectLook(i)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "ArrowRight") {
-                                                        e.preventDefault();
-                                                        selectLook((i + 1) % looks.length);
-                                                    } else if (e.key === "ArrowLeft") {
-                                                        e.preventDefault();
-                                                        selectLook(
-                                                            (i - 1 + looks.length) % looks.length,
-                                                        );
-                                                    }
-                                                }}
-                                            >
-                                                <img
-                                                    src={l.product!.image}
-                                                    alt=""
-                                                    loading="lazy"
-                                                    decoding="async"
-                                                />
-                                            </button>
-                                        ))}
+                                            {/* Bottom Navbar */}
+                                            <div className="ig-ui-navbar">
+                                                <svg
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                >
+                                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                                    <polyline points="9 22 9 12 15 12 15 22" />
+                                                </svg>
+                                                <svg
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                >
+                                                    <circle cx="11" cy="11" r="8" />
+                                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                                </svg>
+                                                <svg
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                >
+                                                    <rect
+                                                        x="3"
+                                                        y="3"
+                                                        width="18"
+                                                        height="18"
+                                                        rx="2"
+                                                        ry="2"
+                                                    />
+                                                    <line x1="12" y1="8" x2="12" y2="16" />
+                                                    <line x1="8" y1="12" x2="16" y2="12" />
+                                                </svg>
+                                                <svg
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                >
+                                                    <rect
+                                                        x="2"
+                                                        y="2"
+                                                        width="20"
+                                                        height="20"
+                                                        rx="4"
+                                                        ry="4"
+                                                    />
+                                                    <path d="M10 8l6 4-6 4V8z" />
+                                                </svg>
+                                                <div className="ig-ui-nav-avatar">
+                                                    <img src={igProfilePic} alt="Profile" />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* RIGHT — outfit card */}
-                                <aside key={look.id} className="look-card" aria-live="polite">
-                                    <p className="look-card__label">{t("Образ з відео")}</p>
-                                    <LLink
-                                        to={`/p/${lookProduct.slug}`}
-                                        className="look-card__media"
-                                    >
-                                        <img
-                                            src={lookProduct.image}
-                                            alt={lookProduct.name}
-                                            loading="lazy"
-                                            decoding="async"
-                                        />
-                                    </LLink>
-                                    <h3 className="look-card__name">{lookProduct.name}</h3>
-                                    <p className="look-card__price">
-                                        {money(lookPrice)}
-                                        {lookProduct.is_sale && (
-                                            <s className="look-card__old">
-                                                {money(lookProduct.price)}
-                                            </s>
-                                        )}
-                                    </p>
-                                    <LLink to={`/p/${lookProduct.slug}`} className="look-card__cta">
-                                        {t("Переглянути товар")}
-                                    </LLink>
-                                </aside>
+                                {/* Minimal floating badge */}
+                                <div className="ig-hyper__float">
+                                    <div className="ig-hyper__live-dot" /> LIVE
+                                </div>
                             </div>
                         </div>
+
+                        <div className="ig-hyper__cta-wrap ig-hyper__reveal">
+                            <a
+                                href="https://www.instagram.com/mindbody_sportwear/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ig-hyper__cta"
+                            >
+                                <svg
+                                    className="ig-hyper__cta-icon"
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+                                </svg>
+                                {t("Дивитись наживо")}
+                            </a>
+                            <span className="ig-hyper__audience">
+                                {igFollowers} {t("у залі")} · {t("сеанс триває")}
+                            </span>
+                        </div>
                     </div>
-                )}
+                    <div className="ig-hyper__grain" aria-hidden="true" />
+                </div>
             </section>
         </main>
     );
