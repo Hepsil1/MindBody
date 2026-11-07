@@ -9,6 +9,8 @@ import { type RouteConfig, route, layout } from "@react-router/dev/routes";
  */
 export default [
     route(":lang?", "routes/home.tsx"),
+    route(":lang?/shop", "routes/shop.tsx"),
+    route(":lang?/cart", "routes/cart.tsx"),
     route(":lang?/shop/:category", "routes/shop.$category.tsx"),
     route(":lang?/shop/:category/:subcategory", "routes/shop.$category.$subcategory.tsx"),
     route(":lang?/product/:id", "routes/product.$id.tsx"),

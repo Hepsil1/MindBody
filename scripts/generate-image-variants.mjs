@@ -252,7 +252,9 @@ async function processBase(filePath) {
 
     // 3. Width variants — WebP + AVIF from the high-resolution source.
     for (const w of WIDTHS) {
-        if (sourceWidth <= w) continue; // don't upscale
+        // Generate every responsive breakpoint (400, 800, 1200, 1600).
+        // withoutEnlargement: true prevents upscaling (caps at sourceWidth),
+        // ensuring srcset candidates never 404 on retina / high-DPR viewports.
 
         const webpDst = `${basePath}-${w}w.webp`;
         if (!(await isUpToDate(sourcePath, webpDst))) {

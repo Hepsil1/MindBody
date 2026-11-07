@@ -33,6 +33,7 @@ export default tseslint.config(
             ".agent/**",
             ".claude/**",
             ".gemini/**",
+            "scratch/**",
             "check-db.cjs",
             "scripts/start.bat",
             "scripts/stop.bat",
