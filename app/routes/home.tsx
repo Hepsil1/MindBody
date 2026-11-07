@@ -578,12 +578,12 @@ const FALLBACK_INSTAGRAM_POSTS: InstagramPost[] = [
     },
     {
         id: "3",
-        mediaUrl: "/generalpics/374_131123.jpg",
+        mediaUrl: "/generalpics/374_131123.webp",
         permalink: "https://www.instagram.com/mindbody_sportwear/",
     },
     {
         id: "4",
-        mediaUrl: "/generalpics/595_131123.jpg",
+        mediaUrl: "/generalpics/595_131123.webp",
         permalink: "https://www.instagram.com/mindbody_sportwear/",
     },
 ];

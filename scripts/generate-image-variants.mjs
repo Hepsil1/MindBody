@@ -69,11 +69,11 @@ const TARGET_DIRS = [
     "lifestyle",
     "brand",
 ];
-const WIDTHS = [400, 800, 1200, 1600, 2400];
-const MASTER_MAX_WIDTH = 3200; // 4K retina desktop / iMac 5K @100vw
+const WIDTHS = [400, 800, 1200, 1600];
+const MASTER_MAX_WIDTH = 2400; // Match responsive-image.ts high-DPR master
 const WEBP_QUALITY = 82;
 const AVIF_QUALITY = 80; // visually ≈ WebP q=85 at 25-30% smaller
-const AVIF_EFFORT = 6; // 0-9; 6 = sane balance of compression ratio vs encode time
+const AVIF_EFFORT = process.env.AVIF_EFFORT ? parseInt(process.env.AVIF_EFFORT, 10) : 2; // 2 = fast production build profile (5x-8x faster than 6)
 const LQIP_WIDTH = 20;
 const LQIP_HEIGHT = 26; // 3:4 aspect
 const LQIP_QUALITY = 30;
