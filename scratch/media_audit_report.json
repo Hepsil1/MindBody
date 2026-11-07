@@ -1,0 +1,1394 @@
+{
+  "summary": {
+    "routesAudited": 55,
+    "brokenMediaRequests": 35,
+    "brokenDomImages": 134,
+    "textAnomalies": 0
+  },
+  "brokenRequests": [
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/"
+    },
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/"
+    },
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/"
+    },
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/"
+    },
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/"
+    },
+    {
+      "url": "http://localhost:3000/brand/detail-strap-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about"
+    },
+    {
+      "url": "http://localhost:3000/brand/move-twist-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about"
+    },
+    {
+      "url": "http://localhost:3000/brand/move-stretch-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about"
+    },
+    {
+      "url": "http://localhost:3000/brand/move-bend-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about"
+    },
+    {
+      "url": "http://localhost:3000/brand/detail-strap-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about"
+    },
+    {
+      "url": "http://localhost:3000/brand/move-twist-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about"
+    },
+    {
+      "url": "http://localhost:3000/brand/move-stretch-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about"
+    },
+    {
+      "url": "http://localhost:3000/brand/move-bend-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about"
+    },
+    {
+      "url": "http://localhost:3000/brand/detail-strap-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/move-twist-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/move-stretch-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/move-bend-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/kids/kids-teal-arabesque-1600w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/lookbook-red-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/material-brown-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/material-plum-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/kids/kids-back-macro-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/kids/kids-pair-reach-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/kids/kids-teal-arabesque-1600w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/kids/kids-back-macro-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/kids/kids-pair-reach-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/material-plum-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/material-brown-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/brand/lookbook-red-800w.avif",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/about#contact-premium"
+    },
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/en"
+    },
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/en"
+    },
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/en"
+    },
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/ru"
+    },
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/ru"
+    },
+    {
+      "url": "http://localhost:3000/instagram/avatar.webp",
+      "status": 404,
+      "pageUrl": "http://localhost:3000/ru"
+    }
+  ],
+  "brokenDomImages": [
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_3209_1.webp",
+      "alt": "Дитячий комбінезон «BUTTERFLY»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_3209_2.webp",
+      "alt": "Дитячий комбінезон «BUTTERFLY»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_3201_1.webp",
+      "alt": "Комбінезон «ICE CREAM»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_3201_2.webp",
+      "alt": "Комбінезон «ICE CREAM»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_2807_1.webp",
+      "alt": "Комбінезон «VYRA»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_2807_2.webp",
+      "alt": "Комбінезон «VYRA»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_2799_1.webp",
+      "alt": "Комбінезон «MOON»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_2799_2.webp",
+      "alt": "Комбінезон «MOON»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_2770_1.webp",
+      "alt": "Комбінезон «HYPNOSE VELO»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_2770_2.webp",
+      "alt": "Комбінезон «HYPNOSE VELO»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_2765_1.webp",
+      "alt": "Комплект лляний",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_2765_2.webp",
+      "alt": "Комплект лляний",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_2749_1.webp",
+      "alt": "Комбінезон «MELISSA»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/uploads/tg_2749_2.webp",
+      "alt": "Комбінезон «MELISSA»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/avatar.webp",
+      "alt": "mindbody_sportwear",
+      "className": "ig-ui-avatar",
+      "renderedWidth": 57.02398681640625,
+      "renderedHeight": 57.02392578125,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/hl_7c9be519.webp",
+      "alt": "SАLE",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/hl_d825045e.webp",
+      "alt": "WINTER",
+      "className": "",
+      "renderedWidth": 39.916748046875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/hl_4b74187e.webp",
+      "alt": "SALE FLUID",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/hl_7c8905f0.webp",
+      "alt": "NEW!",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/hl_641bbc5b.webp",
+      "alt": "ВІДГУКИ 11",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/hl_56d05cf6.webp",
+      "alt": "SALE SET",
+      "className": "",
+      "renderedWidth": 39.9168701171875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/hl_e086bbf.webp",
+      "alt": "SMILE",
+      "className": "",
+      "renderedWidth": 39.916748046875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/hl_4c4512a4.webp",
+      "alt": "OUR GIRLS26",
+      "className": "",
+      "renderedWidth": 39.9168701171875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/hl_cfa8ddbe.webp",
+      "alt": "SUMMER",
+      "className": "",
+      "renderedWidth": 39.9168701171875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/hl_7c876f90.webp",
+      "alt": "KIDS",
+      "className": "",
+      "renderedWidth": 39.916748046875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/DfEhgYvNzwR.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.7061767578125,
+      "renderedHeight": 91.7060546875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/DfDF8ZAtobh.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/De9GfapjR1h.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/De6eEUht2Jy.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.7061767578125,
+      "renderedHeight": 91.7060546875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/DezXzdLt8GK.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/Deyse8riTEl.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/DeyZjixDYsv.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.7061767578125,
+      "renderedHeight": 91.7060546875,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/Dergr5LtQt8.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/DeqtttEDXt8.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/instagram/avatar.webp",
+      "alt": "Profile",
+      "className": "",
+      "renderedWidth": 18.53277587890625,
+      "renderedHeight": 18.533203125,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/icons/payment/visa.svg",
+      "alt": "Visa",
+      "className": "",
+      "renderedWidth": 32,
+      "renderedHeight": 20,
+      "visible": true
+    },
+    {
+      "route": "/",
+      "src": "http://localhost:3000/icons/payment/mastercard.svg",
+      "alt": "Mastercard",
+      "className": "",
+      "renderedWidth": 32,
+      "renderedHeight": 20,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/brand/detail-strap-800w.avif",
+      "alt": "Плетена спина MIND BODY: бірюзовий вузол і вишите сонце зблизька",
+      "className": "",
+      "renderedWidth": 579.4949951171875,
+      "renderedHeight": 724.3599243164062,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/brand/move-twist-800w.avif",
+      "alt": "Модель MIND BODY у русі — Поворот",
+      "className": "",
+      "renderedWidth": 457.3275146484375,
+      "renderedHeight": 571.6549072265625,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/brand/move-stretch-800w.avif",
+      "alt": "Модель MIND BODY у русі — Розтяжка",
+      "className": "",
+      "renderedWidth": 457.3275146484375,
+      "renderedHeight": 571.6549072265625,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/brand/move-bend-800w.avif",
+      "alt": "Модель MIND BODY у русі — Нахил",
+      "className": "",
+      "renderedWidth": 457.344970703125,
+      "renderedHeight": 571.672607421875,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/generalpics/588_131123.webp",
+      "alt": "Модель у комбінезоні MIND BODY кольору сливи, вишите сонце на рукаві",
+      "className": "",
+      "renderedWidth": 657.824951171875,
+      "renderedHeight": 512.1376953125,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/brand/kids/kids-teal-arabesque.webp",
+      "alt": "Дитина MIND BODY KIDS у бірюзовому комбінезоні з піднятою рукою: плетена спина і вишите сонце",
+      "className": "",
+      "renderedWidth": 1440,
+      "renderedHeight": 810,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/brand/kids/kids-back-macro.webp",
+      "alt": "Плетена спина MIND BODY KIDS зблизька: шнурівка-хрест і вишите сонце",
+      "className": "",
+      "renderedWidth": 373.255615234375,
+      "renderedHeight": 466.5576171875,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/brand/kids/kids-pair-reach.webp",
+      "alt": "Дві дівчинки MIND BODY KIDS тримаються за руки",
+      "className": "",
+      "renderedWidth": 373.255615234375,
+      "renderedHeight": 466.5576171875,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/brand/material-plum.webp",
+      "alt": "Комбінезон MIND BODY кольору сливи",
+      "className": "",
+      "renderedWidth": 440.994384765625,
+      "renderedHeight": 551.23876953125,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/brand/material-brown.webp",
+      "alt": "Комбінезон MIND BODY кольору шоколаду",
+      "className": "",
+      "renderedWidth": 440.994384765625,
+      "renderedHeight": 551.23876953125,
+      "visible": true
+    },
+    {
+      "route": "/about",
+      "src": "http://localhost:3000/brand/lookbook-red.webp",
+      "alt": "Комбінезон MIND BODY червоного кольору",
+      "className": "",
+      "renderedWidth": 441.01123046875,
+      "renderedHeight": 551.25537109375,
+      "visible": true
+    },
+    {
+      "route": "/about#contact-premium",
+      "src": "http://localhost:3000/brand/detail-strap.webp",
+      "alt": "Плетена спина MIND BODY: бірюзовий вузол і вишите сонце зблизька",
+      "className": "",
+      "renderedWidth": 579.4949951171875,
+      "renderedHeight": 724.3603515625,
+      "visible": true
+    },
+    {
+      "route": "/about#contact-premium",
+      "src": "http://localhost:3000/brand/move-twist.webp",
+      "alt": "Модель MIND BODY у русі — Поворот",
+      "className": "",
+      "renderedWidth": 457.3275146484375,
+      "renderedHeight": 571.65478515625,
+      "visible": true
+    },
+    {
+      "route": "/about#contact-premium",
+      "src": "http://localhost:3000/brand/move-stretch.webp",
+      "alt": "Модель MIND BODY у русі — Розтяжка",
+      "className": "",
+      "renderedWidth": 457.3275146484375,
+      "renderedHeight": 571.65478515625,
+      "visible": true
+    },
+    {
+      "route": "/about#contact-premium",
+      "src": "http://localhost:3000/brand/move-bend.webp",
+      "alt": "Модель MIND BODY у русі — Нахил",
+      "className": "",
+      "renderedWidth": 457.344970703125,
+      "renderedHeight": 571.67236328125,
+      "visible": true
+    },
+    {
+      "route": "/about#contact-premium",
+      "src": "http://localhost:3000/brand/kids/kids-teal-arabesque-1600w.avif",
+      "alt": "Дитина MIND BODY KIDS у бірюзовому комбінезоні з піднятою рукою: плетена спина і вишите сонце",
+      "className": "",
+      "renderedWidth": 1440,
+      "renderedHeight": 810,
+      "visible": true
+    },
+    {
+      "route": "/about#contact-premium",
+      "src": "http://localhost:3000/brand/kids/kids-back-macro-800w.avif",
+      "alt": "Плетена спина MIND BODY KIDS зблизька: шнурівка-хрест і вишите сонце",
+      "className": "",
+      "renderedWidth": 373.255615234375,
+      "renderedHeight": 466.55712890625,
+      "visible": true
+    },
+    {
+      "route": "/about#contact-premium",
+      "src": "http://localhost:3000/brand/kids/kids-pair-reach-800w.avif",
+      "alt": "Дві дівчинки MIND BODY KIDS тримаються за руки",
+      "className": "",
+      "renderedWidth": 373.255615234375,
+      "renderedHeight": 466.55712890625,
+      "visible": true
+    },
+    {
+      "route": "/about#contact-premium",
+      "src": "http://localhost:3000/brand/material-plum-800w.avif",
+      "alt": "Комбінезон MIND BODY кольору сливи",
+      "className": "",
+      "renderedWidth": 440.994384765625,
+      "renderedHeight": 551.2388305664062,
+      "visible": true
+    },
+    {
+      "route": "/about#contact-premium",
+      "src": "http://localhost:3000/brand/material-brown-800w.avif",
+      "alt": "Комбінезон MIND BODY кольору шоколаду",
+      "className": "",
+      "renderedWidth": 440.994384765625,
+      "renderedHeight": 551.2388305664062,
+      "visible": true
+    },
+    {
+      "route": "/about#contact-premium",
+      "src": "http://localhost:3000/brand/lookbook-red-800w.avif",
+      "alt": "Комбінезон MIND BODY червоного кольору",
+      "className": "",
+      "renderedWidth": 441.01123046875,
+      "renderedHeight": 551.255615234375,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_3209_1.webp",
+      "alt": "Дитячий комбінезон «BUTTERFLY»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_3209_2.webp",
+      "alt": "Дитячий комбінезон «BUTTERFLY»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_3201_1.webp",
+      "alt": "Комбінезон «ICE CREAM»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_3201_2.webp",
+      "alt": "Комбінезон «ICE CREAM»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_2807_1.webp",
+      "alt": "Комбінезон «VYRA»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_2807_2.webp",
+      "alt": "Комбінезон «VYRA»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_2799_1.webp",
+      "alt": "Комбінезон «MOON»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_2799_2.webp",
+      "alt": "Комбінезон «MOON»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_2770_1.webp",
+      "alt": "Комбінезон «HYPNOSE VELO»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_2770_2.webp",
+      "alt": "Комбінезон «HYPNOSE VELO»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_2765_1.webp",
+      "alt": "Комплект лляний",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_2765_2.webp",
+      "alt": "Комплект лляний",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_2749_1.webp",
+      "alt": "Комбінезон «MELISSA»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/uploads/tg_2749_2.webp",
+      "alt": "Комбінезон «MELISSA»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/avatar.webp",
+      "alt": "mindbody_sportwear",
+      "className": "ig-ui-avatar",
+      "renderedWidth": 57.02398681640625,
+      "renderedHeight": 57.02392578125,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/hl_7c9be519.webp",
+      "alt": "SАLE",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/hl_d825045e.webp",
+      "alt": "WINTER",
+      "className": "",
+      "renderedWidth": 39.916748046875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/hl_4b74187e.webp",
+      "alt": "SALE FLUID",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/hl_7c8905f0.webp",
+      "alt": "NEW!",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/hl_641bbc5b.webp",
+      "alt": "ВІДГУКИ 11",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/hl_56d05cf6.webp",
+      "alt": "SALE SET",
+      "className": "",
+      "renderedWidth": 39.9168701171875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/hl_e086bbf.webp",
+      "alt": "SMILE",
+      "className": "",
+      "renderedWidth": 39.916748046875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/hl_4c4512a4.webp",
+      "alt": "OUR GIRLS26",
+      "className": "",
+      "renderedWidth": 39.9168701171875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/hl_cfa8ddbe.webp",
+      "alt": "SUMMER",
+      "className": "",
+      "renderedWidth": 39.9168701171875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/hl_7c876f90.webp",
+      "alt": "KIDS",
+      "className": "",
+      "renderedWidth": 39.916748046875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/DfEhgYvNzwR.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.7061767578125,
+      "renderedHeight": 91.7060546875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/DfDF8ZAtobh.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/De9GfapjR1h.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/De6eEUht2Jy.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.7061767578125,
+      "renderedHeight": 91.7060546875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/DezXzdLt8GK.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/Deyse8riTEl.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/DeyZjixDYsv.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.7061767578125,
+      "renderedHeight": 91.7060546875,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/Dergr5LtQt8.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/DeqtttEDXt8.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/en",
+      "src": "http://localhost:3000/instagram/avatar.webp",
+      "alt": "Profile",
+      "className": "",
+      "renderedWidth": 18.53277587890625,
+      "renderedHeight": 18.533203125,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_3209_1.webp",
+      "alt": "Дитячий комбінезон «BUTTERFLY»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_3209_2.webp",
+      "alt": "Дитячий комбінезон «BUTTERFLY»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_3201_1.webp",
+      "alt": "Комбінезон «ICE CREAM»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_3201_2.webp",
+      "alt": "Комбінезон «ICE CREAM»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.3250732421875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_2807_1.webp",
+      "alt": "Комбінезон «VYRA»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_2807_2.webp",
+      "alt": "Комбінезон «VYRA»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_2799_1.webp",
+      "alt": "Комбінезон «MOON»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_2799_2.webp",
+      "alt": "Комбінезон «MOON»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_2770_1.webp",
+      "alt": "Комбінезон «HYPNOSE VELO»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_2770_2.webp",
+      "alt": "Комбінезон «HYPNOSE VELO»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_2765_1.webp",
+      "alt": "Комплект лляний",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_2765_2.webp",
+      "alt": "Комплект лляний",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_2749_1.webp",
+      "alt": "Комбінезон «MELISSA»",
+      "className": "product-card__img product-card__img--main",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/uploads/tg_2749_2.webp",
+      "alt": "Комбінезон «MELISSA»",
+      "className": "product-card__img product-card__img--hover",
+      "renderedWidth": 290.324951171875,
+      "renderedHeight": 387.10009765625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/avatar.webp",
+      "alt": "mindbody_sportwear",
+      "className": "ig-ui-avatar",
+      "renderedWidth": 57.02398681640625,
+      "renderedHeight": 57.02392578125,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/hl_7c9be519.webp",
+      "alt": "SАLE",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/hl_d825045e.webp",
+      "alt": "WINTER",
+      "className": "",
+      "renderedWidth": 39.916748046875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/hl_4b74187e.webp",
+      "alt": "SALE FLUID",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/hl_7c8905f0.webp",
+      "alt": "NEW!",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/hl_641bbc5b.webp",
+      "alt": "ВІДГУКИ 11",
+      "className": "",
+      "renderedWidth": 39.91680908203125,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/hl_56d05cf6.webp",
+      "alt": "SALE SET",
+      "className": "",
+      "renderedWidth": 39.9168701171875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/hl_e086bbf.webp",
+      "alt": "SMILE",
+      "className": "",
+      "renderedWidth": 39.916748046875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/hl_4c4512a4.webp",
+      "alt": "OUR GIRLS26",
+      "className": "",
+      "renderedWidth": 39.9168701171875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/hl_cfa8ddbe.webp",
+      "alt": "SUMMER",
+      "className": "",
+      "renderedWidth": 39.9168701171875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/hl_7c876f90.webp",
+      "alt": "KIDS",
+      "className": "",
+      "renderedWidth": 39.916748046875,
+      "renderedHeight": 39.9169921875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/DfEhgYvNzwR.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.7061767578125,
+      "renderedHeight": 91.7060546875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/DfDF8ZAtobh.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/De9GfapjR1h.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/De6eEUht2Jy.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.7061767578125,
+      "renderedHeight": 91.7060546875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/DezXzdLt8GK.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/Deyse8riTEl.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/DeyZjixDYsv.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.7061767578125,
+      "renderedHeight": 91.7060546875,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/Dergr5LtQt8.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/DeqtttEDXt8.webp",
+      "alt": "",
+      "className": "",
+      "renderedWidth": 91.71734619140625,
+      "renderedHeight": 91.71728515625,
+      "visible": true
+    },
+    {
+      "route": "/ru",
+      "src": "http://localhost:3000/instagram/avatar.webp",
+      "alt": "Profile",
+      "className": "",
+      "renderedWidth": 18.53277587890625,
+      "renderedHeight": 18.533203125,
+      "visible": true
+    },
+    {
+      "route": "/p/kombinezon-chinchilla-z-dovhym-rukavom",
+      "src": "http://localhost:3000/uploads/tg_3318_3.webp",
+      "alt": "Комбінезон «CHINCHILLA» з довгим рукавом — фото 3",
+      "className": "",
+      "renderedWidth": 0,
+      "renderedHeight": 0,
+      "visible": false
+    },
+    {
+      "route": "/p/kombinezon-chinchilla-z-dovhym-rukavom",
+      "src": "http://localhost:3000/uploads/tg_3318_4.webp",
+      "alt": "Комбінезон «CHINCHILLA» з довгим рукавом — фото 4",
+      "className": "",
+      "renderedWidth": 0,
+      "renderedHeight": 0,
+      "visible": false
+    },
+    {
+      "route": "/p/kombinezon-chinchilla-z-dovhym-rukavom",
+      "src": "http://localhost:3000/uploads/tg_3318_5.webp",
+      "alt": "Комбінезон «CHINCHILLA» з довгим рукавом — фото 5",
+      "className": "",
+      "renderedWidth": 0,
+      "renderedHeight": 0,
+      "visible": false
+    },
+    {
+      "route": "/p/kombinezon-chinchilla-z-dovhym-rukavom",
+      "src": "http://localhost:3000/uploads/tg_3318_6.webp",
+      "alt": "Комбінезон «CHINCHILLA» з довгим рукавом — фото 6",
+      "className": "",
+      "renderedWidth": 0,
+      "renderedHeight": 0,
+      "visible": false
+    },
+    {
+      "route": "/p/kombinezon-moon",
+      "src": "http://localhost:3000/uploads/tg_2799_6.webp",
+      "alt": "Комбінезон «MOON» — фото 6",
+      "className": "",
+      "renderedWidth": 0,
+      "renderedHeight": 0,
+      "visible": false
+    },
+    {
+      "route": "/p/kombinezon-melissa",
+      "src": "http://localhost:3000/uploads/tg_2749_6.webp",
+      "alt": "Комбінезон «MELISSA» — фото 6",
+      "className": "",
+      "renderedWidth": 0,
+      "renderedHeight": 0,
+      "visible": false
+    }
+  ],
+  "textAnomalies": []
+}
