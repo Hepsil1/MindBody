@@ -2561,6 +2561,16 @@
     pointer-events: none;
     opacity: 0.05;
     mix-blend-mode: soft-light;
+    /* Fade the grain out at the top/bottom so the section edge never reads
+       as a visible rectangle against the page background. */
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        #000 18%,
+        #000 82%,
+        transparent 100%
+    );
+    mask-image: linear-gradient(to bottom, transparent 0, #000 18%, #000 82%, transparent 100%);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 /* CTA → confident filled teal "now-showing" pill (overrides the ghost button) */

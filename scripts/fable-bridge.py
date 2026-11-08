@@ -17,7 +17,7 @@ def call_fable(prompt: str, timeout: int = 240) -> str:
     )
     result = subprocess.run(
         [CLAUDE_BIN, "-p", "--dangerously-skip-permissions", system_wrapper],
-        input="",
+        stdin=subprocess.DEVNULL,
         text=True,
         capture_output=True,
         encoding="utf-8",
@@ -33,10 +33,15 @@ if __name__ == "__main__":
     parser.add_argument("--ask", help="Ask Fable a strategic question")
     parser.add_argument("--report", help="Report task completion to Fable for audit")
     
+    parser.add_argument("--file", help="Path to UTF-8 file containing prompt")
+    
     args = parser.parse_args()
     
     query = ""
-    if args.ask:
+    if args.file:
+        with open(args.file, "r", encoding="utf-8") as f:
+            query = f.read().strip()
+    elif args.ask:
         query = f"ВОПРОС АРХИТЕКТОРУ ОТ ИСПОЛНИТЕЛЯ (Gemini):\n{args.ask}"
     elif args.report:
         query = f"ОТЧЕТ ИСПОЛНИТЕЛЯ (Gemini) НА ПРИЁМКУ АРХИТЕКТОРУ:\n{args.report}"

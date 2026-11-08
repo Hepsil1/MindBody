@@ -68,7 +68,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         const particles: SunParticle[] = [];
         // Shared physics across under and overlay: free-floating particles drifting,
         // wrapping, and repelling. Overlay has more (smaller) suns drifting at ~40% speed.
-        const numParticles = isMobile ? (overlay ? 9 : 6) : overlay ? 22 : 14;
+        const numParticles = isMobile ? (overlay ? 9 : 16) : overlay ? 22 : 34;
         const speedMul = (overlay ? 0.4 : 0.7) * motionFactor;
 
         let mouseX = -1000;
@@ -87,8 +87,8 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                         ? Math.random() * 30 + 26
                         : Math.random() * 56 + 34
                     : isMobile
-                      ? Math.random() * 50 + 46
-                      : Math.random() * 90 + 64;
+                      ? Math.random() * 30 + 30
+                      : Math.random() * 60 + 36;
                 particles.push({
                     x: Math.random() * width,
                     y: Math.random() * height,
@@ -98,7 +98,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                     rotation: Math.random() * Math.PI * 2,
                     rotSpeed: (Math.random() - 0.5) * (isMobile ? 0.003 : 0.005) * speedMul,
                     // Brand tints with soft, calm presence on cream paper
-                    alpha: overlay ? Math.random() * 0.12 + 0.08 : Math.random() * 0.07 + 0.035,
+                    alpha: overlay ? Math.random() * 0.12 + 0.08 : Math.random() * 0.08 + 0.07,
                     // Cycle through the brand tints so all colours are present site-wide
                     tint: tinted.length > 0 ? i % tinted.length : -1,
                 });
