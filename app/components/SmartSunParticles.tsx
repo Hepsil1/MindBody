@@ -23,25 +23,30 @@ import { useEffect, useRef } from "react";
  *     three travelling sine waves (stream function ψ, wind = (∂ψ/∂y, −∂ψ/∂x)).
  *     Divergence-free means it never herds suns into clumps or leaves empty
  *     patches, so no pairwise repulsion is needed.
- *  2. A prevailing heading (up and to the right, swinging ±30° over ~2.5 min)
- *     bent by the breeze, plus a per-sun sway: graceful S-curves, no straight lines.
+ *  2. OMNIDIRECTIONAL: every sun owns a heading over the full 360° (handed out on a
+ *     golden-angle sequence, so the sky is always evenly mixed — never one shared
+ *     direction). The heading drifts very slowly and sways, and the breeze bends it
+ *     a little: graceful S-curves, no straight lines.
  *  3. Speed is REGULATED, not integrated. Each sun steers toward a desired velocity
- *     whose length is its own cruise speed (0.30–0.70 px per 60 fps frame). Forces
- *     can bend the heading; nothing can drain the speed to zero.
+ *     whose length is its own cruise speed (0.20–0.45 px per 60 fps frame, every sun
+ *     different, none fast). Forces can bend the heading; nothing can drain the speed
+ *     to zero, nothing can push it past a calm ceiling.
  *  4. Everything is time-based (px/s × dt): 60 / 120 / 144 Hz screens move alike.
  *  5. No scroll LISTENER: scrollY is just read once per frame, so scrolling (native
  *     or Lenis) never pauses the suns.
  *
- * The cursor (a sun "wakes up" when you come near)
- *  - AWAKENING: inside ~260 px the sun's glow eases up (fast), and lingers when you
- *    leave (slow): a warm tinted aura behind it, a gently larger and brighter body,
- *    and a graceful spin-up — an easing angular velocity, in the sense of the curl.
- *  - SILKY CURL: it slides AROUND the cursor on the side it was already on (latched
- *    for the whole encounter, so it never flips mid-arc) with a soft outward push.
- *    A head-on sun keeps ≥ 80 % of its cruise speed — it yields, it never freezes.
+ * Look: quiet luxury. Deep teal, plum, lavender, dusty rose and charcoal — no yellow,
+ * no amber, no terracotta. Opacity 0.08–0.16: a watermark on silk. No flashes, no
+ * halo, no size swell: the only "event" is the cursor.
+ *
+ * The cursor
+ *  - SILKY CURL: a sun within ~260 px slides gently AROUND the cursor on the side it
+ *    was already on (latched for the whole encounter, so it never flips mid-arc) with
+ *    a faint outward push and a slow spin-up. A head-on sun keeps ≥ 80 % of its cruise
+ *    speed — it yields, it never freezes. Nothing brightens, nothing glows.
  *  - WAKE: a quick stroke of the cursor drags the air — suns beside the path get a
- *    one-off gust along it and settle again over ~1.5 s.
- *  - SCROLL GUST: fast scrolling stirs the suns (extra spin, a touch brighter).
+ *    small one-off nudge along it and settle again.
+ *  - SCROLL GUST: fast scrolling adds a little extra spin.
  * ──────────────────────────────────────────────────────────────────────────── */
 
 interface SmartSunParticlesProps {
@@ -50,9 +55,9 @@ interface SmartSunParticlesProps {
      * "overlay" — /about brand atmosphere at z 1 above the opaque cream paper.
      *
      * Both share one motion model and never pause. Under prefers-reduced-motion
-     * (the owner browses with it ON) the drift stays — owner decision — but a touch
-     * calmer (×0.92, still ≥ 0.30 px/frame), with little spin, no parallax, no
-     * wake/scroll gust; the cursor still wakes the suns, in a gentler key (×0.7).
+     * (the owner browses with it ON) the drift stays — owner decision — same speeds
+     * (0.20–0.45 px/frame), with little spin, no parallax, no wake/scroll gust; the
+     * cursor still moves the suns, in a gentler key (×0.7).
      */
     variant?: "under" | "overlay";
 }
@@ -73,18 +78,16 @@ interface Tint {
     boost: number;
 }
 const TINTS: Tint[] = [
-    // terracotta
-    { light: "#e58a62", base: "#c4552f", deep: "#8f3a1d", boost: 1.0 },
-    // warm amber
-    { light: "#f5c860", base: "#dd9418", deep: "#a8650a", boost: 1.02 },
-    // deep teal / emerald
-    { light: "#34b5a0", base: "#0f766e", deep: "#0a4d48", boost: 0.95 },
-    // royal marsala / plum (brand --color-marsala)
-    { light: "#b24a63", base: "#722f37", deep: "#471923", boost: 0.92 },
-    // lavender / amethyst
-    { light: "#c2a8f0", base: "#8a63c0", deep: "#5d3d94", boost: 1.08 },
-    // rose gold
-    { light: "#f3c7b5", base: "#cf8f86", deep: "#a05f63", boost: 1.15 },
+    // deep teal / sage
+    { light: "#6fa8a0", base: "#2f6f6a", deep: "#1d4745", boost: 0.95 },
+    // royal plum / marsala (brand --color-marsala family)
+    { light: "#a8566e", base: "#6b2d45", deep: "#3f1827", boost: 0.92 },
+    // soft lavender / amethyst
+    { light: "#cdbdf0", base: "#9b82cc", deep: "#6a4f9e", boost: 1.1 },
+    // dusty rose / cashmere
+    { light: "#e8c1bd", base: "#c18a8c", deep: "#8e5a63", boost: 1.15 },
+    // charcoal / soft anthracite slate
+    { light: "#7c8590", base: "#424a55", deep: "#262b33", boost: 0.95 },
 ];
 
 // ── Sprites ──────────────────────────────────────────────────────────────────
@@ -134,48 +137,22 @@ function buildTintSprites(img: HTMLImageElement, tint: Tint): HTMLCanvasElement[
     return out;
 }
 
-const rgba = (hex: string, a: number) => {
-    const n = parseInt(hex.slice(1), 16);
-    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-};
-
-/** Soft aura in the sun's own pigment — the "luminance" a woken sun radiates.
- *  Painted once per tint; drawn scaled, so it costs one drawImage per awake sun. */
-const HALO_PX = 128;
-function buildHalo(tint: Tint): HTMLCanvasElement | null {
-    const c = document.createElement("canvas");
-    c.width = c.height = HALO_PX;
-    const g = c.getContext("2d");
-    if (!g) return null;
-    const m = HALO_PX / 2;
-    const grad = g.createRadialGradient(m, m, 0, m, m, m);
-    grad.addColorStop(0, rgba(tint.light, 0.9));
-    grad.addColorStop(0.28, rgba(tint.light, 0.5));
-    grad.addColorStop(0.62, rgba(tint.base, 0.14));
-    grad.addColorStop(1, rgba(tint.base, 0));
-    g.fillStyle = grad;
-    g.fillRect(0, 0, HALO_PX, HALO_PX);
-    return c;
-}
-
 // ── Motion tuning ────────────────────────────────────────────────────────────
 /** Speeds are authored per 60 fps frame (the brief's unit) and applied per second. */
 const PER_FRAME = 60;
-/** Cruise speed band. With the ±9 % surge and the reduced-motion trim below, every
- *  sun stays inside 0.30–0.70 px/frame — in every mode, on every variant. */
-const CRUISE_MIN = 0.36 * PER_FRAME;
-const CRUISE_MAX = 0.64 * PER_FRAME;
-const SURGE = 0.09;
-/** Reduced-motion trim: 0.36 · 0.91 · 0.92 ≈ 0.30 px/frame — calmer, never stalled. */
-const REDUCED_SPEED = 0.92;
+/** Cruise speed band: 0.20–0.45 px per 60 fps frame. The ±5 % surge is already inside
+ *  the band (0.21·0.95 ≈ 0.20, 0.42·1.05 ≈ 0.44), so every sun stays calm, in every mode. */
+const CRUISE_MIN = 0.21 * PER_FRAME;
+const CRUISE_MAX = 0.42 * PER_FRAME;
+const SURGE = 0.05;
 /** Steering time constant (s): how silkily velocity follows the desired velocity. */
-const RELAX_S = 0.8;
-/** Prevailing heading in screen coordinates (rad): up and to the right, like warm air rising. */
-const PREVAIL = -0.95;
-const PREVAIL_SWING = 0.5;
-const PREVAIL_PERIOD = 150;
+const RELAX_S = 1.0;
+/** Slow wander of a sun's own heading (rad/s, ±): the trajectory keeps changing softly. */
+const TURN_MAX = 0.012;
+/** Golden angle: successive suns get headings that never cluster in one direction. */
+const GOLDEN_ANGLE = 2.399963;
 /** How strongly the breeze bends the heading. < 1, so the heading can never reverse. */
-const WIND_WEIGHT = 0.7;
+const WIND_WEIGHT = 0.55;
 
 /** Three shear waves of the stream function: direction (rad), wavelength (px), period (s), phase. */
 const WAVES = [
@@ -207,43 +184,41 @@ function sampleBreeze(x: number, y: number, t: number) {
 
 // ── Page space ───────────────────────────────────────────────────────────────
 /** Suns per screen of page height (the count follows the document height). */
-const PER_SCREEN = { desktop: { under: 34, overlay: 22 }, mobile: { under: 16, overlay: 9 } };
+const PER_SCREEN = { desktop: { under: 27, overlay: 18 }, mobile: { under: 13, overlay: 7 } };
 /** Hard ceiling for the whole page — keeps very long pages cheap. */
-const MAX_SUNS = { desktop: 190, mobile: 90 };
+const MAX_SUNS = { desktop: 150, mobile: 72 };
 /** Parallax floor: the farthest sun trails the page by up to 1 − this of the scroll. */
 const PARALLAX_MIN = 0.8;
 
 // ── Cursor (desktop) ─────────────────────────────────────────────────────────
 const CURSOR_RADIUS = 260;
-/** px/s outward at the cursor's centre. */
-const CURSOR_PUSH = 40;
-/** px/s sideways at the cursor's centre — larger than the push, so suns flow AROUND it.
- *  Worst case (head-on) keeps |v| ≥ cruise · SLIDE/√(PUSH²+SLIDE²) ≈ 0.9 · cruise. */
-const CURSOR_SLIDE = 84;
-const MAX_DESIRED = 150;
+/** px/s outward at the cursor's centre — a whisper. */
+const CURSOR_PUSH = 9;
+/** px/s sideways at the cursor's centre — larger than the push, so suns flow AROUND it. */
+const CURSOR_SLIDE = 19;
+/** Ceiling on the desired speed (px/s) ≈ 0.55 px/frame: even near the cursor, calm. */
+const MAX_DESIRED = 33;
 /** Wake: cursor velocity (capped, px/s) → acceleration of nearby suns. Equilibrium
- *  push ≈ cap · KICK · RELAX_S ≈ 90 px/s at the strongest stroke. */
-const WAKE_KICK = 0.08;
+ *  push ≈ cap · KICK · RELAX_S ≈ 14 px/s at the strongest stroke. */
+const WAKE_KICK = 0.01;
 const WAKE_CAP = 1400;
-/** Hard ceiling on a sun's real speed (px/s), whatever the wake does. */
-const MAX_SPEED = 190;
-/** Awake spin (rad/s) in the sense of the curl, and extra spin from a scroll gust. */
-const SPIN_AWAKE = 1.7;
-const SPIN_GUST = 1.3;
-/** A woken sun grows by this much and its aura reaches this many × its size. */
-const BLOOM = 0.2;
-const HALO_SCALE = 2.7;
+/** Hard ceiling on a sun's real speed (px/s) ≈ 0.6 px/frame, whatever the wake does. */
+const MAX_SPEED = 36;
+/** Spin (rad/s) in the sense of the curl, and extra spin from a scroll gust. */
+const SPIN_AWAKE = 0.35;
+const SPIN_GUST = 0.3;
 const GUST_FULL = 2400; // px/s of scroll that counts as a full gust
 
 // ── Opacity ──────────────────────────────────────────────────────────────────
-const ALPHA_LO = 0.22;
-const ALPHA_HI = 0.38;
-/** Breathing, ± fraction of the sun's own opacity (peaks ≈ 0.45 at most). */
+const ALPHA_LO = 0.08;
+const ALPHA_HI = 0.16;
+/** Per-sun clamp after the pigment boost. */
+const ALPHA_MIN = 0.07;
+const ALPHA_MAX = 0.18;
+/** Breathing, ± fraction of the sun's own opacity. */
 const BREATH = 0.12;
-const ALPHA_CAP = 0.5;
-/** A woken sun may exceed the cap by this much (it is the one in the spotlight). */
-const ALPHA_CAP_AWAKE = 0.16;
-const GLINT_MS = 2600;
+/** Absolute ceiling of any sun's opacity, breath included. */
+const ALPHA_CAP = 0.22;
 
 interface Sun {
     /** page space: x across, y down the whole document (layer coordinates, see k) */
@@ -258,8 +233,10 @@ interface Sun {
     par: number;
     /** personal cruise speed, px/s — always > 0 */
     cruise: number;
-    /** fixed personal heading offset, rad */
-    bias: number;
+    /** personal heading, rad — full 360°, drifts slowly at `turn` */
+    dir: number;
+    /** heading drift, rad/s */
+    turn: number;
     swayAmp: number;
     swayPeriod: number;
     swayPhase: number;
@@ -274,10 +251,6 @@ interface Sun {
     breathPeriod: number;
     breathPhase: number;
     tint: number;
-    /** 0..1 — how awake the sun is (eased proximity to the cursor) */
-    glow: number;
-    /** timestamp (ms) when the next rare glint starts */
-    glintAt: number;
     /** which way to curl round the cursor — latched for the whole encounter */
     side: 1 | -1;
     /** true while inside the cursor radius (side is latched on entry) */
@@ -331,10 +304,11 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         let lastLayoutAt = 0;
         const suns: Sun[] = [];
         let sprites: HTMLCanvasElement[][] = [];
-        let halos: (HTMLCanvasElement | null)[] = [];
         /** shuffled pigments, handed out in turn so every colour is always present */
         const order = TINTS.map((_, i) => i).sort(() => Math.random() - 0.5);
         let tintSeq = 0;
+        /** running golden-angle heading sequence (random start) */
+        let dirSeq = Math.random() * TAU;
 
         /** parallax factor in effect (reduced motion pins every sun to the page) */
         const kOf = (s: Sun) => (reduced ? 1 : s.par);
@@ -419,22 +393,24 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 }
             }
             const tint = order[tintSeq++ % order.length];
-            const bias = rand(-0.3, 0.3);
+            // Own heading over the full circle: golden-angle step + a little jitter.
+            dirSeq += GOLDEN_ANGLE + rand(-0.4, 0.4);
+            const dir = dirSeq % TAU;
+            // Own speed: every sun different, none fast (depth only tilts the draw).
             const cruise =
-                CRUISE_MIN + (CRUISE_MAX - CRUISE_MIN) * (0.7 * depth + 0.3 * Math.random());
+                CRUISE_MIN + (CRUISE_MAX - CRUISE_MIN) * (0.4 * depth + 0.6 * Math.random());
             const mix = 0.35 * depth + 0.65 * Math.random();
-            const heading = PREVAIL + bias;
-            const scale = reduced ? REDUCED_SPEED : 1;
             const spin = (Math.random() < 0.5 ? -1 : 1) * rand(0.03, 0.1);
             return {
                 x: px,
                 y: py,
-                vx: Math.cos(heading) * cruise * scale,
-                vy: Math.sin(heading) * cruise * scale,
+                vx: Math.cos(dir) * cruise,
+                vy: Math.sin(dir) * cruise,
                 size: sizeMin + (sizeMax - sizeMin) * depth,
                 par,
                 cruise,
-                bias,
+                dir,
+                turn: rand(-TURN_MAX, TURN_MAX),
                 swayAmp: rand(0.18, 0.4),
                 swayPeriod: rand(8, 15),
                 swayPhase: Math.random() * TAU,
@@ -444,14 +420,15 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 omega: spin * (reduced ? 0.3 : 1),
                 rot: Math.random() * TAU,
                 alpha: Math.min(
-                    0.4,
-                    Math.max(0.2, (ALPHA_LO + (ALPHA_HI - ALPHA_LO) * mix) * TINTS[tint].boost),
+                    ALPHA_MAX,
+                    Math.max(
+                        ALPHA_MIN,
+                        (ALPHA_LO + (ALPHA_HI - ALPHA_LO) * mix) * TINTS[tint].boost,
+                    ),
                 ),
                 breathPeriod: rand(9, 16),
                 breathPhase: Math.random() * TAU,
                 tint,
-                glow: 0,
-                glintAt: now + rand(4000, 24000),
                 side: Math.random() < 0.5 ? -1 : 1,
                 engaged: false,
                 born: now + delay,
@@ -512,7 +489,6 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             if (dt <= 0) return;
             const t = now / 1000;
 
-            const scale = reduced ? REDUCED_SPEED : 1;
             const spinScale = reduced ? 0.3 : 1;
             // Pointer play stays under reduced motion (it is user-initiated), but gentler.
             const interactive = canHover;
@@ -554,12 +530,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             scrollVel += (sv - scrollVel) * (1 - Math.exp(-dt / 0.18));
             const gust = reduced ? 0 : clamp01(Math.abs(scrollVel) / GUST_FULL);
 
-            const prevail = PREVAIL + PREVAIL_SWING * Math.sin((t * TAU) / PREVAIL_PERIOD);
-            const pcx = Math.cos(prevail);
-            const pcy = Math.sin(prevail);
             const relax = 1 - Math.exp(-dt / RELAX_S);
-            const glowUp = 1 - Math.exp(-dt / 0.22); // wakes quickly…
-            const glowDown = 1 - Math.exp(-dt / 0.7); // …and lingers, like an afterglow
             const spinUp = 1 - Math.exp(-dt / 0.45);
             const spinDown = 1 - Math.exp(-dt / 1.2);
 
@@ -572,16 +543,18 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 const layerH = height + maxScroll * k;
                 const q = s.size / ART_FILL;
 
-                // 1) Desired velocity: breeze-bent heading, personal sway, own cruise speed.
+                // 1) Desired velocity: own heading bent by the shared breeze, personal sway,
+                //    own cruise speed. The heading itself wanders very slowly.
+                s.dir += s.turn * dt;
                 sampleBreeze(s.x, s.y, t);
                 const heading =
-                    Math.atan2(pcy + WIND_WEIGHT * breeze.y, pcx + WIND_WEIGHT * breeze.x) +
-                    s.bias +
+                    Math.atan2(
+                        Math.sin(s.dir) + WIND_WEIGHT * breeze.y,
+                        Math.cos(s.dir) + WIND_WEIGHT * breeze.x,
+                    ) +
                     s.swayAmp * Math.sin((t * TAU) / s.swayPeriod + s.swayPhase);
                 const cruise =
-                    s.cruise *
-                    scale *
-                    (1 + SURGE * Math.sin((t * TAU) / s.surgePeriod + s.surgePhase));
+                    s.cruise * (1 + SURGE * Math.sin((t * TAU) / s.surgePeriod + s.surgePhase));
                 const dx = Math.cos(heading);
                 const dy = Math.sin(heading);
                 let tx = dx * cruise;
@@ -589,7 +562,6 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
 
                 // 2) Cursor (viewport space): curl round it on the side the sun is on, nudge
                 //    outward, and let the wake of a quick stroke carry it a little.
-                let glowTarget = 0;
                 let curl = 0;
                 if (cursorGain > 0.002) {
                     const rx = s.x - cursorX;
@@ -599,8 +571,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                         const d = Math.sqrt(d2);
                         const nx = rx / d;
                         const ny = ry / d;
-                        const f = 1 - d / CURSOR_RADIUS;
-                        const w = smooth(f) * cursorGain;
+                        const w = smooth(1 - d / CURSOR_RADIUS) * cursorGain;
                         let sx = -ny;
                         let sy = nx;
                         if (!s.engaged) {
@@ -619,8 +590,6 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                             s.vx += wakeX * WAKE_KICK * w * dt;
                             s.vy += wakeY * WAKE_KICK * w * dt;
                         }
-                        // Aura swells fast: full glow at ~60 % of the radius.
-                        glowTarget = smooth(clamp01(f * 1.7)) * cursorGain;
                         curl = s.side * w;
                     } else {
                         s.engaged = false;
@@ -655,9 +624,8 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 }
                 s.x += s.vx * dt;
                 s.y += s.vy * dt;
-                s.glow += (glowTarget - s.glow) * (glowTarget > s.glow ? glowUp : glowDown);
 
-                // Spin: resting drift + a graceful spin-up in the sense of the curl + a
+                // Spin: resting drift + a slow spin-up in the sense of the curl + a
                 // scroll gust, all eased (up fast-ish, down slowly) — never a snap.
                 const spinTarget =
                     s.spin * spinScale +
@@ -687,46 +655,26 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 }
                 // A fresh personality each lap keeps the flight non-repeating.
                 if (wrapped) {
-                    s.bias = rand(-0.3, 0.3);
+                    s.turn = rand(-TURN_MAX, TURN_MAX);
                     s.swayPhase = Math.random() * TAU;
                     s.side = Math.random() < 0.5 ? -1 : 1;
                 }
 
-                // 6) Project page → viewport and cull. Margin covers the bloom and the aura.
+                // 6) Project page → viewport and cull.
                 const sy = s.y - scrollY * k;
-                const margin = q * 1.5;
+                const margin = q;
                 if (sy < -margin || sy > height + margin || s.x < -margin || s.x > width + margin) {
                     continue;
                 }
                 const tiers = sprites[s.tint];
                 if (!tiers || !tiers.length) continue;
 
-                // 7) Draw: breathing opacity, cursor glow, a rare glint like sun on silk.
-                let glint = 0;
-                if (now >= s.glintAt) {
-                    const g = (now - s.glintAt) / GLINT_MS;
-                    if (g < 1) glint = Math.sin(g * Math.PI);
-                    else s.glintAt = now + rand(25000, 70000);
-                }
+                // 7) Draw: breathing opacity only — a watermark on silk. No flash, no halo.
                 const intro = smooth(clamp01((now - s.born) / 1200));
                 const breath = 1 + BREATH * Math.sin((t * TAU) / s.breathPeriod + s.breathPhase);
-                const awake = smooth(s.glow);
-                const alpha = Math.min(
-                    ALPHA_CAP + ALPHA_CAP_AWAKE * awake,
-                    s.alpha * breath * (1 + 0.75 * awake + 0.55 * glint + 0.3 * gust) * intro,
-                );
+                const alpha = Math.min(ALPHA_CAP, s.alpha * breath) * intro;
 
-                // Aura first (behind the body): a pulsing pool of the sun's own light.
-                const halo = halos[s.tint];
-                if (halo && awake > 0.015) {
-                    const hs = q * HALO_SCALE * (0.92 + 0.08 * Math.sin(t * 2.4 + s.breathPhase));
-                    ctx.setTransform(dpr, 0, 0, dpr, s.x * dpr, sy * dpr);
-                    ctx.globalAlpha = Math.min(0.62, 0.62 * awake) * intro;
-                    ctx.drawImage(halo, -hs / 2, -hs / 2, hs, hs);
-                }
-
-                const qd = q * (1 + BLOOM * awake);
-                const dev = qd * dpr;
+                const dev = q * dpr;
                 let sprite = tiers[tiers.length - 1];
                 for (let j = 0; j < TIERS.length; j++) {
                     if (TIERS[j] >= dev) {
@@ -738,7 +686,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 const n = Math.sin(s.rot) * dpr;
                 ctx.setTransform(c, n, -n, c, s.x * dpr, sy * dpr);
                 ctx.globalAlpha = alpha;
-                ctx.drawImage(sprite, -qd / 2, -qd / 2, qd, qd);
+                ctx.drawImage(sprite, -q / 2, -q / 2, q, q);
             }
         };
 
@@ -747,7 +695,6 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         img.onload = () => {
             if (disposed) return;
             sprites = TINTS.map((tint) => buildTintSprites(img, tint));
-            halos = TINTS.map((tint) => buildHalo(tint));
             layout();
             rafId = requestAnimationFrame(frame);
         };
@@ -775,7 +722,6 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             window.removeEventListener("blur", onBlur);
             img.onload = null;
             sprites = [];
-            halos = [];
             suns.length = 0;
         };
     }, [overlay]);
