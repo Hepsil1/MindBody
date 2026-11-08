@@ -2,12 +2,10 @@ import { useEffect, useRef } from "react";
 
 interface SmartSunParticlesProps {
     /**
-     * "under" (default) — the site-wide backdrop: fixed at z -1 behind the page,
-     * desktop-only, gated behind prefers-reduced-motion (the original behaviour).
-     * "overlay" — the /about brand atmosphere: sits ABOVE the page's opaque paper
-     * (z 1, still under the header/content stacking contexts that matter), runs on
-     * MOBILE too, and deliberately IGNORES prefers-reduced-motion so the owner
-     * (reduce-motion ON) sees the drift. Slightly more present alpha.
+     * "under" (default) — site-wide backdrop at z -1 behind content, drifting in
+     * brand garment tints. Runs on mobile & desktop, maintaining a calm, slow
+     * ambient drift even with prefers-reduced-motion (at 0.3x speed with mouse repulsion off).
+     * "overlay" — /about brand atmosphere at z 1 above the opaque cream paper.
      */
     variant?: "under" | "overlay";
 }
@@ -20,9 +18,10 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        // Respect the user's motion preference — except the overlay variant,
-        // which is intentional owner-visible brand motion (slow + faint).
-        if (!overlay && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        let disposed = false;
+        const hasReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        // Calm slow drift even with reduced-motion (intentional quiet brand atmosphere)
+        const motionFactor = hasReducedMotion ? 0.3 : 1;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
@@ -35,10 +34,8 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         const sunImage = new Image();
         sunImage.src = "/logo-sun.png";
 
-        // Overlay (/about): the suns come in the BRAND GARMENT COLOURS — teal,
-        // marsala/plum, warm ochre, soft lavender — tinted copies of the same
-        // line-art mark (source-in keeps the drawing, recolours the strokes).
-        // The "under" home backdrop keeps the original single-colour art.
+        // Brand garment tints — teal, marsala/plum, warm ochre, soft lavender.
+        // Applied across all particle variants for a unified quiet-luxury atmosphere.
         const TINTS = ["#0f766e", "#722f37", "#b45309", "#8b7bb8"];
         const tinted: HTMLCanvasElement[] = [];
         const buildTints = () => {
@@ -65,16 +62,14 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             rotation: number;
             rotSpeed: number;
             alpha: number;
-            /** index into `tinted` (overlay), or -1 = the original art */
+            /** index into `tinted`, or -1 = the original art */
             tint: number;
         }
         const particles: SunParticle[] = [];
-        // Same physics/behaviour as home ("under"): free-floating in the
-        // VIEWPORT, drifting + wrapping + repelling. Overlay just has more
-        // (smaller) suns, drifts noticeably slower (~40% speed — calm brand
-        // atmosphere, not busy motion), and never pauses on scroll (below).
-        const numParticles = isMobile ? (overlay ? 9 : 5) : overlay ? 22 : 12;
-        const speedMul = overlay ? 0.4 : 1;
+        // Shared physics across under and overlay: free-floating particles drifting,
+        // wrapping, and repelling. Overlay has more (smaller) suns drifting at ~40% speed.
+        const numParticles = isMobile ? (overlay ? 9 : 6) : overlay ? 22 : 14;
+        const speedMul = (overlay ? 0.4 : 0.7) * motionFactor;
 
         let mouseX = -1000;
         let mouseY = -1000;
@@ -83,16 +78,17 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         let scrollTimeout: ReturnType<typeof setTimeout>;
 
         sunImage.onload = () => {
-            if (overlay) buildTints();
+            if (disposed) return;
+            buildTints();
             for (let i = 0; i < numParticles; i++) {
-                // Overlay: SMALL suns, 34–90px desktop / 26–56px mobile.
+                // SMALL/MEDIUM brand suns with gentle presence
                 const size = overlay
                     ? isMobile
                         ? Math.random() * 30 + 26
                         : Math.random() * 56 + 34
                     : isMobile
-                      ? Math.random() * 70 + 60
-                      : Math.random() * 150 + 80;
+                      ? Math.random() * 50 + 46
+                      : Math.random() * 90 + 64;
                 particles.push({
                     x: Math.random() * width,
                     y: Math.random() * height,
@@ -101,21 +97,20 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                     size,
                     rotation: Math.random() * Math.PI * 2,
                     rotSpeed: (Math.random() - 0.5) * (isMobile ? 0.003 : 0.005) * speedMul,
-                    // Overlay sits on cream paper — colours need a bit more alpha
-                    // to actually read as colours, still quiet.
-                    alpha: overlay ? Math.random() * 0.12 + 0.08 : Math.random() * 0.08 + 0.02,
-                    // Cycle through the brand tints so all colours are present.
-                    tint: overlay && tinted.length > 0 ? i % tinted.length : -1,
+                    // Brand tints with soft, calm presence on cream paper
+                    alpha: overlay ? Math.random() * 0.12 + 0.08 : Math.random() * 0.07 + 0.035,
+                    // Cycle through the brand tints so all colours are present site-wide
+                    tint: tinted.length > 0 ? i % tinted.length : -1,
                 });
             }
             render();
         };
 
         const render = () => {
+            if (disposed) return;
             animationFrameId = requestAnimationFrame(render);
 
-            // Overlay never pauses on scroll (the home backdrop's freeze read
-            // as lag on the long /about page); home keeps the original pause.
+            // Overlay never pauses on scroll; under pauses gently during fast scrolling to conserve CPU.
             if (isScrolling && !overlay) return;
 
             ctx.clearRect(0, 0, width, height);
@@ -125,8 +120,8 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 p.y += p.vy;
                 p.rotation += p.rotSpeed;
 
-                // Mouse repulsion — desktop only (no mouse on mobile)
-                if (!isMobile) {
+                // Mouse repulsion — desktop only, disabled under reduced-motion
+                if (!isMobile && !hasReducedMotion) {
                     const dx = mouseX - p.x;
                     const dy = mouseY - p.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -137,7 +132,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                     }
                 }
 
-                // Particle repulsion — desktop only (O(n²), skip on mobile)
+                // Particle repulsion — desktop only (O(n²), skip on mobile), scaled by motionFactor
                 if (!isMobile) {
                     particles.forEach((p2, j) => {
                         if (i !== j) {
@@ -146,8 +141,8 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                             const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
                             if (dist2 < 280) {
                                 const force2 = (280 - dist2) / 280;
-                                p.vx -= (dx2 / dist2) * force2 * 0.015;
-                                p.vy -= (dy2 / dist2) * force2 * 0.015;
+                                p.vx -= (dx2 / dist2) * force2 * 0.015 * motionFactor;
+                                p.vy -= (dy2 / dist2) * force2 * 0.015 * motionFactor;
                             }
                         }
                     });
@@ -217,6 +212,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         window.addEventListener("scroll", handleScroll, { passive: true });
 
         return () => {
+            disposed = true;
             window.removeEventListener("resize", handleResize);
             if (!isMobile) {
                 window.removeEventListener("mousemove", handleMouseMove);
