@@ -986,7 +986,6 @@ export default function Home() {
 
             {/* Unified Collections Group (Categories + New Arrivals) */}
             <section className="section shop-collections-group">
-                <div className="logo-pattern-bg"></div>
                 {/* Sub-section: Categories */}
                 <div className="container collections-container" id="shop">
                     <div className="section__header section__header--center collections-header">
