@@ -3,23 +3,45 @@ import { useEffect, useRef } from "react";
 /* ─────────────────────────────────────────────────────────────────────────────
  * SmartSunParticles — the brand's drifting suns.
  *
+ * The suns are a separate organism that lives on the PAGE, not on the glass
+ *  A. Document space. Every sun has coordinates on the whole page (x across, y down
+ *     the full document height). The canvas is a fixed viewport-sized window that
+ *     paints `y − scrollY·k`: scroll and the page slides past the suns, they stay
+ *     where they are and keep flying. They are seeded evenly over the entire page
+ *     (density per screen is constant, the count follows the document height) and
+ *     the whole page is simulated, so a sun you scrolled past is still living.
+ *  B. Depth. k ∈ [0.80, 1] (small/far suns ≈ 0.80): a far sun trails the page by up
+ *     to 20 % of the scroll, a near one is pinned to it → quiet parallax. Each sun
+ *     wraps inside its own layer height `viewport + maxScroll·k`, which guarantees
+ *     full coverage at scroll 0 and at the very bottom. (Reduced motion: k = 1.)
+ *  C. Content height changes (lazy images, route change) never move a visible sun:
+ *     y is never rescaled; extra suns are born into the emptiest gaps of the new
+ *     area, surplus ones are removed only while off-screen.
+ *
  * How the suns move (why they never stall, and never look random)
  *  1. ONE shared, slowly evolving breeze: a divergence-free flow field built from
  *     three travelling sine waves (stream function ψ, wind = (∂ψ/∂y, −∂ψ/∂x)).
  *     Divergence-free means it never herds suns into clumps or leaves empty
- *     patches, so no pairwise repulsion is needed — the old O(n²) repulsion is
- *     what pushed suns into a dead-calm equilibrium.
+ *     patches, so no pairwise repulsion is needed.
  *  2. A prevailing heading (up and to the right, swinging ±30° over ~2.5 min)
  *     bent by the breeze, plus a per-sun sway: graceful S-curves, no straight lines.
  *  3. Speed is REGULATED, not integrated. Each sun steers toward a desired velocity
  *     whose length is its own cruise speed (0.30–0.70 px per 60 fps frame). Forces
  *     can bend the heading; nothing can drain the speed to zero.
- *  4. The cursor is just one more flow component: suns slide AROUND it (on the side
- *     they are already on) with a slight outward push, speeding up a little. The
- *     numbers are chosen so even a sun heading straight at it keeps ≥ 80 % of its
- *     cruise speed — it yields, it never freezes.
- *  5. Everything is time-based (px/s × dt): 60 / 120 / 144 Hz screens move alike.
- *  6. No scroll listener at all — scrolling (native or Lenis) never pauses the suns.
+ *  4. Everything is time-based (px/s × dt): 60 / 120 / 144 Hz screens move alike.
+ *  5. No scroll LISTENER: scrollY is just read once per frame, so scrolling (native
+ *     or Lenis) never pauses the suns.
+ *
+ * The cursor (a sun "wakes up" when you come near)
+ *  - AWAKENING: inside ~260 px the sun's glow eases up (fast), and lingers when you
+ *    leave (slow): a warm tinted aura behind it, a gently larger and brighter body,
+ *    and a graceful spin-up — an easing angular velocity, in the sense of the curl.
+ *  - SILKY CURL: it slides AROUND the cursor on the side it was already on (latched
+ *    for the whole encounter, so it never flips mid-arc) with a soft outward push.
+ *    A head-on sun keeps ≥ 80 % of its cruise speed — it yields, it never freezes.
+ *  - WAKE: a quick stroke of the cursor drags the air — suns beside the path get a
+ *    one-off gust along it and settle again over ~1.5 s.
+ *  - SCROLL GUST: fast scrolling stirs the suns (extra spin, a touch brighter).
  * ──────────────────────────────────────────────────────────────────────────── */
 
 interface SmartSunParticlesProps {
@@ -29,7 +51,8 @@ interface SmartSunParticlesProps {
      *
      * Both share one motion model and never pause. Under prefers-reduced-motion
      * (the owner browses with it ON) the drift stays — owner decision — but a touch
-     * calmer (×0.92, still ≥ 0.30 px/frame), with little spin and no cursor play.
+     * calmer (×0.92, still ≥ 0.30 px/frame), with little spin, no parallax, no
+     * wake/scroll gust; the cursor still wakes the suns, in a gentler key (×0.7).
      */
     variant?: "under" | "overlay";
 }
@@ -111,6 +134,30 @@ function buildTintSprites(img: HTMLImageElement, tint: Tint): HTMLCanvasElement[
     return out;
 }
 
+const rgba = (hex: string, a: number) => {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+};
+
+/** Soft aura in the sun's own pigment — the "luminance" a woken sun radiates.
+ *  Painted once per tint; drawn scaled, so it costs one drawImage per awake sun. */
+const HALO_PX = 128;
+function buildHalo(tint: Tint): HTMLCanvasElement | null {
+    const c = document.createElement("canvas");
+    c.width = c.height = HALO_PX;
+    const g = c.getContext("2d");
+    if (!g) return null;
+    const m = HALO_PX / 2;
+    const grad = g.createRadialGradient(m, m, 0, m, m, m);
+    grad.addColorStop(0, rgba(tint.light, 0.9));
+    grad.addColorStop(0.28, rgba(tint.light, 0.5));
+    grad.addColorStop(0.62, rgba(tint.base, 0.14));
+    grad.addColorStop(1, rgba(tint.base, 0));
+    g.fillStyle = grad;
+    g.fillRect(0, 0, HALO_PX, HALO_PX);
+    return c;
+}
+
 // ── Motion tuning ────────────────────────────────────────────────────────────
 /** Speeds are authored per 60 fps frame (the brief's unit) and applied per second. */
 const PER_FRAME = 60;
@@ -158,14 +205,35 @@ function sampleBreeze(x: number, y: number, t: number) {
     breeze.y = by / WAVES.length;
 }
 
-// ── Cursor (desktop, motion allowed) ─────────────────────────────────────────
-const CURSOR_RADIUS = 240;
+// ── Page space ───────────────────────────────────────────────────────────────
+/** Suns per screen of page height (the count follows the document height). */
+const PER_SCREEN = { desktop: { under: 34, overlay: 22 }, mobile: { under: 16, overlay: 9 } };
+/** Hard ceiling for the whole page — keeps very long pages cheap. */
+const MAX_SUNS = { desktop: 190, mobile: 90 };
+/** Parallax floor: the farthest sun trails the page by up to 1 − this of the scroll. */
+const PARALLAX_MIN = 0.8;
+
+// ── Cursor (desktop) ─────────────────────────────────────────────────────────
+const CURSOR_RADIUS = 260;
 /** px/s outward at the cursor's centre. */
-const CURSOR_PUSH = 34;
+const CURSOR_PUSH = 40;
 /** px/s sideways at the cursor's centre — larger than the push, so suns flow AROUND it.
- *  Worst case (head-on) keeps |v| ≥ cruise · SLIDE/√(PUSH²+SLIDE²) ≈ 0.84 · cruise. */
-const CURSOR_SLIDE = 52;
-const MAX_DESIRED = 95;
+ *  Worst case (head-on) keeps |v| ≥ cruise · SLIDE/√(PUSH²+SLIDE²) ≈ 0.9 · cruise. */
+const CURSOR_SLIDE = 84;
+const MAX_DESIRED = 150;
+/** Wake: cursor velocity (capped, px/s) → acceleration of nearby suns. Equilibrium
+ *  push ≈ cap · KICK · RELAX_S ≈ 90 px/s at the strongest stroke. */
+const WAKE_KICK = 0.08;
+const WAKE_CAP = 1400;
+/** Hard ceiling on a sun's real speed (px/s), whatever the wake does. */
+const MAX_SPEED = 190;
+/** Awake spin (rad/s) in the sense of the curl, and extra spin from a scroll gust. */
+const SPIN_AWAKE = 1.7;
+const SPIN_GUST = 1.3;
+/** A woken sun grows by this much and its aura reaches this many × its size. */
+const BLOOM = 0.2;
+const HALO_SCALE = 2.7;
+const GUST_FULL = 2400; // px/s of scroll that counts as a full gust
 
 // ── Opacity ──────────────────────────────────────────────────────────────────
 const ALPHA_LO = 0.22;
@@ -173,9 +241,12 @@ const ALPHA_HI = 0.38;
 /** Breathing, ± fraction of the sun's own opacity (peaks ≈ 0.45 at most). */
 const BREATH = 0.12;
 const ALPHA_CAP = 0.5;
+/** A woken sun may exceed the cap by this much (it is the one in the spotlight). */
+const ALPHA_CAP_AWAKE = 0.16;
 const GLINT_MS = 2600;
 
 interface Sun {
+    /** page space: x across, y down the whole document (layer coordinates, see k) */
     x: number;
     y: number;
     /** px/s */
@@ -183,6 +254,8 @@ interface Sun {
     vy: number;
     /** art size, CSS px */
     size: number;
+    /** depth parallax factor, PARALLAX_MIN..1 (1 = pinned to the page) */
+    par: number;
     /** personal cruise speed, px/s — always > 0 */
     cruise: number;
     /** fixed personal heading offset, rad */
@@ -192,8 +265,9 @@ interface Sun {
     swayPhase: number;
     surgePeriod: number;
     surgePhase: number;
-    /** rad/s, rad */
+    /** resting spin, rad/s; current spin, rad/s; angle, rad */
     spin: number;
+    omega: number;
     rot: number;
     /** base opacity, already balanced per pigment */
     alpha: number;
@@ -204,10 +278,12 @@ interface Sun {
     glow: number;
     /** timestamp (ms) when the next rare glint starts */
     glintAt: number;
-    /** which way to slide round the cursor when approaching exactly head-on */
+    /** which way to curl round the cursor — latched for the whole encounter */
     side: 1 | -1;
-    /** ms, stagger of the fade-in */
-    delay: number;
+    /** true while inside the cursor radius (side is latched on entry) */
+    engaged: boolean;
+    /** timestamp (ms) when the fade-in starts */
+    born: number;
 }
 
 export default function SmartSunParticles({ variant = "under" }: SmartSunParticlesProps) {
@@ -233,7 +309,9 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
 
         const isMobile = window.innerWidth <= 768;
         const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-        const count = isMobile ? (overlay ? 9 : 16) : overlay ? 22 : 34;
+        const perScreen =
+            PER_SCREEN[isMobile ? "mobile" : "desktop"][overlay ? "overlay" : "under"];
+        const maxSuns = MAX_SUNS[isMobile ? "mobile" : "desktop"];
         const [sizeMin, sizeMax] = isMobile
             ? overlay
                 ? [30, 62]
@@ -247,12 +325,22 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         let width = 0;
         let height = 0;
         let dpr = getDpr();
-        let needsFit = true;
+        /** scrollable distance of the document (scrollHeight − viewport) */
+        let maxScroll = 0;
+        let needsLayout = true;
+        let lastLayoutAt = 0;
         const suns: Sun[] = [];
         let sprites: HTMLCanvasElement[][] = [];
+        let halos: (HTMLCanvasElement | null)[] = [];
+        /** shuffled pigments, handed out in turn so every colour is always present */
+        const order = TINTS.map((_, i) => i).sort(() => Math.random() - 0.5);
+        let tintSeq = 0;
 
-        const fit = () => {
-            needsFit = false;
+        /** parallax factor in effect (reduced motion pins every sun to the page) */
+        const kOf = (s: Sun) => (reduced ? 1 : s.par);
+
+        const layout = () => {
+            needsLayout = false;
             // The canvas's own CSS box is the truth (window.innerWidth includes the scrollbar).
             const w = canvas.clientWidth || window.innerWidth;
             const h = canvas.clientHeight || window.innerHeight;
@@ -264,23 +352,17 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 canvas.height = bh;
                 ctx.imageSmoothingQuality = "high";
             }
-            // Big change (rotate phone, resize window): keep the arrangement instead of
-            // letting everything that fell outside wrap in as one column. Small changes
-            // (mobile address bar) leave positions untouched, so nothing jumps.
-            if (
-                suns.length &&
-                width > 0 &&
-                height > 0 &&
-                (Math.abs(w / width - 1) > 0.25 || Math.abs(h / height - 1) > 0.25)
-            ) {
-                for (const s of suns) {
-                    s.x *= w / width;
-                    s.y *= h / height;
-                }
+            // Big width change (rotate phone, resize window): keep the arrangement across
+            // the page. Small changes leave positions untouched, so nothing jumps. y is
+            // NEVER rescaled — it is page space, and a visible sun must not move when the
+            // document grows; new suns are born into the new area instead (reconcile).
+            if (suns.length && width > 0 && Math.abs(w / width - 1) > 0.25) {
+                for (const s of suns) s.x *= w / width;
             }
             width = w;
             height = h;
             dpr = d;
+            maxScroll = Math.max(0, document.documentElement.scrollHeight - h);
         };
 
         // ── cursor ───────────────────────────────────────────────────────────
@@ -289,6 +371,8 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         let mouseActive = false;
         let cursorX = 0;
         let cursorY = 0;
+        let cursorVx = 0;
+        let cursorVy = 0;
         let cursorGain = 0;
 
         const onMouseMove = (e: MouseEvent) => {
@@ -305,82 +389,122 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             mouseActive = false;
         };
 
-        // ── seeding ──────────────────────────────────────────────────────────
-        const seed = () => {
-            suns.length = 0;
-            // Balanced pigments in random order, so every colour is always present.
-            const order = TINTS.map((_, i) => i).sort(() => Math.random() - 0.5);
-            const now = performance.now();
-            const scale = reduced ? REDUCED_SPEED : 1;
-            for (let i = 0; i < count; i++) {
-                // depth: many small/far suns, a few larger/closer ones
-                const depth = Math.pow(Math.random(), 1.5);
-                // Even placement: best of 6 candidates = farthest from the suns already placed.
-                let px = 0;
-                let py = 0;
-                let far = -1;
-                for (let c = 0; c < 6; c++) {
-                    const cx = Math.random() * width;
-                    const cy = Math.random() * height;
-                    let nearest = Infinity;
-                    for (const o of suns) {
-                        const d2 = (o.x - cx) * (o.x - cx) + (o.y - cy) * (o.y - cy);
-                        if (d2 < nearest) nearest = d2;
-                    }
-                    if (nearest > far) {
-                        far = nearest;
-                        px = cx;
-                        py = cy;
-                    }
+        // ── birth ────────────────────────────────────────────────────────────
+        /** One new sun in the emptiest of `tries` random spots on the page. */
+        const makeSun = (now: number, delay: number, tries: number): Sun => {
+            // depth: many small/far suns, a few larger/closer ones
+            const depth = Math.pow(Math.random(), 1.5);
+            const par = PARALLAX_MIN + (1 - PARALLAX_MIN) * depth;
+            const kk = reduced ? 1 : par;
+            const layerH = height + maxScroll * kk;
+            // "Virtual" page height so suns of different layers are compared fairly.
+            const page = height + maxScroll;
+            let px = 0;
+            let py = 0;
+            let far = -1;
+            for (let c = 0; c < tries; c++) {
+                const cx = Math.random() * width;
+                const cy = Math.random() * layerH;
+                const cv = (cy / layerH) * page;
+                let nearest = Infinity;
+                for (const o of suns) {
+                    const ov = (o.y / (height + maxScroll * kOf(o))) * page;
+                    const d2 = (o.x - cx) * (o.x - cx) + (ov - cv) * (ov - cv);
+                    if (d2 < nearest) nearest = d2;
                 }
-                const tint = order[i % order.length];
-                const bias = rand(-0.3, 0.3);
-                const cruise =
-                    CRUISE_MIN + (CRUISE_MAX - CRUISE_MIN) * (0.7 * depth + 0.3 * Math.random());
-                const mix = 0.35 * depth + 0.65 * Math.random();
-                const heading = PREVAIL + bias;
-                suns.push({
-                    x: px,
-                    y: py,
-                    vx: Math.cos(heading) * cruise * scale,
-                    vy: Math.sin(heading) * cruise * scale,
-                    size: sizeMin + (sizeMax - sizeMin) * depth,
-                    cruise,
-                    bias,
-                    swayAmp: rand(0.18, 0.4),
-                    swayPeriod: rand(8, 15),
-                    swayPhase: Math.random() * TAU,
-                    surgePeriod: rand(14, 24),
-                    surgePhase: Math.random() * TAU,
-                    spin: (Math.random() < 0.5 ? -1 : 1) * rand(0.03, 0.1),
-                    rot: Math.random() * TAU,
-                    alpha: Math.min(
-                        0.4,
-                        Math.max(0.2, (ALPHA_LO + (ALPHA_HI - ALPHA_LO) * mix) * TINTS[tint].boost),
-                    ),
-                    breathPeriod: rand(9, 16),
-                    breathPhase: Math.random() * TAU,
-                    tint,
-                    glow: 0,
-                    glintAt: now + rand(4000, 24000),
-                    side: Math.random() < 0.5 ? -1 : 1,
-                    delay: Math.random() * 900,
-                });
+                if (nearest > far) {
+                    far = nearest;
+                    px = cx;
+                    py = cy;
+                }
+            }
+            const tint = order[tintSeq++ % order.length];
+            const bias = rand(-0.3, 0.3);
+            const cruise =
+                CRUISE_MIN + (CRUISE_MAX - CRUISE_MIN) * (0.7 * depth + 0.3 * Math.random());
+            const mix = 0.35 * depth + 0.65 * Math.random();
+            const heading = PREVAIL + bias;
+            const scale = reduced ? REDUCED_SPEED : 1;
+            const spin = (Math.random() < 0.5 ? -1 : 1) * rand(0.03, 0.1);
+            return {
+                x: px,
+                y: py,
+                vx: Math.cos(heading) * cruise * scale,
+                vy: Math.sin(heading) * cruise * scale,
+                size: sizeMin + (sizeMax - sizeMin) * depth,
+                par,
+                cruise,
+                bias,
+                swayAmp: rand(0.18, 0.4),
+                swayPeriod: rand(8, 15),
+                swayPhase: Math.random() * TAU,
+                surgePeriod: rand(14, 24),
+                surgePhase: Math.random() * TAU,
+                spin,
+                omega: spin * (reduced ? 0.3 : 1),
+                rot: Math.random() * TAU,
+                alpha: Math.min(
+                    0.4,
+                    Math.max(0.2, (ALPHA_LO + (ALPHA_HI - ALPHA_LO) * mix) * TINTS[tint].boost),
+                ),
+                breathPeriod: rand(9, 16),
+                breathPhase: Math.random() * TAU,
+                tint,
+                glow: 0,
+                glintAt: now + rand(4000, 24000),
+                side: Math.random() < 0.5 ? -1 : 1,
+                engaged: false,
+                born: now + delay,
+            };
+        };
+
+        /** How many suns the whole page should hold right now. */
+        const targetCount = () => {
+            if (height <= 0) return 0;
+            const screens = (height + maxScroll * 0.9) / height;
+            return Math.min(maxSuns, Math.max(perScreen, Math.round(perScreen * screens)));
+        };
+
+        /** Page got taller / shorter: fill gaps with new suns, retire surplus off-screen. */
+        const reconcile = (now: number, scrollY: number, initial: boolean) => {
+            const want = targetCount();
+            while (suns.length < want) {
+                suns.push(makeSun(now, initial ? Math.random() * 900 : 0, initial ? 6 : 10));
+            }
+            for (let i = suns.length - 1; i >= 0 && suns.length > want; i--) {
+                const s = suns[i];
+                const sy = s.y - scrollY * kOf(s);
+                const m = (s.size / ART_FILL) * 2;
+                if (sy < -m || sy > height + m) suns.splice(i, 1);
             }
         };
 
         // ── the loop ─────────────────────────────────────────────────────────
         let lastNow = -1;
-        let startAt = 0;
+        let lastScrollY = 0;
+        let scrollVel = 0;
+        let seeded = false;
 
         const frame = (now: number) => {
             if (disposed) return;
             rafId = requestAnimationFrame(frame);
 
-            if (needsFit || getDpr() !== dpr) fit();
+            const scrollY = window.scrollY || 0;
             if (lastNow < 0) {
                 lastNow = now;
-                startAt = now;
+                lastScrollY = scrollY;
+            }
+            // Re-measure on resize / zoom / content change, and every ~0.6 s to catch
+            // late-loading images growing the page (ResizeObserver covers most of it).
+            if (needsLayout || getDpr() !== dpr || now - lastLayoutAt > 600) {
+                const prevMax = maxScroll;
+                const prevH = height;
+                layout();
+                lastLayoutAt = now;
+                if (!seeded || prevMax !== maxScroll || prevH !== height) {
+                    reconcile(now, scrollY, !seeded);
+                    seeded = true;
+                }
             }
             // Clamped, so a throttled / resumed tab never teleports the suns.
             const dt = Math.min(0.05, (now - lastNow) / 1000);
@@ -390,33 +514,63 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
 
             const scale = reduced ? REDUCED_SPEED : 1;
             const spinScale = reduced ? 0.3 : 1;
-            const interactive = canHover && !reduced;
+            // Pointer play stays under reduced motion (it is user-initiated), but gentler.
+            const interactive = canHover;
+            const cursorMax = reduced ? 0.7 : 1;
 
             // Cursor eased on both position and influence: no pops on enter / leave.
+            let wakeX = 0;
+            let wakeY = 0;
             if (interactive && mouseActive) {
                 if (cursorGain < 0.01) {
                     cursorX = mouseX;
                     cursorY = mouseY;
+                    cursorVx = 0;
+                    cursorVy = 0;
                 } else {
                     const follow = 1 - Math.exp(-dt / 0.06);
-                    cursorX += (mouseX - cursorX) * follow;
-                    cursorY += (mouseY - cursorY) * follow;
+                    const nx = cursorX + (mouseX - cursorX) * follow;
+                    const ny = cursorY + (mouseY - cursorY) * follow;
+                    const vf = 1 - Math.exp(-dt / 0.1);
+                    cursorVx += ((nx - cursorX) / dt - cursorVx) * vf;
+                    cursorVy += ((ny - cursorY) / dt - cursorVy) * vf;
+                    cursorX = nx;
+                    cursorY = ny;
+                }
+                // The wake: cursor velocity, capped in length.
+                const sp = Math.hypot(cursorVx, cursorVy);
+                if (!reduced && sp > 1) {
+                    const cap = Math.min(sp, WAKE_CAP) / sp;
+                    wakeX = cursorVx * cap;
+                    wakeY = cursorVy * cap;
                 }
             }
-            const gainTarget = interactive && mouseActive ? 1 : 0;
+            const gainTarget = interactive && mouseActive ? cursorMax : 0;
             cursorGain += (gainTarget - cursorGain) * (1 - Math.exp(-dt / 0.35));
+
+            // Scroll gust: how hard the page is being stirred right now (smoothed).
+            const sv = (scrollY - lastScrollY) / dt;
+            lastScrollY = scrollY;
+            scrollVel += (sv - scrollVel) * (1 - Math.exp(-dt / 0.18));
+            const gust = reduced ? 0 : clamp01(Math.abs(scrollVel) / GUST_FULL);
 
             const prevail = PREVAIL + PREVAIL_SWING * Math.sin((t * TAU) / PREVAIL_PERIOD);
             const pcx = Math.cos(prevail);
             const pcy = Math.sin(prevail);
             const relax = 1 - Math.exp(-dt / RELAX_S);
-            const glowEase = 1 - Math.exp(-dt / 0.25);
+            const glowUp = 1 - Math.exp(-dt / 0.22); // wakes quickly…
+            const glowDown = 1 - Math.exp(-dt / 0.7); // …and lingers, like an afterglow
+            const spinUp = 1 - Math.exp(-dt / 0.45);
+            const spinDown = 1 - Math.exp(-dt / 1.2);
 
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             for (let i = 0; i < suns.length; i++) {
                 const s = suns[i];
+                const k = kOf(s);
+                const layerH = height + maxScroll * k;
+                const q = s.size / ART_FILL;
 
                 // 1) Desired velocity: breeze-bent heading, personal sway, own cruise speed.
                 sampleBreeze(s.x, s.y, t);
@@ -433,11 +587,13 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 let tx = dx * cruise;
                 let ty = dy * cruise;
 
-                // 2) Cursor: slide around it on the side the sun is already on, nudge outward.
+                // 2) Cursor (viewport space): curl round it on the side the sun is on, nudge
+                //    outward, and let the wake of a quick stroke carry it a little.
                 let glowTarget = 0;
+                let curl = 0;
                 if (cursorGain > 0.002) {
                     const rx = s.x - cursorX;
-                    const ry = s.y - cursorY;
+                    const ry = s.y - scrollY * k - cursorY;
                     const d2 = rx * rx + ry * ry;
                     if (d2 < CURSOR_RADIUS * CURSOR_RADIUS && d2 > 1) {
                         const d = Math.sqrt(d2);
@@ -447,14 +603,30 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                         const w = smooth(f) * cursorGain;
                         let sx = -ny;
                         let sy = nx;
-                        const along = sx * dx + sy * dy;
-                        const side = Math.abs(along) > 0.15 ? Math.sign(along) : s.side;
-                        sx *= side;
-                        sy *= side;
+                        if (!s.engaged) {
+                            // Latch the side once, on entry: no flip-flopping mid-arc.
+                            const along = sx * dx + sy * dy;
+                            if (Math.abs(along) > 0.15) s.side = along > 0 ? 1 : -1;
+                            s.engaged = true;
+                        }
+                        sx *= s.side;
+                        sy *= s.side;
                         tx += (nx * CURSOR_PUSH + sx * CURSOR_SLIDE) * w;
                         ty += (ny * CURSOR_PUSH + sy * CURSOR_SLIDE) * w;
-                        glowTarget = w;
+                        // One-off gust from a quick stroke, shaped like the curl: strongest
+                        // beside the path, fading with distance.
+                        if (wakeX !== 0 || wakeY !== 0) {
+                            s.vx += wakeX * WAKE_KICK * w * dt;
+                            s.vy += wakeY * WAKE_KICK * w * dt;
+                        }
+                        // Aura swells fast: full glow at ~60 % of the radius.
+                        glowTarget = smooth(clamp01(f * 1.7)) * cursorGain;
+                        curl = s.side * w;
+                    } else {
+                        s.engaged = false;
                     }
+                } else {
+                    s.engaged = false;
                 }
 
                 // 3) Bounds on the desired speed: never below 80 % of cruise, never frantic.
@@ -476,13 +648,28 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 // 4) Steer (silky relaxation toward the desired velocity), then move.
                 s.vx += (tx - s.vx) * relax;
                 s.vy += (ty - s.vy) * relax;
+                const sp = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
+                if (sp > MAX_SPEED) {
+                    s.vx *= MAX_SPEED / sp;
+                    s.vy *= MAX_SPEED / sp;
+                }
                 s.x += s.vx * dt;
                 s.y += s.vy * dt;
-                s.rot += s.spin * spinScale * dt;
-                s.glow += (glowTarget - s.glow) * glowEase;
+                s.glow += (glowTarget - s.glow) * (glowTarget > s.glow ? glowUp : glowDown);
 
-                // 5) Endless flight: leave one edge fully, re-enter from the opposite one.
-                const q = s.size / ART_FILL;
+                // Spin: resting drift + a graceful spin-up in the sense of the curl + a
+                // scroll gust, all eased (up fast-ish, down slowly) — never a snap.
+                const spinTarget =
+                    s.spin * spinScale +
+                    curl * SPIN_AWAKE * (reduced ? 0.45 : 1) +
+                    (s.spin < 0 ? -1 : 1) * SPIN_GUST * gust;
+                s.omega +=
+                    (spinTarget - s.omega) *
+                    (Math.abs(spinTarget) > Math.abs(s.omega) ? spinUp : spinDown);
+                s.rot += s.omega * dt;
+
+                // 5) Endless flight over the whole page: leave one edge fully, re-enter from
+                //    the opposite one. (Off-screen by construction: see header, point B.)
                 let wrapped = false;
                 if (s.x < -q) {
                     s.x = width + q;
@@ -492,48 +679,66 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                     wrapped = true;
                 }
                 if (s.y < -q) {
-                    s.y = height + q;
+                    s.y = layerH + q;
                     wrapped = true;
-                } else if (s.y > height + q) {
+                } else if (s.y > layerH + q) {
                     s.y = -q;
                     wrapped = true;
                 }
-                // Off-screen anyway — a fresh personality each lap keeps the flight non-repeating.
+                // A fresh personality each lap keeps the flight non-repeating.
                 if (wrapped) {
                     s.bias = rand(-0.3, 0.3);
                     s.swayPhase = Math.random() * TAU;
                     s.side = Math.random() < 0.5 ? -1 : 1;
                 }
 
-                // 6) Draw: breathing opacity, cursor glow, a rare glint like sun on silk.
+                // 6) Project page → viewport and cull. Margin covers the bloom and the aura.
+                const sy = s.y - scrollY * k;
+                const margin = q * 1.5;
+                if (sy < -margin || sy > height + margin || s.x < -margin || s.x > width + margin) {
+                    continue;
+                }
                 const tiers = sprites[s.tint];
                 if (!tiers || !tiers.length) continue;
+
+                // 7) Draw: breathing opacity, cursor glow, a rare glint like sun on silk.
                 let glint = 0;
                 if (now >= s.glintAt) {
                     const g = (now - s.glintAt) / GLINT_MS;
                     if (g < 1) glint = Math.sin(g * Math.PI);
                     else s.glintAt = now + rand(25000, 70000);
                 }
-                const intro = smooth(clamp01((now - startAt - s.delay) / 1200));
+                const intro = smooth(clamp01((now - s.born) / 1200));
                 const breath = 1 + BREATH * Math.sin((t * TAU) / s.breathPeriod + s.breathPhase);
+                const awake = smooth(s.glow);
                 const alpha = Math.min(
-                    ALPHA_CAP,
-                    s.alpha * breath * (1 + 0.45 * s.glow + 0.55 * glint) * intro,
+                    ALPHA_CAP + ALPHA_CAP_AWAKE * awake,
+                    s.alpha * breath * (1 + 0.75 * awake + 0.55 * glint + 0.3 * gust) * intro,
                 );
 
-                const dev = q * dpr;
+                // Aura first (behind the body): a pulsing pool of the sun's own light.
+                const halo = halos[s.tint];
+                if (halo && awake > 0.015) {
+                    const hs = q * HALO_SCALE * (0.92 + 0.08 * Math.sin(t * 2.4 + s.breathPhase));
+                    ctx.setTransform(dpr, 0, 0, dpr, s.x * dpr, sy * dpr);
+                    ctx.globalAlpha = Math.min(0.62, 0.62 * awake) * intro;
+                    ctx.drawImage(halo, -hs / 2, -hs / 2, hs, hs);
+                }
+
+                const qd = q * (1 + BLOOM * awake);
+                const dev = qd * dpr;
                 let sprite = tiers[tiers.length - 1];
-                for (let k = 0; k < TIERS.length; k++) {
-                    if (TIERS[k] >= dev) {
-                        sprite = tiers[k];
+                for (let j = 0; j < TIERS.length; j++) {
+                    if (TIERS[j] >= dev) {
+                        sprite = tiers[j];
                         break;
                     }
                 }
                 const c = Math.cos(s.rot) * dpr;
                 const n = Math.sin(s.rot) * dpr;
-                ctx.setTransform(c, n, -n, c, s.x * dpr, s.y * dpr);
+                ctx.setTransform(c, n, -n, c, s.x * dpr, sy * dpr);
                 ctx.globalAlpha = alpha;
-                ctx.drawImage(sprite, -q / 2, -q / 2, q, q);
+                ctx.drawImage(sprite, -qd / 2, -qd / 2, qd, qd);
             }
         };
 
@@ -542,16 +747,18 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         img.onload = () => {
             if (disposed) return;
             sprites = TINTS.map((tint) => buildTintSprites(img, tint));
-            fit();
-            seed();
+            halos = TINTS.map((tint) => buildHalo(tint));
+            layout();
             rafId = requestAnimationFrame(frame);
         };
         img.src = "/logo-sun.png";
 
+        // Canvas = viewport size; body = document height (content loading / route change).
         const resizeObserver = new ResizeObserver(() => {
-            needsFit = true;
+            needsLayout = true;
         });
         resizeObserver.observe(canvas);
+        resizeObserver.observe(document.body);
         if (canHover) {
             window.addEventListener("mousemove", onMouseMove, { passive: true });
             window.addEventListener("mouseout", onMouseOut, { passive: true });
@@ -568,6 +775,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             window.removeEventListener("blur", onBlur);
             img.onload = null;
             sprites = [];
+            halos = [];
             suns.length = 0;
         };
     }, [overlay]);
