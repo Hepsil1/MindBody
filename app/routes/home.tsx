@@ -10,6 +10,7 @@ import BrandStories from "../components/BrandStories";
 import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
 import { readIgCache, checkImageVariantsExist } from "../services/instagram.server";
+import { IG_FALLBACK_CACHE } from "../data/ig-fallback";
 import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
@@ -501,74 +502,26 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         // NEVER calls Instagram here. Returns null until the first successful
         // scrape → we fall back to the EXACT previous hardcoded data (zero
         // regression; safe to ship before any credentials exist).
-        const ig = await readIgCache();
-        const instagramData: InstagramData = ig
-            ? {
-                  username: ig.username,
-                  profilePictureUrl: ig.profilePictureUrl,
-                  followersCount: formatFollowers(ig.followersCount, locale),
-                  postsCountDisplay: ig.postsCount.toLocaleString("uk-UA"),
-                  followersCountDisplay: formatFollowers(ig.followersCount, locale),
-                  followingCountDisplay: ig.followingCount.toLocaleString("uk-UA"),
-                  fullName: ig.fullName,
-                  biography: ig.biography,
-                  externalUrl: ig.externalUrl,
-                  highlights: ig.highlights?.map((h) => ({
-                      ...h,
-                      hasVariants: checkImageVariantsExist(h.cover),
-                  })),
-                  posts: ig.posts.map((p) => ({
-                      ...p,
-                      hasVariants: checkImageVariantsExist(p.mediaUrl),
-                  })),
-              }
-            : {
-                  // ── exact current hardcoded fallback (the curated grid) ──
-                  username: "mindbody_sportwear",
-                  followersCount: "63.9K",
-                  profilePictureUrl: "/logo-sun.png",
-                  postsCountDisplay: "2168",
-                  followersCountDisplay: "63,9 тис.",
-                  followingCountDisplay: "1257",
-                  posts: [
-                      {
-                          id: "1",
-                          mediaUrl: "/generalpics/333_131123.webp",
-                          permalink: "https://www.instagram.com/mindbody_sportwear/",
-                          hasVariants: checkImageVariantsExist("/generalpics/333_131123.webp"),
-                      },
-                      {
-                          id: "2",
-                          mediaUrl: "/generalpics/347_131123.webp",
-                          permalink: "https://www.instagram.com/mindbody_sportwear/",
-                          hasVariants: checkImageVariantsExist("/generalpics/347_131123.webp"),
-                      },
-                      {
-                          id: "3",
-                          mediaUrl: "/generalpics/374_131123.webp",
-                          permalink: "https://www.instagram.com/mindbody_sportwear/",
-                          hasVariants: checkImageVariantsExist("/generalpics/374_131123.webp"),
-                      },
-                      {
-                          id: "4",
-                          mediaUrl: "/generalpics/595_131123.webp",
-                          permalink: "https://www.instagram.com/mindbody_sportwear/",
-                          hasVariants: checkImageVariantsExist("/generalpics/595_131123.webp"),
-                      },
-                      {
-                          id: "5",
-                          mediaUrl: "/generalpics/588_131123.webp",
-                          permalink: "https://www.instagram.com/mindbody_sportwear/",
-                          hasVariants: checkImageVariantsExist("/generalpics/588_131123.webp"),
-                      },
-                      {
-                          id: "6",
-                          mediaUrl: "/generalpics/602_131123.webp",
-                          permalink: "https://www.instagram.com/mindbody_sportwear/",
-                          hasVariants: checkImageVariantsExist("/generalpics/602_131123.webp"),
-                      },
-                  ],
-              };
+        const ig = (await readIgCache()) || IG_FALLBACK_CACHE;
+        const instagramData: InstagramData = {
+            username: ig.username,
+            profilePictureUrl: ig.profilePictureUrl,
+            followersCount: formatFollowers(ig.followersCount, locale),
+            postsCountDisplay: ig.postsCount.toLocaleString("uk-UA"),
+            followersCountDisplay: formatFollowers(ig.followersCount, locale),
+            followingCountDisplay: ig.followingCount.toLocaleString("uk-UA"),
+            fullName: ig.fullName,
+            biography: ig.biography,
+            externalUrl: ig.externalUrl,
+            highlights: ig.highlights?.map((h) => ({
+                ...h,
+                hasVariants: checkImageVariantsExist(h.cover),
+            })),
+            posts: ig.posts.map((p) => ({
+                ...p,
+                hasVariants: checkImageVariantsExist(p.mediaUrl),
+            })),
+        };
 
         return {
             slides: slidesPayload,
@@ -590,28 +543,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     }
 }
 
-const FALLBACK_INSTAGRAM_POSTS: InstagramPost[] = [
-    {
-        id: "1",
-        mediaUrl: "/generalpics/333_131123.webp",
-        permalink: "https://www.instagram.com/mindbody_sportwear/",
-    },
-    {
-        id: "2",
-        mediaUrl: "/generalpics/347_131123.webp",
-        permalink: "https://www.instagram.com/mindbody_sportwear/",
-    },
-    {
-        id: "3",
-        mediaUrl: "/generalpics/374_131123.webp",
-        permalink: "https://www.instagram.com/mindbody_sportwear/",
-    },
-    {
-        id: "4",
-        mediaUrl: "/generalpics/595_131123.webp",
-        permalink: "https://www.instagram.com/mindbody_sportwear/",
-    },
-];
+const FALLBACK_INSTAGRAM_POSTS: InstagramPost[] = IG_FALLBACK_CACHE.posts;
 
 // Premium-features-bar icons — fixed in code, matched to the editable
 // homeFeatures.items by index (the texts are owner-editable, the iconography
@@ -700,25 +632,21 @@ export default function Home() {
     const { homeFeatures, homeBrandWorld }: SiteSettings = useSiteSettings();
     const igUsername = instagramData?.username || "mindbody_sportwear";
     const igProfilePic = instagramData?.profilePictureUrl || "/logo-sun.png";
-    const igFollowers = instagramData?.followersCountDisplay ?? t("63,9 тис.");
+    const igFollowers = instagramData?.followersCountDisplay ?? t("70,7 тис.");
 
     const postsToRender = instagramData?.posts?.length
         ? instagramData.posts
         : FALLBACK_INSTAGRAM_POSTS;
-    const igPostsCount = instagramData?.postsCountDisplay ?? "2168";
-    const igFollowing = instagramData?.followingCountDisplay ?? "1257";
+    const igPostsCount = instagramData?.postsCountDisplay ?? "2 355";
+    const igFollowing = instagramData?.followingCountDisplay ?? "1 315";
     const igHighlights = instagramData?.highlights ?? [];
     const igBio = instagramData?.biography || "";
     const igExternalUrl = instagramData?.externalUrl || "https://t.me/mindbody_sportwear";
     const igExternalLabel = igExternalUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
     const igFullName = instagramData?.fullName || "MIND BODY sport wear";
-    const hlToRender = igHighlights.length
+    const hlToRender: InstagramHighlight[] = igHighlights.length
         ? igHighlights
-        : ["SALE", "SALE FLUID", "SALE SET", "ВІДГУКИ 11"].map((title, i) => ({
-              id: `fb-${i}`,
-              title,
-              cover: postsToRender[i % postsToRender.length]?.mediaUrl || "/logo-sun.png",
-          }));
+        : (IG_FALLBACK_CACHE.highlights ?? []);
 
     const igScrollRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -1332,7 +1260,7 @@ export default function Home() {
                                             loop={false}
                                             muted
                                             playsInline
-                                            preload={i === 0 ? "auto" : "metadata"}
+                                            preload="none"
                                             onEnded={() => {
                                                 const nextIdx = (i + 1) % videoPlaylist.length;
                                                 // Advances the crossfade AND the quiet feature
@@ -1373,7 +1301,7 @@ export default function Home() {
                                             loop
                                             muted
                                             playsInline
-                                            preload="metadata"
+                                            preload="none"
                                         >
                                             <source src={videoPlaylist[n]} type="video/mp4" />
                                         </video>
@@ -1830,16 +1758,20 @@ export default function Home() {
                                                             <div className="ig-ui-hl-ring">
                                                                 <div className="ig-ui-hl-img">
                                                                     <picture>
-                                                                        <source
-                                                                            srcSet={buildWebpSrcset(
-                                                                                hl.cover,
-                                                                            )}
-                                                                            sizes="64px"
-                                                                            type="image/webp"
-                                                                        />
+                                                                        {hl.hasVariants && (
+                                                                            <source
+                                                                                srcSet={buildWebpSrcset(
+                                                                                    hl.cover,
+                                                                                )}
+                                                                                sizes="64px"
+                                                                                type="image/webp"
+                                                                            />
+                                                                        )}
                                                                         <img
                                                                             src={hl.cover}
                                                                             alt={hl.title}
+                                                                            width="64"
+                                                                            height="64"
                                                                             loading="lazy"
                                                                             decoding="async"
                                                                         />
@@ -1925,19 +1857,21 @@ export default function Home() {
                                                                 instantly; alt="" → no "Post N" text
                                                                 flashes while a lazy tile loads. */}
                                                             <picture>
-                                                                <source
-                                                                    srcSet={buildWebpSrcset(
-                                                                        post.mediaUrl,
-                                                                    )}
-                                                                    sizes="(max-width: 768px) 33vw, 120px"
-                                                                    type="image/webp"
-                                                                />
+                                                                {post.hasVariants && (
+                                                                    <source
+                                                                        srcSet={buildWebpSrcset(
+                                                                            post.mediaUrl,
+                                                                        )}
+                                                                        sizes="(max-width: 768px) 33vw, 120px"
+                                                                        type="image/webp"
+                                                                    />
+                                                                )}
                                                                 <img
                                                                     src={post.mediaUrl}
                                                                     alt=""
-                                                                    loading={
-                                                                        i < 9 ? "eager" : "lazy"
-                                                                    }
+                                                                    width="120"
+                                                                    height="120"
+                                                                    loading="lazy"
                                                                     decoding="async"
                                                                 />
                                                             </picture>
