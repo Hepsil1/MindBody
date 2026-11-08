@@ -28,8 +28,19 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
 
         const isMobile = window.innerWidth <= 768;
 
-        let width = (canvas.width = window.innerWidth);
-        let height = (canvas.height = window.innerHeight);
+        // Crisp on retina/phones: back the canvas with device pixels (capped at 2x),
+        // keep drawing in CSS pixels via the transform.
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        const fitCanvas = () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = Math.round(width * dpr);
+            canvas.height = Math.round(height * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        };
+        fitCanvas();
 
         const sunImage = new Image();
         sunImage.src = "/logo-sun.png";
@@ -64,7 +75,14 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             alpha: number;
             /** index into `tinted`, or -1 = the original art */
             tint: number;
+            /** personal phase for the slow "breathing" of opacity */
+            phase: number;
+            /** 0..1 — how awake the logo is (smoothed proximity to the cursor) */
+            glow: number;
+            /** timestamp (ms) when the next rare glint starts */
+            glintAt: number;
         }
+        const GLINT_MS = 2600;
         const particles: SunParticle[] = [];
         // Shared physics across under and overlay: free-floating particles drifting,
         // wrapping, and repelling. Overlay has more (smaller) suns drifting at ~40% speed.
@@ -101,12 +119,15 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                     alpha: overlay ? Math.random() * 0.12 + 0.08 : Math.random() * 0.08 + 0.07,
                     // Cycle through the brand tints so all colours are present site-wide
                     tint: tinted.length > 0 ? i % tinted.length : -1,
+                    phase: Math.random() * Math.PI * 2,
+                    glow: 0,
+                    glintAt: performance.now() + 6000 + Math.random() * 30000,
                 });
             }
-            render();
+            render(performance.now());
         };
 
-        const render = () => {
+        const render = (now: number) => {
             if (disposed) return;
             animationFrameId = requestAnimationFrame(render);
 
@@ -120,17 +141,22 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 p.y += p.vy;
                 p.rotation += p.rotSpeed;
 
-                // Mouse repulsion — desktop only, disabled under reduced-motion
+                // Mouse repulsion — desktop only, disabled under reduced-motion.
+                // The same pass "wakes" the logo: glow eases toward 1 near the cursor
+                // and back to 0 away from it (no push-back change, just a soft light).
+                let glowTarget = 0;
                 if (!isMobile && !hasReducedMotion) {
                     const dx = mouseX - p.x;
                     const dy = mouseY - p.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
-                    if (distance < 300) {
+                    if (distance < 300 && distance > 0.001) {
                         const force = (300 - distance) / 300;
                         p.vx -= (dx / distance) * force * 0.08;
                         p.vy -= (dy / distance) * force * 0.08;
                     }
+                    if (distance < 260) glowTarget = 1 - distance / 260;
                 }
+                p.glow += (glowTarget - p.glow) * 0.04;
 
                 // Particle repulsion — desktop only (O(n²), skip on mobile), scaled by motionFactor
                 if (!isMobile) {
@@ -139,7 +165,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                             const dx2 = p2.x - p.x;
                             const dy2 = p2.y - p.y;
                             const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-                            if (dist2 < 280) {
+                            if (dist2 < 280 && dist2 > 0.001) {
                                 const force2 = (280 - dist2) / 280;
                                 p.vx -= (dx2 / dist2) * force2 * 0.015 * motionFactor;
                                 p.vy -= (dy2 / dist2) * force2 * 0.015 * motionFactor;
@@ -171,17 +197,27 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 ctx.save();
                 ctx.translate(p.x, p.y);
                 ctx.rotate(p.rotation);
-                ctx.globalAlpha = p.alpha;
+                // Charm, barely perceptible: slow silk-like breathing (±22%, ~10–14 s
+                // period), a gentle brightening when the cursor passes, and a rare
+                // 2.6 s glint, like sunlight catching the fabric.
+                const breath = 1 + 0.22 * Math.sin(now * 0.00052 + p.phase);
+                let glint = 0;
+                if (now >= p.glintAt) {
+                    const t = (now - p.glintAt) / GLINT_MS;
+                    if (t < 1) glint = Math.sin(t * Math.PI);
+                    else p.glintAt = now + 20000 + Math.random() * 40000;
+                }
+                ctx.globalAlpha = Math.min(
+                    0.5,
+                    p.alpha * breath * (1 + 0.9 * p.glow + 0.7 * glint),
+                );
                 const art = p.tint >= 0 ? tinted[p.tint] : sunImage;
                 ctx.drawImage(art, -p.size / 2, -p.size / 2, p.size, p.size);
                 ctx.restore();
             });
         };
 
-        const handleResize = () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        };
+        const handleResize = fitCanvas;
 
         const handleMouseMove = (e: MouseEvent) => {
             mouseX = e.clientX;
