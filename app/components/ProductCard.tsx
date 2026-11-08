@@ -94,6 +94,7 @@ export default function ProductCard({
     // swatch opens the PDP already switched to that colour (?color=). Colours
     // without their own photos still link through, they just don't preview.
     const [activeColor, setActiveColor] = useState<string | null>(null);
+    const [isCardHovered, setIsCardHovered] = useState(false);
     const activeGallery =
         activeColor && colorImages?.[activeColor]?.length ? colorImages[activeColor] : null;
     // Main image follows the previewed colour; the CSS hover-swap image is the
@@ -159,7 +160,11 @@ export default function ProductCard({
             <article
                 className={`product-card ${!is_stock ? "product-card--sold-out" : ""}`}
                 data-product-id={id}
-                onMouseLeave={() => setActiveColor(null)}
+                onMouseEnter={() => setIsCardHovered(true)}
+                onMouseLeave={() => {
+                    setActiveColor(null);
+                    setIsCardHovered(false);
+                }}
             >
                 <div
                     className="product-card__image-wrapper"
@@ -199,31 +204,33 @@ export default function ProductCard({
                                 height="533"
                             />
                         </picture>
-                        {hoverImage && (
-                            <picture>
-                                <source
-                                    key={`avif-h-${hoverImage}`}
-                                    srcSet={buildAvifSrcset(hoverImage)}
-                                    sizes={imageSizes}
-                                    type="image/avif"
-                                />
-                                <source
-                                    key={`webp-h-${hoverImage}`}
-                                    srcSet={buildWebpSrcset(hoverImage)}
-                                    sizes={imageSizes}
-                                    type="image/webp"
-                                />
-                                <img
-                                    src={hoverImage}
-                                    alt={name}
-                                    className="product-card__img product-card__img--hover"
-                                    loading="lazy"
-                                    decoding="async"
-                                    width="400"
-                                    height="533"
-                                />
-                            </picture>
-                        )}
+                        {(isCardHovered || activeColor) &&
+                            hoverImage &&
+                            hoverImage !== mainImage && (
+                                <picture>
+                                    <source
+                                        key={`avif-h-${hoverImage}`}
+                                        srcSet={buildAvifSrcset(hoverImage)}
+                                        sizes={imageSizes}
+                                        type="image/avif"
+                                    />
+                                    <source
+                                        key={`webp-h-${hoverImage}`}
+                                        srcSet={buildWebpSrcset(hoverImage)}
+                                        sizes={imageSizes}
+                                        type="image/webp"
+                                    />
+                                    <img
+                                        src={hoverImage}
+                                        alt={name}
+                                        className="product-card__img product-card__img--hover"
+                                        loading="lazy"
+                                        decoding="async"
+                                        width="400"
+                                        height="533"
+                                    />
+                                </picture>
+                            )}
                         {!is_stock && (
                             <div className="product-card__soldout-overlay" aria-hidden="true">
                                 <span>{t("Немає в наявності")}</span>

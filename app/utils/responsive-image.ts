@@ -78,3 +78,26 @@ export function buildAvifSrcset(url: string): string {
         `${base}.avif ${MASTER_WIDTH_DESCRIPTOR}w`,
     ].join(", ");
 }
+
+/**
+ * Direct URL to a pre-generated responsive variant.
+ * Ideal for small thumbnails (e.g. PDP 80×80 thumbs) or preview chips
+ * to avoid downloading the multi-megabyte master image.
+ */
+export function getOptimizedImageUrl(
+    url: string | undefined | null,
+    width: 400 | 800 | 1200 | 1600 = 400,
+    format: "webp" | "avif" = "webp",
+): string {
+    if (!url) return "";
+    if (
+        url.startsWith("data:") ||
+        url.startsWith("http://") ||
+        url.startsWith("https://") ||
+        url.endsWith(".svg")
+    ) {
+        return url;
+    }
+    const base = stripExt(url);
+    return `${base}-${width}w.${format}`;
+}

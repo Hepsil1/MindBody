@@ -1045,7 +1045,7 @@ export default function ShopCategory() {
                 <div className="container">
                     <div className="luxe-grid">
                         {/* MIND BODY x Puma Hybrid Sidebar */}
-                        <aside className="mb-shop-sidebar">
+                        <aside className="mb-shop-sidebar" data-lenis-prevent="true">
                             <div className="sidebar-header">
                                 <h3>{t("ФІЛЬТРИ")}</h3>
                             </div>
@@ -1293,7 +1293,7 @@ export default function ShopCategory() {
                                                 key={product.id || `product-${idx}`}
                                                 className="luxe-card-wrapper"
                                             >
-                                                <ProductCard product={product} priority={idx < 4} />
+                                                <ProductCard product={product} priority={idx < 6} />
                                             </div>
                                         ))}
                                     </div>

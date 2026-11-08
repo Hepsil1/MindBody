@@ -12,7 +12,7 @@ import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
 import { AuthUtils } from "../utils/auth";
 import { WishlistAuthModal } from "../components/WishlistAuthModal";
-import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
+import { buildWebpSrcset, buildAvifSrcset, getOptimizedImageUrl } from "../utils/responsive-image";
 import { shopPageTitle, isRealShopSlug } from "../utils/shop-pages";
 import { DEFAULT_SITE_URL, resolveSiteUrl } from "../utils/site-url";
 import { useI18n, useMoney, LLink, getT } from "../i18n";
@@ -168,7 +168,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
                 ".avif",
             ),
             imageSrcSet: product.images?.[0] ? buildAvifSrcset(product.images[0]) : undefined,
-            imageSizes: "(max-width: 768px) 100vw, 50vw",
+            imageSizes: "(max-width: 768px) 100vw, (max-width: 1024px) 92vw, 44vw",
             fetchPriority: "high",
         },
     ];
@@ -696,16 +696,19 @@ export default function ProductDetail() {
                                     {galleryImages.map((img: string, idx: number) => (
                                         <div key={idx} className="pdp-mobile-gallery__slide">
                                             <picture>
-                                                {/* AVIF first — matches the <link rel=preload> in meta()
-                                                    (which preloads the AVIF srcset). WebP-only here made
-                                                    that preload a guaranteed cache miss → the LCP image
-                                                    downloaded TWICE on mobile. */}
+                                                {/* On desktop (>=768.02px), serve 1px transparent gif to prevent eager download */}
                                                 <source
+                                                    media="(min-width: 768.02px)"
+                                                    srcSet="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                                                />
+                                                <source
+                                                    media="(max-width: 768px)"
                                                     srcSet={buildAvifSrcset(img)}
                                                     sizes="100vw"
                                                     type="image/avif"
                                                 />
                                                 <source
+                                                    media="(max-width: 768px)"
                                                     srcSet={buildWebpSrcset(img)}
                                                     sizes="100vw"
                                                     type="image/webp"
@@ -747,9 +750,19 @@ export default function ProductDetail() {
                                         >
                                             <div className="thumb-inner">
                                                 {/* Square thumb container with CSS object-fit cover;
-                                                width/height attrs reserve space before image loads. */}
+                                                width/height attrs reserve space before image loads.
+                                                Uses 400w WebP thumbnail instead of multi-megabyte master. */}
                                                 <img
-                                                    src={img}
+                                                    src={
+                                                        getOptimizedImageUrl(img, 400, "webp") ||
+                                                        img
+                                                    }
+                                                    onError={(e) => {
+                                                        if (!e.currentTarget.dataset.fb) {
+                                                            e.currentTarget.dataset.fb = "1";
+                                                            e.currentTarget.src = img;
+                                                        }
+                                                    }}
                                                     alt=""
                                                     width="80"
                                                     height="80"
@@ -772,8 +785,14 @@ export default function ProductDetail() {
                                     {/* Responsive variants (was a plain full-master <img>,
                                         ~300-400 KB even on a 600px-wide column). The desktop
                                         gallery column is ~44vw. */}
-                                    <picture>
+                                    <picture className="main-visual-picture">
+                                        {/* On mobile (<=768px), serve 1px transparent gif to prevent eager download */}
                                         <source
+                                            media="(max-width: 768px)"
+                                            srcSet="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+                                        />
+                                        <source
+                                            media="(min-width: 768.02px)"
                                             srcSet={buildAvifSrcset(
                                                 galleryImages[activeImage] || galleryImages[0],
                                             )}
@@ -781,6 +800,7 @@ export default function ProductDetail() {
                                             type="image/avif"
                                         />
                                         <source
+                                            media="(min-width: 768.02px)"
                                             srcSet={buildWebpSrcset(
                                                 galleryImages[activeImage] || galleryImages[0],
                                             )}
@@ -791,6 +811,9 @@ export default function ProductDetail() {
                                             src={galleryImages[activeImage] || galleryImages[0]}
                                             alt={product.name}
                                             className="main-img"
+                                            loading="eager"
+                                            decoding="async"
+                                            fetchPriority="high"
                                         />
                                     </picture>
                                 </div>
