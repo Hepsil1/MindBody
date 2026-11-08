@@ -27,7 +27,7 @@ const CSP = [
     // after cookie-consent AND only when VITE_META_PIXEL_ID is set (empty today,
     // so dormant) — pre-listed so the Pixel works the moment an id is added
     // instead of being silently CSP-blocked.
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://connect.facebook.net",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://connect.facebook.net https://static.cloudflareinsights.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     // 'https:' already covers GA + Meta image beacons (google-analytics.com,
     // www.facebook.com/tr, etc.).
@@ -35,7 +35,8 @@ const CSP = [
     "font-src 'self' data: https://fonts.gstatic.com",
     // GA4 sends hits/config over connect-src (collect endpoint + regional hosts).
     // www.facebook.com is the Meta Pixel's fetch/sendBeacon target (dormant, see above).
-    "connect-src 'self' https://api.novaposhta.ua https://api.telegram.org https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.facebook.com https://connect.facebook.net",
+    // cloudflareinsights.com is Cloudflare Web Analytics beacon target.
+    "connect-src 'self' https://cloudflareinsights.com https://api.novaposhta.ua https://api.telegram.org https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.facebook.com https://connect.facebook.net",
     // 'self' (not 'none') so the admin visual editor can iframe-preview our own
     // storefront. Cross-origin framing (clickjacking) is still blocked.
     "frame-ancestors 'self'",
