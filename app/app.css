@@ -14117,8 +14117,9 @@ body:has(.filter-drawer-overlay) .floating-contact {
    PREMIUM FEATURES BAR (ICON + TEXT 4-COL GRID)
    ======================================== */
 
-/* Shop Collections Group (Shared Alt Background) */
+/* Shop Collections Group (Unified seamless background) */
 .shop-collections-group {
+    background: transparent !important;
     padding-bottom: 100px;
 }
 

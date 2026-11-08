@@ -1688,7 +1688,7 @@
     }
 }
 .premium-features-bar {
-    background: #fafafa;
+    background: transparent;
     padding: 32px 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
@@ -3215,6 +3215,10 @@
 /* =============================================
    NEW ARRIVALS — CAROUSEL
    ============================================= */
+
+.new-arrivals {
+    background: transparent !important;
+}
 
 .new-arrivals-header {
     display: flex;
@@ -5582,6 +5586,7 @@
    Big intrinsic reserve so the scrollbar/anchor math stays stable before
    first render (the `auto` keyword then locks the real measured height). */
 .shop-collections-group {
+    background: transparent !important;
     content-visibility: auto;
     contain-intrinsic-size: auto 2600px;
 }

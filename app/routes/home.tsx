@@ -985,7 +985,7 @@ export default function Home() {
             </EditorAffordance>
 
             {/* Unified Collections Group (Categories + New Arrivals) */}
-            <section className="section section--alt shop-collections-group">
+            <section className="section shop-collections-group">
                 <div className="logo-pattern-bg"></div>
                 {/* Sub-section: Categories */}
                 <div className="container collections-container" id="shop">
