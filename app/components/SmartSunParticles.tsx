@@ -35,17 +35,20 @@ import { useEffect, useRef } from "react";
  *  5. No scroll LISTENER: scrollY is just read once per frame, so scrolling (native
  *     or Lenis) never pauses the suns.
  *
- * Look: quiet luxury. Deep teal, plum, lavender, dusty rose and charcoal — no yellow,
- * no amber, no terracotta. Opacity 0.08–0.16: a watermark on silk. No flashes, no
- * halo, no size swell: the only "event" is the cursor.
+ * Look: clean, noble brand colour — emerald teal, marsala, lavender, warm powder rose
+ * and bronze/mocha. NO grey, no yellow, no amber. Opacity 0.16–0.28: enough for the
+ * pigment to read as colour on cream paper without shouting. Soft sinusoidal breath.
  *
- * The cursor
- *  - SILKY CURL: a sun within ~260 px slides gently AROUND the cursor on the side it
- *    was already on (latched for the whole encounter, so it never flips mid-arc) with
- *    a faint outward push and a slow spin-up. A head-on sun keeps ≥ 80 % of its cruise
- *    speed — it yields, it never freezes. Nothing brightens, nothing glows.
+ * The cursor (alive, but light)
+ *  - YIELD: a sun within 220 px visibly slides out of the way — pushed outward and
+ *    curled around the cursor on the side it was already on (latched for the whole
+ *    encounter, so it never flips mid-arc), at ~1.5–2.5 px/frame near the cursor.
+ *  - SPIN: the breath of the mouse spins the sun up, softly.
+ *  - AWAKENING: the sun glows up to +30 % brighter while the cursor is near, then
+ *    eases back.
+ *  - RETURN: when the cursor leaves, speed and glow relax back to the calm drift.
  *  - WAKE: a quick stroke of the cursor drags the air — suns beside the path get a
- *    small one-off nudge along it and settle again.
+ *    one-off nudge along it and settle again.
  *  - SCROLL GUST: fast scrolling adds a little extra spin.
  * ──────────────────────────────────────────────────────────────────────────── */
 
@@ -57,7 +60,8 @@ interface SmartSunParticlesProps {
      * Both share one motion model and never pause. Under prefers-reduced-motion
      * (the owner browses with it ON) the drift stays — owner decision — same speeds
      * (0.20–0.45 px/frame), with little spin, no parallax, no wake/scroll gust; the
-     * cursor still moves the suns, in a gentler key (×0.7).
+     * cursor still visibly moves, spins and wakes the suns (×0.9) — the owner must
+     * see the reaction.
      */
     variant?: "under" | "overlay";
 }
@@ -70,7 +74,8 @@ const rand = (min: number, max: number) => min + Math.random() * (max - min);
 // ── Brand pigments ───────────────────────────────────────────────────────────
 // Each sun is painted with a diagonal "silk" sheen (light → body → shade).
 // `boost` trims opacity so pale and dark pigments carry equal visual weight on
-// the cream paper (dark marsala is trimmed, pale rose-gold is lifted).
+// the cream paper (dark marsala is trimmed, pale rose is lifted). All pigments are
+// saturated hues — no grey/graphite, which turns to dirty dust at low alpha.
 interface Tint {
     light: string;
     base: string;
@@ -78,16 +83,16 @@ interface Tint {
     boost: number;
 }
 const TINTS: Tint[] = [
-    // deep teal / sage
-    { light: "#6fa8a0", base: "#2f6f6a", deep: "#1d4745", boost: 0.95 },
-    // royal plum / marsala (brand --color-marsala family)
-    { light: "#a8566e", base: "#6b2d45", deep: "#3f1827", boost: 0.92 },
-    // soft lavender / amethyst
-    { light: "#cdbdf0", base: "#9b82cc", deep: "#6a4f9e", boost: 1.1 },
-    // dusty rose / cashmere
-    { light: "#e8c1bd", base: "#c18a8c", deep: "#8e5a63", boost: 1.15 },
-    // charcoal / soft anthracite slate
-    { light: "#7c8590", base: "#424a55", deep: "#262b33", boost: 0.95 },
+    // emerald teal
+    { light: "#14b8a6", base: "#0f766e", deep: "#0c5c56", boost: 0.96 },
+    // noble marsala / wine
+    { light: "#9e2a2b", base: "#802234", deep: "#651a29", boost: 0.92 },
+    // tender violet / lavender
+    { light: "#9d71bc", base: "#7c5295", deep: "#63407a", boost: 1.02 },
+    // warm powder rose
+    { light: "#d98287", base: "#c97a7e", deep: "#ad6166", boost: 1.08 },
+    // noble bronze / mocha
+    { light: "#a06c48", base: "#9c6644", deep: "#7c4e32", boost: 0.98 },
 ];
 
 // ── Sprites ──────────────────────────────────────────────────────────────────
@@ -191,34 +196,39 @@ const MAX_SUNS = { desktop: 150, mobile: 72 };
 const PARALLAX_MIN = 0.8;
 
 // ── Cursor (desktop) ─────────────────────────────────────────────────────────
-const CURSOR_RADIUS = 260;
-/** px/s outward at the cursor's centre — a whisper. */
-const CURSOR_PUSH = 9;
-/** px/s sideways at the cursor's centre — larger than the push, so suns flow AROUND it. */
-const CURSOR_SLIDE = 19;
-/** Ceiling on the desired speed (px/s) ≈ 0.55 px/frame: even near the cursor, calm. */
-const MAX_DESIRED = 33;
+const CURSOR_RADIUS = 220;
+/** px/s outward at the cursor's centre (≈ 2 px/frame) — the sun clearly yields. */
+const CURSOR_PUSH = 105;
+/** px/s sideways at the cursor's centre — the sun flows AROUND, not just away. */
+const CURSOR_SLIDE = 55;
+/** Ceiling on the desired speed (px/s) = 2.5 px/frame: lively near the cursor, never frantic. */
+const MAX_DESIRED = 150;
+/** Steering time constant (s) at the cursor's centre: the sun reacts fast, then
+ *  RELAX_S takes over again as the cursor leaves → smooth return to the calm drift. */
+const RELAX_NEAR_S = 0.22;
 /** Wake: cursor velocity (capped, px/s) → acceleration of nearby suns. Equilibrium
- *  push ≈ cap · KICK · RELAX_S ≈ 14 px/s at the strongest stroke. */
-const WAKE_KICK = 0.01;
+ *  push ≈ cap · KICK · RELAX_S ≈ 40 px/s at the strongest stroke. */
+const WAKE_KICK = 0.03;
 const WAKE_CAP = 1400;
-/** Hard ceiling on a sun's real speed (px/s) ≈ 0.6 px/frame, whatever the wake does. */
-const MAX_SPEED = 36;
+/** Hard ceiling on a sun's real speed (px/s) ≈ 2.8 px/frame, whatever the wake does. */
+const MAX_SPEED = 168;
 /** Spin (rad/s) in the sense of the curl, and extra spin from a scroll gust. */
-const SPIN_AWAKE = 0.35;
+const SPIN_AWAKE = 1.1;
 const SPIN_GUST = 0.3;
 const GUST_FULL = 2400; // px/s of scroll that counts as a full gust
+/** Cursor awakening: opacity gain (fraction) at the cursor's centre. */
+const GLOW = 0.3;
 
 // ── Opacity ──────────────────────────────────────────────────────────────────
-const ALPHA_LO = 0.08;
-const ALPHA_HI = 0.16;
+const ALPHA_LO = 0.16;
+const ALPHA_HI = 0.28;
 /** Per-sun clamp after the pigment boost. */
-const ALPHA_MIN = 0.07;
-const ALPHA_MAX = 0.18;
-/** Breathing, ± fraction of the sun's own opacity. */
-const BREATH = 0.12;
-/** Absolute ceiling of any sun's opacity, breath included. */
-const ALPHA_CAP = 0.22;
+const ALPHA_MIN = 0.16;
+const ALPHA_MAX = 0.28;
+/** Breathing (sinusoidal), ± fraction of the sun's own opacity. */
+const BREATH = 0.14;
+/** Absolute ceiling of any sun's opacity, breath and cursor glow included. */
+const ALPHA_CAP = 0.42;
 
 interface Sun {
     /** page space: x across, y down the whole document (layer coordinates, see k) */
@@ -255,6 +265,8 @@ interface Sun {
     side: 1 | -1;
     /** true while inside the cursor radius (side is latched on entry) */
     engaged: boolean;
+    /** cursor awakening 0..1, eased in fast and out slowly */
+    glow: number;
     /** timestamp (ms) when the fade-in starts */
     born: number;
 }
@@ -431,6 +443,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 tint,
                 side: Math.random() < 0.5 ? -1 : 1,
                 engaged: false,
+                glow: 0,
                 born: now + delay,
             };
         };
@@ -492,7 +505,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             const spinScale = reduced ? 0.3 : 1;
             // Pointer play stays under reduced motion (it is user-initiated), but gentler.
             const interactive = canHover;
-            const cursorMax = reduced ? 0.7 : 1;
+            const cursorMax = reduced ? 0.9 : 1;
 
             // Cursor eased on both position and influence: no pops on enter / leave.
             let wakeX = 0;
@@ -504,10 +517,10 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                     cursorVx = 0;
                     cursorVy = 0;
                 } else {
-                    const follow = 1 - Math.exp(-dt / 0.06);
+                    const follow = 1 - Math.exp(-dt / 0.04);
                     const nx = cursorX + (mouseX - cursorX) * follow;
                     const ny = cursorY + (mouseY - cursorY) * follow;
-                    const vf = 1 - Math.exp(-dt / 0.1);
+                    const vf = 1 - Math.exp(-dt / 0.08);
                     cursorVx += ((nx - cursorX) / dt - cursorVx) * vf;
                     cursorVy += ((ny - cursorY) / dt - cursorVy) * vf;
                     cursorX = nx;
@@ -522,7 +535,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 }
             }
             const gainTarget = interactive && mouseActive ? cursorMax : 0;
-            cursorGain += (gainTarget - cursorGain) * (1 - Math.exp(-dt / 0.35));
+            cursorGain += (gainTarget - cursorGain) * (1 - Math.exp(-dt / 0.2));
 
             // Scroll gust: how hard the page is being stirred right now (smoothed).
             const sv = (scrollY - lastScrollY) / dt;
@@ -531,8 +544,10 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
             const gust = reduced ? 0 : clamp01(Math.abs(scrollVel) / GUST_FULL);
 
             const relax = 1 - Math.exp(-dt / RELAX_S);
-            const spinUp = 1 - Math.exp(-dt / 0.45);
+            const spinUp = 1 - Math.exp(-dt / 0.3);
             const spinDown = 1 - Math.exp(-dt / 1.2);
+            const glowUp = 1 - Math.exp(-dt / 0.25);
+            const glowDown = 1 - Math.exp(-dt / 0.9);
 
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -563,6 +578,9 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 // 2) Cursor (viewport space): curl round it on the side the sun is on, nudge
                 //    outward, and let the wake of a quick stroke carry it a little.
                 let curl = 0;
+                // near: 0..1 proximity-weighted cursor influence on this sun (drives
+                // steering speed and glow); stays 0 when the cursor is away.
+                let near = 0;
                 if (cursorGain > 0.002) {
                     const rx = s.x - cursorX;
                     const ry = s.y - scrollY * k - cursorY;
@@ -571,7 +589,10 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                         const d = Math.sqrt(d2);
                         const nx = rx / d;
                         const ny = ry / d;
-                        const w = smooth(1 - d / CURSOR_RADIUS) * cursorGain;
+                        // Plateau in the inner ~20 % so the reaction is felt across the
+                        // whole zone, with a soft edge (no hard ring).
+                        const w = smooth(clamp01(1.25 * (1 - d / CURSOR_RADIUS))) * cursorGain;
+                        near = w;
                         let sx = -ny;
                         let sy = nx;
                         if (!s.engaged) {
@@ -615,8 +636,15 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 }
 
                 // 4) Steer (silky relaxation toward the desired velocity), then move.
-                s.vx += (tx - s.vx) * relax;
-                s.vy += (ty - s.vy) * relax;
+                // Near the cursor the sun steers quickly (it clearly reacts); away from it,
+                // slowly again — which is also what makes the return silky.
+                s.glow += (near - s.glow) * (near > s.glow ? glowUp : glowDown);
+                const steer =
+                    near > 0.001
+                        ? 1 - Math.exp(-dt / (RELAX_S - (RELAX_S - RELAX_NEAR_S) * near))
+                        : relax;
+                s.vx += (tx - s.vx) * steer;
+                s.vy += (ty - s.vy) * steer;
                 const sp = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
                 if (sp > MAX_SPEED) {
                     s.vx *= MAX_SPEED / sp;
@@ -629,7 +657,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 // scroll gust, all eased (up fast-ish, down slowly) — never a snap.
                 const spinTarget =
                     s.spin * spinScale +
-                    curl * SPIN_AWAKE * (reduced ? 0.45 : 1) +
+                    curl * SPIN_AWAKE * (reduced ? 0.8 : 1) +
                     (s.spin < 0 ? -1 : 1) * SPIN_GUST * gust;
                 s.omega +=
                     (spinTarget - s.omega) *
@@ -669,10 +697,10 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 const tiers = sprites[s.tint];
                 if (!tiers || !tiers.length) continue;
 
-                // 7) Draw: breathing opacity only — a watermark on silk. No flash, no halo.
+                // 7) Draw: sinusoidal breath + the cursor's soft awakening (up to +GLOW).
                 const intro = smooth(clamp01((now - s.born) / 1200));
                 const breath = 1 + BREATH * Math.sin((t * TAU) / s.breathPeriod + s.breathPhase);
-                const alpha = Math.min(ALPHA_CAP, s.alpha * breath) * intro;
+                const alpha = Math.min(ALPHA_CAP, s.alpha * breath * (1 + GLOW * s.glow)) * intro;
 
                 const dev = q * dpr;
                 let sprite = tiers[tiers.length - 1];
