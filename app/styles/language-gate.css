@@ -106,13 +106,95 @@
     letter-spacing: 0.04em;
 }
 
-@media (max-width: 480px) {
-    .lang-gate__card {
-        padding: 28px 20px 22px;
+@media (max-width: 768px) {
+    .lang-gate {
+        inset: auto 0 0 0;
+        background: none;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        pointer-events: none;
+        padding: 0 12px calc(12px + env(safe-area-inset-bottom, 12px));
+        z-index: 900; /* below header (1000) and cart (1100) */
+        align-items: flex-end;
     }
 
-    .lang-gate__title {
-        font-size: 24px;
+    .lang-gate__card {
+        pointer-events: auto;
+        max-width: none;
+        padding: 10px 14px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(15, 31, 36, 0.22);
+        border: 1px solid rgba(42, 90, 104, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        text-align: left;
+    }
+
+    .lang-gate__mobile-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        flex-shrink: 1;
+    }
+
+    .lang-gate__mobile-sun {
+        width: 22px;
+        height: 22px;
+        flex-shrink: 0;
+    }
+
+    .lang-gate__mobile-title {
+        margin: 0;
+        font-family: "Onest", serif;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--color-primary, #2a5a68);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .lang-gate__mobile-options {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .lang-gate__mobile-option {
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--color-primary, #2a5a68);
+        background: #fff;
+        border: 1px solid rgba(42, 90, 104, 0.2);
+        border-radius: 8px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .lang-gate__mobile-option--active {
+        background: var(--color-primary, #2a5a68);
+        color: #fff;
+        border-color: var(--color-primary, #2a5a68);
+    }
+
+    .lang-gate__mobile-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        background: transparent;
+        border: none;
+        color: rgba(42, 90, 104, 0.7);
+        cursor: pointer;
+        border-radius: 50%;
+        flex-shrink: 0;
     }
 }
 

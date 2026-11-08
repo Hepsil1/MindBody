@@ -5367,8 +5367,8 @@
     .brand-stories__seg {
         flex: 1 1 0;
         /* thin visible bar, but a tall invisible hit area */
-        padding: 9px 0;
-        margin: -9px 0;
+        padding: 16px 0;
+        margin: -16px 0;
         background: none;
         border: 0;
         cursor: pointer;

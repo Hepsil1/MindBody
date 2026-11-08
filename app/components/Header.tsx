@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { StorageUtils } from "../utils/storage";
 import { AuthUtils, type User } from "../utils/auth";
@@ -149,6 +149,23 @@ export function Header() {
     const [isSearching, setIsSearching] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Auto-close mobile menu on any route change
+    useEffect(() => {
+        setIsMenuOpen(false);
+    }, [location.pathname]);
+
+    // Scroll-lock on documentElement when mobile menu is open (preserves body overflow-x: clip for sticky sidebar)
+    useEffect(() => {
+        if (!isMenuOpen) return;
+        const html = document.documentElement;
+        const prev = html.style.overflow;
+        html.style.overflow = "hidden";
+        return () => {
+            html.style.overflow = prev;
+        };
+    }, [isMenuOpen]);
 
     useEffect(() => {
         const updateCounts = () => {

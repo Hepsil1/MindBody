@@ -14952,3 +14952,74 @@ select {
         font-size: 1.2rem;
     }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Mobile Touch Targets Enhancement (WCAG 2.5.5 - min 44x44px hit areas)
+   Active ONLY on coarse pointers (touchscreens/mobile) so desktop cursor
+   layout remains 100% pixel-perfect. Uses pure ::after pseudo-elements
+   to expand the interactive hit-area without changing the visible geometry.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (pointer: coarse) {
+    .header__logo {
+        position: relative;
+    }
+    .header__logo::after {
+        content: "";
+        position: absolute;
+        inset: 50% auto auto 50%;
+        width: max(100%, 48px);
+        height: 44px;
+        transform: translate(-50%, -50%);
+    }
+
+    .footer-puma__social-link {
+        position: relative;
+    }
+    .footer-puma__social-link::after {
+        content: "";
+        position: absolute;
+        inset: 50% auto auto 50%;
+        width: 44px;
+        height: 44px;
+        transform: translate(-50%, -50%);
+    }
+
+    .footer-puma__phone-cta {
+        position: relative;
+    }
+    .footer-puma__phone-cta::after {
+        content: "";
+        position: absolute;
+        inset: 50% auto auto 50%;
+        width: max(100%, 44px);
+        height: 44px;
+        transform: translate(-50%, -50%);
+    }
+
+    .ig-ui-mention,
+    .ig-ui-link {
+        position: relative;
+        display: inline-block;
+    }
+    .ig-ui-mention::after,
+    .ig-ui-link::after {
+        content: "";
+        position: absolute;
+        inset: 50% auto auto 50%;
+        width: max(100%, 44px);
+        height: 36px;
+        transform: translate(-50%, -50%);
+    }
+
+    .ig-ui-highlight {
+        position: relative;
+    }
+    .ig-ui-highlight::after {
+        content: "";
+        position: absolute;
+        inset: 50% auto auto 50%;
+        width: 100%;
+        height: max(100%, 54px);
+        transform: translate(-50%, -50%);
+    }
+}
