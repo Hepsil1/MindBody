@@ -450,18 +450,17 @@
 }
 
 /* Actions — quiet-luxury row (Alo / COS / Skims language): three controls of
-   ONE height (50px) and ONE radius (6px) — architectural, not pill/bubble.
+   ONE height (46px) and ONE radius (4px) — architectural, not pill/bubble.
    Deep teal fill for the buy action, hairline-outline for the secondary, a
-   square outline icon for the wishlist. No drop-shadows, no lift on hover:
-   restraint reads as premium. */
+   square outline icon for the wishlist. Refined, airy typography. */
 .actions-row {
-    --pdp-btn-h: 50px;
-    --pdp-btn-radius: 6px;
+    --pdp-btn-h: 46px;
+    --pdp-btn-radius: 4px;
     --pdp-btn-ink: var(--color-primary-dark, #1e4444);
     display: flex;
     align-items: stretch;
     gap: 10px;
-    margin-bottom: 50px;
+    margin-bottom: 44px;
 }
 
 .btn-primary-add {
@@ -471,20 +470,22 @@
     background-color: var(--pdp-btn-ink);
     color: #fff;
     font-family: "Onest", var(--f-sans, "Manrope", sans-serif);
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border: none;
+    letter-spacing: 0.08em;
+    border: 1px solid var(--pdp-btn-ink);
     border-radius: var(--pdp-btn-radius);
     cursor: pointer;
     transition:
         background 0.25s ease,
+        border-color 0.25s ease,
         transform 0.25s ease;
 }
 
 .btn-primary-add:hover:not(:disabled) {
     background-color: #153333;
+    border-color: #153333;
 }
 
 .btn-primary-add:focus-visible,
@@ -501,12 +502,12 @@
     box-shadow: none;
 }
 
-/* Wishlist: square 50×50, same radius + hairline as the ghost button. */
+/* Wishlist: square 46×46, matching radius + 1px hairline border. */
 .btn-wishlist {
     width: var(--pdp-btn-h);
     height: var(--pdp-btn-h);
     flex-shrink: 0;
-    border: 1.5px solid var(--pdp-btn-ink);
+    border: 1px solid var(--pdp-btn-ink);
     border-radius: var(--pdp-btn-radius);
     background: transparent;
     color: var(--pdp-btn-ink);
@@ -813,34 +814,35 @@
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* --- Quick Buy: luxury ghost outline, text only (no icon) --- */
+/* --- Quick Buy: luxury ghost outline, text only (no icon), 1px hairline --- */
 .btn-quick-buy {
-    height: var(--pdp-btn-h, 50px);
-    padding: 0 22px;
+    height: var(--pdp-btn-h, 46px);
+    padding: 0 20px;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: transparent;
-    border: 1.5px solid var(--pdp-btn-ink, #1e4444);
+    border: 1px solid var(--pdp-btn-ink, #1e4444);
     color: var(--pdp-btn-ink, #1e4444);
-    border-radius: var(--pdp-btn-radius, 6px);
+    border-radius: var(--pdp-btn-radius, 4px);
     font-family: "Onest", var(--f-sans, "Manrope", sans-serif);
-    font-weight: 600;
-    font-size: 13px;
+    font-weight: 500;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     cursor: pointer;
     white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
     transition:
         background 0.25s ease,
+        border-color 0.25s ease,
         transform 0.35s var(--mb-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
 .btn-quick-buy:hover,
 .btn-quick-buy:active {
-    background: rgba(30, 68, 68, 0.05);
+    background: rgba(30, 68, 68, 0.04);
 }
 
 .btn-quick-buy:active {
@@ -852,18 +854,20 @@
    share the second. Three controls on one 320px line would crush the labels. */
 @media (max-width: 480px) {
     .actions-row {
-        gap: 10px;
+        gap: 8px;
         flex-wrap: wrap;
-        margin-bottom: 36px;
+        margin-bottom: 30px;
     }
     .btn-primary-add {
         flex: 1 1 100%;
         width: 100%;
+        height: 46px;
     }
     .btn-quick-buy {
         flex: 1 1 0;
         min-width: 0;
-        padding: 0 12px;
+        padding: 0 10px;
+        height: 46px;
     }
 }
 
@@ -1118,18 +1122,19 @@
 
     .mobile-sticky-cta__btn {
         flex: 1;
-        min-height: 48px;
-        padding: 12px 18px;
+        min-height: 46px;
+        height: 46px;
+        padding: 0 16px;
         background: var(--color-primary-dark, #1e4444);
         color: #fff;
         border: none;
-        border-radius: 6px;
+        border-radius: 4px;
         font-family: "Onest", var(--font-body, "Manrope", sans-serif);
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 12px;
+        font-weight: 500;
         cursor: pointer;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.08em;
         -webkit-tap-highlight-color: transparent;
         transition:
             opacity 0.2s,

@@ -89,14 +89,14 @@ export function headers() {
 // curated, real, active products spanning colour + category (filler keeps the
 // gallery full if a slug is renamed/archived).
 const GALLERY_SLUGS = [
-    "kombinezon-dance",
-    "komplekt-pilon",
-    "velo-aera",
-    "kombinezon-solar",
-    "komplekt-mesh",
-    "kombinezon-mini",
-    "longsliv-calm",
-    "hudi-ease",
+    "kombinezon-butterfly",
+    "kombinezon-guerlain",
+    "kombinezon-ice-cream",
+    "kombinezon-hypnose-z-dovhym-rukavom",
+    "kombinezon-moon",
+    "kombinezon-vyra",
+    "kombinezon-melissa",
+    "dytiachyi-kombinezon-butterfly",
 ];
 
 export async function loader({ params }: Route.LoaderArgs) {
