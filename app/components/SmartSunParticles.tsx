@@ -28,7 +28,7 @@ import { useEffect, useRef } from "react";
  *     direction). The heading drifts very slowly and sways, and the breeze bends it
  *     a little: graceful S-curves, no straight lines.
  *  3. Speed is REGULATED, not integrated. Each sun steers toward a desired velocity
- *     whose length is its own cruise speed (0.20–0.45 px per 60 fps frame, every sun
+ *     whose length is its own cruise speed (0.17–0.64 px per 60 fps frame, every sun
  *     different, none fast). Forces can bend the heading; nothing can drain the speed
  *     to zero, nothing can push it past a calm ceiling.
  *  4. Everything is time-based (px/s × dt): 60 / 120 / 144 Hz screens move alike.
@@ -37,7 +37,7 @@ import { useEffect, useRef } from "react";
  *
  * Look: small, delicate, noble. Flat brand pigments (lavender, marsala/plum, deep teal,
  * powder rose) stamped onto the logo with source-in, so the sun's lines stay pure and
- * crisp. Sizes 16–64 px (mostly tiny), opacity 0.08–0.18 on cream paper, soft sinusoidal
+ * crisp. Sizes 16–68 px (mostly tiny), opacity 0.08–0.18 on cream paper, soft sinusoidal
  * breath, no centre glow, no flashes.
  *
  * The cursor (alive, but light)
@@ -60,7 +60,7 @@ interface SmartSunParticlesProps {
      *
      * Both share one motion model and never pause. Under prefers-reduced-motion
      * (the owner browses with it ON) the drift stays — owner decision — same speeds
-     * (0.20–0.45 px/frame), with little spin, no parallax, no wake/scroll gust; the
+     * (0.17–0.64 px/frame), with little spin, no parallax, no wake/scroll gust; the
      * cursor still visibly moves, spins and wakes the suns (×0.9) — the owner must
      * see the reaction.
      */
@@ -96,7 +96,7 @@ const TINTS: Tint[] = [
  *  device size, so it is minified ≤ 2× only: crisp on retina, no shimmer while
  *  rotating, and ~2 MB total instead of re-scaling a 504 px source every frame.
  *  The 32 tier serves the tiny suns (≈18–28 px on a 1× screen); 48 and 96 keep the
- *  36–56 px band within ~1.2× of its sprite. 256 stays for 64 px suns on 3× screens. */
+ *  36–56 px band within ~1.2× of its sprite. 256 stays for 68 px suns on 2×–3× screens. */
 const TIERS = [32, 48, 64, 96, 128, 256];
 /** The logo fills this share of its sprite square; the rest is padding so the
  *  points of the sun never clip while it rotates. */
@@ -133,10 +133,10 @@ function buildTintSprites(img: HTMLImageElement, tint: Tint): HTMLCanvasElement[
 // ── Motion tuning ────────────────────────────────────────────────────────────
 /** Speeds are authored per 60 fps frame (the brief's unit) and applied per second. */
 const PER_FRAME = 60;
-/** Cruise speed band: 0.20–0.45 px per 60 fps frame. The ±5 % surge is already inside
- *  the band (0.21·0.95 ≈ 0.20, 0.42·1.05 ≈ 0.44), so every sun stays calm, in every mode. */
-const CRUISE_MIN = 0.21 * PER_FRAME;
-const CRUISE_MAX = 0.42 * PER_FRAME;
+/** Cruise speed band: 0.17–0.64 px per 60 fps frame. The ±5 % surge is already inside
+ *  the band (0.18·0.95 ≈ 0.17, 0.64·1.05 ≈ 0.67), so every sun stays calm, in every mode. */
+const CRUISE_MIN = 0.18 * PER_FRAME;
+const CRUISE_MAX = 0.64 * PER_FRAME;
 const SURGE = 0.05;
 /** Steering time constant (s): how silkily velocity follows the desired velocity. */
 const RELAX_S = 1.0;
@@ -181,18 +181,18 @@ const PER_SCREEN = { desktop: { under: 31, overlay: 21 }, mobile: { under: 15, o
 /** Hard ceiling for the whole page — keeps very long pages cheap. */
 const MAX_SUNS = { desktop: 170, mobile: 80 };
 
-/** Size mix: many tiny suns, some medium, a few larger ones (never above 64 px). Each band is the
+/** Size mix: many tiny suns, some medium, a few larger ones (never above 68 px). Each band is the
  *  art size in CSS px; `share` is the chance of drawing from it. */
-const SIZE_SHARE = { small: 0.62, medium: 0.28 }; // the rest (≈10 %) are the largest (≤ 64 px)
+const SIZE_SHARE = { small: 0.62, medium: 0.28 }; // the rest (≈10 %) are the largest (≤ 68 px)
 type SizeBands = { small: [number, number]; medium: [number, number]; large: [number, number] };
 const SIZE_BANDS: Record<"desktop" | "mobile", Record<"under" | "overlay", SizeBands>> = {
     desktop: {
-        under: { small: [16, 28], medium: [32, 46], large: [50, 64] },
-        overlay: { small: [16, 26], medium: [30, 44], large: [48, 60] },
+        under: { small: [16, 28], medium: [32, 46], large: [50, 68] },
+        overlay: { small: [16, 26], medium: [30, 44], large: [48, 64] },
     },
     mobile: {
-        under: { small: [16, 26], medium: [30, 40], large: [42, 48] },
-        overlay: { small: [15, 24], medium: [28, 38], large: [40, 46] },
+        under: { small: [16, 26], medium: [30, 40], large: [42, 52] },
+        overlay: { small: [15, 24], medium: [28, 38], large: [40, 50] },
     },
 };
 /** Parallax floor: the farthest sun trails the page by up to 1 − this of the scroll. */
