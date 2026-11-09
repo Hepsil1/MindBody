@@ -311,6 +311,20 @@
     transition: opacity 0.3s;
 }
 
+/* Colourway sibling = a link to another product (own photos/stock). */
+.color-swatch--link {
+    display: inline-block;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+.color-swatch--link:focus-visible {
+    outline: 2px solid var(--c-text, #1a1a1a);
+    outline-offset: 5px;
+}
+.color-swatch--link.is-soldout {
+    opacity: 0.5;
+}
+
 .color-swatch.selected::after {
     opacity: 1;
 }
@@ -435,57 +449,48 @@
     gap: 5px;
 }
 
-/* Actions — brand pill language (matches the site's «Переглянути все» /
-   sticky-CTA pills): equal 58px heights, radius 999, teal-tinted depth.
-   The old row mixed a 60px 8px-radius slab, a padding-sized outline box and
-   a square icon button — three different shapes at three different heights. */
+/* Actions — quiet-luxury row (Alo / COS / Skims language): three controls of
+   ONE height (50px) and ONE radius (6px) — architectural, not pill/bubble.
+   Deep teal fill for the buy action, hairline-outline for the secondary, a
+   square outline icon for the wishlist. No drop-shadows, no lift on hover:
+   restraint reads as premium. */
 .actions-row {
+    --pdp-btn-h: 50px;
+    --pdp-btn-radius: 6px;
+    --pdp-btn-ink: var(--color-primary-dark, #1e4444);
     display: flex;
     align-items: stretch;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 50px;
 }
 
 .btn-primary-add {
     flex: 1;
     min-width: 0;
-    height: 58px;
-    background-color: var(--color-primary, #2a5a5a);
+    height: var(--pdp-btn-h);
+    background-color: var(--pdp-btn-ink);
     color: #fff;
     font-family: "Onest", var(--f-sans, "Manrope", sans-serif);
-    font-size: 13.5px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.05em;
     border: none;
-    border-radius: 999px;
+    border-radius: var(--pdp-btn-radius);
     cursor: pointer;
-    box-shadow:
-        0 10px 24px rgba(42, 90, 90, 0.22),
-        0 2px 6px rgba(42, 90, 90, 0.14);
     transition:
         background 0.25s ease,
-        transform 0.25s ease,
-        box-shadow 0.25s ease;
+        transform 0.25s ease;
 }
 
-.btn-primary-add:hover {
-    background-color: var(--color-primary-dark, #1e4444);
-    transform: translateY(-2px);
-    box-shadow:
-        0 14px 30px rgba(42, 90, 90, 0.28),
-        0 3px 8px rgba(42, 90, 90, 0.16);
-}
-
-.btn-primary-add:active {
-    transform: translateY(0);
-    box-shadow: 0 6px 14px rgba(42, 90, 90, 0.2);
+.btn-primary-add:hover:not(:disabled) {
+    background-color: #153333;
 }
 
 .btn-primary-add:focus-visible,
 .btn-quick-buy:focus-visible,
 .btn-wishlist:focus-visible {
-    outline: 2px solid var(--color-primary, #2a5a5a);
+    outline: 2px solid var(--pdp-btn-ink, #1e4444);
     outline-offset: 3px;
 }
 
@@ -496,28 +501,59 @@
     box-shadow: none;
 }
 
+/* Wishlist: square 50×50, same radius + hairline as the ghost button. */
 .btn-wishlist {
-    width: 58px;
-    height: 58px;
+    width: var(--pdp-btn-h);
+    height: var(--pdp-btn-h);
     flex-shrink: 0;
-    border: 1.5px solid #e2ddd6;
-    border-radius: 50%;
-    background: #fff;
-    color: var(--color-primary, #2a5a5a);
+    border: 1.5px solid var(--pdp-btn-ink);
+    border-radius: var(--pdp-btn-radius);
+    background: transparent;
+    color: var(--pdp-btn-ink);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
     transition:
         border-color 0.25s ease,
         background 0.25s ease,
-        transform 0.25s ease;
+        color 0.25s ease,
+        transform 0.35s var(--mb-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
 .btn-wishlist:hover {
-    border-color: var(--c-primary, #2a5a5a);
-    background: rgba(42, 90, 90, 0.05);
-    transform: translateY(-2px);
+    background: rgba(30, 68, 68, 0.05);
+}
+
+.btn-wishlist:active {
+    transform: scale(0.94);
+    transition-duration: 0.08s;
+}
+
+/* In the wishlist: filled heart in the warm accent (brand marsala) on a
+   faint tint — the only coloured moment in the row. */
+.btn-wishlist.is-active {
+    color: #8c2f39;
+    border-color: #8c2f39;
+    background: rgba(140, 47, 57, 0.06);
+}
+
+/* One spring "pop" on the add moment only (not on page load). */
+.btn-wishlist.is-pop svg {
+    animation: mbHeartPop 0.5s var(--mb-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+@keyframes mbHeartPop {
+    0% {
+        transform: scale(0.6);
+    }
+    55% {
+        transform: scale(1.28);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* Accordion */
@@ -777,39 +813,55 @@
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* --- Quick Buy --- */
+/* --- Quick Buy: luxury ghost outline, text only (no icon) --- */
 .btn-quick-buy {
-    height: 58px;
+    height: var(--pdp-btn-h, 50px);
     padding: 0 22px;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #fff;
-    border: 1.5px solid var(--color-primary, #2a5a5a);
-    color: var(--color-primary, #2a5a5a);
-    border-radius: 999px;
+    background: transparent;
+    border: 1.5px solid var(--pdp-btn-ink, #1e4444);
+    color: var(--pdp-btn-ink, #1e4444);
+    border-radius: var(--pdp-btn-radius, 6px);
     font-family: "Onest", var(--f-sans, "Manrope", sans-serif);
     font-weight: 600;
     font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     cursor: pointer;
     white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
     transition:
         background 0.25s ease,
-        color 0.25s ease,
-        transform 0.25s ease,
-        box-shadow 0.25s ease;
+        transform 0.35s var(--mb-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
-.btn-quick-buy:hover {
-    background: var(--color-primary, #2a5a5a);
-    color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(42, 90, 90, 0.2);
+.btn-quick-buy:hover,
+.btn-quick-buy:active {
+    background: rgba(30, 68, 68, 0.05);
 }
 
 .btn-quick-buy:active {
-    transform: translateY(0);
+    transform: scale(0.98);
+    transition-duration: 0.08s;
+}
+
+/* Narrow phones: the buy button takes the full first line; ghost + heart
+   share the second. Three controls on one 320px line would crush the labels. */
+@media (max-width: 480px) {
+    .actions-row {
+        flex-wrap: wrap;
+    }
+    .btn-primary-add {
+        flex: 1 1 100%;
+    }
+    .btn-quick-buy {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 0 12px;
+    }
 }
 
 .quick-buy-overlay {
@@ -1055,16 +1107,16 @@
         flex: 1;
         min-height: 48px;
         padding: 12px 18px;
-        background: var(--color-primary, #2a5a5a);
+        background: var(--color-primary-dark, #1e4444);
         color: #fff;
         border: none;
-        border-radius: var(--radius-md, 12px);
-        font-family: var(--font-body, "Manrope", sans-serif);
-        font-size: 13.5px;
-        font-weight: 700;
+        border-radius: 6px;
+        font-family: "Onest", var(--font-body, "Manrope", sans-serif);
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.05em;
         -webkit-tap-highlight-color: transparent;
         transition:
             opacity 0.2s,
@@ -1170,7 +1222,7 @@
 
 .btn-primary-add:active:not(:disabled),
 .mobile-sticky-cta__btn:active:not(:disabled) {
-    transform: scale(0.97);
+    transform: scale(0.98);
     opacity: 1;
     transition-duration: 0.08s;
 }

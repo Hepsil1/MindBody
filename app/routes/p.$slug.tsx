@@ -19,6 +19,7 @@ import { useI18n, useMoney, LLink, getT } from "../i18n";
 import { localeFromParam, localeFromParamSafe, localizePath, OG_LOCALE } from "../i18n/config";
 import { localizeEntities } from "../utils/translations.server";
 import type { InventoryVariant, RelatedProductCard, FilterConfigData } from "../types/product";
+import { familyBaseFromSku, isSkuInFamily, type ColorSibling } from "../utils/productFamily";
 import "../styles/product-page.css";
 
 // NOTE: this route file exports a client component, so we can't import
@@ -213,6 +214,7 @@ function parseJson<T>(str: string | null | undefined, fallback: T): T {
 interface ProductDetailData {
     id: string;
     slug: string | null;
+    sku: string | null;
     name: string;
     description: string | null;
     price: number;
@@ -239,6 +241,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     let product: ProductDetailData | null = null;
     let filterConfig: FilterConfigData | null = null;
     let relatedProducts: RelatedProductCard[] = [];
+    const siblings: ColorSibling[] = [];
 
     try {
         // Run product + filterConfig + colorImages queries in parallel. The
@@ -254,6 +257,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
                 select: {
                     id: true,
                     slug: true,
+                    sku: true,
                     name: true,
                     description: true,
                     price: true,
@@ -319,6 +323,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
             product = {
                 id: p.id,
                 slug: p.slug,
+                sku: p.sku,
                 name: p.name,
                 description: p.description,
                 price,
@@ -343,20 +348,62 @@ export async function loader({ params }: LoaderFunctionArgs) {
                     comparePrice > price ? Math.round((1 - price / comparePrice) * 100) : 0,
             };
 
-            if (p.category) {
-                const relatedResult = await prisma.product.findMany({
-                    where: { category: p.category, id: { not: p.id }, status: "active" },
-                    select: { id: true, slug: true, name: true, price: true, images: true },
-                    take: 4,
-                });
+            // Colourway siblings: other ACTIVE products of the same model
+            // (SKU family, see utils/productFamily.ts). Each is a full product
+            // with its own photos/stock, so the PDP renders them as links.
+            // Runs alongside the related query — no extra round-trip.
+            const familyBase = familyBaseFromSku(p.sku);
+            const [relatedResult, siblingRows] = await Promise.all([
+                p.category
+                    ? prisma.product.findMany({
+                          where: { category: p.category, id: { not: p.id }, status: "active" },
+                          select: { id: true, slug: true, name: true, price: true, images: true },
+                          take: 4,
+                      })
+                    : Promise.resolve([]),
+                familyBase
+                    ? prisma.product.findMany({
+                          where: {
+                              sku: { startsWith: `${familyBase}-` },
+                              id: { not: p.id },
+                              status: "active",
+                          },
+                          select: {
+                              slug: true,
+                              sku: true,
+                              colors: true,
+                              inventory: true,
+                          },
+                          orderBy: { sku: "asc" },
+                          take: 12,
+                      })
+                    : Promise.resolve([]),
+            ]);
 
-                relatedProducts = relatedResult.map((rp) => ({
-                    id: rp.id,
-                    slug: rp.slug,
-                    name: rp.name,
-                    price: Number(rp.price),
-                    image: parseJson<string[]>(rp.images, ["/brand-sun.png"])[0],
-                }));
+            relatedProducts = relatedResult.map((rp) => ({
+                id: rp.id,
+                slug: rp.slug,
+                name: rp.name,
+                price: Number(rp.price),
+                image: parseJson<string[]>(rp.images, ["/brand-sun.png"])[0],
+            }));
+
+            for (const row of siblingRows) {
+                // `startsWith` also matches K-JUMP-MINI-PRO-01 — exact-family check.
+                if (!row.slug || !row.sku || !familyBase || !isSkuInFamily(row.sku, familyBase)) {
+                    continue;
+                }
+                const inv = parseJson<InventoryVariant[]>(row.inventory, []);
+                const inStockColor = inv.find((v) => (v.stock ?? 0) > 0 && v.color)?.color;
+                const color =
+                    inStockColor || parseJson<string[]>(row.colors, [])[0] || inv[0]?.color;
+                if (!color) continue; // nothing to draw a swatch from
+                siblings.push({
+                    slug: row.slug,
+                    sku: row.sku,
+                    color,
+                    inStock: inv.length === 0 || inv.some((v) => (v.stock ?? 0) > 0),
+                });
             }
         }
 
@@ -400,9 +447,35 @@ export async function loader({ params }: LoaderFunctionArgs) {
         product: localizedProduct,
         filterConfig,
         relatedProducts: localizedRelated,
+        siblings,
         reviewStats,
         siteUrl: resolveSiteUrl(),
     };
+}
+
+/* Default colour on first paint. The gallery shows the photos of the selected
+   colour, so the default must be a colour we can actually show AND sell:
+   1. a colour with its own photo set (colorImages) that is in stock,
+   2. any colour with its own photo set,
+   3. any in-stock colour,
+   4. the first colour.
+   Without this, a product shot only in marsala opened on "pink" (first colour
+   in the inventory) with marsala photos — colour label and photos disagreed. */
+function pickDefaultColor(
+    colors: string[],
+    colorImages: Record<string, string[]> | undefined,
+    inventory: InventoryVariant[] | undefined,
+): string {
+    if (colors.length === 0) return "";
+    const hasPhotos = (c: string) => (colorImages?.[c]?.length ?? 0) > 0;
+    const hasStock = (c: string) =>
+        !inventory?.length || inventory.some((v) => v.color === c && (v.stock ?? 0) > 0);
+    return (
+        colors.find((c) => hasPhotos(c) && hasStock(c)) ??
+        colors.find(hasPhotos) ??
+        colors.find(hasStock) ??
+        colors[0]
+    );
 }
 
 /* [F-01] React Router reuses the route component when navigating PDP → PDP
@@ -439,7 +512,7 @@ function CtaSwap({
 }
 
 function ProductDetailView() {
-    const { product, filterConfig, relatedProducts } = useLoaderData<typeof loader>();
+    const { product, filterConfig, relatedProducts, siblings } = useLoaderData<typeof loader>();
     const { t } = useI18n();
     const money = useMoney();
 
@@ -451,7 +524,8 @@ function ProductDetailView() {
     const [searchParams] = useSearchParams();
     const [selectedColor, setSelectedColor] = useState<string>(() => {
         const c = searchParams.get("color");
-        return c && product.colors.includes(c) ? c : product.colors[0] || "";
+        if (c && product.colors.includes(c)) return c;
+        return pickDefaultColor(product.colors, product.colorImages, product.inventory);
     });
     const [openAccordion, setOpenAccordion] = useState<string | null>("desc");
     const [activeImage, setActiveImage] = useState(0);
@@ -663,9 +737,26 @@ function ProductDetailView() {
         );
     };
 
+    // Heart mirrors the wishlist store (localStorage → client-only, so it
+    // starts false for SSR/hydration and syncs in an effect, also across tabs
+    // and the header counter via the store's subscription).
+    const [wished, setWished] = useState(false);
+    const [wishPop, setWishPop] = useState(false);
+    useEffect(() => {
+        const sync = () => setWished(StorageUtils.isInWishlist(product.id));
+        sync();
+        return StorageUtils.subscribeToWishlist(sync);
+    }, [product.id]);
+
     const addToWishlist = () => {
         if (!AuthUtils.getAuthState().isAuthenticated) {
             setWishAuthOpen(true);
+            return;
+        }
+        // Filled heart = in the list; tapping it again removes (standard toggle).
+        if (wished) {
+            StorageUtils.removeFromWishlist(product.id);
+            showToast(t("Видалено з обраного"), "info");
             return;
         }
         const added = StorageUtils.addToWishlist({
@@ -675,13 +766,38 @@ function ProductDetailView() {
             image: product.images[0],
             category: product.category ?? "",
         });
-        if (added) showToast(t("Додано до улюбленого ❤️"));
-        else showToast(t("Вже у списку"), "info");
+        if (added) {
+            setWishPop(true);
+            setTimeout(() => setWishPop(false), 500);
+            showToast(t("Додано до улюбленого ❤️"));
+        } else showToast(t("Вже у списку"), "info");
     };
 
     const getColorLabel = (code: string) => filterConfig?.colors?.[code] || code;
     const getColorHex = (code: string) =>
         (code && typeof code === "string" ? COLOR_MAP[code.toLowerCase()] : code) || code;
+
+    // Swatch row = this product's own colours + its colourway siblings, in
+    // stable SKU order so a swatch never jumps position between sibling pages.
+    // Without siblings it is exactly the old own-colours row.
+    type Colorway =
+        | { kind: "self"; color: string; sku: string }
+        | { kind: "sibling"; color: string; sku: string; slug: string; inStock: boolean };
+    const isFamily = siblings.length > 0;
+    const colorways: Colorway[] = [
+        ...product.colors.map(
+            (color: string): Colorway => ({ kind: "self", color, sku: product.sku ?? "" }),
+        ),
+        ...siblings.map(
+            (sb): Colorway => ({
+                kind: "sibling",
+                color: sb.color,
+                sku: sb.sku,
+                slug: sb.slug,
+                inStock: sb.inStock,
+            }),
+        ),
+    ].sort((a, b) => (a.sku === b.sku ? 0 : a.sku < b.sku ? -1 : 1));
 
     return (
         <>
@@ -974,7 +1090,7 @@ function ProductDetailView() {
                                 <div className="div-line" />
 
                                 <div className="selectors-form">
-                                    {product.colors.length > 0 && (
+                                    {colorways.length > 0 && (
                                         <div className="selector-group">
                                             <div className="group-head">
                                                 <span className="selector-label">
@@ -986,17 +1102,48 @@ function ProductDetailView() {
                                             </div>
                                             <div
                                                 className="color-options"
-                                                role="radiogroup"
+                                                role={isFamily ? "group" : "radiogroup"}
                                                 aria-label={t("Колір")}
                                             >
-                                                {product.colors.map((color: string) => {
+                                                {colorways.map((cw) => {
+                                                    if (cw.kind === "sibling") {
+                                                        // Another colourway = another product:
+                                                        // own URL, photos, stock. Real link, so
+                                                        // it's crawlable and prefetched on intent.
+                                                        return (
+                                                            <LLink
+                                                                key={cw.slug}
+                                                                to={`/p/${cw.slug}`}
+                                                                prefetch="intent"
+                                                                preventScrollReset
+                                                                className={`color-swatch color-swatch--link${cw.inStock ? "" : " is-soldout"}`}
+                                                                style={{
+                                                                    backgroundColor: getColorHex(
+                                                                        cw.color,
+                                                                    ),
+                                                                }}
+                                                                aria-label={`${t(getColorLabel(cw.color))}${cw.inStock ? "" : ` — ${t("немає в наявності")}`}`}
+                                                                title={t(getColorLabel(cw.color))}
+                                                            />
+                                                        );
+                                                    }
+                                                    const color = cw.color;
                                                     const available = isColorAvailable(color);
                                                     return (
                                                         <button
                                                             key={color}
                                                             type="button"
-                                                            role="radio"
-                                                            aria-checked={selectedColor === color}
+                                                            role={isFamily ? undefined : "radio"}
+                                                            aria-checked={
+                                                                isFamily
+                                                                    ? undefined
+                                                                    : selectedColor === color
+                                                            }
+                                                            aria-pressed={
+                                                                isFamily
+                                                                    ? selectedColor === color
+                                                                    : undefined
+                                                            }
                                                             className={`color-swatch ${selectedColor === color ? "selected" : ""} ${!available ? "unavailable" : ""}`}
                                                             onClick={() =>
                                                                 available && setSelectedColor(color)
@@ -1253,34 +1400,34 @@ function ProductDetailView() {
                                         className="btn-quick-buy"
                                         onClick={() => setQuickBuyOpen(true)}
                                     >
-                                        <svg
-                                            aria-hidden="true"
-                                            width="16"
-                                            height="16"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            style={{ marginRight: "6px", verticalAlign: "-3px" }}
-                                        >
-                                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                                        </svg>{" "}
                                         {t("Купити в 1 клік")}
                                     </button>
                                     <button
-                                        className="btn-wishlist hover-scale"
+                                        type="button"
+                                        className={`btn-wishlist${wished ? " is-active" : ""}${wishPop ? " is-pop" : ""}`}
                                         onClick={addToWishlist}
-                                        aria-label={t("Додати в обране")}
-                                        title={t("Додати в обране")}
+                                        aria-pressed={wished}
+                                        aria-label={
+                                            wished
+                                                ? t("Видалити з улюбленого")
+                                                : t("Додати в обране")
+                                        }
+                                        title={
+                                            wished
+                                                ? t("Видалити з улюбленого")
+                                                : t("Додати в обране")
+                                        }
                                     >
                                         <svg
-                                            width="20"
-                                            height="20"
-                                            fill="none"
-                                            stroke="currentColor"
+                                            width="22"
+                                            height="22"
                                             viewBox="0 0 24 24"
+                                            fill={wished ? "currentColor" : "none"}
+                                            stroke="currentColor"
+                                            strokeWidth="1.75"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            aria-hidden="true"
                                         >
                                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                         </svg>
