@@ -852,10 +852,13 @@
    share the second. Three controls on one 320px line would crush the labels. */
 @media (max-width: 480px) {
     .actions-row {
+        gap: 10px;
         flex-wrap: wrap;
+        margin-bottom: 36px;
     }
     .btn-primary-add {
         flex: 1 1 100%;
+        width: 100%;
     }
     .btn-quick-buy {
         flex: 1 1 0;
@@ -983,8 +986,14 @@
     }
 
     .product-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: 40px;
+    }
+
+    /* Grid items default to min-width:auto → a wide child (swipe gallery)
+       blows the single column past the viewport. */
+    .product-layout > * {
+        min-width: 0;
     }
 }
 
@@ -1006,6 +1015,8 @@
         position: relative;
         margin: 0 -16px;
         background: var(--color-bg-soft, #f4f1ed);
+        overflow: hidden;
+        max-width: calc(100% + 32px);
     }
     .pdp-mobile-gallery {
         display: flex;
@@ -1015,12 +1026,14 @@
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-x: contain;
         scrollbar-width: none;
+        width: 100%;
     }
     .pdp-mobile-gallery::-webkit-scrollbar {
         display: none;
     }
     .pdp-mobile-gallery__slide {
-        flex: 0 0 100vw;
+        flex: 0 0 100%;
+        width: 100%;
         scroll-snap-align: start;
         aspect-ratio: 4/5;
     }
