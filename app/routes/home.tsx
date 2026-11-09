@@ -1982,11 +1982,6 @@ export default function Home() {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Minimal floating badge */}
-                                <div className="ig-hyper__float">
-                                    <div className="ig-hyper__live-dot" /> LIVE
-                                </div>
                             </div>
                         </div>
 

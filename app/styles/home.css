@@ -2449,41 +2449,6 @@
     }
 }
 
-/* LIVE badge ├óΓé¼ΓÇ¥ frosted glass over the phone */
-.ig-hyper__float {
-    position: absolute;
-    top: 50%;
-    left: -25px;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    padding: 12px 24px;
-    border-radius: 40px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: "Manrope", sans-serif;
-    font-weight: 600;
-    font-size: 12px;
-    color: #111;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-    z-index: 5;
-    animation: igLiveFloat 6s ease-in-out infinite;
-}
-@keyframes igLiveFloat {
-    0%,
-    100% {
-        transform: translateY(-50%);
-    }
-    50% {
-        transform: translateY(calc(-50% - 12px));
-    }
-}
-
 /* CTA ├óΓé¼ΓÇ¥ Classic luxury fashion outline button */
 .ig-hyper__cta {
     display: inline-flex !important;
@@ -3429,22 +3394,12 @@
 }
 
 /* =============================================
-   POLISH — WATERMARK + LIVE BADGE MOBILE
+   POLISH — WATERMARK
    ============================================= */
 
 /* Slightly stronger watermark for atmosphere */
 .ig-hyper__watermark {
     opacity: 0.035 !important;
-}
-
-/* Keep LIVE badge on mobile — scale down instead of hide */
-@media (max-width: 560px) {
-    .ig-hyper__float {
-        display: flex !important;
-        font-size: 0.65rem;
-        padding: 5px 10px;
-        gap: 5px;
-    }
 }
 
 /* =============================================
@@ -6135,9 +6090,6 @@
     }
 }
 @media (max-width: 560px) {
-    .ig-hyper__float {
-        display: none;
-    }
     .ig-hyper__title {
         font-size: 2.2rem;
     }
