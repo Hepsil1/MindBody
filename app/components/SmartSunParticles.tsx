@@ -35,16 +35,17 @@ import { useEffect, useRef } from "react";
  *  5. No scroll LISTENER: scrollY is just read once per frame, so scrolling (native
  *     or Lenis) never pauses the suns.
  *
- * Look: clean, noble brand colour — emerald teal, marsala, lavender, warm powder rose
- * and bronze/mocha. NO grey, no yellow, no amber. Opacity 0.16–0.28: enough for the
- * pigment to read as colour on cream paper without shouting. Soft sinusoidal breath.
+ * Look: small, delicate, noble. Flat brand pigments (lavender, marsala/plum, deep teal,
+ * powder rose) stamped onto the logo with source-in, so the sun's lines stay pure and
+ * crisp. Sizes 16–64 px (mostly tiny), opacity 0.08–0.18 on cream paper, soft sinusoidal
+ * breath, no centre glow, no flashes.
  *
  * The cursor (alive, but light)
  *  - YIELD: a sun within 220 px visibly slides out of the way — pushed outward and
  *    curled around the cursor on the side it was already on (latched for the whole
  *    encounter, so it never flips mid-arc), at ~1.5–2.5 px/frame near the cursor.
  *  - SPIN: the breath of the mouse spins the sun up, softly.
- *  - AWAKENING: the sun glows up to +30 % brighter while the cursor is near, then
+ *  - AWAKENING: the sun glows up to +20 % brighter while the cursor is near, then
  *    eases back.
  *  - RETURN: when the cursor leaves, speed and glow relax back to the calm drift.
  *  - WAKE: a quick stroke of the cursor drags the air — suns beside the path get a
@@ -72,27 +73,22 @@ const smooth = (x: number) => x * x * (3 - 2 * x);
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
 // ── Brand pigments ───────────────────────────────────────────────────────────
-// Each sun is painted with a diagonal "silk" sheen (light → body → shade).
-// `boost` trims opacity so pale and dark pigments carry equal visual weight on
-// the cream paper (dark marsala is trimmed, pale rose is lifted). All pigments are
-// saturated hues — no grey/graphite, which turns to dirty dust at low alpha.
+// Flat pigment per sun (source-in onto /logo-sun.png) — the early, beloved look.
+// `boost` trims opacity so pale and dark pigments carry equal visual weight on the
+// cream paper (dark plum is trimmed, pale rose / lavender are lifted).
 interface Tint {
-    light: string;
-    base: string;
-    deep: string;
+    color: string;
     boost: number;
 }
 const TINTS: Tint[] = [
-    // emerald teal
-    { light: "#14b8a6", base: "#0f766e", deep: "#0c5c56", boost: 0.96 },
-    // noble marsala / wine
-    { light: "#9e2a2b", base: "#802234", deep: "#651a29", boost: 0.92 },
-    // tender violet / lavender
-    { light: "#9d71bc", base: "#7c5295", deep: "#63407a", boost: 1.02 },
-    // warm powder rose
-    { light: "#d98287", base: "#c97a7e", deep: "#ad6166", boost: 1.08 },
-    // noble bronze / mocha
-    { light: "#a06c48", base: "#9c6644", deep: "#7c4e32", boost: 0.98 },
+    // soft lavender
+    { color: "#8b7bb8", boost: 1.08 },
+    // noble plum / marsala
+    { color: "#722f37", boost: 0.9 },
+    // deep teal
+    { color: "#0f766e", boost: 0.96 },
+    // soft powder rose / cashmere
+    { color: "#c18a8c", boost: 1.1 },
 ];
 
 // ── Sprites ──────────────────────────────────────────────────────────────────
@@ -114,13 +110,9 @@ function paintTop(img: HTMLImageElement, size: number, tint: Tint): HTMLCanvasEl
     const art = size * ART_FILL;
     const off = (size - art) / 2;
     g.drawImage(img, off, off, art, art);
-    // Recolour: source-in keeps the logo's own alpha and swaps its pixels for the sheen.
+    // Recolour: source-in keeps the logo's own alpha and swaps its pixels for a flat pigment.
     g.globalCompositeOperation = "source-in";
-    const sheen = g.createLinearGradient(off, off, off + art, off + art);
-    sheen.addColorStop(0, tint.light);
-    sheen.addColorStop(0.5, tint.base);
-    sheen.addColorStop(1, tint.deep);
-    g.fillStyle = sheen;
+    g.fillStyle = tint.color;
     g.fillRect(0, 0, size, size);
     return c;
 }
@@ -194,18 +186,18 @@ const PER_SCREEN = { desktop: { under: 31, overlay: 21 }, mobile: { under: 15, o
 /** Hard ceiling for the whole page — keeps very long pages cheap. */
 const MAX_SUNS = { desktop: 170, mobile: 80 };
 
-/** Size mix: many tiny suns, some medium, a few large "hero" ones. Each band is the
+/** Size mix: many tiny suns, some medium, a few larger ones (never above 64 px). Each band is the
  *  art size in CSS px; `share` is the chance of drawing from it. */
-const SIZE_SHARE = { small: 0.58, medium: 0.26 }; // the rest (≈16 %) are large
+const SIZE_SHARE = { small: 0.62, medium: 0.28 }; // the rest (≈10 %) are the largest (≤ 64 px)
 type SizeBands = { small: [number, number]; medium: [number, number]; large: [number, number] };
 const SIZE_BANDS: Record<"desktop" | "mobile", Record<"under" | "overlay", SizeBands>> = {
     desktop: {
-        under: { small: [18, 34], medium: [38, 60], large: [68, 104] },
-        overlay: { small: [16, 32], medium: [36, 56], large: [62, 92] },
+        under: { small: [16, 28], medium: [32, 46], large: [50, 64] },
+        overlay: { small: [16, 26], medium: [30, 44], large: [48, 60] },
     },
     mobile: {
-        under: { small: [16, 28], medium: [32, 48], large: [54, 70] },
-        overlay: { small: [15, 26], medium: [30, 44], large: [50, 62] },
+        under: { small: [16, 26], medium: [30, 40], large: [42, 48] },
+        overlay: { small: [15, 24], medium: [28, 38], large: [40, 46] },
     },
 };
 /** Parallax floor: the farthest sun trails the page by up to 1 − this of the scroll. */
@@ -233,18 +225,18 @@ const SPIN_AWAKE = 1.1;
 const SPIN_GUST = 0.3;
 const GUST_FULL = 2400; // px/s of scroll that counts as a full gust
 /** Cursor awakening: opacity gain (fraction) at the cursor's centre. */
-const GLOW = 0.3;
+const GLOW = 0.2;
 
 // ── Opacity ──────────────────────────────────────────────────────────────────
-const ALPHA_LO = 0.16;
-const ALPHA_HI = 0.28;
+const ALPHA_LO = 0.08;
+const ALPHA_HI = 0.18;
 /** Per-sun clamp after the pigment boost. */
-const ALPHA_MIN = 0.16;
-const ALPHA_MAX = 0.28;
+const ALPHA_MIN = 0.08;
+const ALPHA_MAX = 0.18;
 /** Breathing (sinusoidal), ± fraction of the sun's own opacity. */
 const BREATH = 0.14;
 /** Absolute ceiling of any sun's opacity, breath and cursor glow included. */
-const ALPHA_CAP = 0.42;
+const ALPHA_CAP = 0.26;
 
 interface Sun {
     /** page space: x across, y down the whole document (layer coordinates, see k) */
