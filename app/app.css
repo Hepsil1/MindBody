@@ -188,6 +188,16 @@ html {
     overflow-x: clip;
 }
 
+/* Desktop classic scrollbars: CartDrawer / PDP modals set body{overflow:hidden}
+   while open, which removes the scrollbar and used to shift the whole page
+   ~15px sideways. Reserving the gutter permanently makes open/close layout-
+   stable. Gated to fine pointers — touch/overlay scrollbars take no space. */
+@media (hover: hover) and (pointer: fine) {
+    html {
+        scrollbar-gutter: stable;
+    }
+}
+
 body {
     font-family: var(--font-body);
     font-size: var(--text-base);
@@ -8347,6 +8357,24 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 
 .wishlist-card:hover .wishlist-card__remove,
 .wishlist-card:hover .wishlist-card__cart {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* [A-04] Touch devices have no hover, so the remove / add-to-cart buttons
+   were permanently invisible (opacity:0) and the actions undiscoverable.
+   Show them always where hover doesn't exist, and keep keyboard users
+   covered via :focus-visible. */
+@media (hover: none) {
+    .wishlist-card__remove,
+    .wishlist-card__cart {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.wishlist-card__remove:focus-visible,
+.wishlist-card__cart:focus-visible {
     opacity: 1;
     transform: translateY(0);
 }

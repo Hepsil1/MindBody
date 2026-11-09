@@ -20,6 +20,7 @@ export const enGenerated: Record<string, string> = {
     "≈70–120 ₴ (Нова Пошта)": "≈$2–3 (Nova Poshta)",
     "✓ В наявності: {n} шт": "✓ In stock: {n}",
     "✓ Додано": "✓ Added",
+    "✓ Додано в кошик": "✓ Added to cart",
     "✓ Підтверджена покупка": "✓ Verified purchase",
     "✕ Видалити промокод": "✕ Remove promo code",
     "✕ Немає в наявності": "✕ Out of stock",

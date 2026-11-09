@@ -405,7 +405,40 @@ export async function loader({ params }: LoaderFunctionArgs) {
     };
 }
 
+/* [F-01] React Router reuses the route component when navigating PDP → PDP
+   (e.g. via "related products"), so useState survived and the buyer kept the
+   previous product's size/colour/gallery index/open modals. Keying the inner
+   view by product.id remounts it per product → all local state starts clean. */
 export default function ProductDetail() {
+    const { product } = useLoaderData<typeof loader>();
+    return <ProductDetailView key={product.id} />;
+}
+
+/* Cross-fading CTA label. Both faces live in the same grid cell, so the button
+   is always as wide/tall as the longer label → idle ⇄ "✓ Додано в кошик" swap
+   never reflows the layout (no jumping). Only opacity/transform animate. */
+function CtaSwap({
+    added,
+    doneLabel,
+    children,
+}: {
+    added: boolean;
+    doneLabel: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <span className="cta-swap" data-added={added ? "true" : "false"}>
+            <span className="cta-swap__face cta-swap__face--idle" aria-hidden={added}>
+                {children}
+            </span>
+            <span className="cta-swap__face cta-swap__face--done" aria-hidden={!added}>
+                {doneLabel}
+            </span>
+        </span>
+    );
+}
+
+function ProductDetailView() {
     const { product, filterConfig, relatedProducts } = useLoaderData<typeof loader>();
     const { t } = useI18n();
     const money = useMoney();
@@ -559,6 +592,10 @@ export default function ProductDetail() {
     };
 
     const addToCart = () => {
+        // Double-tap guard. Previously `disabled={justAdded}` did this, but a
+        // disabled button restyles (mobile "ghost" state) and drops focus —
+        // the confirmation flashed. Guard in the handler instead.
+        if (justAdded) return;
         if (product.sizes.length > 0 && !selectedSize) {
             const node = sizesGroupRef.current;
             if (node) {
@@ -1189,13 +1226,11 @@ export default function ProductDetail() {
                                     stock + just-added (handler-driven). */}
                                     <button
                                         ref={primaryCtaRef}
-                                        className="btn-primary-add"
+                                        className={`btn-primary-add${justAdded ? " is-added" : ""}`}
                                         onClick={addToCart}
-                                        disabled={
-                                            justAdded ||
-                                            (!isInStock && product.inventory?.length > 0)
-                                        }
+                                        disabled={!isInStock && product.inventory?.length > 0}
                                         aria-disabled={product.sizes.length > 0 && !selectedSize}
+                                        aria-live="polite"
                                         style={{
                                             opacity:
                                                 !isInStock && product.inventory?.length > 0
@@ -1203,15 +1238,16 @@ export default function ProductDetail() {
                                                     : 1,
                                         }}
                                     >
-                                        <span>
-                                            {justAdded
-                                                ? t("✓ Додано")
-                                                : !isInStock && product.inventory?.length > 0
-                                                  ? t("Немає в наявності")
-                                                  : product.sizes.length > 0 && !selectedSize
-                                                    ? t("Оберіть розмір")
-                                                    : t("Додати в кошик")}
-                                        </span>
+                                        <CtaSwap
+                                            added={justAdded}
+                                            doneLabel={t("✓ Додано в кошик")}
+                                        >
+                                            {!isInStock && product.inventory?.length > 0
+                                                ? t("Немає в наявності")
+                                                : product.sizes.length > 0 && !selectedSize
+                                                  ? t("Оберіть розмір")
+                                                  : t("Додати в кошик")}
+                                        </CtaSwap>
                                     </button>
                                     <button
                                         className="btn-quick-buy"
@@ -1511,19 +1547,20 @@ export default function ProductDetail() {
                 >
                     <button
                         type="button"
-                        className="mobile-sticky-cta__btn"
+                        className={`mobile-sticky-cta__btn${justAdded ? " is-added" : ""}`}
                         onClick={addToCart}
-                        disabled={justAdded || (!isInStock && product.inventory?.length > 0)}
+                        disabled={!isInStock && product.inventory?.length > 0}
                         aria-disabled={product.sizes.length > 0 && !selectedSize}
+                        aria-live="polite"
                         tabIndex={isPrimaryCtaVisible ? -1 : 0}
                     >
-                        {justAdded
-                            ? t("✓ Додано")
-                            : !isInStock && product.inventory?.length > 0
-                              ? t("Немає в наявності")
-                              : product.sizes.length > 0 && !selectedSize
-                                ? t("Оберіть розмір")
-                                : `${t("Додати в кошик")} · ${money(product.price)}`}
+                        <CtaSwap added={justAdded} doneLabel={t("✓ Додано в кошик")}>
+                            {!isInStock && product.inventory?.length > 0
+                                ? t("Немає в наявності")
+                                : product.sizes.length > 0 && !selectedSize
+                                  ? t("Оберіть розмір")
+                                  : `${t("Додати в кошик")} · ${money(product.price)}`}
+                        </CtaSwap>
                     </button>
                 </div>
             </main>

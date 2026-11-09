@@ -1085,3 +1085,138 @@
         padding-bottom: 120px;
     }
 }
+
+/* ============================================================
+   PDP TACTILE MICRO-INTERACTIONS
+   Spring-damped press feedback on size pills + the two buy CTAs, and a
+   layout-stable "✓ Додано в кошик" confirmation. Only transform / opacity /
+   colour animate (compositor-friendly, zero reflow). Under
+   prefers-reduced-motion the global rule collapses durations to ~0, so the
+   state still changes instantly without movement.
+   ============================================================ */
+.product-page-mindbody,
+.mobile-sticky-cta {
+    --mb-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* soft overshoot */
+    --mb-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- Size pills -------------------------------------------------------- */
+.product-page-mindbody .size-chip {
+    touch-action: manipulation;
+    transition:
+        transform 0.32s var(--mb-spring),
+        background-color 0.22s ease,
+        color 0.22s ease,
+        border-color 0.22s ease,
+        box-shadow 0.28s ease;
+}
+
+/* Press: quick squeeze, released with the spring above. */
+.product-page-mindbody .size-chip:not(.unavailable):not(:disabled):active {
+    transform: scale(0.92);
+    transition-duration: 0.08s;
+}
+
+/* Selection: the newly-selected pill "pops" once. */
+.product-page-mindbody .size-chip.selected {
+    animation: mbChipPop 0.42s var(--mb-spring);
+    box-shadow: 0 6px 16px rgba(42, 90, 90, 0.22);
+}
+
+@keyframes mbChipPop {
+    from {
+        transform: scale(0.9);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+/* Hover lift only where hover exists; on touch the sticky :hover would leave
+   the last-tapped pill enlarged. Sold-out pills never react. */
+@media (hover: hover) {
+    .product-page-mindbody .size-chip:not(.unavailable):not(.selected):hover {
+        transform: scale(1.05);
+    }
+}
+@media (hover: none) {
+    .product-page-mindbody .size-chip:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    .product-page-mindbody .size-chip.selected:hover {
+        box-shadow: 0 6px 16px rgba(42, 90, 90, 0.22);
+    }
+}
+.product-page-mindbody .size-chip.unavailable:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* --- Buy CTAs ---------------------------------------------------------- */
+.btn-primary-add,
+.mobile-sticky-cta__btn {
+    position: relative;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        transform 0.35s var(--mb-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+        background-color 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease,
+        opacity 0.2s ease;
+}
+
+.btn-primary-add:active:not(:disabled),
+.mobile-sticky-cta__btn:active:not(:disabled) {
+    transform: scale(0.97);
+    opacity: 1;
+    transition-duration: 0.08s;
+}
+
+/* Cross-fading label: both faces share ONE grid cell, so the button is always
+   sized by the longer label and the swap can't reflow anything. */
+.cta-swap {
+    display: inline-grid;
+    place-items: center;
+    max-width: 100%;
+}
+.cta-swap__face {
+    grid-area: 1 / 1;
+    white-space: nowrap;
+    transition:
+        opacity 0.26s ease,
+        transform 0.38s var(--mb-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+.cta-swap__face--done {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+}
+.cta-swap[data-added="true"] .cta-swap__face--idle {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+}
+.cta-swap[data-added="true"] .cta-swap__face--done {
+    opacity: 1;
+    transform: none;
+}
+
+/* Confirmed state: deeper brand teal + one soft ring pulse. */
+.btn-primary-add.is-added,
+.mobile-sticky-cta__btn.is-added {
+    background-color: var(--color-primary-dark, #1e4444) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    opacity: 1;
+    animation: mbCtaConfirm 0.7s var(--mb-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+@keyframes mbCtaConfirm {
+    0% {
+        box-shadow: 0 0 0 0 rgba(42, 90, 90, 0.38);
+    }
+    100% {
+        box-shadow: 0 0 0 14px rgba(42, 90, 90, 0);
+    }
+}

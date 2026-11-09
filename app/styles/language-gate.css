@@ -116,6 +116,20 @@
         padding: 0 12px calc(12px + env(safe-area-inset-bottom, 12px));
         z-index: 900; /* below header (1000) and cart (1100) */
         align-items: flex-end;
+        transition:
+            opacity 0.45s ease,
+            visibility 0.45s ease,
+            bottom 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* [A-03] The PDP sticky buy bar (.mobile-sticky-cta, z-index 100, ~58px +
+       safe-area) sits at the same bottom edge, and this banner (z 900) painted
+       over it. While the bar is on screen, lift the banner above it. The bar
+       slides away (.is-hidden) when the in-page CTA is visible, so the banner
+       settles back to the edge in sync (same 0.25s easing). */
+    body:has(.mobile-sticky-cta:not(.is-hidden)) .lang-gate--mobile {
+        bottom: calc(66px + max(12px, env(safe-area-inset-bottom, 0px)));
+        padding-bottom: 0;
     }
 
     .lang-gate__card {

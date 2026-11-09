@@ -38,8 +38,11 @@ export default function FloatingContact() {
        FAB clipped the "Додати в кошик" button on iPhone 14 — direct revenue
        loss. Desktop still shows the widget on those routes because the
        sticky CTA is mobile-only. */
-    const isPDP = /^\/product\//.test(location.pathname);
-    const isCheckout = location.pathname === "/checkout";
+    // Real PDP route is /p/:slug (optionally locale-prefixed: /en/p/..., /ru/p/...),
+    // checkout is /checkout[/...] with the same optional locale prefix. The old
+    // /^\/product\// never matched, so the cluster covered the sticky CTA. [F-02]
+    const isPDP = /^\/([a-z]{2}\/)?p\//.test(location.pathname);
+    const isCheckout = /^\/([a-z]{2}\/)?checkout/.test(location.pathname);
     const hideOnSticky = isPDP || isCheckout;
     // The premium brand-story page carries every channel in its own contact
     // section, so the saturated messenger cluster is suppressed there to keep
