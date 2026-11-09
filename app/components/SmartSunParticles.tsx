@@ -98,8 +98,9 @@ const TINTS: Tint[] = [
 // ── Sprites ──────────────────────────────────────────────────────────────────
 /** Pre-painted sprite sizes (px). A sun uses the smallest tier ≥ its on-screen
  *  device size, so it is minified ≤ 2× only: crisp on retina, no shimmer while
- *  rotating, and ~2 MB total instead of re-scaling a 504 px source every frame. */
-const TIERS = [64, 128, 256];
+ *  rotating, and ~2 MB total instead of re-scaling a 504 px source every frame.
+ *  The 32 tier serves the tiny suns (≈18–28 px on a 1× screen). */
+const TIERS = [32, 64, 128, 256];
 /** The logo fills this share of its sprite square; the rest is padding so the
  *  points of the sun never clip while it rotates. */
 const ART_FILL = 0.88;
@@ -189,9 +190,24 @@ function sampleBreeze(x: number, y: number, t: number) {
 
 // ── Page space ───────────────────────────────────────────────────────────────
 /** Suns per screen of page height (the count follows the document height). */
-const PER_SCREEN = { desktop: { under: 27, overlay: 18 }, mobile: { under: 13, overlay: 7 } };
+const PER_SCREEN = { desktop: { under: 31, overlay: 21 }, mobile: { under: 15, overlay: 9 } };
 /** Hard ceiling for the whole page — keeps very long pages cheap. */
-const MAX_SUNS = { desktop: 150, mobile: 72 };
+const MAX_SUNS = { desktop: 170, mobile: 80 };
+
+/** Size mix: many tiny suns, some medium, a few large "hero" ones. Each band is the
+ *  art size in CSS px; `share` is the chance of drawing from it. */
+const SIZE_SHARE = { small: 0.58, medium: 0.26 }; // the rest (≈16 %) are large
+type SizeBands = { small: [number, number]; medium: [number, number]; large: [number, number] };
+const SIZE_BANDS: Record<"desktop" | "mobile", Record<"under" | "overlay", SizeBands>> = {
+    desktop: {
+        under: { small: [18, 34], medium: [38, 60], large: [68, 104] },
+        overlay: { small: [16, 32], medium: [36, 56], large: [62, 92] },
+    },
+    mobile: {
+        under: { small: [16, 28], medium: [32, 48], large: [54, 70] },
+        overlay: { small: [15, 26], medium: [30, 44], large: [50, 62] },
+    },
+};
 /** Parallax floor: the farthest sun trails the page by up to 1 − this of the scroll. */
 const PARALLAX_MIN = 0.8;
 
@@ -297,13 +313,9 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         const perScreen =
             PER_SCREEN[isMobile ? "mobile" : "desktop"][overlay ? "overlay" : "under"];
         const maxSuns = MAX_SUNS[isMobile ? "mobile" : "desktop"];
-        const [sizeMin, sizeMax] = isMobile
-            ? overlay
-                ? [30, 62]
-                : [34, 70]
-            : overlay
-              ? [34, 92]
-              : [38, 104];
+        const bands = SIZE_BANDS[isMobile ? "mobile" : "desktop"][overlay ? "overlay" : "under"];
+        const sizeMin = bands.small[0];
+        const sizeMax = bands.large[1];
 
         // ── canvas fitting: retina-sharp (DPR ≤ 2), re-measured on resize / zoom ──
         const getDpr = () => Math.min(window.devicePixelRatio || 1, 2);
@@ -378,8 +390,17 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
         // ── birth ────────────────────────────────────────────────────────────
         /** One new sun in the emptiest of `tries` random spots on the page. */
         const makeSun = (now: number, delay: number, tries: number): Sun => {
-            // depth: many small/far suns, a few larger/closer ones
-            const depth = Math.pow(Math.random(), 1.5);
+            // size first (many tiny, some medium, a few large), depth follows from it:
+            // small = far (trails the page, calmer), large = near (pinned to the page).
+            const roll = Math.random();
+            const band =
+                roll < SIZE_SHARE.small
+                    ? bands.small
+                    : roll < SIZE_SHARE.small + SIZE_SHARE.medium
+                      ? bands.medium
+                      : bands.large;
+            const size = rand(band[0], band[1]);
+            const depth = clamp01((size - sizeMin) / (sizeMax - sizeMin));
             const par = PARALLAX_MIN + (1 - PARALLAX_MIN) * depth;
             const kk = reduced ? 1 : par;
             const layerH = height + maxScroll * kk;
@@ -418,7 +439,7 @@ export default function SmartSunParticles({ variant = "under" }: SmartSunParticl
                 y: py,
                 vx: Math.cos(dir) * cruise,
                 vy: Math.sin(dir) * cruise,
-                size: sizeMin + (sizeMax - sizeMin) * depth,
+                size,
                 par,
                 cruise,
                 dir,
