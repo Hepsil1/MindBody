@@ -82,21 +82,22 @@ interface Tint {
 }
 const TINTS: Tint[] = [
     // soft lavender
-    { color: "#8b7bb8", boost: 1.08 },
+    { color: "#8c72bd", boost: 1.08 },
     // noble plum / marsala
-    { color: "#722f37", boost: 0.9 },
+    { color: "#7b2938", boost: 0.9 },
     // deep teal
-    { color: "#0f766e", boost: 0.96 },
+    { color: "#0d7a71", boost: 0.96 },
     // soft powder rose / cashmere
-    { color: "#c18a8c", boost: 1.1 },
+    { color: "#c87a80", boost: 1.1 },
 ];
 
 // ── Sprites ──────────────────────────────────────────────────────────────────
 /** Pre-painted sprite sizes (px). A sun uses the smallest tier ≥ its on-screen
  *  device size, so it is minified ≤ 2× only: crisp on retina, no shimmer while
  *  rotating, and ~2 MB total instead of re-scaling a 504 px source every frame.
- *  The 32 tier serves the tiny suns (≈18–28 px on a 1× screen). */
-const TIERS = [32, 64, 128, 256];
+ *  The 32 tier serves the tiny suns (≈18–28 px on a 1× screen); 48 and 96 keep the
+ *  36–56 px band within ~1.2× of its sprite. 256 stays for 64 px suns on 3× screens. */
+const TIERS = [32, 48, 64, 96, 128, 256];
 /** The logo fills this share of its sprite square; the rest is padding so the
  *  points of the sun never clip while it rotates. */
 const ART_FILL = 0.88;
@@ -117,20 +118,14 @@ function paintTop(img: HTMLImageElement, size: number, tint: Tint): HTMLCanvasEl
     return c;
 }
 
-/** One sprite per tier for a tint; lower tiers are halved from the one above. */
+/** One sprite per tier for a tint. Every tier is rasterised straight from the source
+ *  image (never re-downsampled from a larger tier), so thin rays stay as sharp as possible. */
 function buildTintSprites(img: HTMLImageElement, tint: Tint): HTMLCanvasElement[] {
     const out: HTMLCanvasElement[] = [];
-    const top = paintTop(img, TIERS[TIERS.length - 1], tint);
-    if (!top) return out;
-    out[TIERS.length - 1] = top;
-    for (let i = TIERS.length - 2; i >= 0; i--) {
-        const c = document.createElement("canvas");
-        c.width = c.height = TIERS[i];
-        const g = c.getContext("2d");
-        if (!g) return [];
-        g.imageSmoothingQuality = "high";
-        g.drawImage(out[i + 1], 0, 0, TIERS[i], TIERS[i]);
-        out[i] = c;
+    for (let i = 0; i < TIERS.length; i++) {
+        const sprite = paintTop(img, TIERS[i], tint);
+        if (!sprite) return [];
+        out[i] = sprite;
     }
     return out;
 }
@@ -228,15 +223,15 @@ const GUST_FULL = 2400; // px/s of scroll that counts as a full gust
 const GLOW = 0.2;
 
 // ── Opacity ──────────────────────────────────────────────────────────────────
-const ALPHA_LO = 0.08;
-const ALPHA_HI = 0.18;
+const ALPHA_LO = 0.11;
+const ALPHA_HI = 0.22;
 /** Per-sun clamp after the pigment boost. */
-const ALPHA_MIN = 0.08;
-const ALPHA_MAX = 0.18;
+const ALPHA_MIN = 0.11;
+const ALPHA_MAX = 0.22;
 /** Breathing (sinusoidal), ± fraction of the sun's own opacity. */
 const BREATH = 0.14;
 /** Absolute ceiling of any sun's opacity, breath and cursor glow included. */
-const ALPHA_CAP = 0.26;
+const ALPHA_CAP = 0.3;
 
 interface Sun {
     /** page space: x across, y down the whole document (layer coordinates, see k) */
