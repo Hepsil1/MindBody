@@ -4,7 +4,41 @@ import { useToast } from "../components/Toast";
 import { useI18n, useMoney, LLink, plural } from "../i18n";
 import { slugToLabel } from "../utils/categoryMap";
 import { useProductSlugs, productHref } from "../utils/useProductSlugs";
+import { localeFromParamSafe, localizePath, OG_LOCALE } from "../i18n/config";
+import { DEFAULT_SITE_URL } from "../utils/site-url";
 import "../styles/wishlist.css";
+
+const META = {
+    uk: {
+        title: "Список бажань | MIND BODY",
+        description:
+            "Ваші збережені товари MIND BODY — повертайтеся до улюбленого в будь-який момент.",
+    },
+    en: {
+        title: "Wishlist | MIND BODY",
+        description: "Your saved MIND BODY favourites — come back to them any time.",
+    },
+    ru: {
+        title: "Избранное | MIND BODY",
+        description: "Ваши сохранённые товары MIND BODY — возвращайтесь к любимому в любой момент.",
+    },
+} as const;
+
+export function meta({ params }: { params: { lang?: string } }) {
+    const locale = localeFromParamSafe(params.lang);
+    const m = META[locale];
+    const url = `${DEFAULT_SITE_URL}${localizePath("/wishlist", locale)}`;
+    return [
+        { title: m.title },
+        { name: "description", content: m.description },
+        { tagName: "link", rel: "canonical", href: url },
+        { property: "og:title", content: m.title },
+        { property: "og:description", content: m.description },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "website" },
+        { property: "og:locale", content: OG_LOCALE[locale] },
+    ];
+}
 
 export default function Wishlist() {
     const { showToast } = useToast();

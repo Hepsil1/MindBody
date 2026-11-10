@@ -7,6 +7,14 @@
  * lives at the bottom.
  */
 export const en: Record<string, string> = {
+    // --- shop: empty collection teaser ---
+    "Колекція {name} готується до релізу": "The {name} collection is coming soon",
+    "Ми створюємо нові моделі для цієї лінійки. Запрошуємо ознайомитися з нашими основними колекціями:":
+        "We are creating new pieces for this line. Meanwhile, explore our main collections:",
+    "Колекція Yoga": "Yoga Collection",
+    "Колекція Sport": "Sport Collection",
+    "Дитяча лінія": "Kids Line",
+
     // --- wishlist auth gate ---
     "Збережіть улюблені товари": "Save your favourites",
     "Увійдіть або зареєструйтеся, щоб зберігати обране та повертатися до нього будь-коли":

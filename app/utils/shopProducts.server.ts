@@ -47,6 +47,10 @@ export interface ShopProductCard {
 
 export interface ShopData {
     products: ShopProductCard[];
+    /** Active products in the WHOLE shop section, ignoring any subcategory
+        filter. 0 → the collection itself is empty ("coming soon" teaser);
+        products.length === 0 with total > 0 → just an empty subcategory/filter. */
+    totalCategoryProducts: number;
     category: string;
     shopPage: Awaited<ReturnType<typeof prisma.shopPage.findUnique>>;
     filterConfig: MergedFilterConfig;
@@ -221,8 +225,18 @@ async function loadShopDataUncached(
         };
     });
 
+    // Without a subcategory filter the list IS the whole section; with one we
+    // need a cheap count so an empty subcategory isn't mistaken for an empty
+    // collection.
+    const totalCategoryProducts = opts.subcategoryFilter
+        ? await prisma.product
+              .count({ where: { shopPageSlug: categorySlug, status: "active" } })
+              .catch(() => products.length)
+        : products.length;
+
     return {
         products,
+        totalCategoryProducts,
         category: categorySlug,
         shopPage: shopPageResult,
         filterConfig,

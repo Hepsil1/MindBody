@@ -178,7 +178,11 @@ import { useSearchParams, useParams, useNavigate } from "react-router";
 import "../styles/shop.css";
 
 export default function ShopCategory() {
-    const { products, category, shopPage, filterConfig } = useLoaderData<typeof loader>();
+    const { products, category, shopPage, filterConfig, totalCategoryProducts } =
+        useLoaderData<typeof loader>();
+    // The whole shop section has no active products (e.g. /shop/dance) — as
+    // opposed to filters/a subcategory matching nothing inside a stocked section.
+    const isCollectionEmpty = totalCategoryProducts === 0;
     const { t, lp, locale } = useI18n();
     const money = useMoney();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -768,579 +772,669 @@ export default function ShopCategory() {
                 </div>
             </section>
 
-            {/* Mobile Filter Button */}
-            <div className="mobile-filter-bar">
-                <button
-                    className="mobile-filter-btn"
-                    onClick={() => setIsFilterOpen(true)}
-                    aria-label={t("Відкрити фільтри")}
-                >
-                    <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                    >
-                        <line x1="4" y1="6" x2="20" y2="6" />
-                        <line x1="8" y1="12" x2="16" y2="12" />
-                        <line x1="10" y1="18" x2="14" y2="18" />
-                    </svg>
-                    {t("ФІЛЬТРИ")}
-                    {selectedCategories.length +
-                        selectedSizes.length +
-                        selectedColors.length +
-                        (selectedFabric ? 1 : 0) +
-                        (selectedSleeve ? 1 : 0) +
-                        (selectedPriceRange ? 1 : 0) >
-                        0 && (
-                        <span className="mobile-filter-badge">
+            {isCollectionEmpty ? (
+                <section className="container">
+                    <div className="category-teaser-empty">
+                        <span className="teaser-eyebrow">MIND BODY</span>
+                        <h2>{t("Колекція {name} готується до релізу", { name: mainLabel })}</h2>
+                        <p>
+                            {t(
+                                "Ми створюємо нові моделі для цієї лінійки. Запрошуємо ознайомитися з нашими основними колекціями:",
+                            )}
+                        </p>
+                        <div className="teaser-links">
+                            {category !== "yoga" && (
+                                <LLink to="/shop/yoga" className="btn-teaser">
+                                    {t("Колекція Yoga")}
+                                </LLink>
+                            )}
+                            {category !== "sport" && (
+                                <LLink to="/shop/sport" className="btn-teaser">
+                                    {t("Колекція Sport")}
+                                </LLink>
+                            )}
+                            {category !== "kids" && (
+                                <LLink to="/shop/kids" className="btn-teaser">
+                                    {t("Дитяча лінія")}
+                                </LLink>
+                            )}
+                        </div>
+                    </div>
+                </section>
+            ) : (
+                <>
+                    {/* Mobile Filter Button */}
+                    <div className="mobile-filter-bar">
+                        <button
+                            className="mobile-filter-btn"
+                            onClick={() => setIsFilterOpen(true)}
+                            aria-label={t("Відкрити фільтри")}
+                        >
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
+                                <line x1="4" y1="6" x2="20" y2="6" />
+                                <line x1="8" y1="12" x2="16" y2="12" />
+                                <line x1="10" y1="18" x2="14" y2="18" />
+                            </svg>
+                            {t("ФІЛЬТРИ")}
                             {selectedCategories.length +
                                 selectedSizes.length +
                                 selectedColors.length +
                                 (selectedFabric ? 1 : 0) +
                                 (selectedSleeve ? 1 : 0) +
-                                (selectedPriceRange ? 1 : 0)}
-                        </span>
-                    )}
-                </button>
-                <div className="mobile-product-count">
-                    {filteredProducts.length}{" "}
-                    {plural(locale, filteredProducts.length, "товар", "товари", "товарів")}
-                </div>
-            </div>
-
-            {/* Mobile Filter Drawer Overlay */}
-            {isFilterOpen && (
-                <div className="filter-drawer-overlay" onClick={() => setIsFilterOpen(false)}>
-                    <div className="filter-drawer" onClick={(e) => e.stopPropagation()}>
-                        <div className="filter-drawer__header">
-                            <span>{t("ФІЛЬТРИ")}</span>
-                            <button
-                                className="filter-drawer__close"
-                                onClick={() => setIsFilterOpen(false)}
-                                aria-label={t("Закрити")}
-                            >
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                >
-                                    <line x1="18" y1="6" x2="6" y2="18" />
-                                    <line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="filter-drawer__body">
-                            {/* Same filter content rendered inside drawer */}
-                            <div className="filter-accordion active">
-                                <button
-                                    type="button"
-                                    className="accordion-trigger"
-                                    aria-expanded={openSections.category}
-                                    onClick={() => toggleSection("category")}
-                                >
-                                    <span>{t("КАТЕГОРІЯ")}</span>
-                                    <span className="icon">
-                                        {openSections.category ? "−" : "+"}
-                                    </span>
-                                </button>
-                                <div className="accordion-content">
-                                    <div className="filter-checkbox-list">
-                                        {categories.map((cat, idx) => {
-                                            const count = products.filter(
-                                                (p) =>
-                                                    p.category === cat ||
-                                                    p.category === categoryLabels[cat],
-                                            ).length;
-                                            if (count === 0) return null;
-                                            return (
-                                                <label
-                                                    key={`dcatfil-${cat}-${idx}`}
-                                                    className="mb-checkbox-item"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedCategories.includes(cat)}
-                                                        onChange={() => toggleCategory(cat)}
-                                                    />
-                                                    <span className="checkbox-visual"></span>
-                                                    <span className="label-text">
-                                                        {t(categoryLabels[cat] || cat)}{" "}
-                                                        <span
-                                                            style={{
-                                                                marginLeft: "6px",
-                                                                opacity: 0.4,
-                                                                fontSize: "11px",
-                                                            }}
-                                                        >
-                                                            ({count})
-                                                        </span>
-                                                    </span>
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                            {renderFacetFilter(
-                                t("ТКАНИНА"),
-                                "fabric",
-                                fabricOptions,
-                                selectedFabric,
-                                setSelectedFabric,
-                                fabricLabel,
-                                "d",
+                                (selectedPriceRange ? 1 : 0) >
+                                0 && (
+                                <span className="mobile-filter-badge">
+                                    {selectedCategories.length +
+                                        selectedSizes.length +
+                                        selectedColors.length +
+                                        (selectedFabric ? 1 : 0) +
+                                        (selectedSleeve ? 1 : 0) +
+                                        (selectedPriceRange ? 1 : 0)}
+                                </span>
                             )}
-                            {renderFacetFilter(
-                                t("РУКАВ"),
-                                "sleeve",
-                                sleeveOptions,
-                                selectedSleeve,
-                                setSelectedSleeve,
-                                sleeveLabel,
-                                "d",
-                            )}
-                            <div className="filter-accordion active">
-                                <button
-                                    type="button"
-                                    className="accordion-trigger"
-                                    aria-expanded={openSections.size}
-                                    onClick={() => toggleSection("size")}
-                                >
-                                    <span>{t("РОЗМІР")}</span>
-                                    <span className="icon">{openSections.size ? "−" : "+"}</span>
-                                </button>
-                                <div className="accordion-content">
-                                    <div className="mb-size-grid">
-                                        {sizes.map((size: string, idx: number) => {
-                                            const count = products.filter((p) =>
-                                                p.sizes?.includes(size),
-                                            ).length;
-                                            if (count === 0) return null;
-                                            return (
-                                                <button
-                                                    key={`dsz-${size}-${idx}`}
-                                                    className={`mb-size-chip ${selectedSizes.includes(size) ? "active" : ""}`}
-                                                    onClick={() => toggleSize(size)}
-                                                >
-                                                    {size}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="filter-accordion active">
-                                <button
-                                    type="button"
-                                    className="accordion-trigger"
-                                    aria-expanded={openSections.color}
-                                    onClick={() => toggleSection("color")}
-                                >
-                                    <span>{t("КОЛІР")}</span>
-                                    <span className="icon">{openSections.color ? "−" : "+"}</span>
-                                </button>
-                                <div className="accordion-content">
-                                    <div className="mb-color-grid">
-                                        {colors.map((color: string, idx: number) => {
-                                            const count = products.filter(
-                                                (p) =>
-                                                    p.colors?.includes(color) ||
-                                                    (colorLabels[color] &&
-                                                        p.colors?.includes(colorLabels[color])),
-                                            ).length;
-                                            if (count === 0) return null;
-                                            return (
-                                                <button
-                                                    key={`dcol-${color}-${idx}`}
-                                                    className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? "active" : ""}`}
-                                                    onClick={() => toggleColor(color)}
-                                                    aria-label={t(colorLabels[color] || color)}
-                                                    aria-pressed={selectedColors.includes(color)}
-                                                    title={t(colorLabels[color] || color)}
-                                                >
-                                                    <span className="swatch-check">✓</span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="filter-accordion active">
-                                <button
-                                    type="button"
-                                    className="accordion-trigger"
-                                    aria-expanded={openSections.price}
-                                    onClick={() => toggleSection("price")}
-                                >
-                                    <span>{t("ЦІНА")}</span>
-                                    <span className="icon">{openSections.price ? "−" : "+"}</span>
-                                </button>
-                                <div className="accordion-content">
-                                    <div className="filter-checkbox-list">
-                                        {priceRanges.map((range: PriceRange, idx: number) => (
-                                            <label
-                                                key={range.id || `dr-${idx}`}
-                                                className="mb-checkbox-item"
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="price-range-drawer"
-                                                    checked={selectedPriceRange === range.id}
-                                                    onChange={() => {
-                                                        setSelectedPriceRange(range.id);
-                                                        setDisplayCount(12);
-                                                    }}
-                                                />
-                                                <span className="checkbox-visual radio"></span>
-                                                <span className="label-text">
-                                                    {priceRangeLabel(range)}
-                                                </span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="filter-drawer__footer">
-                            {(selectedCategories.length > 0 ||
-                                selectedSizes.length > 0 ||
-                                selectedColors.length > 0 ||
-                                selectedFabric ||
-                                selectedSleeve ||
-                                selectedPriceRange) && (
-                                <button
-                                    onClick={() => {
-                                        clearFilters();
-                                    }}
-                                    className="filter-drawer__reset"
-                                >
-                                    {t("Скинути фільтри")}
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setIsFilterOpen(false)}
-                                className="filter-drawer__apply"
-                            >
-                                {t("Показати")} {filteredProducts.length}{" "}
-                                {plural(
-                                    locale,
-                                    filteredProducts.length,
-                                    "товар",
-                                    "товари",
-                                    "товарів",
-                                )}
-                            </button>
+                        </button>
+                        <div className="mobile-product-count">
+                            {filteredProducts.length}{" "}
+                            {plural(locale, filteredProducts.length, "товар", "товари", "товарів")}
                         </div>
                     </div>
-                </div>
-            )}
 
-            <div className="shop-main-layout">
-                <div className="container">
-                    <div className="luxe-grid">
-                        {/* MIND BODY x Puma Hybrid Sidebar */}
-                        <aside className="mb-shop-sidebar" data-lenis-prevent="true">
-                            <div className="sidebar-header">
-                                <h3>{t("ФІЛЬТРИ")}</h3>
-                            </div>
-
-                            {/* Category Accordion */}
-                            <div
-                                className={`filter-accordion ${openSections.category ? "active" : ""}`}
-                            >
-                                <button
-                                    type="button"
-                                    className="accordion-trigger"
-                                    aria-expanded={openSections.category}
-                                    onClick={() => toggleSection("category")}
-                                >
-                                    <span>{t("КАТЕГОРІЯ")}</span>
-                                    <span className="icon">
-                                        {openSections.category ? "−" : "+"}
-                                    </span>
-                                </button>
-                                <div className="accordion-content">
-                                    <div className="filter-checkbox-list">
-                                        {categories.map((cat, idx) => {
-                                            const count = products.filter(
-                                                (p) =>
-                                                    p.category === cat ||
-                                                    p.category === categoryLabels[cat],
-                                            ).length;
-                                            if (count === 0) return null;
-                                            return (
-                                                <label
-                                                    key={`cat-${cat}-${idx}`}
-                                                    className="mb-checkbox-item"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedCategories.includes(cat)}
-                                                        onChange={() => toggleCategory(cat)}
-                                                    />
-                                                    <span className="checkbox-visual"></span>
-                                                    <span className="label-text">
-                                                        {t(categoryLabels[cat] || cat)}
-                                                        <span
-                                                            style={{
-                                                                marginLeft: "6px",
-                                                                opacity: 0.4,
-                                                                fontSize: "11px",
-                                                            }}
-                                                        >
-                                                            ({count})
-                                                        </span>
-                                                    </span>
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
+                    {/* Mobile Filter Drawer Overlay */}
+                    {isFilterOpen && (
+                        <div
+                            className="filter-drawer-overlay"
+                            onClick={() => setIsFilterOpen(false)}
+                        >
+                            <div className="filter-drawer" onClick={(e) => e.stopPropagation()}>
+                                <div className="filter-drawer__header">
+                                    <span>{t("ФІЛЬТРИ")}</span>
+                                    <button
+                                        className="filter-drawer__close"
+                                        onClick={() => setIsFilterOpen(false)}
+                                        aria-label={t("Закрити")}
+                                    >
+                                        <svg
+                                            width="20"
+                                            height="20"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                        >
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                        </svg>
+                                    </button>
                                 </div>
-                            </div>
-
-                            {renderFacetFilter(
-                                t("ТКАНИНА"),
-                                "fabric",
-                                fabricOptions,
-                                selectedFabric,
-                                setSelectedFabric,
-                                fabricLabel,
-                                "s",
-                            )}
-                            {renderFacetFilter(
-                                t("РУКАВ"),
-                                "sleeve",
-                                sleeveOptions,
-                                selectedSleeve,
-                                setSelectedSleeve,
-                                sleeveLabel,
-                                "s",
-                            )}
-
-                            {/* Size Accordion */}
-                            <div
-                                className={`filter-accordion ${openSections.size ? "active" : ""}`}
-                            >
-                                <button
-                                    type="button"
-                                    className="accordion-trigger"
-                                    aria-expanded={openSections.size}
-                                    onClick={() => toggleSection("size")}
-                                >
-                                    <span>{t("РОЗМІР")}</span>
-                                    <span className="icon">{openSections.size ? "−" : "+"}</span>
-                                </button>
-                                <div className="accordion-content">
-                                    <div className="mb-size-grid">
-                                        {sizes.map((size: string, idx: number) => {
-                                            const count = products.filter((p) =>
-                                                p.sizes?.includes(size),
-                                            ).length;
-                                            if (count === 0) return null;
-                                            return (
-                                                <button
-                                                    key={`size-${size}-${idx}`}
-                                                    className={`mb-size-chip ${selectedSizes.includes(size) ? "active" : ""}`}
-                                                    onClick={() => toggleSize(size)}
-                                                >
-                                                    {size}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Color Accordion */}
-                            <div
-                                className={`filter-accordion ${openSections.color ? "active" : ""}`}
-                            >
-                                <button
-                                    type="button"
-                                    className="accordion-trigger"
-                                    aria-expanded={openSections.color}
-                                    onClick={() => toggleSection("color")}
-                                >
-                                    <span>{t("КОЛІР")}</span>
-                                    <span className="icon">{openSections.color ? "−" : "+"}</span>
-                                </button>
-                                <div className="accordion-content">
-                                    <div className="mb-color-grid">
-                                        {colors.map((color: string, idx: number) => {
-                                            const count = products.filter(
-                                                (p) =>
-                                                    p.colors?.includes(color) ||
-                                                    (colorLabels[color] &&
-                                                        p.colors?.includes(colorLabels[color])),
-                                            ).length;
-                                            if (count === 0) return null;
-                                            return (
-                                                <button
-                                                    key={`color-${color}-${idx}`}
-                                                    className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? "active" : ""}`}
-                                                    onClick={() => toggleColor(color)}
-                                                    aria-label={t(colorLabels[color] || color)}
-                                                    aria-pressed={selectedColors.includes(color)}
-                                                    title={t(colorLabels[color] || color)}
-                                                >
-                                                    <span className="swatch-check">✓</span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Price Accordion */}
-                            <div
-                                className={`filter-accordion ${openSections.price ? "active" : ""}`}
-                            >
-                                <button
-                                    type="button"
-                                    className="accordion-trigger"
-                                    aria-expanded={openSections.price}
-                                    onClick={() => toggleSection("price")}
-                                >
-                                    <span>{t("ЦІНА")}</span>
-                                    <span className="icon">{openSections.price ? "−" : "+"}</span>
-                                </button>
-                                <div className="accordion-content">
-                                    <div className="filter-checkbox-list">
-                                        {priceRanges.map((range: PriceRange, idx: number) => (
-                                            <label
-                                                key={range.id || `range-${idx}`}
-                                                className="mb-checkbox-item"
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="price-range"
-                                                    checked={selectedPriceRange === range.id}
-                                                    onChange={() => {
-                                                        setSelectedPriceRange(range.id);
-                                                        setDisplayCount(12);
-                                                    }}
-                                                />
-                                                <span className="checkbox-visual radio"></span>
-                                                <span className="label-text">
-                                                    {priceRangeLabel(range)}
-                                                </span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {(selectedCategories.length > 0 ||
-                                selectedSizes.length > 0 ||
-                                selectedColors.length > 0 ||
-                                selectedFabric ||
-                                selectedSleeve ||
-                                selectedPriceRange) && (
-                                <button onClick={clearFilters} className="mb-reset-filters">
-                                    {t("Скинути всі фільтри")}
-                                </button>
-                            )}
-                        </aside>
-
-                        {/* Shop Content Area */}
-                        <main className="mb-shop-content">
-                            {/* MB sorting Toolbar */}
-                            <div className="mb-toolbar">
-                                <div className="toolbar-top-row">
-                                    <div className="sort-label">{t("СОРТУВАТИ ЗА:")}</div>
-                                    <div className="sort-chips">
-                                        {[
-                                            { id: "default", label: "За релевантністю" },
-                                            { id: "price-asc", label: "Ціна: за зростанням" },
-                                            { id: "price-desc", label: "Ціна: за зменшенням" },
-                                            { id: "newest", label: "Новинки" },
-                                        ].map((option) => (
-                                            <button
-                                                key={option.id}
-                                                className={`sort-chip ${sortBy === option.id ? "active" : ""}`}
-                                                onClick={() => setSortBy(option.id)}
-                                            >
-                                                {t(option.label)}
-                                                {sortBy === option.id && (
-                                                    <span className="close-x">✕</span>
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div className="product-count">
-                                        {visibleProducts.length < filteredProducts.length
-                                            ? t("{shown} з {total} ТОВАРІВ", {
-                                                  shown: visibleProducts.length,
-                                                  total: filteredProducts.length,
-                                              })
-                                            : t("{n} ТОВАРІВ", { n: filteredProducts.length })}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Luxe Grid */}
-                            {visibleProducts.length > 0 ? (
-                                <>
-                                    <div className="luxe-product-grid">
-                                        {visibleProducts.map((product, idx) => (
-                                            <div
-                                                key={product.id || `product-${idx}`}
-                                                className="luxe-card-wrapper"
-                                            >
-                                                <ProductCard product={product} priority={idx < 6} />
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {hasMore && (
-                                        <div className="load-more-wrap">
-                                            <button
-                                                className="load-more-btn"
-                                                onClick={() =>
-                                                    setDisplayCount(
-                                                        (prev) => prev + LOAD_MORE_COUNT,
-                                                    )
-                                                }
-                                            >
-                                                {t("Показати ще ({n})", {
-                                                    n: Math.min(
-                                                        LOAD_MORE_COUNT,
-                                                        filteredProducts.length - displayCount,
-                                                    ),
-                                                })}
-                                            </button>
-                                            <span className="load-more-progress">
-                                                {visibleProducts.length} / {filteredProducts.length}
+                                <div className="filter-drawer__body">
+                                    {/* Same filter content rendered inside drawer */}
+                                    <div className="filter-accordion active">
+                                        <button
+                                            type="button"
+                                            className="accordion-trigger"
+                                            aria-expanded={openSections.category}
+                                            onClick={() => toggleSection("category")}
+                                        >
+                                            <span>{t("КАТЕГОРІЯ")}</span>
+                                            <span className="icon">
+                                                {openSections.category ? "−" : "+"}
                                             </span>
+                                        </button>
+                                        <div className="accordion-content">
+                                            <div className="filter-checkbox-list">
+                                                {categories.map((cat, idx) => {
+                                                    const count = products.filter(
+                                                        (p) =>
+                                                            p.category === cat ||
+                                                            p.category === categoryLabels[cat],
+                                                    ).length;
+                                                    if (count === 0) return null;
+                                                    return (
+                                                        <label
+                                                            key={`dcatfil-${cat}-${idx}`}
+                                                            className="mb-checkbox-item"
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedCategories.includes(
+                                                                    cat,
+                                                                )}
+                                                                onChange={() => toggleCategory(cat)}
+                                                            />
+                                                            <span className="checkbox-visual"></span>
+                                                            <span className="label-text">
+                                                                {t(categoryLabels[cat] || cat)}{" "}
+                                                                <span
+                                                                    style={{
+                                                                        marginLeft: "6px",
+                                                                        opacity: 0.4,
+                                                                        fontSize: "11px",
+                                                                    }}
+                                                                >
+                                                                    ({count})
+                                                                </span>
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {renderFacetFilter(
+                                        t("ТКАНИНА"),
+                                        "fabric",
+                                        fabricOptions,
+                                        selectedFabric,
+                                        setSelectedFabric,
+                                        fabricLabel,
+                                        "d",
+                                    )}
+                                    {renderFacetFilter(
+                                        t("РУКАВ"),
+                                        "sleeve",
+                                        sleeveOptions,
+                                        selectedSleeve,
+                                        setSelectedSleeve,
+                                        sleeveLabel,
+                                        "d",
+                                    )}
+                                    <div className="filter-accordion active">
+                                        <button
+                                            type="button"
+                                            className="accordion-trigger"
+                                            aria-expanded={openSections.size}
+                                            onClick={() => toggleSection("size")}
+                                        >
+                                            <span>{t("РОЗМІР")}</span>
+                                            <span className="icon">
+                                                {openSections.size ? "−" : "+"}
+                                            </span>
+                                        </button>
+                                        <div className="accordion-content">
+                                            <div className="mb-size-grid">
+                                                {sizes.map((size: string, idx: number) => {
+                                                    const count = products.filter((p) =>
+                                                        p.sizes?.includes(size),
+                                                    ).length;
+                                                    if (count === 0) return null;
+                                                    return (
+                                                        <button
+                                                            key={`dsz-${size}-${idx}`}
+                                                            className={`mb-size-chip ${selectedSizes.includes(size) ? "active" : ""}`}
+                                                            onClick={() => toggleSize(size)}
+                                                        >
+                                                            {size}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="filter-accordion active">
+                                        <button
+                                            type="button"
+                                            className="accordion-trigger"
+                                            aria-expanded={openSections.color}
+                                            onClick={() => toggleSection("color")}
+                                        >
+                                            <span>{t("КОЛІР")}</span>
+                                            <span className="icon">
+                                                {openSections.color ? "−" : "+"}
+                                            </span>
+                                        </button>
+                                        <div className="accordion-content">
+                                            <div className="mb-color-grid">
+                                                {colors.map((color: string, idx: number) => {
+                                                    const count = products.filter(
+                                                        (p) =>
+                                                            p.colors?.includes(color) ||
+                                                            (colorLabels[color] &&
+                                                                p.colors?.includes(
+                                                                    colorLabels[color],
+                                                                )),
+                                                    ).length;
+                                                    if (count === 0) return null;
+                                                    return (
+                                                        <button
+                                                            key={`dcol-${color}-${idx}`}
+                                                            className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? "active" : ""}`}
+                                                            onClick={() => toggleColor(color)}
+                                                            aria-label={t(
+                                                                colorLabels[color] || color,
+                                                            )}
+                                                            aria-pressed={selectedColors.includes(
+                                                                color,
+                                                            )}
+                                                            title={t(colorLabels[color] || color)}
+                                                        >
+                                                            <span className="swatch-check">✓</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="filter-accordion active">
+                                        <button
+                                            type="button"
+                                            className="accordion-trigger"
+                                            aria-expanded={openSections.price}
+                                            onClick={() => toggleSection("price")}
+                                        >
+                                            <span>{t("ЦІНА")}</span>
+                                            <span className="icon">
+                                                {openSections.price ? "−" : "+"}
+                                            </span>
+                                        </button>
+                                        <div className="accordion-content">
+                                            <div className="filter-checkbox-list">
+                                                {priceRanges.map(
+                                                    (range: PriceRange, idx: number) => (
+                                                        <label
+                                                            key={range.id || `dr-${idx}`}
+                                                            className="mb-checkbox-item"
+                                                        >
+                                                            <input
+                                                                type="radio"
+                                                                name="price-range-drawer"
+                                                                checked={
+                                                                    selectedPriceRange === range.id
+                                                                }
+                                                                onChange={() => {
+                                                                    setSelectedPriceRange(range.id);
+                                                                    setDisplayCount(12);
+                                                                }}
+                                                            />
+                                                            <span className="checkbox-visual radio"></span>
+                                                            <span className="label-text">
+                                                                {priceRangeLabel(range)}
+                                                            </span>
+                                                        </label>
+                                                    ),
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="filter-drawer__footer">
+                                    {(selectedCategories.length > 0 ||
+                                        selectedSizes.length > 0 ||
+                                        selectedColors.length > 0 ||
+                                        selectedFabric ||
+                                        selectedSleeve ||
+                                        selectedPriceRange) && (
+                                        <button
+                                            onClick={() => {
+                                                clearFilters();
+                                            }}
+                                            className="filter-drawer__reset"
+                                        >
+                                            {t("Скинути фільтри")}
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setIsFilterOpen(false)}
+                                        className="filter-drawer__apply"
+                                    >
+                                        {t("Показати")} {filteredProducts.length}{" "}
+                                        {plural(
+                                            locale,
+                                            filteredProducts.length,
+                                            "товар",
+                                            "товари",
+                                            "товарів",
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="shop-main-layout">
+                        <div className="container">
+                            <div className="luxe-grid">
+                                {/* MIND BODY x Puma Hybrid Sidebar */}
+                                <aside className="mb-shop-sidebar" data-lenis-prevent="true">
+                                    <div className="sidebar-header">
+                                        <h3>{t("ФІЛЬТРИ")}</h3>
+                                    </div>
+
+                                    {/* Category Accordion */}
+                                    <div
+                                        className={`filter-accordion ${openSections.category ? "active" : ""}`}
+                                    >
+                                        <button
+                                            type="button"
+                                            className="accordion-trigger"
+                                            aria-expanded={openSections.category}
+                                            onClick={() => toggleSection("category")}
+                                        >
+                                            <span>{t("КАТЕГОРІЯ")}</span>
+                                            <span className="icon">
+                                                {openSections.category ? "−" : "+"}
+                                            </span>
+                                        </button>
+                                        <div className="accordion-content">
+                                            <div className="filter-checkbox-list">
+                                                {categories.map((cat, idx) => {
+                                                    const count = products.filter(
+                                                        (p) =>
+                                                            p.category === cat ||
+                                                            p.category === categoryLabels[cat],
+                                                    ).length;
+                                                    if (count === 0) return null;
+                                                    return (
+                                                        <label
+                                                            key={`cat-${cat}-${idx}`}
+                                                            className="mb-checkbox-item"
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedCategories.includes(
+                                                                    cat,
+                                                                )}
+                                                                onChange={() => toggleCategory(cat)}
+                                                            />
+                                                            <span className="checkbox-visual"></span>
+                                                            <span className="label-text">
+                                                                {t(categoryLabels[cat] || cat)}
+                                                                <span
+                                                                    style={{
+                                                                        marginLeft: "6px",
+                                                                        opacity: 0.4,
+                                                                        fontSize: "11px",
+                                                                    }}
+                                                                >
+                                                                    ({count})
+                                                                </span>
+                                                            </span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {renderFacetFilter(
+                                        t("ТКАНИНА"),
+                                        "fabric",
+                                        fabricOptions,
+                                        selectedFabric,
+                                        setSelectedFabric,
+                                        fabricLabel,
+                                        "s",
+                                    )}
+                                    {renderFacetFilter(
+                                        t("РУКАВ"),
+                                        "sleeve",
+                                        sleeveOptions,
+                                        selectedSleeve,
+                                        setSelectedSleeve,
+                                        sleeveLabel,
+                                        "s",
+                                    )}
+
+                                    {/* Size Accordion */}
+                                    <div
+                                        className={`filter-accordion ${openSections.size ? "active" : ""}`}
+                                    >
+                                        <button
+                                            type="button"
+                                            className="accordion-trigger"
+                                            aria-expanded={openSections.size}
+                                            onClick={() => toggleSection("size")}
+                                        >
+                                            <span>{t("РОЗМІР")}</span>
+                                            <span className="icon">
+                                                {openSections.size ? "−" : "+"}
+                                            </span>
+                                        </button>
+                                        <div className="accordion-content">
+                                            <div className="mb-size-grid">
+                                                {sizes.map((size: string, idx: number) => {
+                                                    const count = products.filter((p) =>
+                                                        p.sizes?.includes(size),
+                                                    ).length;
+                                                    if (count === 0) return null;
+                                                    return (
+                                                        <button
+                                                            key={`size-${size}-${idx}`}
+                                                            className={`mb-size-chip ${selectedSizes.includes(size) ? "active" : ""}`}
+                                                            onClick={() => toggleSize(size)}
+                                                        >
+                                                            {size}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Color Accordion */}
+                                    <div
+                                        className={`filter-accordion ${openSections.color ? "active" : ""}`}
+                                    >
+                                        <button
+                                            type="button"
+                                            className="accordion-trigger"
+                                            aria-expanded={openSections.color}
+                                            onClick={() => toggleSection("color")}
+                                        >
+                                            <span>{t("КОЛІР")}</span>
+                                            <span className="icon">
+                                                {openSections.color ? "−" : "+"}
+                                            </span>
+                                        </button>
+                                        <div className="accordion-content">
+                                            <div className="mb-color-grid">
+                                                {colors.map((color: string, idx: number) => {
+                                                    const count = products.filter(
+                                                        (p) =>
+                                                            p.colors?.includes(color) ||
+                                                            (colorLabels[color] &&
+                                                                p.colors?.includes(
+                                                                    colorLabels[color],
+                                                                )),
+                                                    ).length;
+                                                    if (count === 0) return null;
+                                                    return (
+                                                        <button
+                                                            key={`color-${color}-${idx}`}
+                                                            className={`mb-color-swatch ${color} ${selectedColors.includes(color) ? "active" : ""}`}
+                                                            onClick={() => toggleColor(color)}
+                                                            aria-label={t(
+                                                                colorLabels[color] || color,
+                                                            )}
+                                                            aria-pressed={selectedColors.includes(
+                                                                color,
+                                                            )}
+                                                            title={t(colorLabels[color] || color)}
+                                                        >
+                                                            <span className="swatch-check">✓</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Price Accordion */}
+                                    <div
+                                        className={`filter-accordion ${openSections.price ? "active" : ""}`}
+                                    >
+                                        <button
+                                            type="button"
+                                            className="accordion-trigger"
+                                            aria-expanded={openSections.price}
+                                            onClick={() => toggleSection("price")}
+                                        >
+                                            <span>{t("ЦІНА")}</span>
+                                            <span className="icon">
+                                                {openSections.price ? "−" : "+"}
+                                            </span>
+                                        </button>
+                                        <div className="accordion-content">
+                                            <div className="filter-checkbox-list">
+                                                {priceRanges.map(
+                                                    (range: PriceRange, idx: number) => (
+                                                        <label
+                                                            key={range.id || `range-${idx}`}
+                                                            className="mb-checkbox-item"
+                                                        >
+                                                            <input
+                                                                type="radio"
+                                                                name="price-range"
+                                                                checked={
+                                                                    selectedPriceRange === range.id
+                                                                }
+                                                                onChange={() => {
+                                                                    setSelectedPriceRange(range.id);
+                                                                    setDisplayCount(12);
+                                                                }}
+                                                            />
+                                                            <span className="checkbox-visual radio"></span>
+                                                            <span className="label-text">
+                                                                {priceRangeLabel(range)}
+                                                            </span>
+                                                        </label>
+                                                    ),
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {(selectedCategories.length > 0 ||
+                                        selectedSizes.length > 0 ||
+                                        selectedColors.length > 0 ||
+                                        selectedFabric ||
+                                        selectedSleeve ||
+                                        selectedPriceRange) && (
+                                        <button onClick={clearFilters} className="mb-reset-filters">
+                                            {t("Скинути всі фільтри")}
+                                        </button>
+                                    )}
+                                </aside>
+
+                                {/* Shop Content Area */}
+                                <main className="mb-shop-content">
+                                    {/* MB sorting Toolbar */}
+                                    <div className="mb-toolbar">
+                                        <div className="toolbar-top-row">
+                                            <div className="sort-label">{t("СОРТУВАТИ ЗА:")}</div>
+                                            <div className="sort-chips">
+                                                {[
+                                                    { id: "default", label: "За релевантністю" },
+                                                    {
+                                                        id: "price-asc",
+                                                        label: "Ціна: за зростанням",
+                                                    },
+                                                    {
+                                                        id: "price-desc",
+                                                        label: "Ціна: за зменшенням",
+                                                    },
+                                                    { id: "newest", label: "Новинки" },
+                                                ].map((option) => (
+                                                    <button
+                                                        key={option.id}
+                                                        className={`sort-chip ${sortBy === option.id ? "active" : ""}`}
+                                                        onClick={() => setSortBy(option.id)}
+                                                    >
+                                                        {t(option.label)}
+                                                        {sortBy === option.id && (
+                                                            <span className="close-x">✕</span>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="product-count">
+                                                {visibleProducts.length < filteredProducts.length
+                                                    ? t("{shown} з {total} ТОВАРІВ", {
+                                                          shown: visibleProducts.length,
+                                                          total: filteredProducts.length,
+                                                      })
+                                                    : t("{n} ТОВАРІВ", {
+                                                          n: filteredProducts.length,
+                                                      })}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Luxe Grid */}
+                                    {visibleProducts.length > 0 ? (
+                                        <>
+                                            <div className="luxe-product-grid">
+                                                {visibleProducts.map((product, idx) => (
+                                                    <div
+                                                        key={product.id || `product-${idx}`}
+                                                        className="luxe-card-wrapper"
+                                                    >
+                                                        <ProductCard
+                                                            product={product}
+                                                            priority={idx < 6}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {hasMore && (
+                                                <div className="load-more-wrap">
+                                                    <button
+                                                        className="load-more-btn"
+                                                        onClick={() =>
+                                                            setDisplayCount(
+                                                                (prev) => prev + LOAD_MORE_COUNT,
+                                                            )
+                                                        }
+                                                    >
+                                                        {t("Показати ще ({n})", {
+                                                            n: Math.min(
+                                                                LOAD_MORE_COUNT,
+                                                                filteredProducts.length -
+                                                                    displayCount,
+                                                            ),
+                                                        })}
+                                                    </button>
+                                                    <span className="load-more-progress">
+                                                        {visibleProducts.length} /{" "}
+                                                        {filteredProducts.length}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="luxe-empty">
+                                            <div className="luxe-empty__content">
+                                                <span className="empty-num">00</span>
+                                                <h2>
+                                                    {t("Ми не знайшли збігів за вашим запитом")}
+                                                </h2>
+                                                <p>
+                                                    {t(
+                                                        "Спробуйте змінити технічні параметри або скинути всі фільтри.",
+                                                    )}
+                                                </p>
+                                                <button
+                                                    onClick={clearFilters}
+                                                    className="luxe-btn-primary"
+                                                >
+                                                    {t("Скинути всі налаштування")}
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
-                                </>
-                            ) : (
-                                <div className="luxe-empty">
-                                    <div className="luxe-empty__content">
-                                        <span className="empty-num">00</span>
-                                        <h2>{t("Ми не знайшли збігів за вашим запитом")}</h2>
-                                        <p>
-                                            {t(
-                                                "Спробуйте змінити технічні параметри або скинути всі фільтри.",
-                                            )}
-                                        </p>
-                                        <button onClick={clearFilters} className="luxe-btn-primary">
-                                            {t("Скинути всі налаштування")}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </main>
+                                </main>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </>
+            )}
         </div>
     );
 }

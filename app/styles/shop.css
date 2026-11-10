@@ -566,3 +566,96 @@
         display: none !important;
     }
 }
+
+/* ================================================================
+   EMPTY COLLECTION TEASER ("coming soon")
+   Shown instead of the filter bar / sidebar / toolbar when the whole
+   shop section has no active products (e.g. /shop/dance).
+   Quiet-luxury register: warm cream card, delicate type, 4px buttons.
+   ================================================================ */
+.category-teaser-empty {
+    max-width: 640px;
+    margin: 56px auto 96px;
+    padding: 56px 40px 52px;
+    text-align: center;
+    background: var(--color-bg-cream, #faf8f6);
+    border: 1px solid var(--color-border, #e8e5e1);
+    border-radius: 4px;
+}
+
+.category-teaser-empty .teaser-eyebrow {
+    display: block;
+    margin-bottom: 20px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--color-primary, #2a5a5a);
+}
+
+.category-teaser-empty h2 {
+    margin: 0 0 16px;
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3.4vw, 30px);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: 0.01em;
+    color: var(--color-text-primary, #1a1a1a);
+}
+
+.category-teaser-empty p {
+    max-width: 460px;
+    margin: 0 auto 32px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--color-text-secondary, #555);
+}
+
+.category-teaser-empty .teaser-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.category-teaser-empty .btn-teaser {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 12px 24px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--color-primary, #2a5a5a);
+    background: transparent;
+    border: 1px solid var(--color-primary, #2a5a5a);
+    border-radius: 4px;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.category-teaser-empty .btn-teaser:hover,
+.category-teaser-empty .btn-teaser:focus-visible {
+    background: var(--color-primary, #2a5a5a);
+    color: #fff;
+}
+
+@media (max-width: 600px) {
+    .category-teaser-empty {
+        margin: 32px 0 64px;
+        padding: 40px 20px 36px;
+    }
+    .category-teaser-empty .teaser-links {
+        flex-direction: column;
+    }
+    .category-teaser-empty .btn-teaser {
+        width: 100%;
+    }
+}

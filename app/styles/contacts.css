@@ -704,8 +704,8 @@
     /* Tighter submit label so the button stays one line. */
     .btn-submit {
         padding: 16px 24px;
-        font-size: 14px;
-        letter-spacing: 0.05em;
+        font-size: 12px;
+        letter-spacing: 0.08em;
     }
 }
 

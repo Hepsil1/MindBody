@@ -2,12 +2,48 @@ import { useState } from "react";
 import { buildWebpSrcset } from "../utils/responsive-image";
 import { useSiteSettings } from "../utils/site-settings";
 import { useI18n, LLink } from "../i18n";
+import { localeFromParamSafe, localizePath, OG_LOCALE } from "../i18n/config";
+import { DEFAULT_SITE_URL } from "../utils/site-url";
 import "../styles/contacts.css";
 
 // Extensionless SSR routes ship no Cache-Control unless the route opts in
 // (Caddy's @html matcher only covers / and *.html). Match / and /about.
 export function headers() {
     return { "Cache-Control": "no-cache" };
+}
+
+const META = {
+    uk: {
+        title: "Контакти | MIND BODY",
+        description:
+            "Зв'яжіться з MIND BODY: телефон, email, месенджери та форма звʼязку. Відповідаємо протягом 24 годин.",
+    },
+    en: {
+        title: "Contacts | MIND BODY",
+        description:
+            "Get in touch with MIND BODY: phone, email, messengers and a contact form. We reply within 24 hours.",
+    },
+    ru: {
+        title: "Контакты | MIND BODY",
+        description:
+            "Свяжитесь с MIND BODY: телефон, email, мессенджеры и форма обратной связи. Отвечаем в течение 24 часов.",
+    },
+} as const;
+
+export function meta({ params }: { params: { lang?: string } }) {
+    const locale = localeFromParamSafe(params.lang);
+    const m = META[locale];
+    const url = `${DEFAULT_SITE_URL}${localizePath("/contacts", locale)}`;
+    return [
+        { title: m.title },
+        { name: "description", content: m.description },
+        { tagName: "link", rel: "canonical", href: url },
+        { property: "og:title", content: m.title },
+        { property: "og:description", content: m.description },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "website" },
+        { property: "og:locale", content: OG_LOCALE[locale] },
+    ];
 }
 
 // Page prose lives inline per locale (not in the t() dictionary).

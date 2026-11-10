@@ -11,8 +11,9 @@ const STORAGE_KEY = "mb-floating-contact-collapsed";
 /**
  * Floating contact widget.
  *
- * UX model: messenger panel is EXPANDED by default (Telegram + Viber +
- * WhatsApp visible). A small × on top of the cluster minimises it to a
+ * UX model: messenger panel is EXPANDED by default on desktop (Telegram +
+ * Viber + WhatsApp visible) and COLLAPSED by default on phones (<=768px)
+ * until the visitor makes a choice. A small × on top of the cluster minimises it to a
  * single discreet chat-bubble FAB that sits flush against the right
  * edge — small footprint so it stops overlapping product cards on
  * mobile. The chat-bubble re-expands on tap. Preference is persisted.
@@ -31,6 +32,9 @@ export default function FloatingContact() {
     const TELEGRAM_URL = contacts.telegramUrl;
     const [showBackToTop, setShowBackToTop] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
+    // False until the mount effect has applied the stored / mobile default,
+    // so SSR + first paint never show the tall expanded column on phones.
+    const [ready, setReady] = useState(false);
     const location = useLocation();
 
     /* Sprint 1 D4.1 — #12 NAV-001: hide widget on PDP + checkout where
@@ -49,17 +53,24 @@ export default function FloatingContact() {
     // the editorial register clean (owner decision, 2026-06).
     const isAbout = /^\/(en\/|ru\/|uk\/)?about\/?$/.test(location.pathname);
 
-    // Restore user's last collapse preference. Default is expanded
-    // (no localStorage entry = false) so first-time visitors always
-    // see all three messenger options.
+    // Restore user's last collapse preference. With no stored choice the
+    // default depends on viewport: desktop starts expanded (all three
+    // messengers visible), phones (<=768px) start as a single 44px chat
+    // bubble so the column doesn't cover product photos. An explicit
+    // choice ("1" / "0") always wins and is never overwritten here.
     useEffect(() => {
+        let stored: string | null = null;
         try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored === "1") setCollapsed(true);
+            stored = localStorage.getItem(STORAGE_KEY);
         } catch {
             // localStorage may be unavailable (private browsing,
-            // strict ITP). Fall back to expanded.
+            // strict ITP) — fall through to the viewport default.
         }
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate stored collapsed state once on mount
+        if (stored === "1") setCollapsed(true);
+        else if (stored === null && window.matchMedia("(max-width: 768px)").matches)
+            setCollapsed(true);
+        setReady(true);
     }, []);
 
     useEffect(() => {
@@ -90,7 +101,7 @@ export default function FloatingContact() {
 
     return (
         <div
-            className={`floating-contact ${collapsed ? "is-collapsed" : ""} ${hideOnSticky ? "floating-contact--hide-mobile" : ""}`}
+            className={`floating-contact ${collapsed ? "is-collapsed" : ""} ${ready ? "" : "is-pending"} ${hideOnSticky ? "floating-contact--hide-mobile" : ""}`}
         >
             {/* Minimise affordance — small subtle × above the panel.
                 Only visible when the cluster is expanded. Sized

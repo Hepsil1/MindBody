@@ -946,10 +946,10 @@
     background: var(--color-primary, #2a5a5a);
     color: #fff;
     border: none;
-    border-radius: 999px;
+    border-radius: 4px;
     font-family: "Onest", var(--f-sans, "Manrope", sans-serif);
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     cursor: pointer;
