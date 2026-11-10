@@ -15,12 +15,12 @@ def call_fable(prompt: str, timeout: int = 600, effort: str = "high") -> str:
         "Твой исполнитель — Gemini (Antigravity). Отвечай четко, по существу, профессионально.\n\n"
         + prompt
     )
-    cmd = [CLAUDE_BIN, "--effort", effort, "-p", "--dangerously-skip-permissions"]
+    cmd = [CLAUDE_BIN, "--effort", effort, "-p", system_wrapper, "--dangerously-skip-permissions"]
     result = subprocess.run(
         cmd,
-        input=system_wrapper,
-        text=True,
+        stdin=subprocess.DEVNULL,
         capture_output=True,
+        text=True,
         encoding="utf-8",
         timeout=timeout
     )

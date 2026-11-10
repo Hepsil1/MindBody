@@ -267,6 +267,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
                     colors: true,
                     sizes: true,
                     inventory: true,
+                    familyId: true,
+                    showInCatalog: true,
                     status: true,
                     shopPageSlug: true,
                     createdAt: true,
@@ -348,26 +350,38 @@ export async function loader({ params }: LoaderFunctionArgs) {
                     comparePrice > price ? Math.round((1 - price / comparePrice) * 100) : 0,
             };
 
-            // Colourway siblings: other ACTIVE products of the same model
-            // (SKU family, see utils/productFamily.ts). Each is a full product
-            // with its own photos/stock, so the PDP renders them as links.
-            // Runs alongside the related query — no extra round-trip.
+            // Colourway siblings: other ACTIVE products of the same model.
+            // When familyId is set, it groups all colorways directly.
+            // Fallback: SKU family convention (utils/productFamily.ts).
+            // Each is a full product with its own photos/stock, rendered as links.
             const familyBase = familyBaseFromSku(p.sku);
+            const siblingWhere = p.familyId
+                ? { familyId: p.familyId, id: { not: p.id }, status: "active" }
+                : familyBase
+                  ? {
+                        sku: { startsWith: `${familyBase}-` },
+                        id: { not: p.id },
+                        status: "active",
+                    }
+                  : null;
+
             const [relatedResult, siblingRows] = await Promise.all([
                 p.category
                     ? prisma.product.findMany({
-                          where: { category: p.category, id: { not: p.id }, status: "active" },
+                          where: {
+                              category: p.category,
+                              id: { not: p.id },
+                              ...(p.familyId ? { familyId: { not: p.familyId } } : {}),
+                              status: "active",
+                              showInCatalog: true,
+                          },
                           select: { id: true, slug: true, name: true, price: true, images: true },
                           take: 4,
                       })
                     : Promise.resolve([]),
-                familyBase
+                siblingWhere
                     ? prisma.product.findMany({
-                          where: {
-                              sku: { startsWith: `${familyBase}-` },
-                              id: { not: p.id },
-                              status: "active",
-                          },
+                          where: siblingWhere,
                           select: {
                               slug: true,
                               sku: true,
@@ -375,7 +389,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
                               inventory: true,
                           },
                           orderBy: { sku: "asc" },
-                          take: 12,
+                          take: 24,
                       })
                     : Promise.resolve([]),
             ]);
@@ -389,8 +403,12 @@ export async function loader({ params }: LoaderFunctionArgs) {
             }));
 
             for (const row of siblingRows) {
-                // `startsWith` also matches K-JUMP-MINI-PRO-01 — exact-family check.
-                if (!row.slug || !row.sku || !familyBase || !isSkuInFamily(row.sku, familyBase)) {
+                if (!row.slug) continue;
+                // If matched via SKU-prefix fallback, verify exact-family match
+                if (
+                    !p.familyId &&
+                    (!row.sku || !familyBase || !isSkuInFamily(row.sku, familyBase))
+                ) {
                     continue;
                 }
                 const inv = parseJson<InventoryVariant[]>(row.inventory, []);
@@ -400,7 +418,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
                 if (!color) continue; // nothing to draw a swatch from
                 siblings.push({
                     slug: row.slug,
-                    sku: row.sku,
+                    sku: row.sku || "",
                     color,
                     inStock: inv.length === 0 || inv.some((v) => (v.stock ?? 0) > 0),
                 });
@@ -784,8 +802,18 @@ function ProductDetailView() {
         | { kind: "self"; color: string; sku: string }
         | { kind: "sibling"; color: string; sku: string; slug: string; inStock: boolean };
     const isFamily = siblings.length > 0;
+    const ownColorsList = isFamily
+        ? product.colors.length > 0
+            ? [product.colors[0]]
+            : []
+        : Object.keys(product.colorImages || {}).length > 0
+          ? product.colors
+          : product.colors.length > 0
+            ? [product.colors[0]]
+            : [];
+
     const colorways: Colorway[] = [
-        ...product.colors.map(
+        ...ownColorsList.map(
             (color: string): Colorway => ({ kind: "self", color, sku: product.sku ?? "" }),
         ),
         ...siblings.map(
@@ -797,7 +825,11 @@ function ProductDetailView() {
                 inStock: sb.inStock,
             }),
         ),
-    ].sort((a, b) => (a.sku === b.sku ? 0 : a.sku < b.sku ? -1 : 1));
+    ].sort((a, b) => {
+        const keyA = a.sku || a.color;
+        const keyB = b.sku || b.color;
+        return keyA.localeCompare(keyB);
+    });
 
     return (
         <>

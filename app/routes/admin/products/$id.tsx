@@ -65,6 +65,8 @@ interface ProductForm {
     colors: string[];
     sizes: string[];
     inventory: Record<string, number>; // "color_size" -> quantity
+    familyId: string;
+    showInCatalog: boolean;
     /**
      * Per-image colour binding: imageUrl -> colour code ("" = shared/all
      * colours). The buyer-facing shape is the inverse — Product.colorImages
@@ -95,6 +97,8 @@ const emptyForm: ProductForm = {
     colors: [],
     sizes: [],
     inventory: {},
+    familyId: "",
+    showInCatalog: true,
     imageColors: {},
 };
 
@@ -215,7 +219,78 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
                     sizes: parseJsonAdmin<string[]>(p.sizes, []),
                     inventory: inventoryMap,
                     imageColors,
+                    familyId: p.familyId ?? "",
+                    showInCatalog: p.showInCatalog ?? true,
                 };
+            }
+
+            let familySiblings: Array<{
+                id: string;
+                name: string;
+                sku: string | null;
+                colors: string | null;
+                showInCatalog: boolean;
+                status: string;
+            }> = [];
+            if (p?.familyId) {
+                familySiblings = await prisma.product.findMany({
+                    where: { familyId: p.familyId, id: { not: p.id } },
+                    select: {
+                        id: true,
+                        name: true,
+                        sku: true,
+                        colors: true,
+                        showInCatalog: true,
+                        status: true,
+                    },
+                    orderBy: { sku: "asc" },
+                });
+            }
+            return { product, filterConfigs, shopPages, isNew, familySiblings };
+        }
+
+        if (isNew) {
+            const url = new URL(request.url);
+            const copyFromId = url.searchParams.get("copyFrom");
+            if (copyFromId) {
+                const base = await prisma.product.findUnique({ where: { id: copyFromId } });
+                if (base) {
+                    const trMap = await fetchTranslationsMap("Product", [base.id]);
+                    const tr = trMap[base.id] ?? {};
+                    const baseFamily = base.familyId || slugify(base.name);
+                    product = {
+                        ...emptyForm,
+                        name: base.name,
+                        description: base.description ?? "",
+                        nameEn: tr.en?.name ?? "",
+                        descriptionEn: tr.en?.description ?? "",
+                        nameRu: tr.ru?.name ?? "",
+                        descriptionRu: tr.ru?.description ?? "",
+                        category: base.category ?? "",
+                        fabric: base.fabric ?? "",
+                        sleeve: base.sleeve ?? "",
+                        shopPageSlug: base.shopPageSlug ?? SHOP_SLUGS[0],
+                        price: String(base.price),
+                        comparePrice: base.comparePrice ? String(base.comparePrice) : "",
+                        familyId: baseFamily,
+                        showInCatalog: false,
+                        status: "draft",
+                        sizes: parseJsonAdmin<string[]>(base.sizes, []),
+                    };
+                    const familySiblings = await prisma.product.findMany({
+                        where: { familyId: baseFamily },
+                        select: {
+                            id: true,
+                            name: true,
+                            sku: true,
+                            colors: true,
+                            showInCatalog: true,
+                            status: true,
+                        },
+                        orderBy: { sku: "asc" },
+                    });
+                    return { product, filterConfigs, shopPages, isNew, familySiblings };
+                }
             }
         }
     } catch (e) {
@@ -228,7 +303,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     if (!isNew && !product) {
         throw new Response("Product not found", { status: 404 });
     }
-    return { product, filterConfigs, shopPages, isNew };
+    return { product, filterConfigs, shopPages, isNew, familySiblings: [] };
 }
 
 // --- Action ---
@@ -271,6 +346,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
             const statusRaw = (formData.get("status") as string) || "draft";
             const category = (formData.get("category") as string) || null;
             const shopPageSlug = (formData.get("shopPageSlug") as string) || null;
+            const familyId = ((formData.get("familyId") as string) || "").trim() || null;
+            const showInCatalog = formData.get("showInCatalog") !== "false";
 
             // Arrays (defensive parse — never trust the client blob).
             const imagesArr = parseJsonAdmin<string[]>(formData.get("images") as string, []);
@@ -441,6 +518,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
                     inventory,
                     fabric,
                     sleeve,
+                    familyId,
+                    showInCatalog,
                 };
                 await prisma.product.upsert({
                     where: { id },
@@ -655,7 +734,13 @@ export function ErrorBoundary({ error }: { error: unknown }) {
 
 // --- Component ---
 export default function AdminProductEdit() {
-    const { product, filterConfigs, shopPages, isNew } = useLoaderData<typeof loader>();
+    const {
+        product,
+        filterConfigs,
+        shopPages,
+        isNew,
+        familySiblings = [],
+    } = useLoaderData<typeof loader>();
     const fetcher = useFetcher();
     const navigate = useNavigate();
     // Active taxonomy (root loader → DB config) so admin-added categories +
@@ -666,7 +751,16 @@ export default function AdminProductEdit() {
 
     // Initial State
     const [formData, setFormData] = useState<ProductForm>(() => {
-        if (product) return product;
+        if (product) {
+            const status: "active" | "draft" | "archived" =
+                product.status === "active" || product.status === "archived"
+                    ? product.status
+                    : "draft";
+            return {
+                ...product,
+                status,
+            };
+        }
         return {
             ...emptyForm,
             shopPageSlug: shopPages[0]?.slug || SHOP_SLUGS[0],
@@ -676,6 +770,8 @@ export default function AdminProductEdit() {
     const filterConfig = filterConfigs[formData.shopPageSlug] || filterConfigs["global"];
     // Quantity for the "fill all variants" helper (replaces a window.prompt).
     const [fillQty, setFillQty] = useState("10");
+    const productId =
+        !isNew && product && "id" in product && typeof product.id === "string" ? product.id : null;
 
     // --- Unsaved-changes guard --------------------------------------------
     // Warn before the operator navigates away (sidebar / back / swipe-back) and
@@ -877,9 +973,9 @@ export default function AdminProductEdit() {
                                 ? "Створіть ідеальний товар для вашого магазину"
                                 : `SKU: ${formData.sku || "---"}`}
                         </p>
-                        {!isNew && product?.id && (
+                        {productId && (
                             <Link
-                                to={`/admin/inventory?productId=${product.id}`}
+                                to={`/admin/inventory?productId=${productId}`}
                                 style={{
                                     display: "inline-block",
                                     marginTop: "8px",
@@ -1533,6 +1629,190 @@ export default function AdminProductEdit() {
                                     </p>
                                 )}
                             </div>
+                        </div>
+
+                        <div className="ad-card">
+                            <h3 className="ad-card-title">
+                                <span
+                                    className="ad-card-ico"
+                                    style={{
+                                        background: "rgba(94, 234, 212, 0.16)",
+                                        color: "var(--ad-primary, #5eead4)",
+                                    }}
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <rect x="3" y="3" width="7" height="7" />
+                                        <rect x="14" y="3" width="7" height="7" />
+                                        <rect x="14" y="14" width="7" height="7" />
+                                        <rect x="3" y="14" width="7" height="7" />
+                                    </svg>
+                                </span>
+                                Модель та кольори (Family)
+                            </h3>
+
+                            <div className="form-group">
+                                <label className="form-label">
+                                    Код моделі (Family ID)
+                                    <span
+                                        style={{
+                                            fontSize: "11px",
+                                            color: "var(--ad-text-muted)",
+                                            marginLeft: "6px",
+                                            fontWeight: 400,
+                                        }}
+                                    >
+                                        (спільний для всіх кольорів моделі)
+                                    </span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="напр. butterfly або spokusa"
+                                    value={formData.familyId}
+                                    onChange={(e) =>
+                                        setFormData((p) => ({ ...p, familyId: e.target.value }))
+                                    }
+                                />
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "10px",
+                                        cursor: "pointer",
+                                        fontSize: "13px",
+                                        fontWeight: 500,
+                                        userSelect: "none",
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.showInCatalog}
+                                        onChange={(e) =>
+                                            setFormData((p) => ({
+                                                ...p,
+                                                showInCatalog: e.target.checked,
+                                            }))
+                                        }
+                                        style={{
+                                            width: "16px",
+                                            height: "16px",
+                                            accentColor: "var(--ad-primary)",
+                                        }}
+                                    />
+                                    Показувати цей колір у каталозі (/shop)
+                                </label>
+                                <p
+                                    style={{
+                                        fontSize: "11px",
+                                        color: "var(--ad-text-muted)",
+                                        margin: "4px 0 0 26px",
+                                    }}
+                                >
+                                    Вимкніть, щоб покупець бачив цей колір тільки на сторінці моделі
+                                    (через перемикач кольорів).
+                                </p>
+                            </div>
+
+                            {/* Sibling colorways list & action */}
+                            {!isNew && product && "id" in product && product.id && (
+                                <div
+                                    style={{
+                                        marginTop: "16px",
+                                        paddingTop: "14px",
+                                        borderTop: "1px solid var(--ad-border)",
+                                    }}
+                                >
+                                    {familySiblings.length > 0 && (
+                                        <div style={{ marginBottom: "12px" }}>
+                                            <div
+                                                style={{
+                                                    fontSize: "11px",
+                                                    fontWeight: 600,
+                                                    color: "var(--ad-text-muted)",
+                                                    textTransform: "uppercase",
+                                                    letterSpacing: "0.05em",
+                                                    marginBottom: "8px",
+                                                }}
+                                            >
+                                                Інші кольори моделі ({familySiblings.length}):
+                                            </div>
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    gap: "6px",
+                                                }}
+                                            >
+                                                {familySiblings.map((s) => (
+                                                    <div
+                                                        key={s.id}
+                                                        style={{
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "space-between",
+                                                            padding: "6px 8px",
+                                                            background: "rgba(255,255,255,0.03)",
+                                                            borderRadius: "4px",
+                                                            fontSize: "12px",
+                                                        }}
+                                                    >
+                                                        <div>
+                                                            <span>{s.sku || s.name}</span>
+                                                            <span
+                                                                style={{
+                                                                    fontSize: "10px",
+                                                                    marginLeft: "6px",
+                                                                    color: s.showInCatalog
+                                                                        ? "#10b981"
+                                                                        : "var(--ad-text-muted)",
+                                                                }}
+                                                            >
+                                                                {s.showInCatalog
+                                                                    ? "● В каталозі"
+                                                                    : "○ Тільки PDP"}
+                                                            </span>
+                                                        </div>
+                                                        <Link
+                                                            to={`/admin/products/${s.id}`}
+                                                            style={{
+                                                                fontSize: "11px",
+                                                                color: "var(--ad-primary)",
+                                                                textDecoration: "underline",
+                                                            }}
+                                                        >
+                                                            Редагувати
+                                                        </Link>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <Link
+                                        to={`/admin/products/new?copyFrom=${productId}`}
+                                        className="ad-btn-secondary"
+                                        style={{
+                                            display: "block",
+                                            textAlign: "center",
+                                            width: "100%",
+                                            padding: "8px 12px",
+                                            fontSize: "12px",
+                                            textDecoration: "none",
+                                            boxSizing: "border-box",
+                                        }}
+                                    >
+                                        + Додати ще один колір до цієї моделі
+                                    </Link>
+                                </div>
+                            )}
                         </div>
 
                         <div className="ad-card">

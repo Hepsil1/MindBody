@@ -11,273 +11,25 @@ const colors = (arr: string[]) => JSON.stringify(arr);
 const imgs = (arr: string[]) => JSON.stringify(arr);
 const inv = (rows: Array<{ size: string; color: string; stock: number }>) => JSON.stringify(rows);
 
-const PRODUCTS = [
-    {
-        sku: "W-LEG-PRO-01",
-        slug: "legginsy-pro",
-        name: "Лосини PRO",
-        category: "leggings",
-        shopPageSlug: "yoga",
-        description:
-            "Високі лосини з Premium Supplex. Тримають форму, відводять вологу, " +
-            "дозволяють тілу дихати. Створені для йоги, акробатики та довгих практик.",
-        metaTitle: "Лосини PRO Premium Supplex | MIND BODY",
-        metaDescription:
-            "Лосини PRO MIND BODY з преміум Supplex — для йоги, фітнесу, гімнастики. Створено в Україні.",
-        price: 1490,
-        comparePrice: 1790,
-        status: "active",
-        images: imgs([
-            "/pics1cloths/IMG_6201.JPG",
-            "/pics1cloths/IMG_6202.JPG",
-            "/pics1cloths/IMG_6203.JPG",
-        ]),
-        sizes: sizes(["XS", "S", "M", "L"]),
-        colors: colors(["black", "navy", "marsala"]),
-        inventory: inv([
-            { size: "XS", color: "black", stock: 4 },
-            { size: "S", color: "black", stock: 6 },
-            { size: "M", color: "black", stock: 5 },
-            { size: "L", color: "black", stock: 3 },
-            { size: "S", color: "navy", stock: 2 },
-            { size: "M", color: "marsala", stock: 4 },
-        ]),
-    },
-    {
-        sku: "W-TOP-MIRA-01",
-        slug: "top-mira",
-        name: "Топ MIRA",
-        category: "tops",
-        shopPageSlug: "yoga",
-        description:
-            "Лаконічний топ з вбудованою підтримкою. М'яка тканина не стискає рух, " +
-            "ідеальна посадка завдяки еластичній стрічці під грудьми.",
-        price: 890,
-        status: "active",
-        images: imgs(["/pics1cloths/IMG_6204.JPG", "/pics1cloths/IMG_6205.JPG"]),
-        sizes: sizes(["XS", "S", "M", "L"]),
-        colors: colors(["black", "beige", "marsala"]),
-        inventory: inv([
-            { size: "XS", color: "black", stock: 6 },
-            { size: "S", color: "black", stock: 8 },
-            { size: "M", color: "beige", stock: 5 },
-            { size: "L", color: "marsala", stock: 3 },
-        ]),
-    },
-    {
-        sku: "W-JUMP-SOLAR-01",
-        slug: "kombinezon-solar",
-        name: "Комбінезон SOLAR",
-        category: "jumpsuit",
-        shopPageSlug: "yoga",
-        description:
-            "Комбінезон на тонких бретелях, друга шкіра. Глибокий виріз на спині, " +
-            "м'який пояс, який не врізається. Створено для тих, хто практикує перевернуті асани.",
-        price: 2390,
-        comparePrice: 2690,
-        status: "active",
-        images: imgs([
-            "/pics1cloths/IMG_6206.JPG",
-            "/pics1cloths/IMG_6207.JPG",
-            "/pics1cloths/IMG_6209.JPG",
-        ]),
-        sizes: sizes(["XS", "S", "M", "L"]),
-        colors: colors(["black", "navy"]),
-        inventory: inv([
-            { size: "S", color: "black", stock: 3 },
-            { size: "M", color: "black", stock: 4 },
-            { size: "L", color: "navy", stock: 2 },
-        ]),
-    },
-    {
-        sku: "W-SHORTS-FLEX-01",
-        slug: "shorty-flex",
-        name: "Шорти FLEX",
-        category: "shorts",
-        shopPageSlug: "yoga",
-        description:
-            "Шорти для гарячих практик і піляте. Дихаюча тканина, висока посадка, " +
-            "не задираються в позах. Підходять і для повсякдення.",
-        price: 790,
-        status: "active",
-        images: imgs(["/pics1cloths/IMG_6210.JPG", "/pics1cloths/IMG_6212.JPG"]),
-        sizes: sizes(["XS", "S", "M", "L"]),
-        colors: colors(["black", "marsala"]),
-        inventory: inv([
-            { size: "XS", color: "black", stock: 5 },
-            { size: "S", color: "black", stock: 6 },
-            { size: "M", color: "marsala", stock: 4 },
-        ]),
-    },
-    {
-        sku: "W-LONG-CALM-01",
-        slug: "longsliv-calm",
-        name: "Лонгслів CALM",
-        category: "longsleeve",
-        shopPageSlug: "yoga",
-        description:
-            "Легкий лонгслів для йоги в прохолодному залі або ранкових практик удома. " +
-            "Сидить вільно у плечах, прилягає по талії.",
-        price: 1190,
-        status: "active",
-        images: imgs(["/pics1cloths/IMG_6215.JPG", "/pics2cloths/IMG_5217.JPG"]),
-        sizes: sizes(["S", "M", "L"]),
-        colors: colors(["beige", "black"]),
-        inventory: inv([
-            { size: "S", color: "beige", stock: 4 },
-            { size: "M", color: "beige", stock: 5 },
-            { size: "L", color: "black", stock: 2 },
-        ]),
-    },
-    {
-        sku: "W-LEG-SPORT-01",
-        slug: "legginsy-sport",
-        name: "Лосини SPORT",
-        category: "leggings",
-        shopPageSlug: "sport",
-        description:
-            "Для бігу, тренажерки та інтенсивних кардіо. Компресійна посадка, " +
-            "потаємна кишеня під ключик або карту.",
-        price: 1290,
-        status: "active",
-        images: imgs(["/generalpics/333_131123.jpg", "/generalpics/338_131123.jpg"]),
-        sizes: sizes(["XS", "S", "M", "L"]),
-        colors: colors(["black", "navy"]),
-        inventory: inv([
-            { size: "S", color: "black", stock: 5 },
-            { size: "M", color: "black", stock: 6 },
-            { size: "L", color: "navy", stock: 3 },
-        ]),
-    },
-    {
-        sku: "W-VELO-AERA-01",
-        slug: "velo-aera",
-        name: "VELO AERA",
-        category: "velo",
-        shopPageSlug: "sport",
-        description:
-            "Велосипедні шорти середньої довжини. Анатомічний крій, силіконова стрічка " +
-            "знизу — не з'їжджають.",
-        price: 990,
-        status: "active",
-        images: imgs(["/generalpics/347_131123.jpg", "/generalpics/348_131123.jpg"]),
-        sizes: sizes(["XS", "S", "M", "L"]),
-        colors: colors(["black"]),
-        inventory: inv([
-            { size: "S", color: "black", stock: 4 },
-            { size: "M", color: "black", stock: 5 },
-            { size: "L", color: "black", stock: 3 },
-        ]),
-    },
-    {
-        sku: "W-DANCE-MESH-01",
-        slug: "komplekt-mesh",
-        name: "Комплект MESH",
-        category: "net-models",
-        shopPageSlug: "dance",
-        description:
-            "Комплект для пілону та контемпорарі: топ + лосини зі вставками із дихаючої сітки. " +
-            "Дозволяє рухатись вільно і ефектно виглядати на сцені.",
-        price: 2890,
-        comparePrice: 3190,
-        status: "active",
-        images: imgs([
-            "/generalpics/374_131123.jpg",
-            "/generalpics/585_131123.jpg",
-            "/generalpics/588_131123.jpg",
-        ]),
-        sizes: sizes(["S", "M", "L"]),
-        colors: colors(["black", "marsala"]),
-        inventory: inv([
-            { size: "S", color: "black", stock: 2 },
-            { size: "M", color: "black", stock: 3 },
-            { size: "M", color: "marsala", stock: 2 },
-        ]),
-    },
-    {
-        sku: "W-DANCE-PILON-01",
-        slug: "komplekt-pilon",
-        name: "Комплект для пілону",
-        category: "pole-sets",
-        shopPageSlug: "dance",
-        description:
-            "Високі шорти + укорочений топ. Тканина з ефектом «другої шкіри», " +
-            "не сповзає на перевернутих фігурах.",
-        price: 1990,
-        status: "active",
-        images: imgs(["/generalpics/595_131123.jpg", "/generalpics/602_131123.jpg"]),
-        sizes: sizes(["XS", "S", "M"]),
-        colors: colors(["black", "marsala"]),
-        inventory: inv([
-            { size: "S", color: "black", stock: 3 },
-            { size: "M", color: "marsala", stock: 2 },
-        ]),
-    },
-    {
-        sku: "C-HOODIE-EASE-01",
-        slug: "hudi-ease",
-        name: "Худі EASE",
-        category: "hoodies",
-        shopPageSlug: "casual",
-        description:
-            "М'яке худі з петлями для довгих ранків і повільних днів. " +
-            "Зовні softstretch — всередині брашований трикотаж.",
-        price: 1890,
-        status: "active",
-        images: imgs(["/pics2cloths/IMG_4971.JPG", "/pics2cloths/IMG_4976.JPG"]),
-        sizes: sizes(["S", "M", "L"]),
-        colors: colors(["beige", "black"]),
-        inventory: inv([
-            { size: "S", color: "beige", stock: 4 },
-            { size: "M", color: "beige", stock: 6 },
-            { size: "L", color: "black", stock: 3 },
-        ]),
-    },
-    {
-        sku: "C-JOGGER-FLOW-01",
-        slug: "dzhogery-flow",
-        name: "Джогери FLOW",
-        category: "joggers",
-        shopPageSlug: "casual",
-        description:
-            "Зручні джогери з еластичним поясом і манжетами. Висока посадка, " +
-            "м'який трикотаж — для дому, прогулянок та подорожей.",
-        price: 1390,
-        status: "active",
-        images: imgs(["/pics2cloths/IMG_4980.JPG", "/pics2cloths/IMG_4983.JPG"]),
-        sizes: sizes(["S", "M", "L"]),
-        colors: colors(["black", "beige"]),
-        inventory: inv([
-            { size: "S", color: "black", stock: 5 },
-            { size: "M", color: "black", stock: 5 },
-            { size: "L", color: "beige", stock: 3 },
-        ]),
-    },
-    {
-        sku: "K-JUMP-MINI-01",
-        slug: "kombinezon-mini",
-        name: "Дитячий комбінезон MINI",
-        category: "jumpsuit",
-        shopPageSlug: "kids",
-        description:
-            "Для маленьких гімнасток і танцівниць. Тканина, що тягнеться у 4 напрямках. " +
-            "Не врізається в плечі, не натирає шкіру.",
-        price: 1290,
-        status: "active",
-        images: imgs([
-            "/pics2cloths/IMG_5221.JPG",
-            "/pics2cloths/IMG_5222.JPG",
-            "/pics2cloths/IMG_5223.JPG",
-        ]),
-        sizes: sizes(["XS", "S", "M"]),
-        colors: colors(["pink", "marsala", "navy"]),
-        inventory: inv([
-            { size: "XS", color: "pink", stock: 4 },
-            { size: "S", color: "pink", stock: 5 },
-            { size: "M", color: "marsala", stock: 3 },
-        ]),
-    },
-];
+// Products are managed dynamically via Telegram catalog / Admin panel.
+// Dummy products are omitted so running seed never reintroduces placeholders.
+const PRODUCTS: Array<{
+    sku: string;
+    slug: string;
+    name: string;
+    category: string;
+    shopPageSlug: string;
+    description: string;
+    price: number;
+    comparePrice?: number;
+    status: string;
+    images: string;
+    sizes: string;
+    colors: string;
+    inventory: string;
+    metaTitle?: string;
+    metaDescription?: string;
+}> = [];
 
 const REVIEWS_BY_SLUG: Record<string, Array<{ author: string; rating: number; text: string }>> = {
     "legginsy-pro": [
@@ -466,7 +218,7 @@ async function main() {
     }
 
     // ---------- one historical order (so customer profile isn't empty) ----------
-    const firstProduct = await prisma.product.findFirst({ where: { sku: PRODUCTS[0].sku } });
+    const firstProduct = await prisma.product.findFirst({ where: { status: "active" } });
     if (firstProduct) {
         await prisma.order.upsert({
             where: { orderNumber: 1001 },

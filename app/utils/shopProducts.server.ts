@@ -137,6 +137,7 @@ async function loadShopDataUncached(
                 where: {
                     shopPageSlug: categorySlug,
                     status: "active",
+                    showInCatalog: true,
                     ...(opts.subcategoryFilter ? { category: opts.subcategoryFilter } : {}),
                 },
                 orderBy: { createdAt: "desc" },
@@ -153,6 +154,8 @@ async function loadShopDataUncached(
                     images: true,
                     colorImages: true,
                     colors: true,
+                    familyId: true,
+                    showInCatalog: true,
                     sizes: true,
                     inventory: true,
                     shopPageSlug: true,
@@ -174,6 +177,30 @@ async function loadShopDataUncached(
 
     const NOW = Date.now();
     const NEW_THRESHOLD_DAYS = 14;
+
+    // Collect active sibling colours for all models in this listing so
+    // catalog cards render all family swatches (Alo / Lululemon model).
+    const familyIds = Array.from(
+        new Set(rawProducts.map((p) => p.familyId).filter(Boolean)),
+    ) as string[];
+    const siblingColorsMap: Record<string, string[]> = {};
+    if (familyIds.length > 0) {
+        const familyRows = await prisma.product
+            .findMany({
+                where: { familyId: { in: familyIds }, status: "active" },
+                select: { familyId: true, colors: true },
+            })
+            .catch(() => []);
+        for (const r of familyRows) {
+            if (!r.familyId) continue;
+            if (!siblingColorsMap[r.familyId]) siblingColorsMap[r.familyId] = [];
+            const clrs = parseJson<string[]>(r.colors, []);
+            const primaryColor = clrs[0];
+            if (primaryColor && !siblingColorsMap[r.familyId].includes(primaryColor)) {
+                siblingColorsMap[r.familyId].push(primaryColor);
+            }
+        }
+    }
 
     const products: ShopProductCard[] = rawProducts.map((p) => {
         const images = parseJson<string[]>(p.images, []);
@@ -215,7 +242,12 @@ async function loadShopDataUncached(
             category: p.category ?? undefined,
             fabric: p.fabric ?? undefined,
             sleeve: p.sleeve ?? undefined,
-            colors: parseJson<string[]>(p.colors, []),
+            colors:
+                p.familyId && siblingColorsMap[p.familyId]?.length
+                    ? siblingColorsMap[p.familyId]
+                    : Object.keys(colorImages).length > 0
+                      ? parseJson<string[]>(p.colors, [])
+                      : parseJson<string[]>(p.colors, []).slice(0, 1),
             sizes: parseJson<string[]>(p.sizes, []),
             is_new: isNew,
             is_sale: isSale,
@@ -230,7 +262,13 @@ async function loadShopDataUncached(
     // collection.
     const totalCategoryProducts = opts.subcategoryFilter
         ? await prisma.product
-              .count({ where: { shopPageSlug: categorySlug, status: "active" } })
+              .count({
+                  where: {
+                      shopPageSlug: categorySlug,
+                      status: "active",
+                      showInCatalog: true,
+                  },
+              })
               .catch(() => products.length)
         : products.length;
 

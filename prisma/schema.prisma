@@ -23,6 +23,12 @@ model Product {
   fabric          String? // sport | cotton
   sleeve          String? // long | short | sleeveless | velo
   images          String?
+  // Colourway model family grouping ("each colour is its own product").
+  // Nullable: null = standalone single-colour product without a family.
+  familyId        String?
+  // Catalog visibility flag: true = visible as a card in /shop, false = hidden
+  // from catalog listing but directly accessible via URL and via sibling swatches.
+  showInCatalog   Boolean     @default(true)
   colors          String?
   // Per-colour gallery override: JSON {"black":["/uploads/a.webp",...],
   // "white":[...]}. When the buyer picks a colour on the PDP the gallery
@@ -51,6 +57,8 @@ model Product {
   @@index([sleeve])
   @@index([createdAt])
   @@index([slug])
+  @@index([familyId])
+  @@index([status, showInCatalog])
 }
 
 model Customer {
