@@ -51,8 +51,11 @@ export function CookieBanner() {
                 <div className="cookie-banner__text">
                     <strong id="cookie-banner-title">{t("Ми використовуємо cookies")}</strong>
                     <p id="cookie-banner-desc">
-                        {t("Щоб сайт працював коректно та ставав зручнішим. Деталі — у")}{" "}
-                        <LLink to="/privacy">{t("Політиці конфіденційності")}</LLink>.
+                        <span className="cookie-banner__verbose">
+                            {t("Щоб сайт працював коректно та ставав зручнішим. Деталі — у")}{" "}
+                        </span>
+                        <LLink to="/privacy">{t("Політиці конфіденційності")}</LLink>
+                        <span className="cookie-banner__verbose">.</span>
                     </p>
                 </div>
                 <div className="cookie-banner__actions">

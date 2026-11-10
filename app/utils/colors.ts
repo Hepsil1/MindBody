@@ -25,6 +25,8 @@ export const COLOR_MAP: Record<string, string> = {
     lavender: "#b8a8d8",
     mint: "#a7e3c0",
     cream: "#faf8f6",
+    sliva: "#4b3b6b",
+    nude: "#e4d2c0",
 };
 
 export function getColorHex(code: string | undefined | null): string {

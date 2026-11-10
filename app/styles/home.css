@@ -1833,7 +1833,7 @@
 .bw-unified-section.bw-v3 {
     position: relative;
     background: transparent;
-    padding: 100px 0 120px;
+    padding: 84px 0 48px;
     overflow: hidden;
 }
 
@@ -2306,9 +2306,8 @@
     position: relative;
     background: transparent; /* Natively inherits the textured background of the about section wrapper */
     overflow: hidden;
-    /* Top padding so the cinematic title-card breathes as its own chapter and
-       clears the sticky nav (was 0 to merge into the About section). */
-    padding: clamp(84px, 11vh, 150px) 0 120px;
+    /* Balanced chapter rhythm without creating 240px dead air above/below. */
+    padding: 56px 0 36px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -2345,7 +2344,7 @@
 
 /* Header */
 .ig-hyper__header {
-    margin-bottom: 56px;
+    margin-bottom: 40px;
     position: relative;
     z-index: 2;
 }
@@ -4314,89 +4313,79 @@
      Cormorant 16px title (2-line clamp), glass 34px heart, etc.
    ==================================================================== */
 @media (max-width: 768px) {
-    /* 2-col CSS Grid with bulletproof column sizing.
-       Negative margin escapes container padding → cards ~22% bigger
-       on iPhone 14 (was 149.5px → now ~182px each). */
+    /* 2-Column Horizontal Swipe Carousel (Fable / Alo / Zara mobile pattern):
+       Shows 2 cards side-by-side cleanly + edge peek of card #3 to invite horizontal
+       thumb swipe across all 12 arrivals, cutting vertical scroll height by >700px
+       and matching /shop catalog parity (swatches + consistent architectural badges). */
     .products-carousel {
-        display: grid !important;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-        grid-auto-rows: auto !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
         gap: 10px !important;
-        overflow: hidden !important;
-        overflow-x: hidden !important;
+        overflow-x: auto !important;
         overflow-y: visible !important;
-        scroll-snap-type: none !important;
-        scroll-padding: 0 !important;
-        padding: 8px 8px 24px !important;
-        margin: 0 -8px !important;
-        flex-direction: row;
-        width: auto !important;
+        scroll-snap-type: x mandatory !important;
+        scroll-padding-inline-start: 16px !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 8px 16px 16px !important;
+        margin: 0 -16px !important;
+        width: calc(100% + 32px) !important;
         max-width: none !important;
         box-sizing: border-box;
-        scrollbar-width: auto;
+    }
+    .products-carousel::-webkit-scrollbar {
+        display: none;
     }
 
-    /* Show only first 6 (curated); CTA → all 12 */
-    .products-carousel > *:nth-child(3n + 1) {
-        grid-column: auto !important; /* cancel any bento span */
-    }
+    .products-carousel > *:nth-child(3n + 1),
     .products-carousel > *:nth-child(n + 7) {
-        display: none !important;
+        display: block !important;
+        grid-column: auto !important;
     }
 
-    /* min-width: 0 on grid items = canonical fix for grid blowout */
     .products-carousel > * {
-        flex: none !important;
-        width: 100% !important;
-        max-width: 100% !important;
+        flex: 0 0 43.5vw !important;
+        width: 43.5vw !important;
+        max-width: 215px !important;
         min-width: 0 !important;
-        scroll-snap-align: none !important;
+        scroll-snap-align: start !important;
         scroll-snap-stop: normal !important;
         box-sizing: border-box;
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
     }
 
-    /* Card object — Apple Today + brand-tinted shadow.
-       Smaller radius (16px) tuned for ~half-viewport card width. */
     .products-carousel .product-card,
     .products-carousel .product-card-luxe {
         background: #ffffff !important;
-        border-radius: 16px !important;
+        border-radius: 14px !important;
         overflow: hidden !important;
         padding: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box;
-        border: 1px solid rgba(42, 90, 90, 0.05) !important;
-        /* 3-layer teal-tinted shadow */
+        border: 1px solid rgba(42, 90, 90, 0.06) !important;
         box-shadow:
             0 1px 2px rgba(42, 90, 90, 0.04),
-            0 3px 10px rgba(42, 90, 90, 0.06),
-            0 12px 30px -8px rgba(42, 90, 90, 0.1) !important;
+            0 4px 14px -4px rgba(42, 90, 90, 0.08) !important;
         transition:
-            box-shadow 0.3s ease,
+            box-shadow 0.25s ease,
             transform 0.18s cubic-bezier(0.2, 0, 0, 1) !important;
-        will-change: transform, box-shadow;
     }
-    /* Tap state — scale + shadow softens (Apple Today press) */
     .products-carousel .product-card:active,
     .products-carousel .product-card-luxe:active {
         transform: scale(0.97) !important;
-        box-shadow:
-            0 1px 2px rgba(42, 90, 90, 0.03),
-            0 3px 8px rgba(42, 90, 90, 0.04),
-            0 6px 16px -8px rgba(42, 90, 90, 0.08) !important;
     }
 
-    /* Image — 4:5 portrait, full-bleed top of card.
-       width: 100% + max-width 100% + min-width 0 = bulletproof
-       against intrinsic content blowing out the grid column. */
     .products-carousel .product-card__image-wrapper {
         aspect-ratio: 4 / 5 !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
-        border-radius: 16px 16px 0 0 !important;
+        border-radius: 14px 14px 0 0 !important;
         overflow: hidden;
         background: var(--color-bg-soft);
         margin: 0 !important;
@@ -4407,40 +4396,37 @@
         width: 100% !important;
         height: 100% !important;
     }
-
-    /* Cancel Batch 13 ken-burns / Batch 14 fade-up */
     .products-carousel > * .product-card__img--main {
         animation: none !important;
         transform: none !important;
     }
 
-    /* Caption — tuned for ~half-viewport card */
     .products-carousel .product-card__details,
     .products-carousel .product-card-luxe__details {
-        padding: 12px 14px 14px !important;
+        padding: 10px 12px 12px !important;
         background: transparent !important;
         min-width: 0 !important;
     }
     .products-carousel .product-card__title {
-        font-family: var(--font-display) !important;
-        font-size: 1rem !important; /* 16px - fits 2-line on ~half-viewport */
+        font-family: var(--font-body) !important;
+        font-size: 13px !important;
         font-weight: 500 !important;
-        letter-spacing: var(--tracking-tight) !important;
-        line-height: 1.2 !important;
-        margin: 0 0 8px 0 !important;
+        letter-spacing: 0 !important;
+        line-height: 1.28 !important;
+        margin: 0 0 6px 0 !important;
         text-transform: none !important;
         color: var(--color-text-primary) !important;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        min-height: 2.4em;
+        min-height: 2.56em;
         word-break: break-word;
     }
     .products-carousel .product-card__price-row {
         display: flex !important;
         align-items: baseline !important;
-        gap: 8px !important;
+        gap: 6px !important;
         margin: 0 !important;
         font-family: var(--font-body) !important;
         font-variant-numeric: tabular-nums;
@@ -4449,14 +4435,13 @@
     }
     .products-carousel .product-card__price {
         font-size: 13px !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.02em !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.01em !important;
         color: var(--color-text-primary) !important;
         text-transform: none !important;
     }
     .products-carousel .product-card__price--sale {
         color: var(--color-marsala) !important;
-        font-weight: 600 !important;
     }
     .products-carousel .product-card__price-old {
         font-size: 11px !important;
@@ -4464,125 +4449,89 @@
         margin-left: 0 !important;
     }
 
-    /* Hide colour swatches — too cramped on half-viewport card */
+    /* Interactive swatches visible on mobile carousel — full parity with /shop */
     .products-carousel .product-card__colors {
-        display: none !important;
+        display: flex !important;
+        gap: 6px !important;
+        margin-top: 8px !important;
+        flex-wrap: wrap;
+    }
+    .products-carousel .product-card__swatch {
+        width: 15px !important;
+        height: 15px !important;
     }
 
-    /* Heart — top-right glass button */
+    /* Refined glass heart — subtle footprint on mobile image */
     .products-carousel .product-card__heart-btn {
-        top: 10px !important;
-        right: 10px !important;
+        top: 8px !important;
+        right: 8px !important;
         bottom: auto !important;
         left: auto !important;
-        width: 34px !important;
-        height: 34px !important;
-        background: rgba(255, 255, 255, 0.85) !important;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        width: 30px !important;
+        height: 30px !important;
+        background: rgba(255, 255, 255, 0.88) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         border: 0 !important;
         border-radius: 999px !important;
         opacity: 1 !important;
     }
     .products-carousel .product-card__heart-btn svg {
-        width: 16px;
-        height: 16px;
+        width: 14px;
+        height: 14px;
     }
 
-    /* NEW / SALE — italic Cormorant pill, glass */
+    /* Consistent uppercase architectural badge matching Desktop & /shop */
     .products-carousel .product-card__badge,
     .products-carousel [class*="product-card__badge"] {
-        font-family: var(--font-display) !important;
-        font-style: italic !important;
-        font-size: 11px !important;
-        font-weight: 400 !important;
-        text-transform: lowercase !important;
-        letter-spacing: 0.02em !important;
-        background: rgba(255, 255, 255, 0.9) !important;
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-        color: var(--color-primary) !important;
-        padding: 3px 10px !important;
-        top: 10px !important;
-        left: 10px !important;
-        border-radius: 999px !important;
+        font-family: var(--font-body) !important;
+        font-style: normal !important;
+        font-size: 9px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.14em !important;
+        background: rgba(250, 248, 246, 0.94) !important;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        color: var(--color-text-primary) !important;
+        padding: 4px 8px !important;
+        top: 8px !important;
+        left: 8px !important;
+        border-radius: 4px !important;
         border: 0 !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
     }
-
-    /* Batch 45 A4: SALE badge "−9%" → "sale" word in carousel.
-       This block sits AFTER the second carousel-badge rule above (which
-       runs in the same @media block, source-order later than our first
-       attempt at line ~4108). Hide the original "−9%" text via
-       color:transparent + font-size:0 (overrides parent color:teal +
-       font-size:11px), then ::after injects "sale" in same italic teal
-       Cormorant. Surface consistency: shop = uppercase "SALE" pill,
-       home = lowercase italic "sale". Both signal sale without math. */
     .products-carousel .product-card__badge--sale {
-        color: transparent !important;
-        font-size: 0 !important;
-        padding: 3px 10px !important;
-        min-width: 44px;
-        position: relative;
+        background: var(--color-marsala) !important;
+        color: #fff !important;
     }
     .products-carousel .product-card__badge--sale::after {
-        content: "sale";
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--color-primary) !important;
-        font-family: var(--font-display) !important;
-        font-style: italic !important;
-        font-size: 11px !important;
-        font-weight: 400 !important;
-        letter-spacing: 0.02em !important;
-        text-transform: lowercase !important;
-        pointer-events: none;
+        color: #fff !important;
+        font-family: var(--font-body) !important;
+        font-style: normal !important;
+        font-size: 9px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.14em !important;
+        text-transform: uppercase !important;
     }
 
-    /* Hide artifacts from previous batches */
-    .arrival-counter,
+    .arrival-counter {
+        display: flex !important;
+        margin: 10px auto 0 !important;
+        font-size: 20px !important;
+        gap: 10px !important;
+    }
     .arrival-progress {
         display: none !important;
     }
 
-    /* MOTION — subtle entry fade-up as each card enters viewport.
-       Pure CSS scroll-driven, GPU, respects prefers-reduced-motion. */
-    @supports (animation-timeline: view()) {
-        .products-carousel > * {
-            animation: cardGridEntry linear both !important;
-            animation-timeline: view();
-            animation-range: entry 0% entry 35%;
-            will-change: transform, opacity;
-        }
-        @keyframes cardGridEntry {
-            0% {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-    }
-    @media (prefers-reduced-motion: reduce) {
-        .products-carousel > * {
-            animation: none !important;
-            opacity: 1 !important;
-            transform: none !important;
-        }
-    }
-
     #new-collections .new-arrivals-header {
-        margin-bottom: 20px !important;
+        margin-bottom: 16px !important;
         padding: 0 16px !important;
     }
     #new-collections .section__cta-center {
-        margin-top: 24px !important;
+        margin-top: 18px !important;
         padding: 0 16px;
     }
 }
@@ -4704,23 +4653,24 @@
         margin-bottom: 28px !important;
     }
 
-    /* Batch 47: shop-collections-group bottom padding was already 48
-       (from app.css 600px rule).  Drop trailing padding to 32 since
-       next section (brand-video) has its own 48 top padding already
-       — 32+48 = 80 between cards bottom and brand-video heading. */
-    .shop-collections-group {
-        padding-bottom: 32px !important;
+    .bw-unified-section {
+        padding-top: 36px !important;
+        padding-bottom: 24px !important;
     }
 
-    /* IG section — tighten internal padding + header rhythm.  Phone
-       mockup widget is intentionally preserved (per user); but section
-       padding can shrink. */
+    .shop-collections-group {
+        padding-top: 28px !important;
+        padding-bottom: 20px !important;
+    }
+
+    /* IG section — tighten internal padding + header rhythm while
+       preserving the iPhone mockup inside intact. */
     .ig-hyper {
-        padding-top: 48px !important;
-        padding-bottom: 48px !important;
+        padding-top: 36px !important;
+        padding-bottom: 28px !important;
     }
     .ig-hyper__header {
-        margin-bottom: 32px !important;
+        margin-bottom: 24px !important;
     }
 }
 
@@ -5516,26 +5466,16 @@
    playback is governed by its own IntersectionObserver and the
    interplay would be needlessly subtle.
    ============================================================ */
-.ig-hyper {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 1200px;
-}
+/* Keeping .stats-section offscreen deferred; keeping .shop-collections-group
+   and .ig-hyper eagerly painted eliminates white blank voids when fast-scrolling
+   or capturing full-page layout. */
 .stats-section {
     content-visibility: auto;
     contain-intrinsic-size: auto 220px;
 }
-/* The collections + new-arrivals block is the largest below-fold chunk
-   (6 category cards + a 12-product carousel = the bulk of the home DOM).
-   The mobile perf trace pinned the home LCP's render-delay on layout/
-   style recalc cost, not network — deferring this group's layout until
-   it nears the viewport cuts the initial layout passes directly. It
-   stays in the DOM for SEO/crawlers; only rendering work is deferred.
-   Big intrinsic reserve so the scrollbar/anchor math stays stable before
-   first render (the `auto` keyword then locks the real measured height). */
 .shop-collections-group {
     background: transparent !important;
-    content-visibility: auto;
-    contain-intrinsic-size: auto 2600px;
+    padding-bottom: 36px;
 }
 
 /* =============================================

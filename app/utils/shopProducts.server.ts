@@ -76,6 +76,49 @@ function parseJson<T>(str: string | null | undefined, fallback: T): T {
     }
 }
 
+export interface FamilySwatchData {
+    colorsByFamily: Record<string, string[]>;
+    colorImagesByFamily: Record<string, Record<string, string[]>>;
+}
+
+/**
+ * Collects active sibling colorways and per-color photo galleries for a list
+ * of product familyIds so listing cards (/shop and home) render complete,
+ * interactive swatches that live-preview each colorway's photoshoot.
+ */
+export async function collectFamilySwatches(familyIds: string[]): Promise<FamilySwatchData> {
+    const colorsByFamily: Record<string, string[]> = {};
+    const colorImagesByFamily: Record<string, Record<string, string[]>> = {};
+    if (familyIds.length === 0) return { colorsByFamily, colorImagesByFamily };
+
+    const familyRows = await prisma.product
+        .findMany({
+            where: { familyId: { in: familyIds }, status: "active" },
+            orderBy: { showInCatalog: "desc" },
+            select: { familyId: true, colors: true, images: true },
+        })
+        .catch(() => []);
+
+    for (const r of familyRows) {
+        if (!r.familyId) continue;
+        if (!colorsByFamily[r.familyId]) colorsByFamily[r.familyId] = [];
+        if (!colorImagesByFamily[r.familyId]) colorImagesByFamily[r.familyId] = {};
+
+        const clrs = parseJson<string[]>(r.colors, []);
+        const imgs = parseJson<string[]>(r.images, []);
+        const primaryColor = clrs[0];
+        if (!primaryColor) continue;
+
+        if (!colorsByFamily[r.familyId].includes(primaryColor)) {
+            colorsByFamily[r.familyId].push(primaryColor);
+        }
+        if (imgs.length > 0 && !colorImagesByFamily[r.familyId][primaryColor]) {
+            colorImagesByFamily[r.familyId][primaryColor] = imgs;
+        }
+    }
+    return { colorsByFamily, colorImagesByFamily };
+}
+
 /**
  * Single source of truth for the shop-listing data fetch. Both the parent
  * `/shop/:category` and the nested `/shop/:category/:subcategory` routes
@@ -178,36 +221,20 @@ async function loadShopDataUncached(
     const NOW = Date.now();
     const NEW_THRESHOLD_DAYS = 14;
 
-    // Collect active sibling colours for all models in this listing so
-    // catalog cards render all family swatches (Alo / Lululemon model).
     const familyIds = Array.from(
         new Set(rawProducts.map((p) => p.familyId).filter(Boolean)),
     ) as string[];
-    const siblingColorsMap: Record<string, string[]> = {};
-    if (familyIds.length > 0) {
-        const familyRows = await prisma.product
-            .findMany({
-                where: { familyId: { in: familyIds }, status: "active" },
-                select: { familyId: true, colors: true },
-            })
-            .catch(() => []);
-        for (const r of familyRows) {
-            if (!r.familyId) continue;
-            if (!siblingColorsMap[r.familyId]) siblingColorsMap[r.familyId] = [];
-            const clrs = parseJson<string[]>(r.colors, []);
-            const primaryColor = clrs[0];
-            if (primaryColor && !siblingColorsMap[r.familyId].includes(primaryColor)) {
-                siblingColorsMap[r.familyId].push(primaryColor);
-            }
-        }
-    }
+    const { colorsByFamily: siblingColorsMap, colorImagesByFamily } =
+        await collectFamilySwatches(familyIds);
 
     const products: ShopProductCard[] = rawProducts.map((p) => {
         const images = parseJson<string[]>(p.images, []);
         // Per-colour galleries: keep only entries that are non-empty string
         // arrays, so a malformed/partial tag never feeds a blank src to the card.
         const rawColorImages = parseJson<Record<string, string[]>>(p.colorImages, {});
-        const colorImages: Record<string, string[]> = {};
+        const colorImages: Record<string, string[]> = {
+            ...(p.familyId ? colorImagesByFamily[p.familyId] : undefined),
+        };
         for (const key of Object.keys(rawColorImages)) {
             const urls = rawColorImages[key];
             if (

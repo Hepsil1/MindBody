@@ -314,7 +314,6 @@ export default function Footer() {
                             alt="Visa"
                             width="32"
                             height="20"
-                            loading="lazy"
                             decoding="async"
                         />
                     </li>
@@ -324,7 +323,6 @@ export default function Footer() {
                             alt="Mastercard"
                             width="32"
                             height="20"
-                            loading="lazy"
                             decoding="async"
                         />
                     </li>

@@ -4930,6 +4930,73 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     text-transform: uppercase;
 }
 
+.footer-puma__phone-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    margin-bottom: 4px;
+    transition: color 0.25s ease;
+}
+
+.footer-puma__phone-cta:hover {
+    color: var(--color-primary-light);
+}
+
+.footer-puma__phone-cta svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    opacity: 0.78;
+}
+
+.footer-puma__social-icons {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 12px;
+}
+
+.footer-puma__social-icons li {
+    margin: 0;
+    padding: 0;
+}
+
+.footer-puma__social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    transition:
+        border-color 0.25s ease,
+        background-color 0.25s ease,
+        transform 0.25s ease;
+}
+
+.footer-puma__social-link:hover {
+    border-color: var(--color-primary-light);
+    background: rgba(74, 180, 180, 0.14);
+    transform: translateY(-2px);
+}
+
+.footer-puma__social-link svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
 /* RIGHT GROUP: Feedback Form */
 .footer-puma__right-group {
     display: flex;
@@ -5454,32 +5521,65 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     outline-offset: 2px;
 }
 
-/* Mobile: a floating card inset 12px from BOTH edges. The base rule sets
-   left:20px + width:100%-40px; resetting width/left/right here is what stops
-   the old full-width variant from overflowing the 375px viewport. */
+/* Mobile: sleek, quiet-luxury compact horizontal bar pinned at the bottom
+   edge (~52px total height) so it stays completely clear of the Hero CTA
+   above (~90px clearance on 844px viewports). */
 @media (max-width: 600px) {
     .cookie-banner {
-        left: 12px;
-        right: 12px;
-        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        left: 10px;
+        right: 10px;
+        bottom: calc(8px + env(safe-area-inset-bottom, 0px));
         width: auto;
-        max-width: calc(100% - 24px);
-        border-radius: 4px;
-        border: 1px solid var(--color-border);
+        max-width: calc(100% - 20px);
+        border-radius: 8px;
+        background: rgba(250, 248, 246, 0.94);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(42, 90, 90, 0.14);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
     }
     .cookie-banner__inner {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        padding: 14px 16px;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 10px;
+    }
+    .cookie-banner__text {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .cookie-banner__text strong {
+        font-size: 10.5px;
+        letter-spacing: -0.01em;
+        line-height: 1.25;
+        margin-bottom: 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .cookie-banner__verbose {
+        display: none;
+    }
+    .cookie-banner__text p {
+        font-size: 9.5px;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .cookie-banner__actions {
-        gap: 8px;
+        gap: 5px;
+        flex-shrink: 0;
     }
     .cookie-banner__btn {
-        flex: 1;
-        min-height: 44px; /* touch target */
-        padding: 10px 14px;
+        flex: none;
+        min-height: 32px;
+        padding: 5px 8px;
+        font-size: 9px;
+        letter-spacing: 0.03em;
+        border-radius: 4px;
     }
 }
 
@@ -12328,40 +12428,6 @@ body:has(.filter-drawer-overlay) .floating-contact {
     grid-row: span 1;
 }
 
-/* Mobile override — RESTORED.  The desktop 12-col bento
-   (repeat(12, 1fr) + span-7/5/4) blows out on a 390px viewport: the
-   card images force each 1fr track to ~800px, so the whole grid
-   overflows ~800px wide and the cards slide off-screen, leaving an
-   empty grey band (the visible slice is just blank photo edges).
-   On mobile we drop the bento entirely and stack the cards full-width
-   single-column with a fixed aspect so each photo + its label/subtitle/
-   CTA renders cleanly.  Desktop bento is untouched. */
-@media (max-width: 768px) {
-    .editorial-categories-grid {
-        display: flex !important;
-        flex-direction: column !important;
-        grid-template-columns: none !important;
-        grid-auto-rows: auto !important;
-        gap: 12px !important;
-        width: 100% !important;
-    }
-    .category-card-editorial,
-    .category-card-editorial:nth-child(1),
-    .category-card-editorial:nth-child(2),
-    .category-card-editorial:nth-child(3),
-    .category-card-editorial:nth-child(4),
-    .category-card-editorial:nth-child(5),
-    .category-card-editorial:nth-child(6),
-    .category-card-editorial:nth-child(n + 7) {
-        grid-column: auto !important;
-        grid-row: auto !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        aspect-ratio: 16 / 11;
-        min-height: 220px;
-    }
-}
-
 .category-card-editorial:hover {
     transform: scale(0.985); /* Sophisticated subtle shrink */
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
@@ -12509,21 +12575,70 @@ body:has(.filter-drawer-overlay) .floating-contact {
 }
 
 @media (max-width: 768px) {
+    /* Editorial 2-Column Mosaic (Alo Yoga / Skims inspired):
+       Row 1: Hero full-width opener (16:10)
+       Row 2-3: Paired portrait tiles (3:4) — eliminates face chopping & cuts vertical scroll in half
+       Row 4: Architectural horizontal closer (16:8) */
     .editorial-categories-grid {
-        gap: 12px;
-        grid-auto-rows: 280px;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        grid-auto-rows: auto !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    .category-card-editorial,
+    .category-card-editorial:nth-child(n) {
+        grid-column: span 1 !important;
+        grid-row: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        aspect-ratio: 3 / 4;
+        min-height: 205px;
+    }
+    .category-card-editorial:nth-child(1) {
+        grid-column: 1 / -1 !important;
+        aspect-ratio: 16 / 10;
+        min-height: 200px;
+    }
+    .category-card-editorial:nth-child(6) {
+        grid-column: 1 / -1 !important;
+        aspect-ratio: 16 / 8;
+        min-height: 150px;
     }
     .category-card-editorial__content {
-        padding: 24px;
+        padding: 14px 16px;
     }
-    .category-card-editorial:nth-child(n) {
-        grid-column: span 12;
-        grid-row: span 1;
+    .category-card-editorial:nth-child(1) .category-card-editorial__content,
+    .category-card-editorial:nth-child(6) .category-card-editorial__content {
+        padding: 20px;
     }
-
-    /* On mobile, text should probably be somewhat visible by default due to lack of hover */
+    .category-card-editorial__title {
+        font-size: 1.15rem;
+        letter-spacing: 0.08em;
+    }
+    .category-card-editorial:nth-child(1) .category-card-editorial__title {
+        font-size: 1.75rem;
+    }
+    .category-card-editorial:nth-child(6) .category-card-editorial__title {
+        font-size: 1.35rem;
+    }
+    .category-card-editorial__reveal-inner {
+        gap: 6px;
+    }
+    .category-card-editorial__subtitle {
+        font-size: 11px;
+        padding-top: 3px;
+        line-height: 1.25;
+        color: rgba(255, 255, 255, 0.85);
+    }
+    .category-card-editorial__link {
+        font-size: 9.5px;
+        letter-spacing: 0.16em;
+        gap: 6px;
+    }
     .category-card-editorial__overlay {
-        opacity: 0.6;
+        opacity: 0.72;
     }
     .category-card-editorial__reveal-wrap {
         grid-template-rows: 1fr;
@@ -12770,11 +12885,11 @@ body:has(.filter-drawer-overlay) .floating-contact {
    ======================================== */
 .collections-container {
     max-width: 1440px;
-    padding-bottom: 100px;
+    padding-bottom: 64px;
 }
 
 .collections-header {
-    margin-bottom: 120px;
+    margin-bottom: 56px;
 }
 
 .collections-title {
@@ -12929,16 +13044,16 @@ body:has(.filter-drawer-overlay) .floating-contact {
    ============================================================ */
 @media (max-width: 600px) {
     .shop-collections-group {
-        padding-top: 48px;
-        padding-bottom: 48px;
+        padding-top: 32px;
+        padding-bottom: 24px;
     }
 
     .collections-header {
-        margin-bottom: 48px;
+        margin-bottom: 28px;
     }
 
     .collections-container {
-        padding-bottom: 48px;
+        padding-bottom: 36px;
     }
 }
 

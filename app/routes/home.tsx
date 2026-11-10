@@ -9,6 +9,7 @@ import ProductCard from "../components/ProductCard";
 import BrandStories from "../components/BrandStories";
 import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
+import { collectFamilySwatches } from "../utils/shopProducts.server";
 import { readIgCache, checkImageVariantsExist } from "../services/instagram.server";
 import { IG_FALLBACK_CACHE } from "../data/ig-fallback";
 import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
@@ -119,10 +120,13 @@ interface HomeProductCard {
     price: number;
     image: string;
     image2: string | null;
+    colors: string[];
+    colorImages: Record<string, string[]>;
     is_new: boolean;
     is_sale: boolean;
     sale_price: number | undefined;
     discount_percent: number;
+    is_stock: boolean;
 }
 
 export function meta({ data, params }: Route.MetaArgs) {
@@ -345,9 +349,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                     },
                 }),
             ),
-            cachedFetch("home:products", CACHE_TTL, () =>
+            cachedFetch("home:products:v2", CACHE_TTL, () =>
                 prisma.product.findMany({
-                    where: { status: "active" },
+                    where: { status: "active", showInCatalog: true },
                     orderBy: { createdAt: "desc" },
                     take: 12,
                     select: {
@@ -358,12 +362,16 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                         comparePrice: true,
                         category: true,
                         images: true,
+                        colors: true,
+                        colorImages: true,
+                        familyId: true,
+                        inventory: true,
                         shopPageSlug: true,
                         createdAt: true,
                     },
                 }),
             ),
-            cachedFetch("home:looks", CACHE_TTL, () =>
+            cachedFetch("home:looks:v2", CACHE_TTL, () =>
                 prisma.product.findMany({
                     where: { status: "active", slug: { in: HOME_LOOKS.map((l) => l.productSlug) } },
                     select: {
@@ -374,12 +382,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                         comparePrice: true,
                         category: true,
                         images: true,
+                        colors: true,
+                        colorImages: true,
+                        familyId: true,
+                        inventory: true,
                         shopPageSlug: true,
                         createdAt: true,
                     },
                 }),
             ),
         ]);
+
+        const familyIds = Array.from(
+            new Set([...rawProducts, ...(rawLooks || [])].map((p) => p.familyId).filter(Boolean)),
+        ) as string[];
+        const { colorsByFamily, colorImagesByFamily } = await collectFamilySwatches(familyIds);
 
         const NOW = Date.now();
         const NEW_THRESHOLD_DAYS = 14;
@@ -392,6 +409,40 @@ export async function loader({ request, params }: Route.LoaderArgs) {
             } catch {
                 // Malformed images JSON — fall back to the brand placeholder.
             }
+            let rawColors: string[] = [];
+            try {
+                rawColors = JSON.parse(p.colors || "[]");
+            } catch {
+                // empty
+            }
+            let rawColorImgs: Record<string, string[]> = {};
+            try {
+                rawColorImgs = JSON.parse(p.colorImages || "{}");
+            } catch {
+                // empty
+            }
+            const colorImages: Record<string, string[]> = {
+                ...(p.familyId ? colorImagesByFamily[p.familyId] : undefined),
+            };
+            for (const key of Object.keys(rawColorImgs)) {
+                const urls = rawColorImgs[key];
+                if (
+                    Array.isArray(urls) &&
+                    urls.length > 0 &&
+                    urls.every((u) => typeof u === "string" && u)
+                ) {
+                    colorImages[key] = urls;
+                }
+            }
+            let inventory: Array<{ stock?: number }> = [];
+            try {
+                inventory = JSON.parse(p.inventory || "[]");
+            } catch {
+                // empty
+            }
+            const isStock =
+                inventory.length === 0 ? true : inventory.some((v) => (v.stock ?? 0) > 0);
+
             const price = Number(p.price);
             const comparePrice = Number(p.comparePrice) || 0;
             const isSale = comparePrice > price && price > 0;
@@ -406,10 +457,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                 price: isSale ? comparePrice : price, // comparePrice is the "original" price
                 image: imgs[0] || "/brand-sun.png",
                 image2: imgs[1] || null,
+                colors:
+                    p.familyId && colorsByFamily[p.familyId]?.length
+                        ? colorsByFamily[p.familyId]
+                        : Object.keys(colorImages).length > 0
+                          ? rawColors
+                          : rawColors.slice(0, 1),
+                colorImages,
                 is_new: isNew,
                 is_sale: isSale,
                 sale_price: isSale ? price : undefined,
                 discount_percent: isSale ? Math.round((1 - price / comparePrice) * 100) : 0,
+                is_stock: isStock,
             };
         };
 
@@ -435,20 +494,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                 id: "1",
                 title: "YOGA",
                 subtitle: "Для гармонії тіла та духу",
-                image: "/pics1cloths/IMG_6201.webp",
+                image: "/generalpics/374_131123.webp",
+                imagePos: "50% 56%",
                 link: "/shop/yoga",
                 buttonText: "Переглянути",
-                // Batch 41 pilot: Yoga is the first mood-tagged category.
-                // The DB row (set via admin) overrides this; the fallback
-                // value just lets local-dev / empty-DB render the pilot
-                // visual immediately.
                 moodType: "yoga",
             },
             {
                 id: "2",
                 title: "SPORT",
                 subtitle: "Для активних тренувань",
-                image: "/pics1cloths/IMG_6210.webp",
+                image: "/pics1cloths/IMG_6215.webp",
+                imagePos: "50% 14%",
                 link: "/shop/sport",
                 buttonText: "Переглянути",
             },
@@ -457,6 +514,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                 title: "DANCE",
                 subtitle: "Свобода рухів",
                 image: "/generalpics/595_131123.webp",
+                imagePos: "50% 18%",
                 link: "/shop/dance",
                 buttonText: "Переглянути",
             },
@@ -464,7 +522,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                 id: "4",
                 title: "CASUAL",
                 subtitle: "Повсякденний комфорт",
-                image: "/generalpics/348_131123.webp",
+                image: "/lifestyle/0Y4A5994.webp",
+                imagePos: "50% 14%",
                 link: "/shop/casual",
                 buttonText: "Переглянути",
             },
@@ -472,7 +531,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                 id: "5",
                 title: "KIDS",
                 subtitle: "Для наймолодших",
-                image: "/pics2cloths/IMG_5222.webp",
+                image: "/uploads/tg_3213_1.webp",
+                imagePos: "50% 14%",
                 link: "/shop/kids",
                 buttonText: "Переглянути",
             },
@@ -480,7 +540,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
                 id: "6",
                 title: "YOGATOOLS",
                 subtitle: "Аксесуари та інвентар",
-                image: "/generalpics/374_131123.webp",
+                image: "/pics1cloths/IMG_6204.webp",
+                imagePos: "50% 8%",
                 link: "/shop/yogatools",
                 buttonText: "Переглянути",
             },
@@ -691,12 +752,14 @@ export default function Home() {
         });
     }, []);
 
-    // Touch swipe support
+    // Touch swipe fallback for non-snap viewports; on mobile (<=768px), native
+    // CSS scroll-snap-type: x mandatory handles fluid 1-by-1 momentum swipes.
     const touchStartX = useRef(0);
     const handleTouchStart = (e: React.TouchEvent) => {
         touchStartX.current = e.touches[0].clientX;
     };
     const handleTouchEnd = (e: React.TouchEvent) => {
+        if (typeof window !== "undefined" && window.innerWidth <= 768) return;
         const diff = touchStartX.current - e.changedTouches[0].clientX;
         if (Math.abs(diff) > 50) scrollCarousel(diff > 0 ? "next" : "prev");
     };
@@ -1082,7 +1145,12 @@ export default function Home() {
                         onTouchEnd={handleTouchEnd}
                     >
                         {newProducts.map((p, i) => (
-                            <ProductCard key={p.id} product={p} priority={i < 4} />
+                            <ProductCard
+                                key={p.id}
+                                product={p}
+                                priority={i < 4}
+                                imageSizes="(max-width: 768px) 62vw, 25vw"
+                            />
                         ))}
                     </div>
 

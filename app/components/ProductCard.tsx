@@ -5,6 +5,7 @@ import { useToast } from "./Toast";
 import { WishlistAuthModal } from "./WishlistAuthModal";
 import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
 import { getLqipStyle } from "../utils/lqip";
+import { getColorHex, getColorLabel } from "../utils/colors";
 import { useI18n, useMoney, LLink } from "../i18n";
 
 export interface Product {
@@ -25,27 +26,6 @@ export interface Product {
     colorImages?: Record<string, string[]>;
     discount_percent?: number;
     is_stock?: boolean;
-}
-
-const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
-const NAMED_COLORS: Record<string, string> = {
-    white: "#f5f5f5",
-    black: "#1a1a1a",
-    cream: "#faf8f6",
-    teal: "#2a5a5a",
-    sliva: "#4b3b6b",
-    marsala: "#722f37",
-    beige: "#d4c4a4",
-    nude: "#e4d2c0",
-    grey: "#999",
-    gray: "#999",
-};
-
-function resolveColor(c: string): string {
-    const key = c.toLowerCase().trim();
-    if (NAMED_COLORS[key]) return NAMED_COLORS[key];
-    if (HEX_RE.test(c)) return c;
-    return c; // pass-through, browser may understand css color
 }
 
 export default function ProductCard({
@@ -302,8 +282,8 @@ export default function ProductCard({
                                 const cls = `product-card__swatch${isActive ? " is-active" : ""}${
                                     hasGallery ? " has-gallery" : ""
                                 }`;
-                                const style = { backgroundColor: resolveColor(color) };
-                                const title = color.charAt(0).toUpperCase() + color.slice(1);
+                                const style = { backgroundColor: getColorHex(color) };
+                                const title = getColorLabel(color) || color;
                                 return (
                                     <LLink
                                         key={i}

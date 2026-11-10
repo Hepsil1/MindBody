@@ -81,10 +81,13 @@ export default function CategoryCard({
             </div>
             <div
                 className="category-card-editorial__overlay"
-                /* Batch 41: mood tint laid OVER the base overlay. Keep
-                   opacity low (≤12%) so the photo stays readable — this
-                   is a flavour layer, not a colour wash. */
-                style={mood ? { background: mood.tintOverlay } : undefined}
+                style={
+                    mood
+                        ? {
+                              background: `${mood.tintOverlay}, linear-gradient(180deg, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0.72) 100%)`,
+                          }
+                        : undefined
+                }
             />
             <div className="category-card-editorial__content">
                 <div className="category-card-editorial__text-group">
