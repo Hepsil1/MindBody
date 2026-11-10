@@ -1,14 +1,14 @@
 {
   "ok": true,
-  "fetchedAt": "2026-11-10T15:44:39.100Z",
+  "fetchedAt": "2026-11-10T16:33:38.311Z",
   "username": "mindbody_sportwear",
-  "fullName": "mindbody_sportwear",
-  "biography": "Комбінезон твоєї мрії✨\nНайбільший вибір,найкраща якість\nCASUAL @fluid_feel_free\nYOGAMAT @mindbody_yogamat\nKIDS @mindbody_kidswear\nShipping🌎Made in🇺🇦",
-  "externalUrl": "https://t.me/mindbody_sportwear",
+  "fullName": "𝐌𝐈𝐍𝐃 𝐁𝐎𝐃𝐘 𝐬𝐩𝐨𝐫𝐭 𝐰𝐞𝐚𝐫 комбінезони та одяг для йоги та фітнесу",
+  "biography": "Комбінезон твоєї мрії✨\nНайбільший вибір,найкраща якість\nCASUAL @fluid_feel_free\nYOGAMAT @mindbody_yogamat \nKIDS @mindbody_kidswear \nShipping🌎Made in🇺🇦",
+  "externalUrl": "http://t.me/mindbody_sportwear",
   "profilePictureUrl": "/instagram/avatar_61f29b4b.webp",
   "postsCount": 2359,
-  "followersCount": 70702,
-  "followingCount": 1315,
+  "followersCount": 70679,
+  "followingCount": 1319,
   "highlights": [
     {
       "id": "7c9be519",
@@ -63,9 +63,27 @@
   ],
   "posts": [
     {
-      "id": "DfWjVPcN3tj",
-      "mediaUrl": "/instagram/DfWjVPcN3tj.webp",
-      "permalink": "https://www.instagram.com/p/DfWjVPcN3tj/",
+      "id": "DfjxhsYuE9y",
+      "mediaUrl": "/instagram/DfjxhsYuE9y.webp",
+      "permalink": "https://www.instagram.com/p/DfjxhsYuE9y/",
+      "isVideo": true
+    },
+    {
+      "id": "Dfjb9DANYEz",
+      "mediaUrl": "/instagram/Dfjb9DANYEz.webp",
+      "permalink": "https://www.instagram.com/p/Dfjb9DANYEz/",
+      "isVideo": true
+    },
+    {
+      "id": "Dfh8bpANEE4",
+      "mediaUrl": "/instagram/Dfh8bpANEE4.webp",
+      "permalink": "https://www.instagram.com/p/Dfh8bpANEE4/",
+      "isVideo": true
+    },
+    {
+      "id": "DfeS5WMN53F",
+      "mediaUrl": "/instagram/DfeS5WMN53F.webp",
+      "permalink": "https://www.instagram.com/p/DfeS5WMN53F/",
       "isVideo": true
     },
     {
@@ -75,21 +93,21 @@
       "isVideo": false
     },
     {
-      "id": "DfWXJXERNsv",
-      "mediaUrl": "/instagram/DfWXJXERNsv.webp",
-      "permalink": "https://www.instagram.com/p/DfWXJXERNsv/",
-      "isVideo": true
-    },
-    {
       "id": "DfXXHiLo80T",
       "mediaUrl": "/instagram/DfXXHiLo80T.webp",
       "permalink": "https://www.instagram.com/p/DfXXHiLo80T/",
       "isVideo": true
     },
     {
-      "id": "DfPWWjJRRpA",
-      "mediaUrl": "/instagram/DfPWWjJRRpA.webp",
-      "permalink": "https://www.instagram.com/p/DfPWWjJRRpA/",
+      "id": "DfWjVPcN3tj",
+      "mediaUrl": "/instagram/DfWjVPcN3tj.webp",
+      "permalink": "https://www.instagram.com/p/DfWjVPcN3tj/",
+      "isVideo": true
+    },
+    {
+      "id": "DfWXJXERNsv",
+      "mediaUrl": "/instagram/DfWXJXERNsv.webp",
+      "permalink": "https://www.instagram.com/p/DfWXJXERNsv/",
       "isVideo": true
     },
     {
@@ -97,6 +115,12 @@
       "mediaUrl": "/instagram/DfT8DkDjRXa.webp",
       "permalink": "https://www.instagram.com/p/DfT8DkDjRXa/",
       "isVideo": false
+    },
+    {
+      "id": "DfPWWjJRRpA",
+      "mediaUrl": "/instagram/DfPWWjJRRpA.webp",
+      "permalink": "https://www.instagram.com/p/DfPWWjJRRpA/",
+      "isVideo": true
     },
     {
       "id": "DfO9UCTNPwc",
@@ -216,30 +240,6 @@
       "id": "DeYqlk2NSud",
       "mediaUrl": "/instagram/DeYqlk2NSud.webp",
       "permalink": "https://www.instagram.com/p/DeYqlk2NSud/",
-      "isVideo": true
-    },
-    {
-      "id": "DePMBWwDY4n",
-      "mediaUrl": "/instagram/DePMBWwDY4n.webp",
-      "permalink": "https://www.instagram.com/p/DePMBWwDY4n/",
-      "isVideo": false
-    },
-    {
-      "id": "DeMxWUbjXxm",
-      "mediaUrl": "/instagram/DeMxWUbjXxm.webp",
-      "permalink": "https://www.instagram.com/p/DeMxWUbjXxm/",
-      "isVideo": false
-    },
-    {
-      "id": "DeJHgdINtuF",
-      "mediaUrl": "/instagram/DeJHgdINtuF.webp",
-      "permalink": "https://www.instagram.com/p/DeJHgdINtuF/",
-      "isVideo": true
-    },
-    {
-      "id": "DeH1Clxtnki",
-      "mediaUrl": "/instagram/DeH1Clxtnki.webp",
-      "permalink": "https://www.instagram.com/p/DeH1Clxtnki/",
       "isVideo": true
     }
   ]

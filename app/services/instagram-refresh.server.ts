@@ -36,7 +36,7 @@ const UA =
 const SHORTCODE_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const MIN_INTERVAL_MS = 5 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
-const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // auto-refresh cadence (safe for the server IP)
+const REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; // 2 hours (12 runs/day, ~360/mo → well within Apify $5/mo free tier)
 const NAV_TIMEOUT_MS = 45_000;
 const CAPTURE_WAIT_MS = 10_000;
 const IMG_TIMEOUT_MS = 20_000;
@@ -592,6 +592,179 @@ export interface RefreshResult {
     error?: string;
 }
 
+interface ApifyPost {
+    id?: string;
+    shortCode?: string;
+    type?: string;
+    url?: string;
+    displayUrl?: string;
+}
+
+interface ApifyProfile {
+    username?: string;
+    fullName?: string;
+    biography?: string;
+    externalUrls?: { url?: string }[];
+    profilePicUrl?: string;
+    postsCount?: number;
+    followersCount?: number;
+    followsCount?: number;
+    latestPosts?: ApifyPost[];
+}
+
+async function refreshViaApify(
+    token: string,
+    target: string,
+    prev: IgCache | null,
+): Promise<RefreshResult | null> {
+    logger.info({ target }, "[ig-refresh] requesting live data from Apify Actor");
+    const res = await fetch(
+        `https://api.apify.com/v2/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items?token=${token}`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ usernames: [target] }),
+        },
+    );
+
+    if (!res.ok) {
+        logger.warn({ status: res.status }, "[ig-refresh] Apify request failed");
+        return null;
+    }
+
+    const items = (await res.json()) as ApifyProfile[];
+    const data = items?.[0];
+    if (!data || typeof data.postsCount !== "number") {
+        logger.warn("[ig-refresh] Apify returned empty or invalid profile data");
+        return null;
+    }
+
+    await fs.mkdir(IG_DIR, { recursive: true });
+
+    const posts: IgCache["posts"] = [];
+    const incomingPosts = data.latestPosts || [];
+
+    for (const p of incomingPosts) {
+        const code = p.shortCode;
+        if (!code || !/^[A-Za-z0-9_-]{5,30}$/.test(code)) continue;
+        const isVideo = p.type === "Video" || p.type === "Reel";
+        const filePath = path.join(IG_DIR, `${code}.webp`);
+
+        if (!existsSync(filePath) && p.displayUrl) {
+            try {
+                const imgRes = await fetch(p.displayUrl);
+                if (imgRes.ok) {
+                    const buf = Buffer.from(await imgRes.arrayBuffer());
+                    await processIgImage(buf, code);
+                }
+            } catch (err) {
+                logger.warn(
+                    { code, err: String(err) },
+                    "[ig-refresh] failed to process post image from Apify",
+                );
+            }
+        }
+
+        if (existsSync(filePath)) {
+            posts.push({
+                id: code,
+                mediaUrl: `/instagram/${code}.webp`,
+                permalink: p.url || `https://www.instagram.com/p/${code}/`,
+                isVideo,
+            });
+        }
+    }
+
+    // Backfill with previous posts to maintain grid depth
+    if (prev?.posts) {
+        for (const oldP of prev.posts) {
+            if (
+                !posts.some((x) => x.id === oldP.id) &&
+                existsSync(path.join(IG_DIR, `${oldP.id}.webp`))
+            ) {
+                posts.push(oldP);
+            }
+            if (posts.length >= TARGET_POSTS) break;
+        }
+    }
+
+    // Profile picture
+    let profilePictureUrl = prev?.profilePictureUrl || "/logo-sun.png";
+    if (data.profilePicUrl) {
+        try {
+            const picRes = await fetch(data.profilePicUrl);
+            if (picRes.ok) {
+                const pBuf = Buffer.from(await picRes.arrayBuffer());
+                const base = `avatar_${hashBuf(pBuf)}`;
+                const pPath = path.join(IG_DIR, `${base}.webp`);
+                if (!existsSync(pPath)) {
+                    await processIgImage(pBuf, base, 320);
+                }
+                profilePictureUrl = `/instagram/${base}.webp`;
+            }
+        } catch (e) {
+            logger.warn(
+                { err: String(e) },
+                "[ig-refresh] avatar download failed, keeping previous",
+            );
+        }
+    }
+
+    let externalUrl = prev?.externalUrl || "https://t.me/mindbody_sportwear";
+    if (data.externalUrls && data.externalUrls.length > 0 && data.externalUrls[0].url) {
+        externalUrl = data.externalUrls[0].url;
+    }
+
+    const next: IgCache = {
+        ok: true,
+        fetchedAt: new Date().toISOString(),
+        username: data.username || target,
+        fullName: data.fullName || prev?.fullName || "MIND BODY sport wear",
+        biography: data.biography || prev?.biography || "",
+        externalUrl,
+        profilePictureUrl,
+        postsCount: data.postsCount,
+        followersCount: data.followersCount || prev?.followersCount || 70700,
+        followingCount: data.followsCount || prev?.followingCount || 1319,
+        highlights: prev?.highlights || [],
+        posts,
+    };
+
+    const tmp = CACHE_FILE + ".tmp";
+    await fs.writeFile(tmp, JSON.stringify(next));
+    await fs.rename(tmp, CACHE_FILE);
+    setIgMemCache(next);
+    setSessionLikelyExpired(false);
+
+    const keep = new Set<string>(posts.map((p) => p.id));
+    next.highlights.forEach((h) => keep.add(`hl_${h.id}`));
+    if (profilePictureUrl.startsWith("/instagram/"))
+        keep.add(profilePictureUrl.slice("/instagram/".length).replace(/\.webp$/, ""));
+    await pruneOldImages(keep);
+
+    backoffN = 0;
+    nextNormalDelayMs = REFRESH_INTERVAL_MS;
+    logger.info(
+        {
+            postsCount: next.postsCount,
+            followers: next.followersCount,
+            following: next.followingCount,
+            postsShown: posts.length,
+        },
+        "[ig-refresh] Apify sync ok",
+    );
+
+    return {
+        ok: true,
+        fetchedAt: next.fetchedAt,
+        postsCount: next.postsCount,
+        followersCount: next.followersCount,
+        followingCount: next.followingCount,
+        postsShown: posts.length,
+        highlights: next.highlights.length,
+    };
+}
+
 /** The single entry point. Locked, rate-floored, never throws to the caller. */
 export async function runRefresh(): Promise<RefreshResult> {
     if (process.env.IG_SCRAPE_ENABLED !== "true") return { ok: false, skipped: "disabled" };
@@ -606,6 +779,22 @@ export async function runRefresh(): Promise<RefreshResult> {
 
     try {
         const prev = await readIgCache();
+
+        // 1. Primary path: Apify (reliable, zero account connection, residential Meta unblocker)
+        const apifyToken = process.env.APIFY_TOKEN?.trim();
+        if (apifyToken) {
+            try {
+                const apifyRes = await refreshViaApify(apifyToken, target, prev);
+                if (apifyRes && apifyRes.ok) return apifyRes;
+            } catch (apifyErr) {
+                logger.warn(
+                    { err: String(apifyErr) },
+                    "[ig-refresh] Apify run failed, falling back to browser",
+                );
+            }
+        }
+
+        // 2. Secondary path: Headless Chromium via Playwright
         const deep = (prev?.posts?.length ?? 0) < TARGET_POSTS;
         const r = await renderWebProfile(target, sessionid, proxy, deep, prev?.posts ?? []);
 
@@ -748,9 +937,11 @@ export function startInstagramScheduler(): void {
         logger.info("[ig-refresh] disabled (IG_SCRAPE_ENABLED!=true) — using hardcoded fallback");
         return;
     }
-    if (!process.env.IG_SCRAPE_PROXY?.trim()) {
+    if (process.env.APIFY_TOKEN?.trim()) {
+        logger.info("[ig-refresh] enabled with Apify Actor auto-sync");
+    } else if (!process.env.IG_SCRAPE_PROXY?.trim()) {
         logger.warn(
-            "[ig-refresh] enabled but IG_SCRAPE_PROXY is empty — refreshes will fail; fallback stays.",
+            "[ig-refresh] enabled but neither APIFY_TOKEN nor IG_SCRAPE_PROXY is configured — refreshes may fail; fallback stays.",
         );
     }
     started = true;
