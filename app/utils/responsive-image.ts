@@ -50,6 +50,9 @@
 const VARIANT_WIDTHS = [400, 800, 1200, 1600];
 const MASTER_WIDTH_DESCRIPTOR = 2400;
 
+const HERO_VARIANT_WIDTHS = [400, 800, 1200, 1600, 2400];
+const HERO_MASTER_DESCRIPTOR = 3840;
+
 function stripExt(url: string): string {
     return url.replace(/\.(jpg|jpeg|JPG|JPEG|png|PNG|webp|avif)$/, "");
 }
@@ -76,6 +79,27 @@ export function buildAvifSrcset(url: string): string {
     return [
         ...VARIANT_WIDTHS.map((w) => `${base}-${w}w.avif ${w}w`),
         `${base}.avif ${MASTER_WIDTH_DESCRIPTOR}w`,
+    ].join(", ");
+}
+
+/**
+ * Dedicated Retina 8K/4K srcset builder for Hero banners.
+ * Supplies up to 2400w and 3840w descriptors so that 4K and Retina 2x/3x
+ * displays receive uncompromised physical pixel density without upscaling.
+ */
+export function buildHeroWebpSrcset(url: string): string {
+    const base = stripExt(url);
+    return [
+        ...HERO_VARIANT_WIDTHS.map((w) => `${base}-${w}w.webp ${w}w`),
+        `${base}.webp ${HERO_MASTER_DESCRIPTOR}w`,
+    ].join(", ");
+}
+
+export function buildHeroAvifSrcset(url: string): string {
+    const base = stripExt(url);
+    return [
+        ...HERO_VARIANT_WIDTHS.map((w) => `${base}-${w}w.avif ${w}w`),
+        `${base}.avif ${HERO_MASTER_DESCRIPTOR}w`,
     ].join(", ");
 }
 

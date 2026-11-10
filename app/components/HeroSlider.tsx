@@ -1,5 +1,10 @@
 import { useState, useEffect, type ReactNode } from "react";
-import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
+import {
+    buildAvifSrcset,
+    buildWebpSrcset,
+    buildHeroAvifSrcset,
+    buildHeroWebpSrcset,
+} from "../utils/responsive-image";
 import { getLqipStyle } from "../utils/lqip";
 import { useI18n, LLink } from "../i18n";
 import "../styles/hero.css";
@@ -24,14 +29,22 @@ export interface SlideData {
 }
 
 // Default slides featuring Fable-curated luxury studio hero solutions.
-// V3 (editorial-left) is Fable's Rank #1 Winner: Zero-Cutout studio outpaint with left-aligned white logo.
-// V1 (trio-center) is Fable's Rank #2: Signature Multi-Ref Trio with 85mm pulled-back safe zones.
-// V2 (top-clean) is Fable's Rank #3: Standing Chevron Trio with Frequency Separation & top logo headroom.
+// V1 (Grand Trio) synthesizes all techniques in 4K Retina: 3 models in front/seated/back views,
+// luminous warm sand cyclorama, safe zones, floor reflections, and 100% RAW 2625px texture.
 const FACE_SAFE = "50% 35%";
 
 export const defaultSlides: SlideData[] = [
     {
         id: "default-1",
+        name: "V1 · Grand Trio (Retina 8K)",
+        type: "single",
+        layout: "trio-center",
+        image1: "/Slides/hero-v1-desktop.webp",
+        mobileImage: "/Slides/hero-v1-mobile.webp",
+        image1Pos: "50% 50%",
+    },
+    {
+        id: "default-2",
         name: "V3 · Editorial Lookbook",
         type: "single",
         layout: "editorial-left",
@@ -40,17 +53,8 @@ export const defaultSlides: SlideData[] = [
         image1Pos: "50% 50%",
     },
     {
-        id: "default-2",
-        name: "V1 · Signature Trio",
-        type: "single",
-        layout: "trio-center",
-        image1: "/Slides/hero-v1-desktop.webp",
-        mobileImage: "/Slides/hero-v1-mobile.webp",
-        image1Pos: "50% 50%",
-    },
-    {
         id: "default-3",
-        name: "V2 · Studio Standing",
+        name: "V2 · Studio Standing Duo",
         type: "single",
         layout: "top-clean",
         image1: "/Slides/hero-v2-desktop.webp",
@@ -109,11 +113,11 @@ export default function HeroSlider({
             }
             const heroVal = (params.get("hero") || "").toLowerCase();
             if (heroVal === "v1" || heroVal === "1") {
+                setActiveSlide(0);
+            } else if (heroVal === "v3" || heroVal === "3") {
                 setActiveSlide(1);
             } else if (heroVal === "v2" || heroVal === "2") {
                 setActiveSlide(2);
-            } else if (heroVal === "v3" || heroVal === "3" || heroVal === "0") {
-                setActiveSlide(0);
             }
             const slideParam = params.get("slide");
             if (slideParam !== null) {
@@ -138,7 +142,7 @@ export default function HeroSlider({
         setActiveSlide(index);
         if (typeof window !== "undefined" && window.history?.replaceState) {
             const url = new URL(window.location.href);
-            const variantMap: Record<number, string> = { 0: "v3", 1: "v1", 2: "v2" };
+            const variantMap: Record<number, string> = { 0: "v1", 1: "v3", 2: "v2" };
             if (variantMap[index]) {
                 url.searchParams.set("hero", variantMap[index]);
             } else {
@@ -189,23 +193,9 @@ export default function HeroSlider({
                     >
                         {(() => {
                             const items = getSlideItems(slide);
-                            // Dynamic `sizes`:
-                            // - desktop triptych → each item takes ~33vw (single → 100vw)
-                            // - MOBILE → 200vw, deliberately over-stated.
-                            //
-                            // Why 200vw on mobile: below 768px the CSS shows ONLY the
-                            // middle item, FULL-SCREEN, object-fit:cover in a PORTRAIT
-                            // box. A cover-crop is height-bound, but `sizes` only
-                            // describes width — so 100vw made the browser fetch the
-                            // 1200w variant (e.g. 1200×675 for a landscape slide) and
-                            // then CSS stretched its 675px height across a ~2532px-tall
-                            // DPR3 screen = ~3.7× upscale = the mush the owner reported.
-                            // 200vw forces the browser to pick the LARGEST available
-                            // variant (master / 2400w), i.e. maximum available
-                            // resolution on phones. (A truly portrait hero source then
-                            // renders pixel-perfect; a landscape source is still the
-                            // best it can be — see note for the owner: upload portrait
-                            // hero photos for flawless mobile.)
+                            const isHeroSingle = slide.type === "single";
+                            const avifSrcset = isHeroSingle ? buildHeroAvifSrcset : buildAvifSrcset;
+                            const webpSrcset = isHeroSingle ? buildHeroWebpSrcset : buildWebpSrcset;
                             const desktopFrac = Math.floor(100 / items.length);
                             const sizesAttr = `(max-width: 768px) 200vw, ${desktopFrac}vw`;
                             return (
@@ -230,13 +220,17 @@ export default function HeroSlider({
                                                     <>
                                                         <source
                                                             media="(max-width: 768px)"
-                                                            srcSet={buildAvifSrcset(item.mobileImg)}
+                                                            srcSet={buildHeroAvifSrcset(
+                                                                item.mobileImg,
+                                                            )}
                                                             sizes="100vw"
                                                             type="image/avif"
                                                         />
                                                         <source
                                                             media="(max-width: 768px)"
-                                                            srcSet={buildWebpSrcset(item.mobileImg)}
+                                                            srcSet={buildHeroWebpSrcset(
+                                                                item.mobileImg,
+                                                            )}
                                                             sizes="100vw"
                                                             type="image/webp"
                                                         />
@@ -245,7 +239,7 @@ export default function HeroSlider({
                                                 {/* Batch 40 atom 6: AVIF first
                                                     for -25/-30% mobile payload. */}
                                                 <source
-                                                    srcSet={buildAvifSrcset(item.img)}
+                                                    srcSet={avifSrcset(item.img)}
                                                     sizes={
                                                         item.mobileImg
                                                             ? `${desktopFrac}vw`
@@ -254,7 +248,7 @@ export default function HeroSlider({
                                                     type="image/avif"
                                                 />
                                                 <source
-                                                    srcSet={buildWebpSrcset(item.img)}
+                                                    srcSet={webpSrcset(item.img)}
                                                     sizes={
                                                         item.mobileImg
                                                             ? `${desktopFrac}vw`
@@ -378,8 +372,10 @@ export default function HeroSlider({
                             aria-pressed={activeSlide === 0}
                             onClick={() => goToSlide(0)}
                         >
-                            <span className="hero-compare-pill__rank">#1</span>
-                            <span className="hero-compare-pill__name">V3 · Editorial</span>
+                            <span className="hero-compare-pill__rank">★</span>
+                            <span className="hero-compare-pill__name">
+                                V1 · Grand Trio (Retina 8K)
+                            </span>
                         </button>
                         <button
                             type="button"
@@ -388,7 +384,7 @@ export default function HeroSlider({
                             onClick={() => goToSlide(1)}
                         >
                             <span className="hero-compare-pill__rank">#2</span>
-                            <span className="hero-compare-pill__name">V1 · Signature Trio</span>
+                            <span className="hero-compare-pill__name">V3 · Editorial Left</span>
                         </button>
                         <button
                             type="button"
@@ -397,7 +393,7 @@ export default function HeroSlider({
                             onClick={() => goToSlide(2)}
                         >
                             <span className="hero-compare-pill__rank">#3</span>
-                            <span className="hero-compare-pill__name">V2 · Standing Trio</span>
+                            <span className="hero-compare-pill__name">V2 · Standing Duo</span>
                         </button>
                     </div>
                 </div>

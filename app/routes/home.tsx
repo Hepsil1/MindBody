@@ -12,7 +12,7 @@ import { cachedFetch } from "../utils/cache.server";
 import { collectFamilySwatches } from "../utils/shopProducts.server";
 import { readIgCache, checkImageVariantsExist } from "../services/instagram.server";
 import { IG_FALLBACK_CACHE } from "../data/ig-fallback";
-import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
+import { buildWebpSrcset, buildAvifSrcset, buildHeroAvifSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
 import { useI18n, getT, LLink, useMoney } from "../i18n";
@@ -154,6 +154,7 @@ export function meta({ data, params }: Route.MetaArgs) {
     // for. Single slides with a dedicated `mobileImage` preload that 9:19
     // portrait master at 100vw on mobile and the 16:9 canvas on desktop.
     const middleIdx = isTriptych ? 1 : 0;
+    const isSingleHero = !isTriptych;
     const mobilePreloadImg = firstSlide?.mobileImage || heroImgs[middleIdx];
     const mobileHeroPreload = mobilePreloadImg
         ? [
@@ -164,7 +165,9 @@ export function meta({ data, params }: Route.MetaArgs) {
                   type: "image/avif",
                   media: "(max-width: 768px)",
                   href: avif(mobilePreloadImg),
-                  imageSrcSet: buildAvifSrcset(mobilePreloadImg),
+                  imageSrcSet: isSingleHero
+                      ? buildHeroAvifSrcset(mobilePreloadImg)
+                      : buildAvifSrcset(mobilePreloadImg),
                   imageSizes: firstSlide?.mobileImage ? "100vw" : "200vw",
                   fetchPriority: "high" as const,
               },
@@ -177,7 +180,7 @@ export function meta({ data, params }: Route.MetaArgs) {
         type: "image/avif",
         media: "(min-width: 769px)",
         href: avif(img),
-        imageSrcSet: buildAvifSrcset(img),
+        imageSrcSet: isSingleHero ? buildHeroAvifSrcset(img) : buildAvifSrcset(img),
         imageSizes: isTriptych ? "33vw" : "100vw",
         ...(i === 0 ? { fetchPriority: "high" as const } : {}),
     }));
