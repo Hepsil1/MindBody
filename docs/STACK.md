@@ -76,11 +76,9 @@ curl https://mindbody-sportwear.com | Select-String "og:title|canonical|applicat
 1. Каталог вырос до 10k+ товаров и **LCP > 3 секунд** на PDP/категориях
    (тогда ISR Next.js даст ощутимый выигрыш — у нас же сейчас live SSR
    на каждый запрос и этого хватает).
-2. Решили хостить на Vercel и не хочется поддерживать собственный
-   Caddy/PM2 стек (но мы их уже знаем и контролируем).
-3. Команда выросла и нанимать React Router 7 разработчиков
+2. Команда выросла и нанимать React Router 7 разработчиков
    объективно сложнее, чем Next.js.
-4. **Конкретные claim'ы от Google Search Console**, что страницы не
+3. **Конкретные claim'ы от Google Search Console**, что страницы не
    индексируются — и расследование показало, что причина в нашем SSR,
    а не в чём-то ещё (robots, canonical, контенте).
 
@@ -100,7 +98,6 @@ curl https://mindbody-sportwear.com | Select-String "og:title|canonical|applicat
 | Code splitting                            | Vite делает автоматом                                      |
 | **`next/image`**                          | Реальная разница. Мы используем `sharp` вручную.           |
 | **ISR** (Incremental Static Regeneration) | Не критично пока ~50 товаров                               |
-| **Vercel auto-deploy**                    | Self-hosted VPS — осознанный выбор, больше контроля        |
 | **Большая экосистема, легче нанимать**    | Реальное, но не блокирующее                                |
 
 ## История
