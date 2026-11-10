@@ -2,8 +2,11 @@ import { useState, useEffect, type ReactNode } from "react";
 import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
 import { getLqipStyle } from "../utils/lqip";
 import { useI18n, LLink } from "../i18n";
+import "../styles/hero.css";
 
 // Define the Slide type that matches the database model
+export type HeroLayoutMode = "editorial-left" | "trio-center" | "top-clean";
+
 export interface SlideData {
     id: string;
     name: string;
@@ -17,24 +20,45 @@ export interface SlideData {
     image1Pos?: string;
     image2Pos?: string;
     image3Pos?: string;
+    layout?: HeroLayoutMode;
 }
 
-// Default slides for when database is empty.
-// imagePos defaults to "50% 35%" — face/upper-body safe crop for women's
-// fashion photography. Center crop would slice through the figure's torso.
+// Default slides featuring Fable-curated luxury studio hero solutions.
+// V3 (editorial-left) is Fable's Rank #1 Winner: Zero-Cutout studio outpaint with left-aligned white logo.
+// V1 (trio-center) is Fable's Rank #2: Signature Multi-Ref Trio with 85mm pulled-back safe zones.
+// V2 (top-clean) is Fable's Rank #3: Standing Chevron Trio with Frequency Separation & top logo headroom.
 const FACE_SAFE = "50% 35%";
 
 export const defaultSlides: SlideData[] = [
     {
         id: "default-1",
-        name: "MindBody Signature Trio",
+        name: "V3 · Editorial Lookbook",
         type: "single",
-        image1: "/Slides/hero-trio-desktop.webp",
-        mobileImage: "/Slides/hero-trio-mobile.webp",
+        layout: "editorial-left",
+        image1: "/Slides/hero-v3-desktop.webp",
+        mobileImage: "/Slides/hero-v3-mobile.webp",
         image1Pos: "50% 50%",
     },
     {
         id: "default-2",
+        name: "V1 · Signature Trio",
+        type: "single",
+        layout: "trio-center",
+        image1: "/Slides/hero-v1-desktop.webp",
+        mobileImage: "/Slides/hero-v1-mobile.webp",
+        image1Pos: "50% 50%",
+    },
+    {
+        id: "default-3",
+        name: "V2 · Studio Standing",
+        type: "single",
+        layout: "top-clean",
+        image1: "/Slides/hero-v2-desktop.webp",
+        mobileImage: "/Slides/hero-v2-mobile.webp",
+        image1Pos: "50% 50%",
+    },
+    {
+        id: "default-4",
         name: "Cocoa Collection",
         type: "triptych",
         image1: "/pics2cloths/IMG_4971.webp",
@@ -45,33 +69,11 @@ export const defaultSlides: SlideData[] = [
         image3Pos: FACE_SAFE,
     },
     {
-        id: "default-3",
-        name: "Black Collection",
-        type: "triptych",
-        image1: "/pics1cloths/IMG_6201.webp",
-        image2: "/pics1cloths/IMG_6203.webp",
-        image3: "/pics1cloths/IMG_6204.webp",
-        image1Pos: FACE_SAFE,
-        image2Pos: FACE_SAFE,
-        image3Pos: FACE_SAFE,
-    },
-    {
-        id: "default-4",
+        id: "default-5",
         name: "Teal Variants",
         type: "triptych",
         image1: "/generalpics/348_131123.webp",
         image2: "/generalpics/595_131123.webp",
-        image3: "/generalpics/602_131123.webp",
-        image1Pos: FACE_SAFE,
-        image2Pos: FACE_SAFE,
-        image3Pos: FACE_SAFE,
-    },
-    {
-        id: "default-5",
-        name: "Hero Banner",
-        type: "triptych",
-        image1: "/generalpics/585_131123.webp",
-        image2: "/generalpics/588_131123.webp",
         image3: "/generalpics/602_131123.webp",
         image1Pos: FACE_SAFE,
         image2Pos: FACE_SAFE,
@@ -95,19 +97,61 @@ export default function HeroSlider({
     const { t } = useI18n();
     const slides = propSlides && propSlides.length > 0 ? propSlides : defaultSlides;
     const [activeSlide, setActiveSlide] = useState(0);
+    const [isCompareMode, setIsCompareMode] = useState(false);
 
     useEffect(() => {
-        if (!autoPlay) return;
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const hasHeroParam = params.has("hero") || params.has("compare");
+            const isDev = Boolean(import.meta.env.DEV);
+            if (hasHeroParam || isDev) {
+                setIsCompareMode(true);
+            }
+            const heroVal = (params.get("hero") || "").toLowerCase();
+            if (heroVal === "v1" || heroVal === "1") {
+                setActiveSlide(1);
+            } else if (heroVal === "v2" || heroVal === "2") {
+                setActiveSlide(2);
+            } else if (heroVal === "v3" || heroVal === "3" || heroVal === "0") {
+                setActiveSlide(0);
+            }
+            const slideParam = params.get("slide");
+            if (slideParam !== null) {
+                const idx = parseInt(slideParam, 10);
+                if (!isNaN(idx) && idx >= 0 && idx < slides.length) {
+                    setActiveSlide(idx);
+                }
+            }
+        }
+    }, [slides.length]);
+
+    useEffect(() => {
+        if (!autoPlay || isCompareMode) return;
 
         const slideInterval = setInterval(() => {
             setActiveSlide((prev) => (prev + 1) % slides.length);
-        }, 5000);
+        }, interval);
         return () => clearInterval(slideInterval);
-    }, [slides.length]);
+    }, [autoPlay, isCompareMode, interval, slides.length]);
 
     const goToSlide = (index: number) => {
         setActiveSlide(index);
+        if (typeof window !== "undefined" && window.history?.replaceState) {
+            const url = new URL(window.location.href);
+            const variantMap: Record<number, string> = { 0: "v3", 1: "v1", 2: "v2" };
+            if (variantMap[index]) {
+                url.searchParams.set("hero", variantMap[index]);
+            } else {
+                url.searchParams.set("slide", String(index));
+            }
+            window.history.replaceState({}, "", url.toString());
+        }
     };
+
+    const currentSlide = slides[activeSlide] ?? slides[0];
+    const activeLayout: HeroLayoutMode =
+        currentSlide?.layout ||
+        (currentSlide?.type === "single" ? "editorial-left" : "trio-center");
 
     // Convert slide data to images array with positions
     const getSlideItems = (
@@ -130,7 +174,11 @@ export default function HeroSlider({
     };
 
     return (
-        <section className="hero-slider" id="hero" aria-label={t("Вітрина бренду MIND BODY")}>
+        <section
+            className={`hero-slider hero-slider--${activeLayout}`}
+            id="hero"
+            aria-label={t("Вітрина бренду MIND BODY")}
+        >
             {/* Slides Container */}
             <div className="hero-slider__slides">
                 {slides.map((slide, index) => (
@@ -314,6 +362,46 @@ export default function HeroSlider({
                     </div>
                 )}
             </div>
+
+            {/* Fable Comparison Switcher (dev mode or ?hero=compare) */}
+            {isCompareMode && (
+                <div
+                    className="hero-compare-bar"
+                    role="toolbar"
+                    aria-label={t("Fable Studio Hero Comparison")}
+                >
+                    <span className="hero-compare-bar__badge">Fable Studio Lab</span>
+                    <div className="hero-compare-bar__pills">
+                        <button
+                            type="button"
+                            className={`hero-compare-pill ${activeSlide === 0 ? "is-active" : ""}`}
+                            aria-pressed={activeSlide === 0}
+                            onClick={() => goToSlide(0)}
+                        >
+                            <span className="hero-compare-pill__rank">#1</span>
+                            <span className="hero-compare-pill__name">V3 · Editorial</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`hero-compare-pill ${activeSlide === 1 ? "is-active" : ""}`}
+                            aria-pressed={activeSlide === 1}
+                            onClick={() => goToSlide(1)}
+                        >
+                            <span className="hero-compare-pill__rank">#2</span>
+                            <span className="hero-compare-pill__name">V1 · Signature Trio</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`hero-compare-pill ${activeSlide === 2 ? "is-active" : ""}`}
+                            aria-pressed={activeSlide === 2}
+                            onClick={() => goToSlide(2)}
+                        >
+                            <span className="hero-compare-pill__rank">#3</span>
+                            <span className="hero-compare-pill__name">V2 · Standing Trio</span>
+                        </button>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }

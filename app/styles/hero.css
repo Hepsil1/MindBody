@@ -407,3 +407,184 @@
         display: none;
     }
 }
+
+/* ==========================================================================
+   FABLE STUDIO HERO LAYOUT MODES & COMPARISON BAR
+   ========================================================================== */
+
+/* === Layout 1: Editorial Left (Fable Rank #1 Winner — V3) ===
+   Exploits the pure negative space on the mocha-clay cyclorama wall (x: 8%..40%)
+   with 0% model overlap and WCAG AAA contrast (8.0:1). */
+@media (min-width: 769px) {
+    .hero-slider--editorial-left .hero-slider__content {
+        align-items: flex-start;
+        padding-left: clamp(48px, 9vw, 150px);
+        padding-right: clamp(48px, 9vw, 150px);
+    }
+
+    .hero-slider--editorial-left .hero-slider__logo-container {
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .hero-slider--editorial-left .hero-slider__brand-block {
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .hero-slider--editorial-left .hero-slider__logo img {
+        width: clamp(210px, 18vw, 290px);
+        max-width: 290px;
+    }
+
+    .hero-slider--editorial-left .hero-slider__footer-cta {
+        align-items: flex-start;
+        padding-bottom: clamp(60px, 12vh, 120px);
+    }
+
+    .hero-slider--editorial-left .hero-slider__cta {
+        justify-content: flex-start;
+    }
+}
+
+/* === Layout 2: Trio Center (Fable Rank #2 — V1) ===
+   Compact centered logo at y = 14.5%..38.5% with >=24px headroom above
+   the seated teal model and 0% boot clipping across ultrawide monitors. */
+.hero-slider--trio-center .hero-slider__logo-container {
+    align-items: flex-start;
+    padding-top: clamp(40px, 7vh, 85px);
+}
+
+.hero-slider--trio-center .hero-slider__logo img {
+    width: clamp(180px, 15vw, 225px);
+    max-width: 225px;
+}
+
+/* === Layout 3: Top Clean (Fable Rank #3 — V2) ===
+   Standing trio has tall silhouettes (y = 23%..80%).
+   Logo sits cleanly in the top cyclorama falloff zone (y = 9%..22%). */
+.hero-slider--top-clean .hero-slider__logo-container {
+    align-items: flex-start;
+    padding-top: clamp(28px, 5vh, 65px);
+}
+
+.hero-slider--top-clean .hero-slider__logo img {
+    width: clamp(190px, 16vw, 240px);
+    max-width: 240px;
+}
+
+/* === Fable Comparison Switcher (Dev Mode / ?hero=compare) === */
+.hero-compare-bar {
+    position: absolute;
+    top: calc(38px + var(--header-height, 80px) + 14px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(18, 20, 24, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 9999px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    pointer-events: auto;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -10px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.hero-compare-bar__badge {
+    font-size: 0.64rem;
+    font-family: var(--font-display, "Jost", sans-serif);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #dfb76c;
+    padding: 4px 8px;
+    background: rgba(223, 183, 108, 0.14);
+    border: 1px solid rgba(223, 183, 108, 0.3);
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+.hero-compare-bar__pills {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.hero-compare-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.72rem;
+    font-family: var(--font-display, "Jost", sans-serif);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.hero-compare-pill:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.hero-compare-pill.is-active {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.4);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.hero-compare-pill__rank {
+    font-weight: 700;
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.hero-compare-pill.is-active .hero-compare-pill__rank {
+    background: #dfb76c;
+    color: #1a1a1a;
+}
+
+@media (max-width: 768px) {
+    .hero-compare-bar {
+        top: calc(var(--header-height, 60px) + 8px);
+        max-width: 96vw;
+        padding: 4px 6px;
+        gap: 4px;
+    }
+
+    .hero-compare-bar__badge {
+        display: none;
+    }
+
+    .hero-compare-pill {
+        padding: 5px 8px;
+        font-size: 0.66rem;
+        gap: 4px;
+    }
+}
