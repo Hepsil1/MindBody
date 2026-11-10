@@ -42,9 +42,11 @@ export interface IgCache {
     }[];
 }
 
-// Hot in-process copy. Survives between requests; refreshed by the writer.
+// Hot in-process copy with TTL so disk changes take effect without server restart.
 let _mem: IgCache | null = null;
 let _loaded = false;
+let _lastReadTime = 0;
+const CACHE_TTL_MS = 30_000; // 30 seconds
 
 // Surfaced via the manual refresh route so the owner can tell "cookie expired".
 let _sessionLikelyExpired = false;
@@ -78,16 +80,18 @@ export function checkImageVariantsExist(url?: string): boolean {
     }
 }
 
-/** Pure file read. Returns null until the first successful scrape has run. */
+/** Pure file read with 30s cache TTL. Returns null until the first successful scrape has run. */
 export async function readIgCache(): Promise<IgCache | null> {
-    if (_loaded) return _mem;
+    const now = Date.now();
+    if (_loaded && now - _lastReadTime < CACHE_TTL_MS) return _mem;
     try {
         const raw = await fs.readFile(CACHE_FILE, "utf8");
         const parsed = JSON.parse(raw) as IgCache;
         _mem = parsed.ok ? parsed : null; // never trust a non-ok cache
     } catch {
-        _mem = null; // no file yet / unreadable → caller uses hardcoded fallback
+        if (!_mem) _mem = null; // no file yet / unreadable → caller uses hardcoded fallback
     }
+    _lastReadTime = now;
     _loaded = true;
     return _mem;
 }

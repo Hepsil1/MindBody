@@ -9,7 +9,7 @@ export const IG_FALLBACK_CACHE: IgCache = {
         "Комбінезон твоєї мрії✨\nНайбільший вибір,найкраща якість\nCASUAL @fluid_feel_free\nYOGAMAT @mindbody_yogamat\nKIDS @mindbody_kidswear\nShipping🌎Made in🇺🇦",
     externalUrl: "https://t.me/mindbody_sportwear",
     profilePictureUrl: "/instagram/avatar_61f29b4b.webp",
-    postsCount: 2355,
+    postsCount: 2359,
     followersCount: 70702,
     followingCount: 1315,
     highlights: [

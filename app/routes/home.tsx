@@ -637,7 +637,7 @@ export default function Home() {
     const postsToRender = instagramData?.posts?.length
         ? instagramData.posts
         : FALLBACK_INSTAGRAM_POSTS;
-    const igPostsCount = instagramData?.postsCountDisplay ?? "2 355";
+    const igPostsCount = instagramData?.postsCountDisplay ?? "2 359";
     const igFollowing = instagramData?.followingCountDisplay ?? "1 315";
     const igHighlights = instagramData?.highlights ?? [];
     const igBio = instagramData?.biography || "";
