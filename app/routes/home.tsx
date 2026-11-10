@@ -1,7 +1,7 @@
 import type { Route } from "./+types/home";
 import { useLoaderData } from "react-router";
 import { useEffect, useState, useRef, useCallback, Fragment } from "react";
-import HeroSlider, { type SlideData } from "../components/HeroSlider";
+import HeroSlider, { defaultSlides, type SlideData } from "../components/HeroSlider";
 import CategoryCard from "../components/CategoryCard";
 import { EditorAffordance } from "../components/EditorAffordance";
 import { useSiteSettings, type SiteSettings } from "../utils/site-settings";
@@ -140,7 +140,7 @@ export function meta({ data, params }: Route.MetaArgs) {
     // defaults). The <picture> in HeroSlider lists AVIF first, so AVIF is
     // what the browser will actually request — preloading WebP was a
     // guaranteed cache miss. `type` lets non-AVIF browsers skip the hint.
-    const firstSlide = data?.slides?.[0];
+    const firstSlide = data?.slides?.[0] ?? defaultSlides[0];
     const heroImgs = firstSlide
         ? [firstSlide.image1, firstSlide.image2, firstSlide.image3].filter(
               (x): x is string => typeof x === "string" && x.length > 0,
@@ -151,13 +151,11 @@ export function meta({ data, params }: Route.MetaArgs) {
 
     // Viewport-split preload — the mobile and desktop heroes show DIFFERENT
     // images, so a single preload set wastes bytes on whichever it's wrong
-    // for. Below 768px the CSS shows ONLY the middle triptych item, full-
-    // screen; above, all three at ~33vw each. `media` makes each browser act
-    // on just its set. Mobile preloads the one visible image at 200vw (max
-    // resolution, matching HeroSlider's mobile `sizes`); desktop preloads all
-    // three at their triptych fraction.
+    // for. Single slides with a dedicated `mobileImage` preload that 9:19
+    // portrait master at 100vw on mobile and the 16:9 canvas on desktop.
     const middleIdx = isTriptych ? 1 : 0;
-    const mobileHeroPreload = heroImgs[middleIdx]
+    const mobilePreloadImg = firstSlide?.mobileImage || heroImgs[middleIdx];
+    const mobileHeroPreload = mobilePreloadImg
         ? [
               {
                   tagName: "link" as const,
@@ -165,9 +163,9 @@ export function meta({ data, params }: Route.MetaArgs) {
                   as: "image" as const,
                   type: "image/avif",
                   media: "(max-width: 768px)",
-                  href: avif(heroImgs[middleIdx]),
-                  imageSrcSet: buildAvifSrcset(heroImgs[middleIdx]),
-                  imageSizes: "200vw",
+                  href: avif(mobilePreloadImg),
+                  imageSrcSet: buildAvifSrcset(mobilePreloadImg),
+                  imageSizes: firstSlide?.mobileImage ? "100vw" : "200vw",
                   fetchPriority: "high" as const,
               },
           ]

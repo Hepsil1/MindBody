@@ -10,6 +10,7 @@ export interface SlideData {
     type: "triptych" | "single";
     link?: string | null;
     image1: string;
+    mobileImage?: string | null;
     image2?: string | null;
     image3?: string | null;
     // Optional object-position overrides per image (e.g. "50% 30%")
@@ -23,17 +24,14 @@ export interface SlideData {
 // fashion photography. Center crop would slice through the figure's torso.
 const FACE_SAFE = "50% 35%";
 
-const defaultSlides: SlideData[] = [
+export const defaultSlides: SlideData[] = [
     {
         id: "default-1",
-        name: "Teal Collection",
-        type: "triptych",
-        image1: "/generalpics/333_131123.webp",
-        image2: "/generalpics/374_131123.webp",
-        image3: "/generalpics/338_131123.webp",
-        image1Pos: FACE_SAFE,
-        image2Pos: FACE_SAFE,
-        image3Pos: FACE_SAFE,
+        name: "MindBody Signature Trio",
+        type: "single",
+        image1: "/Slides/hero-trio-desktop.webp",
+        mobileImage: "/Slides/hero-trio-mobile.webp",
+        image1Pos: "50% 50%",
     },
     {
         id: "default-2",
@@ -112,9 +110,17 @@ export default function HeroSlider({
     };
 
     // Convert slide data to images array with positions
-    const getSlideItems = (slide: SlideData) => {
+    const getSlideItems = (
+        slide: SlideData,
+    ): Array<{ img: string; mobileImg?: string; pos: string }> => {
         if (slide.type === "single") {
-            return [{ img: slide.image1, pos: slide.image1Pos || "center center" }];
+            return [
+                {
+                    img: slide.image1,
+                    mobileImg: slide.mobileImage || undefined,
+                    pos: slide.image1Pos || "center center",
+                },
+            ];
         }
         return [
             { img: slide.image1, pos: slide.image1Pos || "center center" },
@@ -172,16 +178,40 @@ export default function HeroSlider({
                                                 the image decodes. 1080x1920 is the typical mobile-portrait
                                                 ratio of our hero uploads. */}
                                             <picture>
+                                                {item.mobileImg && (
+                                                    <>
+                                                        <source
+                                                            media="(max-width: 768px)"
+                                                            srcSet={buildAvifSrcset(item.mobileImg)}
+                                                            sizes="100vw"
+                                                            type="image/avif"
+                                                        />
+                                                        <source
+                                                            media="(max-width: 768px)"
+                                                            srcSet={buildWebpSrcset(item.mobileImg)}
+                                                            sizes="100vw"
+                                                            type="image/webp"
+                                                        />
+                                                    </>
+                                                )}
                                                 {/* Batch 40 atom 6: AVIF first
                                                     for -25/-30% mobile payload. */}
                                                 <source
                                                     srcSet={buildAvifSrcset(item.img)}
-                                                    sizes={sizesAttr}
+                                                    sizes={
+                                                        item.mobileImg
+                                                            ? `${desktopFrac}vw`
+                                                            : sizesAttr
+                                                    }
                                                     type="image/avif"
                                                 />
                                                 <source
                                                     srcSet={buildWebpSrcset(item.img)}
-                                                    sizes={sizesAttr}
+                                                    sizes={
+                                                        item.mobileImg
+                                                            ? `${desktopFrac}vw`
+                                                            : sizesAttr
+                                                    }
                                                     type="image/webp"
                                                 />
                                                 <img

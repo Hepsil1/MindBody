@@ -65,6 +65,7 @@ const TARGET_DIRS = [
     "pics1cloths",
     "pics2cloths",
     "generalpics",
+    "Slides",
     "uploads",
     "lifestyle",
     "brand",

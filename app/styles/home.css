@@ -1332,9 +1332,23 @@
 .hero-slider__slide.is-active .hero-slider__triptych-item img {
     animation: triptychZoom 20s ease-out forwards;
 }
+.hero-slider__slide.is-active .hero-slider__triptych-item:only-child img {
+    animation: singleHeroBreath 20s ease-out forwards;
+}
 .hero-slider__slide.is-active .hero-slider__triptych-item:nth-child(2) img {
     animation-duration: 25s;
     animation-direction: alternate;
+}
+.hero-slider__triptych-item:only-child::after {
+    display: none;
+}
+@keyframes singleHeroBreath {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.025);
+    }
 }
 .hero-slider__triptych-item::after {
     content: "";
