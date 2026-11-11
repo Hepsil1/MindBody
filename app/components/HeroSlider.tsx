@@ -198,7 +198,15 @@ interface HeroSliderProps {
     children?: ReactNode;
 }
 
-export default function HeroSlider({
+import IssueCoverHero, {
+    MAGAZINE_ISSUES,
+    type IssueData,
+    type IssueCoverHeroProps,
+} from "./IssueCoverHero";
+
+export { IssueCoverHero, MAGAZINE_ISSUES, type IssueData, type IssueCoverHeroProps };
+
+export function TwoColumnHero({
     slides: propSlides,
     autoPlay = true,
     interval = 8000,
@@ -527,3 +535,5 @@ export default function HeroSlider({
         </section>
     );
 }
+
+export default IssueCoverHero;

@@ -1,0 +1,578 @@
+/* =========================================================================
+   MIND BODY · ISSUE COVER HERO (High-Fashion Collector's Magazine Standard)
+   100vw × 100svh Full-Screen Stage · Physical Diagonal Page Peel
+   Zero Masks · Grounded Reflection Floor · Authentic 4284×5712 Studio Masters
+   ========================================================================= */
+
+.issue-hero {
+    --bg: #b2acb5;
+    --ink: #16111a;
+    --accent: #e2d9e2;
+    --next-bg: #dfdade;
+    --next-ink: #20141e;
+
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    min-height: 640px;
+    max-height: 1200px;
+    background-color: var(--bg);
+    color: var(--ink);
+    overflow: hidden;
+    user-select: none;
+    transition: background-color 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* =========================================================================
+   DUAL LAYER STACK: UNDERLAY & OVERLAY WITH DIAGONAL PEEL
+   ========================================================================= */
+
+.issue-underlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    overflow: hidden;
+}
+
+.issue-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 20;
+    overflow: hidden;
+    will-change: clip-path;
+    filter: drop-shadow(-12px -12px 32px rgba(0, 0, 0, 0.22));
+    transition: clip-path 0.15s ease-out;
+}
+
+.issue-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Visual Image Layer */
+.cover-picture,
+.issue-picture {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 20%;
+    display: block;
+    transform: translateZ(0);
+    user-select: none;
+    -webkit-user-drag: none;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* On Widescreen / Ultrawide Monitors: Contain full model so heads & boots are 100% visible */
+@media (min-aspect-ratio: 16/10) {
+    .cover-picture,
+    .issue-picture {
+        padding-top: 60px;
+    }
+
+    .cover-img {
+        object-fit: contain;
+        object-position: 50% 100%;
+    }
+}
+
+/* =========================================================================
+   HIGH-FASHION EDITORIAL TYPOGRAPHY GRID
+   ========================================================================= */
+
+.issue-editorial-grid {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(86px, 11vh, 108px) clamp(24px, 4vw, 56px) clamp(32px, 5vh, 48px);
+    pointer-events: none;
+}
+
+.issue-editorial-grid * {
+    pointer-events: auto;
+}
+
+/* Masthead / Top Bar */
+.issue-masthead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.issue-masthead__left {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 6px 16px;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.issue-masthead__edition {
+    font-family: "Onest", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink);
+}
+
+.issue-masthead__bullet {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--ink);
+    opacity: 0.4;
+}
+
+.issue-masthead__season {
+    font-family: "Onest", sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+    opacity: 0.75;
+}
+
+.issue-masthead__controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.issue-ctrl-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease;
+}
+
+.issue-ctrl-btn:hover {
+    transform: scale(1.06);
+    background: color-mix(in srgb, var(--bg) 95%, transparent);
+}
+
+.issue-ctrl-btn--active {
+    background: var(--ink);
+    color: var(--bg);
+}
+
+/* Midground Badges */
+.issue-midground {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-top: 12px;
+}
+
+.issue-badges-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+}
+
+.issue-badge-pill {
+    font-family: "Onest", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: color-mix(in srgb, var(--bg) 75%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 4px 10px;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+/* Bottom Editorial Row */
+.issue-bottom-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+    width: 100%;
+}
+
+.issue-title-block {
+    max-width: clamp(400px, 36vw, 560px);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: clamp(24px, 3vh, 36px) clamp(24px, 2.8vw, 40px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow:
+        0 24px 48px -12px rgba(0, 0, 0, 0.14),
+        0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.issue-number-badge {
+    font-family: "Spectral", Georgia, serif;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink);
+    opacity: 0.7;
+    margin-bottom: 6px;
+}
+
+.issue-headline {
+    font-family: "Spectral", Georgia, serif;
+    font-size: clamp(32px, 3.4vw, 52px);
+    font-weight: 300;
+    letter-spacing: -0.015em;
+    line-height: 1.04;
+    color: var(--ink);
+    margin: 0 0 6px 0;
+}
+
+.issue-subheadline {
+    font-family: "Onest", sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: color-mix(in srgb, var(--ink) 85%, transparent);
+    margin: 0 0 12px 0;
+}
+
+.issue-desc {
+    font-family: "Onest", sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: color-mix(in srgb, var(--ink) 75%, transparent);
+    margin: 0 0 20px 0;
+}
+
+/* Turn Switch */
+.issue-turn-switch {
+    display: inline-flex;
+    align-items: center;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    padding: 3px;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    margin-bottom: 18px;
+}
+
+.issue-turn-btn {
+    padding: 6px 14px;
+    border-radius: 9999px;
+    border: none;
+    background: transparent;
+    font-family: "Onest", sans-serif;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+    cursor: pointer;
+    transition:
+        background 0.25s ease,
+        color 0.25s ease;
+}
+
+.issue-turn-btn--active {
+    background: var(--ink);
+    color: var(--bg);
+}
+
+/* Actions: CTA & Price */
+.issue-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 14px;
+    border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.issue-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    border-radius: 9999px;
+    background: var(--ink);
+    color: var(--bg);
+    text-decoration: none;
+    font-family: "Onest", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.issue-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.28);
+}
+
+.issue-price-tag {
+    font-weight: 400;
+    opacity: 0.8;
+    font-size: 12px;
+}
+
+.issue-arrow {
+    font-size: 15px;
+    transition: transform 0.2s ease;
+}
+
+.issue-cta-btn:hover .issue-arrow {
+    transform: translateX(4px);
+}
+
+/* Issue Navigation Bar (Desktop) - Centered along bottom */
+.issue-nav {
+    position: absolute;
+    bottom: clamp(24px, 4vh, 44px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 45;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 5px 12px;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.issue-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: "Onest", sans-serif;
+    color: var(--ink);
+    transition:
+        background 0.2s ease,
+        transform 0.15s ease;
+}
+
+.issue-nav-item:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.issue-nav-num {
+    font-family: "Spectral", Georgia, serif;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.issue-nav-title {
+    font-size: 11.5px;
+    font-weight: 500;
+    opacity: 0.7;
+}
+
+.issue-nav-item--active {
+    background: var(--ink);
+    color: var(--bg);
+}
+
+.issue-nav-item--active .issue-nav-title {
+    opacity: 1;
+}
+
+/* =========================================================================
+   PHYSICAL INTERACTIVE PEEL CORNER (BOTTOM RIGHT)
+   ========================================================================= */
+
+.issue-peel-corner {
+    position: absolute;
+    bottom: clamp(24px, 4vh, 44px);
+    right: clamp(24px, 4vw, 56px);
+    z-index: 50;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+    box-shadow:
+        0 14px 28px -6px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition:
+        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.25s ease;
+}
+
+.issue-peel-corner:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow:
+        0 18px 36px -8px rgba(0, 0, 0, 0.24),
+        0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.issue-peel-curl {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px 2px 8px 2px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(0, 0, 0, 0.2) 100%);
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    transform: rotate(45deg);
+    animation: cornerPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes cornerPulse {
+    0%,
+    100% {
+        transform: rotate(45deg) scale(1);
+    }
+    50% {
+        transform: rotate(45deg) scale(1.25);
+    }
+}
+
+.issue-peel-label {
+    font-family: "Onest", sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+}
+
+/* =========================================================================
+   MOBILE ADAPTATION (IPHONE 390×844)
+   ========================================================================= */
+
+@media (max-width: 900px) {
+    .issue-hero {
+        height: 100svh;
+        min-height: 580px;
+    }
+
+    .issue-masthead {
+        display: none !important;
+    }
+
+    .issue-nav {
+        display: none !important;
+    }
+
+    .issue-editorial-grid {
+        justify-content: flex-end !important;
+        padding: 72px 18px calc(16px + env(safe-area-inset-bottom, 16px)) 18px;
+    }
+
+    .issue-midground {
+        display: none;
+    }
+
+    .cover-img {
+        object-position: 50% 12% !important;
+    }
+
+    .issue-bottom-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .issue-title-block {
+        max-width: 100%;
+        padding: 18px 18px;
+        border-radius: 20px;
+    }
+
+    .issue-headline {
+        font-size: 26px;
+    }
+
+    .issue-subheadline {
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+
+    .issue-actions .issue-cta-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 11px 18px;
+    }
+
+    .issue-peel-corner {
+        bottom: calc(16px + env(safe-area-inset-bottom, 16px));
+        right: 18px;
+        padding: 8px 14px;
+        font-size: 10px;
+    }
+
+    .issue-peel-label {
+        font-size: 10px;
+    }
+}
+
+/* =========================================================================
+   ACCESSIBILITY: PREFERS REDUCED MOTION
+   ========================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .issue-hero,
+    .issue-overlay,
+    .cover-img,
+    .issue-title-block,
+    .issue-peel-curl {
+        transition: none !important;
+        animation: none !important;
+    }
+}
