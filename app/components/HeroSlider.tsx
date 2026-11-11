@@ -3,7 +3,7 @@ import { useI18n, LLink } from "../i18n";
 import { getLqipStyle } from "../utils/lqip";
 import "../styles/hero.css";
 
-export type FableLayoutMode = "solo" | "duo" | "trio" | "macro" | "single" | "triptych";
+export type FableLayoutMode = "solo" | "duo" | "single" | "macro";
 
 export interface FrameItem {
     src: string;
@@ -14,24 +14,25 @@ export interface FrameItem {
 
 export interface SlideData {
     id: string;
-    label?: string;
-    name?: string;
-    tag?: string;
-    title?: string;
-    desc?: string;
-    layout?: FableLayoutMode;
-    type?: string;
-    bg?: string;
-    ink?: string;
-    word?: string;
-    link?: string | null;
-    frames?: FrameItem[];
+    label: string;
+    tag: string;
+    title: string;
+    desc: string;
+    cta: string;
+    layout: FableLayoutMode;
+    bg: string;
+    ink: string;
+    link: string;
+    frames: FrameItem[];
     turnFrames?: {
-        back: FrameItem;
         front: FrameItem;
+        back: FrameItem;
     };
     mobileImage?: string;
     // Backward-compatibility properties
+    name?: string;
+    type?: string;
+    word?: string;
     image1?: string;
     image2?: string | null;
     image3?: string | null;
@@ -41,155 +42,135 @@ export interface SlideData {
     images?: Array<{ src: string; pos?: string; alt: string }>;
 }
 
-export type FableSlide = SlideData;
-
 export const defaultSlides: SlideData[] = [
     {
         id: "s1",
-        label: "Plum Laced Back",
-        name: "S1 · Sculpted Open Back (1 модель)",
+        label: "Sculpted Plum",
         tag: "SIGNATURE PIECE · 01 / 05",
-        title: "SCULPTED OPEN BACK",
-        desc: "Культовий комбінезон зі скульптурною шнуровкою на спині та фірмовою вишивкою-мандалою на рукаві.",
+        title: "Sculpted Open Back",
+        desc: "Культовий комбінезон із преміального компресійного трикотажу: фірмова вишивка-мандала на рукаві та скульптурна анатомічна шнуровка спини.",
+        cta: "Переглянути колекцію",
         layout: "solo",
-        bg: "#DDD9DB",
-        ink: "#261622",
-        word: "SCULPT",
+        bg: "#DFDADE",
+        ink: "#20141E",
         link: "/shop/casual",
         frames: [
             {
-                src: "fable-s1-plum-back",
-                alt: "MIND BODY — Сливовий комбінезон зі шнуровкою на спині",
-                focus: "50% 25%",
-                view: "back",
+                src: "fable-s1-front",
+                alt: "MIND BODY — Сливовий комбінезон, фронтальний погляд з вишивкою-мандалою",
+                focus: "50% 20%",
+                view: "front",
             },
         ],
         turnFrames: {
-            back: {
-                src: "fable-s1-plum-back",
-                alt: "MIND BODY — Сливовий комбінезон, спина зі шнуровкою",
-                focus: "50% 25%",
-                view: "back",
-            },
             front: {
-                src: "fable-s3-plum",
-                alt: "MIND BODY — Сливовий комбінезон, фронтальний ракурс з вишитою мандалою",
+                src: "fable-s1-front",
+                alt: "MIND BODY — Сливовий комбінезон, фронтальний погляд з вишивкою-мандалою",
                 focus: "50% 20%",
                 view: "front",
+            },
+            back: {
+                src: "fable-s1-back-full",
+                alt: "MIND BODY — Сливовий комбінезон у повний зріст, спина зі скульптурною шнуровкою",
+                focus: "50% 25%",
+                view: "back",
             },
         },
     },
     {
         id: "s2",
         label: "Studio Duo",
-        name: "S2 · Duality of Form (2 моделі)",
         tag: "TWO SILHOUETTES · 02 / 05",
-        title: "DUALITY OF FORM",
-        desc: "Дві моделі в єдиному студійному просторі: комбінезони кльош у відтінках Rich Plum та Obsidian Black.",
-        layout: "solo",
-        bg: "#ABA7AE",
-        ink: "#1C1620",
-        word: "DUALITY",
+        title: "Duality of Form",
+        desc: "Дві моделі в єдиному кадрі студійної зйомки: комбінезони кльош з капюшоном у відтінках Rich Plum та Obsidian Black на дзеркальній підлозі.",
+        cta: "Кльош та капюшони",
+        layout: "duo",
+        bg: "#B2ACB5",
+        ink: "#16111A",
         link: "/shop/sport",
         frames: [
             {
-                src: "fable-s2-duo-models",
+                src: "fable-s2-duo-campaign",
                 alt: "MIND BODY — Дві моделі у комбінезонах кльош з капюшоном",
-                focus: "50% 25%",
+                focus: "50% 24%",
             },
         ],
     },
     {
         id: "s3",
-        label: "Color Triad",
-        name: "S3 · Color & Movement (3 моделі)",
-        tag: "SIGNATURE TRIAD · 03 / 05",
-        title: "COLOR & MOVEMENT",
-        desc: "Три стихії колекції: Midnight Hooded, Deep Petrol Yoga та Rich Plum Mandala.",
-        layout: "trio",
-        bg: "#CBC6CB",
-        ink: "#112323",
-        word: "COLOR",
-        link: "/shop",
+        label: "Obsidian Flare",
+        tag: "CORE CAPSULE · 03 / 05",
+        title: "Obsidian Hooded",
+        desc: "Спортивний комбінезон другого шару з глибоким анатомічним капюшоном, розкльошеними штанинами та фіксуючим поясом.",
+        cta: "Спортивні силуети",
+        layout: "solo",
+        bg: "#B8B0BB",
+        ink: "#141018",
+        link: "/shop/sport",
         frames: [
             {
-                src: "fable-s3-black",
-                alt: "MIND BODY — Чорний комбінезон з капюшоном",
-                focus: "50% 20%",
-            },
-            {
-                src: "fable-s3-teal",
-                alt: "MIND BODY — Бірюзовий комбінезон для йоги",
-                focus: "50% 20%",
-            },
-            {
-                src: "fable-s3-plum",
-                alt: "MIND BODY — Сливовий портрет з вишитою мандалою",
-                focus: "50% 20%",
+                src: "fable-s3-obsidian-hooded",
+                alt: "MIND BODY — Чорний комбінезон з капюшоном у повний зріст",
+                focus: "50% 22%",
             },
         ],
     },
     {
         id: "s4",
-        label: "Tactile Lens",
-        name: "S4 · Anatomy of Laces (Лінза 2.4×)",
+        label: "Petrol Lacing",
         tag: "INTERACTIVE LENS · 2.4× MACRO · 04 / 05",
-        title: "ANATOMY OF LACES",
-        desc: "Наведіть або проведіть пальцем: 2.4× тактильна оптична лінза розкриває переплетення ниток та точність анатомічного шва.",
+        title: "Anatomy of Laces",
+        desc: "Наведіть курсор для 2.4× тактильної оптичної лупи: переплетення ниток, точність лазерного крою та якість матеріалу.",
+        cta: "Анатомія крою",
         layout: "macro",
-        bg: "#DDD8DB",
-        ink: "#18171E",
-        word: "ANATOMY",
+        bg: "#D4D2D7",
+        ink: "#121A1A",
         link: "/shop/yoga",
         frames: [
             {
-                src: "fable-s4-macro-lacing",
-                alt: "MIND BODY — Макро деталізація шнуровки та мандали",
-                focus: "50% 22%",
+                src: "fable-s4-petrol-lacing",
+                alt: "MIND BODY — Бірюзовий комбінезон для йоги з відкритою спиною на шнуровці",
+                focus: "50% 30%",
             },
         ],
     },
     {
         id: "s5",
         label: "Espresso Runway",
-        name: "S5 · Espresso Runway (1 модель)",
         tag: "EDITORIAL STATEMENT · 05 / 05",
-        title: "ESPRESSO RUNWAY",
-        desc: "Шоколадний комбінезон другого шару в поєднанні з еко-шубою та масивними черевиками. Подіумний образ для міста.",
+        title: "Espresso Runway",
+        desc: "Шоколадний комбінезон у поєднанні з преміальною еко-шубою та масивними черевиками. Повноцінний міський образ високої моди.",
+        cta: "Верхній шар та образи",
         layout: "solo",
-        bg: "#B9B4BB",
-        ink: "#281D17",
-        word: "ESPRESSO",
+        bg: "#BEB8C0",
+        ink: "#221814",
         link: "/shop/casual",
         frames: [
             {
-                src: "fable-s5-espresso-fur",
-                alt: "MIND BODY — Шоколадний комбінезон з шубою та черевиками",
-                focus: "50% 25%",
+                src: "fable-s5-espresso-runway",
+                alt: "MIND BODY — Шоколадний комбінезон з шубою та черевиками у повний зріст",
+                focus: "50% 22%",
             },
         ],
     },
 ];
 
-const WIDTHS = [640, 960, 1440, 1920, 2560, 3200];
+const WIDTHS = [640, 960, 1440, 1920, 2560];
 
 function PictureFrame({ frame, eager }: { frame: FrameItem; eager?: boolean }) {
     const baseSrc = frame.src.startsWith("/")
         ? frame.src.replace(/\.(webp|avif|jpg)$/, "")
         : `/hero/${frame.src}`;
 
-    const avifSrcSet =
-        WIDTHS.map((w) => `${baseSrc}-${w}w.avif ${w}w`).join(", ") + `, ${baseSrc}.avif 3840w`;
     const webpSrcSet =
         WIDTHS.map((w) => `${baseSrc}-${w}w.webp ${w}w`).join(", ") + `, ${baseSrc}.webp 3840w`;
     const jpgSrcSet = WIDTHS.map((w) => `${baseSrc}-${w}w.jpg ${w}w`).join(", ");
 
-    const sizes = "(max-width: 768px) 100vw, (max-width: 1280px) 52vw, 42vw";
+    const sizes = "(max-width: 768px) 100vw, 62vw";
     const lqip = getLqipStyle(`${baseSrc}.webp`) || getLqipStyle(baseSrc);
 
     return (
-        <picture>
-            <source type="image/avif" srcSet={avifSrcSet} sizes={sizes} />
+        <picture className="hero__picture">
             <source type="image/webp" srcSet={webpSrcSet} sizes={sizes} />
             <img
                 src={`${baseSrc}-1920w.jpg`}
@@ -203,7 +184,7 @@ function PictureFrame({ frame, eager }: { frame: FrameItem; eager?: boolean }) {
                 className="hero__img"
                 style={{
                     ...lqip,
-                    objectPosition: frame.focus || "50% 25%",
+                    objectPosition: frame.focus || "50% 22%",
                 }}
             />
         </picture>
@@ -220,11 +201,10 @@ interface HeroSliderProps {
 export default function HeroSlider({
     slides: propSlides,
     autoPlay = true,
-    interval = 6500,
+    interval = 8000,
 }: HeroSliderProps) {
     const { t } = useI18n();
-    const hasFableSlides = propSlides && propSlides.some((s) => s.frames && s.frames.length > 0);
-    const slides = hasFableSlides ? propSlides : defaultSlides;
+    const slides = propSlides && propSlides.length > 0 ? propSlides : defaultSlides;
 
     const [activeSlide, setActiveSlide] = useState(() => {
         if (typeof window === "undefined") return 0;
@@ -237,15 +217,15 @@ export default function HeroSlider({
         return 0;
     });
 
-    const [activeView, setActiveView] = useState<"back" | "front">("back");
+    const [activeView, setActiveView] = useState<"front" | "back">("front");
     const [paused, setPaused] = useState(false);
     const [isCompareMode, setIsCompareMode] = useState(false);
     const rootRef = useRef<HTMLElement>(null);
     const rafRef = useRef<number | null>(null);
 
-    // Reset view to back on slide transition
+    // Reset view to front on slide transition
     useEffect(() => {
-        setActiveView("back");
+        setActiveView("front");
     }, [activeSlide]);
 
     // URL parameter sync (?hero=compare, ?hero=s1, etc.)
@@ -304,7 +284,7 @@ export default function HeroSlider({
         [slides.length, isCompareMode],
     );
 
-    // Keyboard navigation (ArrowLeft / ArrowRight / ArrowUp / ArrowDown)
+    // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
@@ -321,7 +301,7 @@ export default function HeroSlider({
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [activeSlide, go]);
 
-    // Autoplay Timer
+    // Autoplay Timer (8 seconds, paused on hover/focus)
     useEffect(() => {
         const isTargetedSlide =
             typeof window !== "undefined" &&
@@ -335,49 +315,24 @@ export default function HeroSlider({
         return () => clearInterval(timer);
     }, [activeSlide, autoPlay, interval, isCompareMode, paused, slides.length, go]);
 
-    // Zero-overhead Parallax & Tactile Lens Pointer Tracking (direct CSS variables, zero re-renders)
-    const onMove = (e: React.PointerEvent<HTMLElement>) => {
+    // Zero-overhead 2.4x Lens pointer tracking
+    const onStagePointerMove = (e: React.PointerEvent<HTMLElement>) => {
+        const stage = e.currentTarget;
+        const rect = stage.getBoundingClientRect();
         const root = rootRef.current;
         if (!root) return;
-        const rect = root.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width;
-        const y = (e.clientY - rect.top) / rect.height;
-        const px = (x - 0.5) * 2;
-        const py = (y - 0.5) * 2;
 
-        const lx = Math.max(0, Math.min(100, x * 100));
-        const ly = Math.max(0, Math.min(100, y * 100));
+        const xPercent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+        const yPercent = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
 
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         rafRef.current = requestAnimationFrame(() => {
-            root.style.setProperty("--px", px.toFixed(3));
-            root.style.setProperty("--py", py.toFixed(3));
-            root.style.setProperty("--lx", `${lx.toFixed(1)}%`);
-            root.style.setProperty("--ly", `${ly.toFixed(1)}%`);
+            root.style.setProperty("--lx", `${xPercent.toFixed(1)}%`);
+            root.style.setProperty("--ly", `${yPercent.toFixed(1)}%`);
         });
     };
 
     const currentSlide = slides[activeSlide] || slides[0];
-
-    // Normalize frames
-    const getFrames = (s: SlideData): FrameItem[] => {
-        if (s.frames && s.frames.length > 0) return s.frames;
-        if (s.images && s.images.length > 0) {
-            return s.images.map((img) => ({
-                src: img.src.replace(/^\/hero\//, "").replace(/\.(webp|avif|jpg)$/, ""),
-                alt: img.alt || s.title || "MIND BODY",
-                focus: img.pos,
-            }));
-        }
-        const res: FrameItem[] = [];
-        if (s.image1) res.push({ src: s.image1, alt: s.name || "MIND BODY", focus: s.image1Pos });
-        if (s.image2) res.push({ src: s.image2, alt: s.name || "MIND BODY", focus: s.image2Pos });
-        if (s.image3) res.push({ src: s.image3, alt: s.name || "MIND BODY", focus: s.image3Pos });
-        return res;
-    };
-
-    const activeFrames = getFrames(currentSlide);
-    const layout = currentSlide.layout || "solo";
 
     return (
         <section
@@ -388,92 +343,26 @@ export default function HeroSlider({
             aria-label={t("Вітрина бренду MIND BODY")}
             style={
                 {
-                    "--bg": currentSlide.bg || "#DDD9DB",
-                    "--ink": currentSlide.ink || "#261622",
+                    "--bg": currentSlide.bg || "#DFDADE",
+                    "--ink": currentSlide.ink || "#20141E",
                 } as React.CSSProperties
             }
             onPointerEnter={() => setPaused(true)}
             onPointerLeave={() => setPaused(false)}
-            onPointerMove={onMove}
         >
-            {/* Soft Ambient Header Veil (Guarantees site navigation clarity with seamless blend) */}
-            <div className="hero__header-veil" aria-hidden="true" />
-
-            {/* Monumental Spectral Typography Layer (Behind the Model Stage) */}
-            <div className="hero__word-layer" aria-hidden="true" key={`word-${currentSlide.id}`}>
-                <span className="hero__word-text">{currentSlide.word || "MIND BODY"}</span>
-            </div>
-
-            {/* Photography Stage (Full Studio Cyclorama Dissolved via Feather Mask) */}
-            <div className={`hero__stage hero__stage--${layout}`} key={`stage-${currentSlide.id}`}>
-                {/* Turn Stage for Slide 1 (Front/Back Curtain Wipe) */}
-                {currentSlide.turnFrames ? (
-                    <div className="hero__turn-stage">
-                        <figure
-                            className={`hero__frame hero__frame--turn ${activeView === "back" ? "is-active" : "is-hidden"}`}
-                        >
-                            <PictureFrame
-                                frame={currentSlide.turnFrames.back}
-                                eager={activeSlide === 0}
-                            />
-                        </figure>
-                        <figure
-                            className={`hero__frame hero__frame--turn ${activeView === "front" ? "is-active" : "is-hidden"}`}
-                        >
-                            <PictureFrame frame={currentSlide.turnFrames.front} eager={false} />
-                        </figure>
-                    </div>
-                ) : (
-                    activeFrames.map((frame, k) => (
-                        <figure
-                            className="hero__frame"
-                            key={`${frame.src}-${k}`}
-                            style={{ "--d": `${k * 90}ms` } as React.CSSProperties}
-                        >
-                            <PictureFrame frame={frame} eager={activeSlide === 0} />
-
-                            {/* Dual-Focus Lens: Magnifying circle at 2.4x optical zoom */}
-                            {layout === "macro" && (
-                                <div className="hero__lens" aria-hidden="true">
-                                    <picture>
-                                        <source
-                                            type="image/avif"
-                                            srcSet={`/hero/${frame.src}-3200w.avif 3200w, /hero/${frame.src}.avif 3840w`}
-                                        />
-                                        <source
-                                            type="image/webp"
-                                            srcSet={`/hero/${frame.src}-3200w.webp 3200w, /hero/${frame.src}.webp 3840w`}
-                                        />
-                                        <img
-                                            src={`/hero/${frame.src}-2560w.jpg`}
-                                            alt=""
-                                            decoding="async"
-                                            draggable={false}
-                                        />
-                                    </picture>
-                                </div>
-                            )}
-                        </figure>
-                    ))
-                )}
-            </div>
-
-            {/* Editorial Caption & Action Cluster (Docked in safe bottom-left zone) */}
+            {/* COLUMN 1: EDITORIAL GALLERY PANEL (World-Class Magazine Spread) */}
             <div className="hero-editorial" key={`editorial-${currentSlide.id}`}>
                 <div className="hero-editorial__badge">
-                    <span className="hero-editorial__tag">
-                        {currentSlide.tag ||
-                            `SIGNATURE PIECE · 0${activeSlide + 1} / 0${slides.length}`}
-                    </span>
+                    <span className="hero-editorial__tag">{currentSlide.tag}</span>
                 </div>
 
-                <h1 className="hero-editorial__title">{currentSlide.title || currentSlide.name}</h1>
+                <h2 className="hero-editorial__title">{currentSlide.title}</h2>
 
-                {currentSlide.desc && <p className="hero-editorial__desc">{currentSlide.desc}</p>}
+                <p className="hero-editorial__desc">{currentSlide.desc}</p>
 
                 <div className="hero-editorial__actions">
                     <LLink to={currentSlide.link || "/shop"} className="hero-editorial__cta">
-                        <span>{t("ПЕРЕГЛЯНУТИ КОЛЕКЦІЮ")}</span>
+                        <span>{t(currentSlide.cta || "Переглянути колекцію")}</span>
                         <svg
                             width="15"
                             height="15"
@@ -484,113 +373,130 @@ export default function HeroSlider({
                             <path
                                 d="M2.5 7.5H12.5M12.5 7.5L8 3M12.5 7.5L8 12"
                                 stroke="currentColor"
-                                strokeWidth="1.3"
+                                strokeWidth="1.4"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                             />
                         </svg>
                     </LLink>
 
-                    {/* Turn Toggle (FRONT · BACK) for Signature Sculpted Piece */}
+                    {/* Turn Segmented Switch (FRONT / BACK) for Signature Piece */}
                     {currentSlide.turnFrames && (
                         <div
-                            className="hero-turn-toggle"
+                            className="hero-turn-switch"
                             role="group"
-                            aria-label={t("Перемикання ракурсу: спина та перед")}
+                            aria-label={t("Перемикання ракурсу моделі")}
                         >
                             <button
                                 type="button"
-                                className={`hero-turn-btn ${activeView === "back" ? "is-active" : ""}`}
-                                onClick={() => setActiveView("back")}
-                            >
-                                <span className="hero-turn-btn__label">{t("СПИНА")}</span>
-                                <span className="hero-turn-btn__detail">{t("ШНУРОВКА")}</span>
-                            </button>
-                            <span className="hero-turn-toggle__divider" aria-hidden="true" />
-                            <button
-                                type="button"
-                                className={`hero-turn-btn ${activeView === "front" ? "is-active" : ""}`}
+                                className={`hero-turn-switch__btn ${activeView === "front" ? "is-active" : ""}`}
                                 onClick={() => setActiveView("front")}
                             >
-                                <span className="hero-turn-btn__label">{t("ПЕРЕД")}</span>
-                                <span className="hero-turn-btn__detail">{t("МАНДАЛА")}</span>
+                                {t("ПЕРЕД")}
+                            </button>
+                            <button
+                                type="button"
+                                className={`hero-turn-switch__btn ${activeView === "back" ? "is-active" : ""}`}
+                                onClick={() => setActiveView("back")}
+                            >
+                                {t("СПИНА")}
                             </button>
                         </div>
                     )}
-
-                    {/* Lens Mode Hint */}
-                    {layout === "macro" && (
-                        <div className="hero-lens-hint" aria-hidden="true">
-                            <span className="hero-lens-hint__zoom">2.4×</span>
-                            <span className="hero-lens-hint__text">{t("ТАКТИЛЬНА ЛУПА")}</span>
-                        </div>
-                    )}
                 </div>
+
+                {/* Vertical Lace Line Navigation inside Editorial Column */}
+                <nav className="hero-lacenav" aria-label={t("Навігація по образах")}>
+                    <div className="hero-lacenav__knots">
+                        {slides.map((s, k) => {
+                            const isActive = k === activeSlide;
+                            return (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    aria-current={isActive ? "true" : undefined}
+                                    aria-label={`${s.title} — ${s.label}`}
+                                    className={`hero-lacenav__knot ${isActive ? "is-active" : ""}`}
+                                    onClick={() => go(k)}
+                                >
+                                    <span className="hero-lacenav__num">0{k + 1}</span>
+                                    <span className="hero-lacenav__line" />
+                                    <span className="hero-lacenav__label">{s.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Autoplay Pause / Play Toggle for WCAG 2.2.2 */}
+                    <button
+                        type="button"
+                        className="hero-pause-btn"
+                        onClick={() => setPaused(!paused)}
+                        aria-label={
+                            paused ? t("Запустити автозміну слайдів") : t("Призупинити автозміну")
+                        }
+                    >
+                        {paused ? (
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                                <path d="M2.5 1.5L10 6L2.5 10.5V1.5Z" />
+                            </svg>
+                        ) : (
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                                <rect x="2" y="1.5" width="2.5" height="9" rx="0.5" />
+                                <rect x="7.5" y="1.5" width="2.5" height="9" rx="0.5" />
+                            </svg>
+                        )}
+                    </button>
+                </nav>
             </div>
 
-            {/* Signature LaceNav (Навігація-нить: The Lace Line with 5 tactile stitch-knots) */}
-            <aside
-                className="hero-lacenav"
-                role="tablist"
-                aria-label={t("Шнуровка — навігація по образах")}
+            {/* COLUMN 2: FULL-HEIGHT MASTER STUDIO PHOTOGRAPHY (Zero Mask, Crisp Studio Floor) */}
+            <div
+                className={`hero__stage hero__stage--${currentSlide.layout}`}
+                key={`stage-${currentSlide.id}`}
+                onPointerMove={currentSlide.layout === "macro" ? onStagePointerMove : undefined}
             >
-                <div className="hero-lacenav__thread" aria-hidden="true">
-                    <svg
-                        className="hero-lacenav__svg"
-                        viewBox="0 0 16 260"
-                        fill="none"
-                        preserveAspectRatio="none"
-                    >
-                        <line
-                            x1="8"
-                            y1="16"
-                            x2="8"
-                            y2="244"
-                            stroke="currentColor"
-                            strokeWidth="1"
-                            strokeDasharray="3 3"
-                            opacity="0.25"
-                        />
-                        <line
-                            x1="8"
-                            y1="16"
-                            x2="8"
-                            y2={16 + (activeSlide / (slides.length - 1)) * 228}
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            opacity="0.85"
-                            className="hero-lacenav__progress-line"
-                        />
-                    </svg>
-                </div>
-                <div className="hero-lacenav__knots">
-                    {slides.map((s, k) => {
-                        const isActive = k === activeSlide;
-                        return (
-                            <button
-                                key={s.id}
-                                type="button"
-                                role="tab"
-                                aria-selected={isActive}
-                                aria-label={`${s.title || s.name || s.label}`}
-                                className={`hero-lacenav__knot ${isActive ? "is-active" : ""}`}
-                                onClick={() => go(k)}
-                            >
-                                <span className="hero-lacenav__eyelet">
-                                    <span className="hero-lacenav__dot" />
-                                    {isActive && <span className="hero-lacenav__pulse" />}
-                                </span>
-                                <span className="hero-lacenav__tooltip">
-                                    <span className="hero-lacenav__tooltip-num">0{k + 1}</span>
-                                    <span className="hero-lacenav__tooltip-title">
-                                        {s.word || s.label}
-                                    </span>
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </aside>
+                {/* Turn Stage for Slide 1 with smooth Crossfade */}
+                {currentSlide.turnFrames ? (
+                    <div className="hero__turn-wrapper">
+                        <figure
+                            className={`hero__frame hero__frame--turn ${activeView === "front" ? "is-visible" : "is-hidden"}`}
+                        >
+                            <PictureFrame
+                                frame={currentSlide.turnFrames.front}
+                                eager={activeSlide === 0}
+                            />
+                        </figure>
+                        <figure
+                            className={`hero__frame hero__frame--turn ${activeView === "back" ? "is-visible" : "is-hidden"}`}
+                        >
+                            <PictureFrame frame={currentSlide.turnFrames.back} eager={false} />
+                        </figure>
+                    </div>
+                ) : (
+                    <figure className="hero__frame">
+                        <PictureFrame frame={currentSlide.frames[0]} eager={activeSlide === 0} />
+
+                        {/* Dual-Focus Lens: 2.4x Optical Macro on Slide 4 */}
+                        {currentSlide.layout === "macro" && (
+                            <div className="hero__lens" aria-hidden="true">
+                                <picture className="hero__picture">
+                                    <source
+                                        type="image/webp"
+                                        srcSet={`/hero/${currentSlide.frames[0].src}-2560w.webp 2560w, /hero/${currentSlide.frames[0].src}.webp 3840w`}
+                                    />
+                                    <img
+                                        src={`/hero/${currentSlide.frames[0].src}-1920w.jpg`}
+                                        alt=""
+                                        decoding="async"
+                                        draggable={false}
+                                    />
+                                </picture>
+                            </div>
+                        )}
+                    </figure>
+                )}
+            </div>
 
             {/* Interactive Fable Studio Lab Bar (?hero=compare) */}
             {isCompareMode && (
@@ -612,9 +518,7 @@ export default function HeroSlider({
                                 <span className="hero-compare-pill__rank">
                                     {idx === 0 ? "★" : `#${idx + 1}`}
                                 </span>
-                                <span className="hero-compare-pill__name">
-                                    {s.word || s.name || s.label}
-                                </span>
+                                <span className="hero-compare-pill__name">{s.label}</span>
                             </button>
                         ))}
                     </div>

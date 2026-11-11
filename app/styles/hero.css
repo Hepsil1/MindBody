@@ -1,196 +1,307 @@
 /* =========================================================================
-   MIND BODY — THE LACE LINE («ШНУРОВКА»)
-   Architectural Direction by Fable (Studio Master & Luxury Editorial)
-   Zero cutouts · Dissolved cyclorama · Monumental Spectral typography ·
-   Interactive LaceNav · Anatomical Turn (Front/Back) · 2.4× Tactile Lens
+   MIND BODY · TWO-COLUMN EDITORIAL HERO (Khaite / Toteme Luxury Standard)
+   Designed & Architected with Fable (World-Class Editorial Gallery)
+   Zero masks · Solid studio floor · Crisp reflection · Authentic lighting
    ========================================================================= */
 
 .fable-luxury-hero {
-    --bg: #ddd9db;
-    --ink: #261622;
-    --px: 0;
-    --py: 0;
+    --bg: #dfdade;
+    --ink: #20141e;
     --lx: 50%;
     --ly: 50%;
-    --lens: min(30vmin, 280px);
+    --lens: min(32vmin, 300px);
 
     position: relative;
     width: 100%;
     height: 100vh;
     height: 100svh;
     min-height: 640px;
-    background: radial-gradient(
-        ellipse 72% 65% at 50% 46%,
-        color-mix(in srgb, #ffffff 38%, var(--bg)) 0%,
-        var(--bg) 82%
-    );
+    display: grid;
+    grid-template-columns: minmax(380px, 38vw) 1fr;
+    background-color: var(--bg);
     color: var(--ink);
     overflow: hidden;
     user-select: none;
     transition:
-        background 0.9s cubic-bezier(0.2, 0.7, 0.1, 1),
-        color 0.9s cubic-bezier(0.2, 0.7, 0.1, 1);
+        background-color 0.8s cubic-bezier(0.2, 0.7, 0.1, 1),
+        color 0.8s cubic-bezier(0.2, 0.7, 0.1, 1);
 }
 
-/* === AMBIENT HEADER VEIL ===
-   Guarantees site logo & navigation sit with effortless clarity over photography */
-.hero__header-veil {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: clamp(92px, 14vh, 124px);
-    background: linear-gradient(
-        to bottom,
-        var(--bg) 0%,
-        color-mix(in srgb, var(--bg) 75%, transparent) 55%,
-        transparent 100%
-    );
-    z-index: 6;
-    pointer-events: none;
-    transition: background 0.9s cubic-bezier(0.2, 0.7, 0.1, 1);
-}
-
-/* === LAYER 1: MONUMENTAL SPECTRAL TYPOGRAPHY ===
-   Architectural word sitting at z-index: 1 BEHIND the photography stage.
-   Zero text overlap on faces/bodies. Shifts subtly via mouse parallax. */
-.hero__word-layer {
-    position: absolute;
-    inset: 0;
+/* === COLUMN 1: EDITORIAL GALLERY PANEL === */
+.hero-editorial {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-    z-index: 1;
-    pointer-events: none;
-    overflow: hidden;
+    padding: clamp(48px, 9vh, 88px) clamp(36px, 4.2vw, 64px);
+    background-color: var(--bg);
+    position: relative;
+    z-index: 10;
+    transition: background-color 0.8s cubic-bezier(0.2, 0.7, 0.1, 1);
+    animation: editorialPanelFade 0.8s cubic-bezier(0.2, 0.7, 0.1, 1) both;
 }
 
-.hero__word-text {
-    font-family: "Spectral", Georgia, serif;
-    font-size: clamp(120px, 22vw, 340px);
-    font-weight: 300;
-    font-style: italic;
-    line-height: 0.76;
-    letter-spacing: -0.035em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--ink) 8.5%, transparent);
-    white-space: nowrap;
-    user-select: none;
-    transform: translate3d(calc(var(--px, 0) * -26px), calc(var(--py, 0) * -10px), 0);
-    will-change: transform;
-    transition:
-        transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-        color 0.9s cubic-bezier(0.2, 0.7, 0.1, 1);
-    animation: heroWordFade 1s cubic-bezier(0.2, 0.7, 0.1, 1) both;
-}
-
-@keyframes heroWordFade {
+@keyframes editorialPanelFade {
     from {
         opacity: 0;
-        transform: translate3d(calc(var(--px, 0) * -26px), 24px, 0) scale(0.97);
+        transform: translateY(12px);
     }
     to {
         opacity: 1;
-        transform: translate3d(calc(var(--px, 0) * -26px), 0, 0) scale(1);
+        transform: translateY(0);
     }
 }
 
-/* === LAYER 2: THE PHOTOGRAPHY STAGE ===
-   Studio cyclorama dissolves into the page background.
-   No cardboard boxes, no borders, no cards. The model stands in the room. */
+.hero-editorial__badge {
+    margin-bottom: 12px;
+}
+
+.hero-editorial__tag {
+    font-family: "Onest", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink);
+    opacity: 0.7;
+}
+
+.hero-editorial__title {
+    font-family: "Spectral", Georgia, serif;
+    font-size: clamp(34px, 3.6vw, 56px);
+    font-weight: 300;
+    letter-spacing: -0.015em;
+    line-height: 1.04;
+    margin: 0 0 16px 0;
+    color: var(--ink);
+}
+
+.hero-editorial__desc {
+    font-family: "Onest", sans-serif;
+    font-size: 14.5px;
+    font-weight: 400;
+    line-height: 1.62;
+    color: color-mix(in srgb, var(--ink) 80%, transparent);
+    margin: 0 0 28px 0;
+    max-width: 40ch;
+}
+
+.hero-editorial__actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: clamp(32px, 6vh, 56px);
+}
+
+/* Solid Architectural CTA (No blur, Pure High-Fashion Gravity) */
+.hero-editorial__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    height: 52px;
+    padding: 0 32px;
+    border-radius: 2px;
+    background-color: var(--ink);
+    color: var(--bg);
+    font-family: "Onest", sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        background-color 0.3s ease;
+}
+
+.hero-editorial__cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.3);
+}
+
+.hero-editorial__cta svg {
+    transition: transform 0.25s ease;
+}
+
+.hero-editorial__cta:hover svg {
+    transform: translateX(4px);
+}
+
+/* Turn Segmented Switch (FRONT / BACK) */
+.hero-turn-switch {
+    display: inline-flex;
+    align-items: center;
+    height: 52px;
+    padding: 4px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+    gap: 3px;
+}
+
+.hero-turn-switch__btn {
+    height: 42px;
+    padding: 0 16px;
+    border-radius: 2px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-family: "Onest", sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--ink) 65%, transparent);
+    transition: all 0.25s ease;
+}
+
+.hero-turn-switch__btn:hover {
+    color: var(--ink);
+}
+
+.hero-turn-switch__btn.is-active {
+    background-color: var(--ink);
+    color: var(--bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+/* Vertical Lace Line Navigation inside Editorial Column */
+.hero-lacenav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding-top: 18px;
+    border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.hero-lacenav__knots {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.hero-lacenav__knot {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: var(--ink);
+    opacity: 0.45;
+    transition: opacity 0.25s ease;
+}
+
+.hero-lacenav__knot:hover {
+    opacity: 0.85;
+}
+
+.hero-lacenav__knot.is-active {
+    opacity: 1;
+}
+
+.hero-lacenav__num {
+    font-family: "Onest", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.hero-lacenav__line {
+    width: 14px;
+    height: 1px;
+    background-color: currentColor;
+    opacity: 0.6;
+    transition: width 0.3s ease;
+}
+
+.hero-lacenav__knot.is-active .hero-lacenav__line {
+    width: 24px;
+    height: 1.5px;
+    opacity: 1;
+}
+
+.hero-lacenav__label {
+    display: none; /* Clean minimal numbers */
+}
+
+/* Pause button for WCAG 2.2.2 compliance */
+.hero-pause-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    opacity: 0.6;
+    transition:
+        opacity 0.25s ease,
+        background-color 0.25s ease;
+}
+
+.hero-pause-btn:hover {
+    opacity: 1;
+    background-color: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+/* === COLUMN 2: FULL-HEIGHT MASTER STUDIO PHOTOGRAPHY ===
+   100% genuine studio lighting, crisp mirror reflections, zero blur mask */
 .hero__stage {
     position: relative;
     width: 100%;
     height: 100%;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-top: clamp(68px, 10vh, 92px);
-    padding-bottom: clamp(68px, 10vh, 92px);
-    cursor: default;
+    overflow: hidden;
+    background-color: var(--bg);
 }
 
-.hero__stage--macro {
-    cursor: crosshair;
+.hero__frame,
+.hero__picture,
+.hero__img {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
-/* Solo Slides (S1, S2, S4, S5) */
-.hero__stage--solo,
-.hero__stage--macro {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Trio Slide (S3) — 3-Panel Editorial Triad with Guaranteed Safe Zones */
-.hero__stage--trio {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, clamp(190px, 18.5vw, 280px)));
-    gap: clamp(8px, 1.2vw, 16px);
-    justify-content: center;
-    align-items: center;
-    max-width: calc(100vw - 560px);
-    margin: 0 auto;
-}
-
-/* Frame Definition — Full Proportions, Dissolving Cyclorama Mask */
 .hero__frame {
     margin: 0;
     position: relative;
+    width: 100%;
     height: 100%;
-    max-height: calc(100svh - clamp(68px, 10vh, 92px) * 2);
-    aspect-ratio: 2 / 3;
-    background: transparent;
-    border-radius: 0;
-    box-shadow: none;
-    overflow: visible;
-    transform: translate3d(calc(var(--px, 0) * 10px), calc(var(--py, 0) * 6px), 0);
-    will-change: transform;
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    animation: heroFrameEmerge 0.9s cubic-bezier(0.2, 0.7, 0.1, 1) both;
-    animation-delay: var(--d, 0ms);
 }
 
-@keyframes heroFrameEmerge {
+.hero__img {
+    object-fit: cover;
+    image-rendering: auto;
+    /* ZERO MASK: pristine, razor-sharp studio master */
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    animation: heroPhotoEnter 1s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+
+@keyframes heroPhotoEnter {
     from {
         opacity: 0;
-        transform: translate3d(calc(var(--px, 0) * 10px), 18px, 0) scale(0.985);
+        transform: scale(1.025);
     }
     to {
         opacity: 1;
-        transform: translate3d(calc(var(--px, 0) * 10px), calc(var(--py, 0) * 6px), 0) scale(1);
+        transform: scale(1);
     }
 }
 
-.hero__frame picture {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
-.hero__frame .hero__img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* Seamless studio feather mask: removes all box boundaries */
-    -webkit-mask-image:
-        linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%),
-        linear-gradient(to bottom, transparent 0%, #000 6%, #000 88%, transparent 100%);
-    -webkit-mask-composite: source-in;
-    mask-composite: intersect;
-}
-
-/* === TURN STAGE (FRONT / BACK CURTAIN MECHANISM) === */
-.hero__turn-stage {
+/* Turn Stage Crossfade */
+.hero__turn-wrapper {
     position: relative;
+    width: 100%;
     height: 100%;
-    max-height: calc(100svh - clamp(68px, 10vh, 92px) * 2);
-    aspect-ratio: 2 / 3;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 .hero__frame--turn {
@@ -199,31 +310,35 @@
     width: 100%;
     height: 100%;
     transition:
-        clip-path 0.75s cubic-bezier(0.2, 0.7, 0.1, 1),
-        opacity 0.4s ease;
+        opacity 0.55s cubic-bezier(0.2, 0.7, 0.1, 1),
+        transform 0.55s cubic-bezier(0.2, 0.7, 0.1, 1);
 }
 
-.hero__frame--turn.is-active {
-    clip-path: inset(0 0 0 0);
+.hero__frame--turn.is-visible {
     opacity: 1;
+    transform: translateX(0);
     z-index: 2;
     pointer-events: auto;
 }
 
 .hero__frame--turn.is-hidden {
-    clip-path: inset(0 100% 0 0);
     opacity: 0;
+    transform: translateX(12px);
     z-index: 1;
     pointer-events: none;
 }
 
-/* === 2.4× OPTICAL MACRO LENS === */
+/* === DUAL-FOCUS LENS 2.4× (Slide 4 Macro) === */
+.hero__stage--macro {
+    cursor: crosshair;
+}
+
 .hero__lens {
     position: absolute;
     inset: 0;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.3s ease;
     clip-path: circle(calc(var(--lens) / 2) at var(--lx) var(--ly));
     z-index: 10;
 }
@@ -234,28 +349,25 @@
     inset: 0;
     clip-path: circle(calc(var(--lens) / 2) at var(--lx) var(--ly));
     box-shadow:
-        inset 0 0 0 1.5px rgba(255, 255, 255, 0.85),
-        0 18px 40px rgba(0, 0, 0, 0.4);
-    pointer-events: none;
+        inset 0 0 0 1.5px rgba(255, 255, 255, 0.9),
+        0 20px 48px rgba(0, 0, 0, 0.45);
 }
 
 .hero__lens::after {
     content: "2.4× MACRO";
     position: absolute;
-    left: calc(var(--lx) + 14px);
+    left: calc(var(--lx) + 16px);
     top: calc(var(--ly) - calc(var(--lens) / 2) - 18px);
     font-family: "Onest", sans-serif;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.16em;
-    color: var(--ink);
-    background: color-mix(in srgb, var(--bg) 90%, transparent);
-    padding: 3px 9px;
+    color: #ffffff;
+    background: rgba(18, 18, 18, 0.85);
+    padding: 4px 10px;
     border-radius: 9999px;
-    border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    pointer-events: none;
 }
 
 .hero__lens img {
@@ -270,385 +382,30 @@
     opacity: 1;
 }
 
-@media (hover: none) {
-    .hero__stage--macro:active .hero__lens {
-        opacity: 1;
-    }
-}
-
-/* === EDITORIAL CAPTION & ACTIONS ===
-   Docked in safe bottom-left zone with museum-grade typography */
-.hero-editorial {
-    position: absolute;
-    bottom: clamp(34px, 5.5vh, 58px);
-    left: clamp(24px, 3.8vw, 54px);
-    z-index: 12;
-    max-width: min(400px, 32vw);
-    pointer-events: auto;
-    animation: heroEditorialFade 0.85s cubic-bezier(0.2, 0.7, 0.1, 1) both;
-}
-
-@keyframes heroEditorialFade {
-    from {
-        opacity: 0;
-        transform: translateY(14px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.hero-editorial__badge {
-    margin-bottom: 8px;
-}
-
-.hero-editorial__tag {
-    display: inline-block;
-    font-family: "Onest", sans-serif;
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.26em;
-    text-transform: uppercase;
-    color: var(--ink);
-    opacity: 0.75;
-}
-
-.hero-editorial__title {
-    font-family: "Spectral", Georgia, serif;
-    font-size: clamp(26px, 3.2vw, 44px);
-    font-weight: 300;
-    font-style: italic;
-    letter-spacing: -0.015em;
-    line-height: 1.06;
-    margin: 0 0 10px 0;
-    color: var(--ink);
-}
-
-.hero-editorial__desc {
-    font-family: "Onest", sans-serif;
-    font-size: 0.82rem;
-    font-weight: 400;
-    line-height: 1.52;
-    color: color-mix(in srgb, var(--ink) 78%, transparent);
-    margin: 0 0 20px 0;
-    max-width: 380px;
-}
-
-.hero-editorial__actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-/* Glassmorphism CTA Pill */
-.hero-editorial__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    height: 48px;
-    padding: 0 26px;
-    border-radius: 9999px;
-    background: color-mix(in srgb, var(--bg) 65%, transparent);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
-    color: var(--ink);
-    font-family: "Onest", sans-serif;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    text-decoration: none;
-    transition:
-        background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-        color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-        transform 0.25s ease,
-        box-shadow 0.35s ease;
-    cursor: pointer;
-}
-
-.hero-editorial__cta:hover {
-    background: var(--ink);
-    color: var(--bg);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.22);
-}
-
-.hero-editorial__cta svg {
-    transition: transform 0.3s ease;
-}
-
-.hero-editorial__cta:hover svg {
-    transform: translateX(3px);
-}
-
-/* Turn Mechanism Toggle (FRONT · BACK) */
-.hero-turn-toggle {
-    display: inline-flex;
-    align-items: center;
-    height: 48px;
-    padding: 3px 5px;
-    border-radius: 9999px;
-    background: color-mix(in srgb, var(--bg) 60%, transparent);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
-    gap: 2px;
-}
-
-.hero-turn-btn {
-    height: 40px;
-    padding: 0 14px;
-    border-radius: 9999px;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    color: color-mix(in srgb, var(--ink) 65%, transparent);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.hero-turn-btn:hover {
-    color: var(--ink);
-}
-
-.hero-turn-btn.is-active {
-    background: var(--ink);
-    color: var(--bg);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
-}
-
-.hero-turn-btn__label {
-    font-family: "Onest", sans-serif;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    line-height: 1.1;
-}
-
-.hero-turn-btn__detail {
-    font-family: "Onest", sans-serif;
-    font-size: 0.52rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    opacity: 0.78;
-    line-height: 1.1;
-}
-
-.hero-turn-toggle__divider {
-    width: 1px;
-    height: 18px;
-    background: color-mix(in srgb, var(--ink) 18%, transparent);
-}
-
-/* Lens Mode Hint */
-.hero-lens-hint {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 48px;
-    padding: 0 16px;
-    border-radius: 9999px;
-    background: color-mix(in srgb, var(--bg) 50%, transparent);
-    border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: var(--ink);
-    opacity: 0.85;
-}
-
-.hero-lens-hint__zoom {
-    font-family: "Onest", sans-serif;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-}
-
-.hero-lens-hint__text {
-    font-family: "Onest", sans-serif;
-    font-size: 0.62rem;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-}
-
-/* === LACENAV (НАВІГАЦІЯ-НИТЬ: THE LACE LINE) ===
-   Vertical tactile lacing thread with 5 stitch knots along the right margin */
-.hero-lacenav {
-    position: absolute;
-    right: clamp(24px, 3.8vw, 56px);
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 12;
-    display: flex;
-    align-items: center;
-    height: 250px;
-}
-
-.hero-lacenav__thread {
-    position: absolute;
-    right: 20px;
-    top: 0;
-    bottom: 0;
-    width: 16px;
-    display: flex;
-    justify-content: center;
-    pointer-events: none;
-}
-
-.hero-lacenav__svg {
-    width: 100%;
-    height: 100%;
-    color: var(--ink);
-    overflow: visible;
-}
-
-.hero-lacenav__progress-line {
-    transition: y2 0.7s cubic-bezier(0.2, 0.7, 0.1, 1);
-}
-
-.hero-lacenav__knots {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-    position: relative;
-    z-index: 2;
-}
-
-.hero-lacenav__knot {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 12px;
-    min-height: 44px;
-    min-width: 44px;
-    padding: 0 10px;
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    color: var(--ink);
-    position: relative;
-}
-
-.hero-lacenav__eyelet {
-    position: relative;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.hero-lacenav__dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: currentColor;
-    opacity: 0.38;
-    transition:
-        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-        opacity 0.3s ease;
-}
-
-.hero-lacenav__knot:hover .hero-lacenav__dot {
-    opacity: 0.85;
-    transform: scale(1.3);
-}
-
-.hero-lacenav__knot.is-active .hero-lacenav__dot {
-    opacity: 1;
-    transform: scale(1.4);
-}
-
-.hero-lacenav__pulse {
-    position: absolute;
-    inset: -3px;
-    border-radius: 50%;
-    border: 1px solid currentColor;
-    opacity: 0.65;
-    animation: laceKnotPulse 2.4s cubic-bezier(0.24, 0, 0.38, 1) infinite;
-}
-
-@keyframes laceKnotPulse {
-    0% {
-        transform: scale(0.8);
-        opacity: 0.9;
-    }
-    50% {
-        transform: scale(1.5);
-        opacity: 0;
-    }
-    100% {
-        transform: scale(0.8);
-        opacity: 0;
-    }
-}
-
-.hero-lacenav__tooltip {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    opacity: 0;
-    transform: translateX(8px);
-    transition:
-        opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    pointer-events: none;
-    white-space: nowrap;
-}
-
-.hero-lacenav__knot:hover .hero-lacenav__tooltip,
-.hero-lacenav__knot.is-active .hero-lacenav__tooltip {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.hero-lacenav__tooltip-num {
-    font-family: "Onest", sans-serif;
-    font-size: 0.64rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    opacity: 0.65;
-}
-
-.hero-lacenav__tooltip-title {
-    font-family: "Spectral", Georgia, serif;
-    font-size: 0.84rem;
-    font-style: italic;
-    font-weight: 400;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
 /* === FABLE COMPARISON LAB DOCK (?hero=compare) === */
 .hero-compare-bar {
     position: absolute;
-    bottom: 20px;
+    bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 120;
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(18, 18, 18, 0.92);
+    background: rgba(18, 18, 18, 0.94);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    padding: 6px 12px;
+    padding: 6px 14px;
     border-radius: 9999px;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
     max-width: 95vw;
     overflow-x: auto;
 }
 
 .hero-compare-bar__badge {
     font-family: "Onest", sans-serif;
-    font-size: 0.62rem;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -673,9 +430,9 @@
     border-radius: 9999px;
     background: transparent;
     border: 1px solid transparent;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.75);
     font-family: "Onest", sans-serif;
-    font-size: 0.72rem;
+    font-size: 11.5px;
     cursor: pointer;
     transition: all 0.25s ease;
     white-space: nowrap;
@@ -688,8 +445,8 @@
 
 .hero-compare-pill.is-active {
     color: #ffffff;
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 .hero-compare-pill__rank {
@@ -700,191 +457,91 @@
 /* === MOBILE ADAPTATION (max-width: 768px) === */
 @media (max-width: 768px) {
     .fable-luxury-hero {
-        height: 100dvh;
-        min-height: 0;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-    }
-
-    .hero__header-veil {
-        height: 72px;
-    }
-
-    .hero__word-layer {
-        top: 36%;
-    }
-
-    .hero__word-text {
-        font-size: 32vw;
-        opacity: 0.65;
-    }
-
-    .hero__stage {
-        flex: 1;
+        height: 100dvh;
         min-height: 0;
-        padding-top: 60px;
-        padding-bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
-    .hero__stage--solo,
-    .hero__stage--macro {
-        width: 100%;
-        height: 100%;
+    /* Top: Full Photography with solid floor and boots, clears global header */
+    .hero__stage {
+        order: 1;
+        height: 56svh;
+        min-height: 0;
+        flex: none;
+        padding-top: 68px;
     }
 
     .hero__frame,
-    .hero__turn-stage {
+    .hero__turn-wrapper {
         height: 100%;
-        max-height: calc(100dvh - 210px);
-        width: auto;
-        aspect-ratio: 2 / 3;
     }
 
-    .hero__frame .hero__img {
-        object-position: 50% 20%;
+    .hero__img {
+        object-position: 50% 18%;
     }
 
-    /* Multi-model group (S3) horizontal snap-swipe */
-    .hero__stage--trio {
-        display: flex;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        gap: 12px;
-        padding-inline: calc((100vw - 82vw) / 2);
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        width: 100vw;
-        margin-inline: 0;
-        max-width: none;
-    }
-
-    .hero__stage--trio::-webkit-scrollbar {
-        display: none;
-    }
-
-    .hero__stage--trio .hero__frame {
-        flex: 0 0 82vw;
-        width: 82vw;
-        scroll-snap-align: center;
-        max-height: calc(100dvh - 210px);
-    }
-
-    /* LaceNav on Mobile — Centered neat dots bar */
-    .hero-lacenav {
-        position: static;
-        transform: none;
-        margin: 6px auto 4px auto;
-        height: auto;
-        width: auto;
-        display: flex;
-        justify-content: center;
-        z-index: 15;
-    }
-
-    .hero-lacenav__thread {
-        display: none;
-    }
-
-    .hero-lacenav__knots {
-        flex-direction: row;
-        gap: 6px;
-        height: auto;
-        background: color-mix(in srgb, var(--bg) 80%, transparent);
-        padding: 3px 10px;
-        border-radius: 9999px;
-        border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-    }
-
-    .hero-lacenav__knot {
-        min-height: 28px;
-        min-width: 28px;
-        padding: 0;
-        justify-content: center;
-    }
-
-    .hero-lacenav__tooltip {
-        display: none;
-    }
-
-    /* Editorial Caption on Mobile — Dedicated safe dock at screen bottom */
+    /* Bottom: Editorial Panel sits below photo */
     .hero-editorial {
-        position: static;
-        transform: none;
-        width: 100%;
-        max-width: 100%;
-        padding: 0 16px max(14px, env(safe-area-inset-bottom)) 16px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        z-index: 15;
+        order: 2;
+        flex: 1;
+        padding: 16px 20px max(16px, env(safe-area-inset-bottom)) 20px;
+        justify-content: space-between;
+        text-align: left;
     }
 
     .hero-editorial__badge {
-        display: none;
+        margin-bottom: 6px;
     }
 
     .hero-editorial__title {
-        font-size: 1.35rem;
-        margin: 0 0 10px 0;
-        line-height: 1.1;
+        font-size: 1.65rem;
+        margin-bottom: 8px;
     }
 
     .hero-editorial__desc {
-        display: none;
+        display: none; /* Kept clean and focused on mobile */
     }
 
     .hero-editorial__actions {
-        width: 100%;
-        display: flex;
-        justify-content: center;
+        margin-bottom: 14px;
         gap: 8px;
     }
 
     .hero-editorial__cta {
         flex: 1;
-        max-width: 210px;
-        height: 42px;
-        padding: 0 14px;
-        font-size: 0.65rem;
+        height: 46px;
+        padding: 0 18px;
+        font-size: 0.68rem;
         justify-content: center;
     }
 
-    .hero-turn-toggle {
-        height: 42px;
-        padding: 2px 4px;
+    .hero-turn-switch {
+        height: 46px;
     }
 
-    .hero-turn-btn {
-        height: 36px;
-        padding: 0 10px;
+    .hero-turn-switch__btn {
+        height: 38px;
+        padding: 0 12px;
+        font-size: 0.62rem;
     }
 
-    .hero-turn-btn__label {
-        font-size: 0.6rem;
+    .hero-lacenav {
+        padding-top: 10px;
     }
 
-    .hero-turn-btn__detail {
-        font-size: 0.48rem;
+    .hero-lacenav__knots {
+        gap: 12px;
     }
 }
 
 /* === REDUCE MOTION (ACCESSIBILITY COMPLIANT) === */
 @media (prefers-reduced-motion: reduce) {
     .fable-luxury-hero,
-    .hero__word-text,
-    .hero__frame,
-    .hero__lens,
-    .hero__turn-stage,
-    .hero__frame--turn,
     .hero-editorial,
-    .hero-lacenav__progress-line {
+    .hero__img,
+    .hero__frame--turn,
+    .hero__lens {
         transition: none !important;
         animation: none !important;
         transform: none !important;
