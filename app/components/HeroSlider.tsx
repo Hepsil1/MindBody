@@ -198,16 +198,7 @@ interface HeroSliderProps {
     children?: ReactNode;
 }
 
-import RunwayHero, {
-    RUNWAY_LOOKS,
-    type RunwayLook,
-    type RunwayHeroProps,
-    type TechCallout,
-} from "./RunwayHero";
-
-export { RunwayHero, RUNWAY_LOOKS, type RunwayLook, type RunwayHeroProps, type TechCallout };
-
-export function TwoColumnHero({
+export default function HeroSlider({
     slides: propSlides,
     autoPlay = true,
     interval = 8000,
@@ -536,5 +527,3 @@ export function TwoColumnHero({
         </section>
     );
 }
-
-export default RunwayHero;
