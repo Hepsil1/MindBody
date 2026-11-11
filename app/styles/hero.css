@@ -588,3 +588,341 @@
         gap: 4px;
     }
 }
+
+/* ========================================================
+   FABLE EDITORIAL LOOKBOOK & DUPLET ARCHITECTURE
+   Authentic RAW Studio Photography without Cutouts
+   ======================================================== */
+
+.hero-slider__slide {
+    background: var(--slide-bg, #b0aab3);
+    transition:
+        opacity 1s cubic-bezier(0.22, 0.61, 0.36, 1),
+        background-color 1s ease;
+}
+
+/* === Editorial Duplet (Magazine Spread) === */
+.hero-editorial-duplet {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    background: var(--slide-bg, #b0aab3);
+    overflow: hidden;
+}
+
+.hero-editorial-duplet__main-frame {
+    position: relative;
+    width: 50%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-editorial-duplet__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    transform: scale(1);
+    animation: kenBurnsSubtle 12s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes kenBurnsSubtle {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.035);
+    }
+}
+
+.hero-editorial-duplet__edge-fade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, transparent 65%, var(--slide-bg, #b0aab3) 100%);
+    pointer-events: none;
+}
+
+.hero-editorial-duplet__side-card {
+    position: relative;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: calc(38px + var(--header-height, 80px) + 20px) 6vw 40px 4vw;
+    z-index: 10;
+}
+
+.hero-editorial-duplet__detail-frame {
+    position: relative;
+    width: clamp(180px, 20vw, 280px);
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.22),
+        0 2px 8px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    margin-bottom: 24px;
+    background: #111;
+}
+
+.hero-editorial-duplet__detail-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 5;
+    background: rgba(18, 18, 18, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-editorial-duplet__detail-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s ease;
+}
+
+.hero-editorial-duplet__detail-frame:hover .hero-editorial-duplet__detail-img {
+    transform: scale(1.08);
+}
+
+.hero-editorial-duplet__story {
+    max-width: 520px;
+}
+
+.hero-editorial-duplet__tag {
+    display: inline-block;
+    font-family: var(--font-display, "Jost", sans-serif);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 12px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.hero-editorial-duplet__headline {
+    font-family: var(--font-serif, "Cormorant Garamond", "Playfair Display", serif);
+    font-size: clamp(2rem, 3.8vw, 3.6rem);
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    margin: 0 0 14px 0;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+.hero-editorial-duplet__desc {
+    font-family: var(--font-body, "Inter", sans-serif);
+    font-size: clamp(0.9rem, 1.1vw, 1.05rem);
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.88);
+    margin: 0 0 28px 0;
+    max-width: 440px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.hero-editorial-duplet__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 32px;
+    background: #ffffff;
+    color: #1a1a1a;
+    border-radius: 9999px;
+    font-family: var(--font-display, "Jost", sans-serif);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.hero-editorial-duplet__btn:hover {
+    transform: translateY(-2px);
+    background: #f4efe9;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+}
+
+/* === Colour Chapters (Full-Bleed Center) === */
+.hero-colour-chapters {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--slide-bg, #b9b2b9);
+    overflow: hidden;
+}
+
+.hero-colour-chapters__frame {
+    position: relative;
+    width: 100%;
+    max-width: 1400px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-colour-chapters__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+    animation: kenBurnsSubtle 14s ease-out forwards;
+}
+
+.hero-colour-chapters__side-fade {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 15%;
+    pointer-events: none;
+}
+.hero-colour-chapters__side-fade.left {
+    left: 0;
+    background: linear-gradient(to right, var(--slide-bg, #b9b2b9) 0%, transparent 100%);
+}
+.hero-colour-chapters__side-fade.right {
+    right: 0;
+    background: linear-gradient(to left, var(--slide-bg, #b9b2b9) 0%, transparent 100%);
+}
+
+.hero-colour-chapters__caption {
+    position: absolute;
+    left: clamp(20px, 8vw, 120px);
+    bottom: clamp(30px, 8vh, 80px);
+    z-index: 10;
+    max-width: 500px;
+}
+
+.hero-colour-chapters__tag {
+    display: inline-block;
+    font-family: var(--font-display, "Jost", sans-serif);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 8px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.hero-colour-chapters__title {
+    font-family: var(--font-serif, "Cormorant Garamond", serif);
+    font-size: clamp(2.2rem, 4vw, 3.8rem);
+    font-weight: 300;
+    line-height: 1;
+    color: #ffffff;
+    margin: 0 0 10px 0;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.hero-colour-chapters__desc {
+    font-family: var(--font-body, "Inter", sans-serif);
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.88);
+    margin: 0 0 24px 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.hero-slider__triptych-caption {
+    position: absolute;
+    bottom: clamp(30px, 6vh, 60px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+/* === Mobile Adjustments (< 1024px) === */
+@media (max-width: 1023px) {
+    .hero-editorial-duplet {
+        flex-direction: column;
+    }
+
+    .hero-editorial-duplet__main-frame {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        inset: 0;
+    }
+
+    .hero-editorial-duplet__edge-fade {
+        background: linear-gradient(
+            to top,
+            rgba(15, 15, 15, 0.85) 0%,
+            rgba(15, 15, 15, 0.3) 45%,
+            transparent 75%
+        );
+    }
+
+    .hero-editorial-duplet__side-card {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 20px));
+        justify-content: flex-end;
+    }
+
+    .hero-editorial-duplet__detail-frame {
+        display: none; /* keep clean full-bleed model on mobile */
+    }
+
+    .hero-editorial-duplet__headline {
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+
+    .hero-editorial-duplet__desc {
+        font-size: 0.88rem;
+        margin-bottom: 18px;
+    }
+
+    .hero-editorial-duplet__btn {
+        width: 100%;
+        justify-content: center;
+        padding: 14px 24px;
+        font-size: 0.8rem;
+    }
+
+    .hero-colour-chapters__caption {
+        left: 20px;
+        right: 20px;
+        bottom: calc(24px + env(safe-area-inset-bottom, 20px));
+        max-width: 100%;
+    }
+
+    .hero-colour-chapters__side-fade {
+        display: none;
+    }
+}
