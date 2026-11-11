@@ -103,6 +103,21 @@ export function buildHeroAvifSrcset(url: string): string {
     ].join(", ");
 }
 
+const FABLE_VERTICAL_WIDTHS = [640, 960, 1440, 1920, 2560, 3200];
+const FABLE_FULL_WIDTHS = [1280, 1920, 2560, 3840];
+
+export function buildFableAvifSrcset(url: string, type: "vertical" | "full" = "vertical"): string {
+    const base = stripExt(url);
+    const widths = type === "full" ? FABLE_FULL_WIDTHS : FABLE_VERTICAL_WIDTHS;
+    return [...widths.map((w) => `${base}-${w}w.avif ${w}w`), `${base}.avif 3840w`].join(", ");
+}
+
+export function buildFableWebpSrcset(url: string, type: "vertical" | "full" = "vertical"): string {
+    const base = stripExt(url);
+    const widths = type === "full" ? FABLE_FULL_WIDTHS : FABLE_VERTICAL_WIDTHS;
+    return [...widths.map((w) => `${base}-${w}w.webp ${w}w`), `${base}.webp 3840w`].join(", ");
+}
+
 /**
  * Direct URL to a pre-generated responsive variant.
  * Ideal for small thumbnails (e.g. PDP 80×80 thumbs) or preview chips
