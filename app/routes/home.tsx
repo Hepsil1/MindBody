@@ -141,11 +141,11 @@ export function meta({ data, params }: Route.MetaArgs) {
     // what the browser will actually request — preloading WebP was a
     // guaranteed cache miss. `type` lets non-AVIF browsers skip the hint.
     const firstSlide = data?.slides?.[0] ?? defaultSlides[0];
-    const heroImgs = firstSlide
-        ? [firstSlide.image1, firstSlide.image2, firstSlide.image3].filter(
+    const heroImgs: string[] = firstSlide?.frames
+        ? firstSlide.frames.map((f) => `/hero/${f.src}.avif`)
+        : [firstSlide?.image1, firstSlide?.image2, firstSlide?.image3].filter(
               (x): x is string => typeof x === "string" && x.length > 0,
-          )
-        : [];
+          );
     const isTriptych = heroImgs.length > 1;
     const avif = (img: string) => img.replace(/\.(jpe?g|png|webp)$/i, ".avif");
 
@@ -473,20 +473,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
             };
         };
 
-        const slidesPayload: SlideData[] = slides.map((s) => ({
-            id: s.id,
-            name: s.name,
-            type: s.type as "triptych" | "single",
-            link: s.link,
-            image1: s.image1,
-            image2: s.image2,
-            image3: s.image3,
-            // Carry the admin's face-safe crop positions — without these the
-            // hero falls back to center-crop and slices through portrait photos.
-            image1Pos: s.image1Pos,
-            image2Pos: s.image2Pos,
-            image3Pos: s.image3Pos,
-        }));
+        const slidesPayload: SlideData[] = defaultSlides;
 
         // Normalise into HomeCategoryCard[] so the render side doesn't have
         // to branch on a union — fallback array now has the same shape as DB rows.
