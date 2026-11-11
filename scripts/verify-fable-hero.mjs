@@ -1,6 +1,5 @@
 import { chromium } from "playwright";
 import path from "node:path";
-import fs from "node:fs";
 
 const ARTIFACT_DIR =
     "C:/Users/tgmbo/.gemini/antigravity/brain/678229c0-0337-4392-95a2-0345912060d1";
@@ -37,27 +36,25 @@ async function main() {
             // Wait for hero element
             await page.waitForSelector(".fable-luxury-hero");
 
-            // Dismiss cookie banner if present
+            // Dismiss cookie banner
             try {
                 const cookieBtn = await page.$(
                     'button:has-text("ЛИШЕ НЕОБХІДНІ"), button:has-text("ПРИЙНЯТИ")',
                 );
                 if (cookieBtn) {
                     await cookieBtn.click();
-                    await page.waitForTimeout(200);
+                    await page.waitForTimeout(300);
                 }
             } catch {}
 
-            // Allow CSS transitions and images to fully render
-            await page.waitForTimeout(600);
+            await page.waitForTimeout(500);
 
-            // If it's macro slide, simulate pointer move to test Dual-Focus Lens
+            // Test Dual-Focus Lens on Slide 4
             if (slide.id === "s4") {
                 const stage = await page.$(".hero__stage--macro");
                 if (stage) {
                     const box = await stage.boundingBox();
                     if (box) {
-                        // Move cursor over lacing region (center-right)
                         await page.mouse.move(box.x + box.width * 0.52, box.y + box.height * 0.42);
                         await page.waitForTimeout(300);
                     }
@@ -68,6 +65,18 @@ async function main() {
             const outPath = path.join(ARTIFACT_DIR, filename);
             await page.screenshot({ path: outPath });
             console.log(`Saved screenshot: ${filename}`);
+
+            // On Slide 1 on desktop, also capture the Turn FRONT view
+            if (slide.id === "s1" && vp.name === "desktop_1440") {
+                const frontBtn = await page.$('.hero-turn-btn:has-text("ПЕРЕД")');
+                if (frontBtn) {
+                    await frontBtn.click();
+                    await page.waitForTimeout(800);
+                    const turnFilename = `fable_${vp.name}_01_turn_front_mandala.png`;
+                    await page.screenshot({ path: path.join(ARTIFACT_DIR, turnFilename) });
+                    console.log(`Saved screenshot: ${turnFilename}`);
+                }
+            }
         }
         await context.close();
     }
