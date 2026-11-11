@@ -9,19 +9,13 @@ import { getLqipStyle } from "../utils/lqip";
 import { useI18n, LLink } from "../i18n";
 import "../styles/hero.css";
 
-// Supported Hero layout modes curated with Fable
-export type HeroLayoutMode =
-    | "editorial-duplet"
-    | "colour-chapters"
-    | "triptych-gallery"
-    | "editorial-left"
-    | "trio-center"
-    | "top-clean";
+// Layout modes for the Hero Screen
+export type HeroLayoutMode = "trio-center" | "editorial-left" | "top-clean" | "quartet";
 
 export interface SlideData {
     id: string;
     name: string;
-    type: "triptych" | "single";
+    type: "single" | "triptych";
     link?: string | null;
     image1: string;
     mobileImage?: string | null;
@@ -31,80 +25,53 @@ export interface SlideData {
     image2Pos?: string;
     image3Pos?: string;
     layout?: HeroLayoutMode;
-    title?: string;
-    subtitle?: string;
-    bg?: string;
 }
 
-// Fable Masterpiece Default Slides:
-// Authentic RAW photography (4284x5712 downscaled with Lanczos3 + unsharp mask).
-// ZERO cutouts, ZERO artificial stickers. Natural studio lighting, real skin & fabric textures,
-// and seamless edge dissolves into the sampled studio wall color.
+const FACE_SAFE = "50% 35%";
+
+// The Flagship Campaign Canvases (Retina 8K)
+// Real RAW studio photography (5410x7214, 4284x5712) seamlessly rendered into
+// a luminous, champagne-silk studio cyclorama with contact shadows and reflections.
+// Curated multi-model variety: 3 models -> 1 model -> 2 models -> 4 models!
 export const defaultSlides: SlideData[] = [
     {
-        id: "fable-1",
-        name: "Editorial Lookbook · Black Core & Macro",
+        id: "v1-grand-trio",
+        name: "V1 · Grand Trio (3 моделі)",
         type: "single",
-        layout: "editorial-duplet",
-        image1: "/hero/hero-black-desktop.webp",
-        mobileImage: "/hero/hero-black-mobile.webp",
-        image2: "/hero/hero-black-detail.webp",
-        bg: "#b0aab3",
-        title: "Black Obsidian Core",
-        subtitle: "Анатомічний комбінезон із компресійного трикотажу з прорізами для пальців",
-        link: "/shop/yoga",
+        layout: "trio-center",
+        image1: "/Slides/hero-v1-desktop.webp",
+        mobileImage: "/Slides/hero-v1-mobile.webp",
+        image1Pos: "center center",
+        link: "/shop",
     },
     {
-        id: "fable-2",
-        name: "Editorial Lookbook · Rich Cocoa Lace",
+        id: "v3-editorial-lookbook",
+        name: "V3 · Editorial Lookbook (1 модель соло)",
         type: "single",
-        layout: "editorial-duplet",
-        image1: "/hero/hero-choco-desktop.webp",
-        mobileImage: "/hero/hero-choco-mobile.webp",
-        image2: "/hero/hero-choco-detail.webp",
-        bg: "#b9b2b9",
-        title: "Rich Cocoa Lace",
-        subtitle: "Культова відкрита спина з геометричним шнуруванням та вишивкою сонця",
+        layout: "editorial-left",
+        image1: "/Slides/hero-v3-desktop.webp",
+        mobileImage: "/Slides/hero-v3-mobile.webp",
+        image1Pos: "center center",
         link: "/shop/casual",
     },
     {
-        id: "fable-3",
-        name: "Colour Chapters · Deep Petrol",
+        id: "v2-standing-duo",
+        name: "V2 · Studio Standing Duo (2 моделі)",
         type: "single",
-        layout: "colour-chapters",
-        image1: "/hero/hero-teal-desktop.webp",
-        mobileImage: "/hero/hero-teal-mobile.webp",
-        bg: "#d8d5d7",
-        title: "Deep Petrol Flow",
-        subtitle: "Матовий шовковий дотик та повна свобода рухів для йоги та танцю",
-        link: "/shop/dance",
+        layout: "top-clean",
+        image1: "/Slides/hero-v2-desktop.webp",
+        mobileImage: "/Slides/hero-v2-mobile.webp",
+        image1Pos: "center center",
+        link: "/shop/yoga",
     },
     {
-        id: "fable-4",
-        name: "Colour Chapters · Dark Ruby",
+        id: "v4-studio-quartet",
+        name: "V4 · Studio Quartet (4 моделі)",
         type: "single",
-        layout: "colour-chapters",
-        image1: "/hero/hero-ruby-desktop.webp",
-        mobileImage: "/hero/hero-ruby-mobile.webp",
-        bg: "#d9d4d7",
-        title: "Dark Ruby Vitality",
-        subtitle: "Динамічний силует і заряд упевненості для інтенсивних тренувань",
-        link: "/shop/sport",
-    },
-    {
-        id: "fable-5",
-        name: "Studio Triptych · Pure Frames",
-        type: "triptych",
-        layout: "triptych-gallery",
-        image1: "/hero/hero-black-desktop.webp",
-        image2: "/hero/hero-choco-desktop.webp",
-        image3: "/hero/hero-teal-desktop.webp",
-        image1Pos: "50% 35%",
-        image2Pos: "50% 35%",
-        image3Pos: "50% 60%",
-        bg: "#2b2826",
-        title: "The MindBody Studio Archive",
-        subtitle: "Чотири культові посадки. Бездоганна якість українського виробництва.",
+        layout: "quartet",
+        image1: "/Slides/hero-v4-desktop.webp",
+        mobileImage: "/Slides/hero-v4-mobile.webp",
+        image1Pos: "center center",
         link: "/shop",
     },
 ];
@@ -141,14 +108,10 @@ export default function HeroSlider({
         if (heroParam === "compare" || heroParam) {
             setIsCompareMode(true);
             const variantMap: Record<string, number> = {
-                "duplet-black": 0,
-                "duplet-choco": 1,
-                "chapters-teal": 2,
-                "chapters-ruby": 3,
-                triptych: 4,
                 v1: 0,
                 v3: 1,
                 v2: 2,
+                v4: 3,
             };
             if (heroParam in variantMap) {
                 setActiveSlide(variantMap[heroParam]);
@@ -176,13 +139,7 @@ export default function HeroSlider({
         setActiveSlide(index);
         if (typeof window !== "undefined" && window.history?.replaceState) {
             const url = new URL(window.location.href);
-            const variantMap: Record<number, string> = {
-                0: "duplet-black",
-                1: "duplet-choco",
-                2: "chapters-teal",
-                3: "chapters-ruby",
-                4: "triptych",
-            };
+            const variantMap: Record<number, string> = { 0: "v1", 1: "v3", 2: "v2", 3: "v4" };
             if (variantMap[index]) {
                 url.searchParams.set("hero", variantMap[index]);
             } else {
@@ -193,7 +150,28 @@ export default function HeroSlider({
     };
 
     const currentSlide = slides[activeSlide] ?? slides[0];
-    const activeLayout: HeroLayoutMode = currentSlide?.layout || "editorial-duplet";
+    const activeLayout: HeroLayoutMode =
+        currentSlide?.layout || (currentSlide?.type === "single" ? "trio-center" : "top-clean");
+
+    // Convert slide data to images array with positions
+    const getSlideItems = (
+        slide: SlideData,
+    ): Array<{ img: string; mobileImg?: string; pos: string }> => {
+        if (slide.type === "single") {
+            return [
+                {
+                    img: slide.image1,
+                    mobileImg: slide.mobileImage || undefined,
+                    pos: slide.image1Pos || "center center",
+                },
+            ];
+        }
+        return [
+            { img: slide.image1, pos: slide.image1Pos || "center center" },
+            { img: slide.image2, pos: slide.image2Pos || "center center" },
+            { img: slide.image3, pos: slide.image3Pos || "center center" },
+        ].filter((item): item is { img: string; pos: string } => !!item.img);
+    };
 
     // Minimum touch distance for swipe (in px)
     const minSwipeDistance = 50;
@@ -230,284 +208,88 @@ export default function HeroSlider({
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
-            style={{ "--active-bg": currentSlide?.bg || "#b0aab3" } as React.CSSProperties}
         >
             {/* Slides Container */}
             <div className="hero-slider__slides">
                 {slides.map((slide, index) => {
-                    const isActive = index === activeSlide;
-                    const isDuplet = slide.layout === "editorial-duplet";
-                    const isChapters = slide.layout === "colour-chapters";
-                    const isTriptych =
-                        slide.type === "triptych" || slide.layout === "triptych-gallery";
+                    const items = getSlideItems(slide);
+                    const isHeroSingle = slide.type === "single";
+                    const avifSrcset = isHeroSingle ? buildHeroAvifSrcset : buildAvifSrcset;
+                    const webpSrcset = isHeroSingle ? buildHeroWebpSrcset : buildWebpSrcset;
+                    const desktopFrac = Math.floor(100 / items.length);
+                    const sizesAttr = `(max-width: 768px) 100vw, ${desktopFrac}vw`;
 
                     return (
                         <div
                             key={slide.id}
-                            className={`hero-slider__slide ${isActive ? "is-active" : ""}`}
+                            className={`hero-slider__slide ${index === activeSlide ? "is-active" : ""}`}
                             data-slide={index}
-                            style={{ "--slide-bg": slide.bg || "#b0aab3" } as React.CSSProperties}
                         >
-                            {/* CASE 1: Editorial Duplet (Magazine Spread with Macro Detail) */}
-                            {isDuplet && (
-                                <div className="hero-editorial-duplet">
-                                    {/* Left: Main Model 4:5 Frame */}
+                            <div className="hero-slider__triptych">
+                                {items.map((item, imgIndex) => (
                                     <div
-                                        className="hero-editorial-duplet__main-frame"
-                                        style={getLqipStyle(slide.image1)}
+                                        key={imgIndex}
+                                        className="hero-slider__triptych-item"
+                                        style={getLqipStyle(item.img)}
                                     >
                                         <picture>
-                                            {slide.mobileImage && (
+                                            {item.mobileImg && (
                                                 <>
                                                     <source
-                                                        media="(max-width: 1023px)"
-                                                        srcSet={buildHeroAvifSrcset(
-                                                            slide.mobileImage,
-                                                        )}
+                                                        media="(max-width: 768px)"
+                                                        srcSet={buildHeroAvifSrcset(item.mobileImg)}
                                                         sizes="100vw"
                                                         type="image/avif"
                                                     />
                                                     <source
-                                                        media="(max-width: 1023px)"
-                                                        srcSet={buildHeroWebpSrcset(
-                                                            slide.mobileImage,
-                                                        )}
+                                                        media="(max-width: 768px)"
+                                                        srcSet={buildHeroWebpSrcset(item.mobileImg)}
                                                         sizes="100vw"
                                                         type="image/webp"
                                                     />
                                                 </>
                                             )}
                                             <source
-                                                media="(min-width: 1024px)"
-                                                srcSet={buildHeroAvifSrcset(slide.image1)}
-                                                sizes="(min-width: 1440px) 46vw, 55vw"
+                                                srcSet={avifSrcset(item.img)}
+                                                sizes={sizesAttr}
                                                 type="image/avif"
                                             />
                                             <source
-                                                media="(min-width: 1024px)"
-                                                srcSet={buildHeroWebpSrcset(slide.image1)}
-                                                sizes="(min-width: 1440px) 46vw, 55vw"
+                                                srcSet={webpSrcset(item.img)}
+                                                sizes={sizesAttr}
                                                 type="image/webp"
                                             />
                                             <img
-                                                src={slide.image1}
-                                                alt={slide.title || slide.name}
-                                                className="hero-editorial-duplet__img"
+                                                src={item.img}
+                                                alt={
+                                                    slide.name && slide.name !== "Без назви"
+                                                        ? `${slide.name} — фото ${imgIndex + 1}`
+                                                        : `Колекція MIND BODY — фото ${imgIndex + 1}`
+                                                }
+                                                width={isHeroSingle ? 3840 : 1080}
+                                                height={isHeroSingle ? 2160 : 1920}
+                                                style={{ objectPosition: item.pos }}
                                                 loading={index === 0 ? "eager" : "lazy"}
                                                 decoding={index === 0 ? "sync" : "async"}
                                                 fetchPriority={index === 0 ? "high" : "low"}
                                             />
                                         </picture>
-                                        <div className="hero-editorial-duplet__edge-fade" />
                                     </div>
-
-                                    {/* Right: Macro Detail & Story Card */}
-                                    <div className="hero-editorial-duplet__side-card">
-                                        {slide.image2 && (
-                                            <div
-                                                className="hero-editorial-duplet__detail-frame"
-                                                style={getLqipStyle(slide.image2)}
-                                            >
-                                                <span className="hero-editorial-duplet__detail-badge">
-                                                    1:1 Macro Craft
-                                                </span>
-                                                <picture>
-                                                    <source
-                                                        srcSet={buildHeroAvifSrcset(slide.image2)}
-                                                        sizes="(min-width: 1024px) 24vw, 45vw"
-                                                        type="image/avif"
-                                                    />
-                                                    <source
-                                                        srcSet={buildHeroWebpSrcset(slide.image2)}
-                                                        sizes="(min-width: 1024px) 24vw, 45vw"
-                                                        type="image/webp"
-                                                    />
-                                                    <img
-                                                        src={slide.image2}
-                                                        alt={`${slide.title} — деталь крою`}
-                                                        className="hero-editorial-duplet__detail-img"
-                                                        loading="lazy"
-                                                    />
-                                                </picture>
-                                            </div>
-                                        )}
-                                        <div className="hero-editorial-duplet__story">
-                                            <span className="hero-editorial-duplet__tag">
-                                                MINDBODY ARCHIVE · 2026
-                                            </span>
-                                            <h2 className="hero-editorial-duplet__headline">
-                                                {slide.title}
-                                            </h2>
-                                            <p className="hero-editorial-duplet__desc">
-                                                {slide.subtitle}
-                                            </p>
-                                            <div className="hero-editorial-duplet__action">
-                                                <LLink
-                                                    to={slide.link || "/shop"}
-                                                    className="hero-editorial-duplet__btn"
-                                                >
-                                                    <span>{t("Переглянути колекцію")}</span>
-                                                    <svg
-                                                        width="18"
-                                                        height="18"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        strokeWidth="2"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                    >
-                                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                                        <polyline points="12 5 19 12 12 19"></polyline>
-                                                    </svg>
-                                                </LLink>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* CASE 2: Colour Chapters (Full-Bleed Photographic Canvas) */}
-                            {isChapters && (
-                                <div className="hero-colour-chapters">
-                                    <div
-                                        className="hero-colour-chapters__frame"
-                                        style={getLqipStyle(slide.image1)}
-                                    >
-                                        <picture>
-                                            {slide.mobileImage && (
-                                                <>
-                                                    <source
-                                                        media="(max-width: 1023px)"
-                                                        srcSet={buildHeroAvifSrcset(
-                                                            slide.mobileImage,
-                                                        )}
-                                                        sizes="100vw"
-                                                        type="image/avif"
-                                                    />
-                                                    <source
-                                                        media="(max-width: 1023px)"
-                                                        srcSet={buildHeroWebpSrcset(
-                                                            slide.mobileImage,
-                                                        )}
-                                                        sizes="100vw"
-                                                        type="image/webp"
-                                                    />
-                                                </>
-                                            )}
-                                            <source
-                                                media="(min-width: 1024px)"
-                                                srcSet={buildHeroAvifSrcset(slide.image1)}
-                                                sizes="100vw"
-                                                type="image/avif"
-                                            />
-                                            <source
-                                                media="(min-width: 1024px)"
-                                                srcSet={buildHeroWebpSrcset(slide.image1)}
-                                                sizes="100vw"
-                                                type="image/webp"
-                                            />
-                                            <img
-                                                src={slide.image1}
-                                                alt={slide.title || slide.name}
-                                                className="hero-colour-chapters__img"
-                                                loading={index === 0 ? "eager" : "lazy"}
-                                                decoding={index === 0 ? "sync" : "async"}
-                                                fetchPriority={index === 0 ? "high" : "low"}
-                                            />
-                                        </picture>
-                                        <div className="hero-colour-chapters__side-fade left" />
-                                        <div className="hero-colour-chapters__side-fade right" />
-                                    </div>
-                                    <div className="hero-colour-chapters__caption">
-                                        <span className="hero-colour-chapters__tag">
-                                            COLOUR CHAPTERS
-                                        </span>
-                                        <h2 className="hero-colour-chapters__title">
-                                            {slide.title}
-                                        </h2>
-                                        <p className="hero-colour-chapters__desc">
-                                            {slide.subtitle}
-                                        </p>
-                                        <LLink
-                                            to={slide.link || "/shop"}
-                                            className="hero-editorial-duplet__btn"
-                                        >
-                                            <span>{t("Переглянути колекцію")}</span>
-                                        </LLink>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* CASE 3: Triptych Gallery (3 Pure Photographic Frames) */}
-                            {isTriptych && (
-                                <div className="hero-slider__triptych">
-                                    {[
-                                        {
-                                            img: slide.image1,
-                                            pos: slide.image1Pos || "center center",
-                                        },
-                                        {
-                                            img: slide.image2 || slide.image1,
-                                            pos: slide.image2Pos || "center center",
-                                        },
-                                        {
-                                            img: slide.image3 || slide.image1,
-                                            pos: slide.image3Pos || "center center",
-                                        },
-                                    ].map((item, imgIndex) => (
-                                        <div
-                                            key={imgIndex}
-                                            className="hero-slider__triptych-item"
-                                            style={getLqipStyle(item.img)}
-                                        >
-                                            <picture>
-                                                <source
-                                                    srcSet={buildHeroAvifSrcset(item.img)}
-                                                    sizes="33.33vw"
-                                                    type="image/avif"
-                                                />
-                                                <source
-                                                    srcSet={buildHeroWebpSrcset(item.img)}
-                                                    sizes="33.33vw"
-                                                    type="image/webp"
-                                                />
-                                                <img
-                                                    src={item.img}
-                                                    alt={`${slide.name} — кадр ${imgIndex + 1}`}
-                                                    style={{ objectPosition: item.pos }}
-                                                    loading={index === 0 ? "eager" : "lazy"}
-                                                />
-                                            </picture>
-                                        </div>
-                                    ))}
-                                    <div className="hero-slider__triptych-caption">
-                                        <h2 className="hero-editorial-duplet__headline">
-                                            {slide.title || "The Studio Archive"}
-                                        </h2>
-                                        <LLink
-                                            to={slide.link || "/shop"}
-                                            className="hero-editorial-duplet__btn"
-                                        >
-                                            <span>{t("Переглянути всі моделі")}</span>
-                                        </LLink>
-                                    </div>
-                                </div>
-                            )}
-
+                                ))}
+                            </div>
                             <div className="hero-slider__overlay" />
                         </div>
                     );
                 })}
             </div>
 
-            {/* Content Layer (Minimalist Brand Logo and Navigation) */}
+            {/* Content Layer */}
             <div className="hero-slider__content">
                 {children ? (
                     children
                 ) : (
                     <>
-                        {/* Top Clean Brand Emblem */}
+                        {/* Brand Logo with Floral Sun Emblem */}
                         <div className="hero-slider__logo-container">
                             <div className="hero-slider__brand-block">
                                 <div className="hero-slider__logo">
@@ -525,10 +307,19 @@ export default function HeroSlider({
                                 </div>
                             </div>
                         </div>
+
+                        {/* CTA Action Button */}
+                        <div className="hero-slider__footer-cta">
+                            <div className="hero-slider__cta">
+                                <LLink to={currentSlide?.link || "/shop"} className="hero-cta-btn">
+                                    <span>{t("ПЕРЕГЛЯНУТИ КОЛЕКЦІЮ")}</span>
+                                </LLink>
+                            </div>
+                        </div>
                     </>
                 )}
 
-                {/* Slide indicators */}
+                {/* Slide navigation indicators */}
                 {slides.length > 1 && (
                     <div className="hero-slider__nav">
                         {slides.map((_, index) => (
@@ -545,7 +336,7 @@ export default function HeroSlider({
                 )}
             </div>
 
-            {/* Fable Comparison Switcher (dev mode or ?hero=compare) */}
+            {/* Interactive Fable Studio Switcher (?hero=compare) */}
             {isCompareMode && (
                 <div
                     className="hero-compare-bar"
@@ -561,9 +352,7 @@ export default function HeroSlider({
                             onClick={() => goToSlide(0)}
                         >
                             <span className="hero-compare-pill__rank">★</span>
-                            <span className="hero-compare-pill__name">
-                                #1 Lookbook · Black Core & Macro
-                            </span>
+                            <span className="hero-compare-pill__name">V1 · Trio (3 моделі)</span>
                         </button>
                         <button
                             type="button"
@@ -573,7 +362,7 @@ export default function HeroSlider({
                         >
                             <span className="hero-compare-pill__rank">#2</span>
                             <span className="hero-compare-pill__name">
-                                #2 Lookbook · Rich Cocoa Lace
+                                V3 · Lookbook (1 модель)
                             </span>
                         </button>
                         <button
@@ -583,9 +372,7 @@ export default function HeroSlider({
                             onClick={() => goToSlide(2)}
                         >
                             <span className="hero-compare-pill__rank">#3</span>
-                            <span className="hero-compare-pill__name">
-                                #3 Chapters · Deep Petrol
-                            </span>
+                            <span className="hero-compare-pill__name">V2 · Duo (2 моделі)</span>
                         </button>
                         <button
                             type="button"
@@ -594,16 +381,7 @@ export default function HeroSlider({
                             onClick={() => goToSlide(3)}
                         >
                             <span className="hero-compare-pill__rank">#4</span>
-                            <span className="hero-compare-pill__name">#4 Chapters · Dark Ruby</span>
-                        </button>
-                        <button
-                            type="button"
-                            className={`hero-compare-pill ${activeSlide === 4 ? "is-active" : ""}`}
-                            aria-pressed={activeSlide === 4}
-                            onClick={() => goToSlide(4)}
-                        >
-                            <span className="hero-compare-pill__rank">#5</span>
-                            <span className="hero-compare-pill__name">#5 Pure Studio Triptych</span>
+                            <span className="hero-compare-pill__name">V4 · Quartet (4 моделі)</span>
                         </button>
                     </div>
                 </div>
