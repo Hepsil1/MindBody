@@ -67,6 +67,7 @@ export const OrderCreateSchema = z.object({
     // Storefront language the order was placed from — drives the language of
     // the confirmation email. Optional: older clients imply Ukrainian.
     locale: z.enum(["uk", "en", "ru"]).optional().default("uk"),
+    sessionKey: z.string().max(100).optional().nullable(),
 });
 
 // ===== Contact API =====

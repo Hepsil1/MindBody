@@ -4,7 +4,8 @@ import type { Route } from "./+types/about";
 import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
 import { getLqipStyle } from "../utils/lqip";
 import { useI18n, LLink } from "../i18n";
-import { localeFromParamSafe, OG_LOCALE } from "../i18n/config";
+import { localeFromParamSafe, localizePath, OG_LOCALE } from "../i18n/config";
+import { DEFAULT_SITE_URL } from "../utils/site-url";
 import { useSiteSettings, viberChatUrl, whatsappUrl } from "../utils/site-settings";
 import { prisma } from "../db.server";
 import { cachedFetch } from "../utils/cache.server";
@@ -71,14 +72,26 @@ const META = {
 export function meta({ params }: Route.MetaArgs) {
     const locale = localeFromParamSafe(params.lang);
     const m = META[locale];
+    const siteUrl = DEFAULT_SITE_URL;
+    const url = `${siteUrl}${localizePath("/about", locale)}`;
+    const ogImage = `${siteUrl}/og-default.jpg`;
     return [
         { title: m.title },
         { name: "description", content: m.description },
+        { tagName: "link", rel: "canonical", href: url },
         { property: "og:title", content: m.ogTitle },
         { property: "og:description", content: m.ogDescription },
+        { property: "og:url", content: url },
         { property: "og:type", content: "website" },
-        { property: "og:image", content: "/generalpics/347_131123.webp" },
+        { property: "og:image", content: ogImage },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:type", content: "image/jpeg" },
         { property: "og:locale", content: OG_LOCALE[locale] },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: m.ogTitle },
+        { name: "twitter:description", content: m.ogDescription },
+        { name: "twitter:image", content: ogImage },
     ];
 }
 

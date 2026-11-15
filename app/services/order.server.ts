@@ -16,6 +16,7 @@
 import { Prisma } from "@prisma/client";
 import { randomBytes } from "node:crypto";
 import { prisma } from "../db.server";
+import { generateOrderToken } from "../utils/orderToken.server";
 import {
     decrementForOrderTx,
     restoreForCancelTx,
@@ -77,6 +78,7 @@ export type CreateOrderResult =
           orderId: string;
           orderNumber: number;
           finalTotal: number;
+          orderToken: string;
           /** Present only when a NEW order was created (drives email/telegram + emailStatus). */
           email?: OrderEmailPayload;
       }
@@ -96,15 +98,21 @@ interface ExistingOrder {
     id: string;
     orderNumber: number;
     finalTotal: number;
+    accessToken?: string | null;
 }
 
 async function findOrderByKey(key: string): Promise<ExistingOrder | null> {
     const r = await prisma.order.findUnique({
         where: { idempotencyKey: key },
-        select: { id: true, orderNumber: true, total: true },
+        select: { id: true, orderNumber: true, total: true, accessToken: true },
     });
     if (!r) return null;
-    return { id: r.id, orderNumber: Number(r.orderNumber), finalTotal: Number(r.total) };
+    return {
+        id: r.id,
+        orderNumber: Number(r.orderNumber),
+        finalTotal: Number(r.total),
+        accessToken: r.accessToken,
+    };
 }
 
 function metaString(e: Prisma.PrismaClientKnownRequestError): string {
@@ -205,6 +213,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                 orderId: existing.id,
                 orderNumber: existing.orderNumber,
                 finalTotal: existing.finalTotal,
+                orderToken: existing.accessToken || "",
             };
         }
     }
@@ -226,14 +235,22 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                 if (idempotencyKey) {
                     const dup = await tx.order.findUnique({
                         where: { idempotencyKey },
-                        select: { id: true, orderNumber: true, total: true },
+                        select: { id: true, orderNumber: true, total: true, accessToken: true },
                     });
                     if (dup) {
+                        const token = dup.accessToken || generateOrderToken();
+                        if (!dup.accessToken) {
+                            await tx.order.update({
+                                where: { id: dup.id },
+                                data: { accessToken: token },
+                            });
+                        }
                         return {
                             deduped: true as const,
                             id: dup.id,
                             orderNumber: Number(dup.orderNumber),
                             finalTotal: Number(dup.total),
+                            orderToken: token,
                         };
                     }
                 }
@@ -249,6 +266,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                     },
                 });
 
+                const accessToken = generateOrderToken();
                 // idempotencyKey is @unique → a truly concurrent duplicate fails
                 // at INSERT here (P2002) and is caught + deduped below.
                 const created = await tx.order.create({
@@ -261,6 +279,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                         idempotencyKey,
                         appliedPromoCode,
                         discountAmount,
+                        accessToken,
                         items: {
                             create: validItems.map((i) => ({
                                 productId: i.id,
@@ -297,6 +316,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                     id: created.id,
                     orderNumber,
                     finalTotal,
+                    orderToken: accessToken,
                 };
             });
 
@@ -307,6 +327,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                     orderId: result.id,
                     orderNumber: result.orderNumber,
                     finalTotal: result.finalTotal,
+                    orderToken: result.orderToken,
                 };
             }
 
@@ -316,6 +337,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                 orderId: result.id,
                 orderNumber: result.orderNumber,
                 finalTotal,
+                orderToken: result.orderToken,
                 email: {
                     validItems,
                     customer,
@@ -346,6 +368,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
                         orderId: existing.id,
                         orderNumber: existing.orderNumber,
                         finalTotal: existing.finalTotal,
+                        orderToken: existing.accessToken || "",
                     };
                 }
             }

@@ -65,11 +65,13 @@ const TARGET_DIRS = [
     "pics1cloths",
     "pics2cloths",
     "generalpics",
-    "Slides",
     "uploads",
     "lifestyle",
     "brand",
 ];
+// Single masters outside TARGET_DIRS that still need the standard srcset
+// ladder (the Single Look hero uses /hero/fable-s1-front).
+const EXTRA_MASTERS = ["hero/fable-s1-front.jpg"];
 const WIDTHS = [400, 800, 1200, 1600];
 const MASTER_MAX_WIDTH = 2400; // Match responsive-image.ts high-DPR master
 const WEBP_QUALITY = 82;
@@ -313,6 +315,18 @@ async function processBase(filePath) {
                 );
             }
         }
+    }
+
+    for (const rel of EXTRA_MASTERS) {
+        const srcPath = path.join(PUBLIC_DIR, rel);
+        const base = srcPath.replace(/\.(webp|jpe?g)$/i, "");
+        if (seenBases.has(base) || !(await fileExists(srcPath))) continue;
+        seenBases.add(base);
+        total++;
+        const r = await processBase(srcPath);
+        if (r.skipped) continue;
+        generated += r.generated;
+        if (r.generated > 0) console.log(`  ✓ ${rel.padEnd(45)} → ${r.actions.join(", ")}`);
     }
 
     // 5. Write LQIP map. Components import this JSON at build time.

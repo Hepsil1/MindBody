@@ -656,3 +656,79 @@ export async function notifyOrderStatus(
         logger.error({ err: e, orderId, status }, "[email] order-status notify failed");
     }
 }
+
+// ---------------------------------------------------------------------------
+// Back-in-stock ("Повідомити, коли з'явиться") — sent by
+// services/stockSubscription.server.ts once the subscribed size/colour has stock.
+// ---------------------------------------------------------------------------
+
+const BACK_IN_STOCK_STRINGS: Record<
+    Locale,
+    {
+        subject: (name: string) => string;
+        title: string;
+        body: (name: string, variant: string) => string;
+        cta: string;
+        unsub: (href: string) => string;
+    }
+> = {
+    uk: {
+        subject: (n) => `${n} знову в наявності`,
+        title: "Знову в наявності",
+        body: (n, v) =>
+            `Гарні новини: <b>${n}</b>${v ? ` (${v})` : ""} знову можна замовити. Кількість обмежена — радимо не відкладати.`,
+        cta: "Перейти до товару",
+        unsub: (h) =>
+            `Ви отримали цей лист, бо підписалися на сповіщення про наявність. <a href="${h}" style="color:#888;">Відписатися</a>`,
+    },
+    en: {
+        subject: (n) => `${n} is back in stock`,
+        title: "Back in stock",
+        body: (n, v) =>
+            `Good news: <b>${n}</b>${v ? ` (${v})` : ""} is available to order again. Quantities are limited.`,
+        cta: "View product",
+        unsub: (h) =>
+            `You received this because you asked to be notified about availability. <a href="${h}" style="color:#888;">Unsubscribe</a>`,
+    },
+    ru: {
+        subject: (n) => `${n} снова в наличии`,
+        title: "Снова в наличии",
+        body: (n, v) =>
+            `Хорошие новости: <b>${n}</b>${v ? ` (${v})` : ""} снова можно заказать. Количество ограничено.`,
+        cta: "Перейти к товару",
+        unsub: (h) =>
+            `Вы получили это письмо, потому что подписались на уведомление о наличии. <a href="${h}" style="color:#888;">Отписаться</a>`,
+    },
+};
+
+export function backInStockSubject(name: string, locale: Locale): string {
+    return BACK_IN_STOCK_STRINGS[locale].subject(name);
+}
+
+export function renderBackInStock(data: {
+    productName: string;
+    productPath: string; // unlocalized, e.g. /p/kombinezon-wings
+    size?: string | null;
+    color?: string | null;
+    unsubUrl: string;
+    locale: Locale;
+}): string {
+    const S = BACK_IN_STOCK_STRINGS[data.locale];
+    const variant = [data.size, data.color].filter(Boolean).map(esc).join(" / ");
+    const bodyHtml = `
+        <p style="font-size:16px; line-height:1.6; color:#1a1a1a; margin:0 0 16px;">
+            ${S.body(esc(data.productName), variant)}
+        </p>
+        <p style="font-size:13px; color:#888; line-height:1.6; margin-top:24px;">
+            ${S.unsub(esc(data.unsubUrl))}
+        </p>
+    `;
+    return shell({
+        preheader: S.subject(data.productName),
+        title: S.title,
+        eyebrow: "MIND BODY",
+        bodyHtml,
+        cta: { label: S.cta, href: `${SITE_URL}${localizePath(data.productPath, data.locale)}` },
+        locale: data.locale,
+    });
+}

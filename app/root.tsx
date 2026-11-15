@@ -49,11 +49,11 @@ import Analytics from "./components/Analytics";
 const GA4_ID = (import.meta.env.VITE_GA4_ID || "") as string;
 
 export const links: Route.LinksFunction = () => [
-    { rel: "icon", type: "image/png", href: "/logo-sun.png" },
-    // iOS home-screen icon + PWA manifest — lets the site be "added to
-    // home screen" with a proper icon and standalone display on mobile.
-    { rel: "apple-touch-icon", href: "/logo-sun.png" },
-    { rel: "manifest", href: "/manifest.json" },
+    { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+    { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png" },
+    { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" },
+    { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+    { rel: "manifest", href: "/site.webmanifest" },
     { rel: "preconnect", href: "https://fonts.googleapis.com" },
     {
         rel: "preconnect",
@@ -66,11 +66,11 @@ export const links: Route.LinksFunction = () => [
        hit by warming up DNS + TCP + TLS handshake. */
     { rel: "preconnect", href: "https://api.novaposhta.ua", crossOrigin: "anonymous" },
     { rel: "preconnect", href: "https://api.telegram.org", crossOrigin: "anonymous" },
-    /* Fonts: Onest (display/headings 400-700) + Manrope (body/UI 400-700) + Spectral (editorial/hero 300-400 italic).
+    /* Fonts: Onest (display/headings 400-700) + Manrope (body/UI 400-700).
        Clean single stylesheet as specified by Lead Architect (Stage 2.1). */
     {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Onest:wght@400;500;600;700;800&family=Spectral:ital,wght@0,300;0,400;1,300;1,400&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Onest:wght@400;500;600;700;800&display=swap",
     },
     { rel: "stylesheet", href: appCss },
     { rel: "stylesheet", href: cartStyles },

@@ -41,3 +41,6 @@ Preparing API and Integration Credentials.md
 # Scripts owned by user (untracked)
 scripts/start.bat
 scripts/stop.bat
+
+# Local scratch work
+scratch/

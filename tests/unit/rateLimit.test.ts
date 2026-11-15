@@ -112,6 +112,17 @@ describe("checkRateLimit", () => {
         expect(first).toBeNull();
     });
 
+    it("prioritizes cf-connecting-ip when present behind Cloudflare", () => {
+        const req = new Request("http://localhost/test", {
+            headers: {
+                "cf-connecting-ip": "203.0.113.195",
+                "x-forwarded-for": "172.68.1.1, 10.0.0.1",
+            },
+        });
+        expect(checkRateLimit(req, "cf-ip-test", 1, 60_000)).toBeNull();
+        expect(checkRateLimit(req, "cf-ip-test", 1, 60_000)?.status).toBe(429);
+    });
+
     it("takes the first IP from a comma-separated x-forwarded-for", () => {
         // Standard proxy chain: client, proxy1, proxy2.
         // Only the first (client) IP should count for rate-limiting.

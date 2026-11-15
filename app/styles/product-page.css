@@ -1301,3 +1301,273 @@
         box-shadow: 0 0 0 14px rgba(42, 90, 90, 0);
     }
 }
+
+/* ==========================================================================
+   Complete the Look (Editorial cross-merchandising section)
+   ========================================================================== */
+.complete-the-look {
+    margin: 80px 0 40px;
+    padding: 60px 0 40px;
+    border-top: 1px solid rgba(42, 90, 104, 0.12);
+}
+
+.complete-the-look__header {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto 48px;
+}
+
+.complete-the-look__kicker {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--color-primary, #2a5a68);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.complete-the-look__title {
+    font-family: "Onest", sans-serif;
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1.25;
+    color: #1a1a1b;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+}
+
+.complete-the-look__subtitle {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(26, 26, 27, 0.65);
+    margin: 0;
+}
+
+.complete-the-look__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 28px;
+}
+
+.complete-the-look__card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid rgba(42, 90, 104, 0.08);
+    transition:
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.3s ease;
+}
+
+.complete-the-look__card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(42, 90, 104, 0.1);
+}
+
+.complete-the-look__image-wrapper {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background: #f7f6f4;
+}
+
+.complete-the-look__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.complete-the-look__card:hover .complete-the-look__image {
+    transform: scale(1.05);
+}
+
+.complete-the-look__badge {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.9);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-primary, #2a5a68);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: all 0.25s ease;
+}
+
+.complete-the-look__card:hover .complete-the-look__badge {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.complete-the-look__info {
+    padding: 18px 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.complete-the-look__name {
+    font-family: "Onest", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a1b;
+    margin: 0;
+    line-height: 1.35;
+}
+
+.complete-the-look__price {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-primary, #2a5a68);
+}
+
+@media (max-width: 768px) {
+    .complete-the-look {
+        margin: 50px 0 30px;
+        padding: 40px 0 20px;
+    }
+    .complete-the-look__title {
+        font-size: 22px;
+    }
+    .complete-the-look__grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+    .complete-the-look__info {
+        padding: 12px 14px 16px;
+    }
+    .complete-the-look__name {
+        font-size: 13px;
+    }
+    .complete-the-look__price {
+        font-size: 13px;
+    }
+}
+
+/* ==========================================================================
+   Back-in-Stock / Waitlist Box
+   ========================================================================== */
+.back-in-stock-box {
+    margin-top: 24px;
+    padding: 22px;
+    background: rgba(42, 90, 104, 0.04);
+    border: 1px solid rgba(42, 90, 104, 0.15);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.back-in-stock-box__badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #b91c1c;
+    background: #fef2f2;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.back-in-stock-box__title {
+    font-family: "Onest", sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111;
+    margin: 0 0 6px;
+}
+
+.back-in-stock-box__desc {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #52525b;
+    margin: 0 0 16px;
+}
+
+.back-in-stock-box__form {
+    display: flex;
+    gap: 8px;
+}
+
+.back-in-stock-box__input {
+    flex: 1;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid rgba(42, 90, 104, 0.2);
+    border-radius: 10px;
+    font-size: 14px;
+    color: #111;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.back-in-stock-box__input:focus {
+    border-color: var(--color-primary, #2a5a68);
+    box-shadow: 0 0 0 3px rgba(42, 90, 104, 0.1);
+}
+
+.back-in-stock-box__btn {
+    padding: 12px 20px;
+    background: var(--color-primary, #2a5a68);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.back-in-stock-box__btn:hover {
+    background: #1e444e;
+}
+
+.back-in-stock-box.is-success {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.back-in-stock-box.is-success .back-in-stock-box__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #dcfce7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.back-in-stock-box.is-success .back-in-stock-box__text strong {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.back-in-stock-box.is-success .back-in-stock-box__text p {
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
+    color: #15803d;
+}
+
+@media (max-width: 600px) {
+    .back-in-stock-box__form {
+        flex-direction: column;
+    }
+}

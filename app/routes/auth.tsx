@@ -9,7 +9,10 @@ import { localeFromParamSafe } from "../i18n/config";
 export function meta({ params }: { params: { lang?: string } }) {
     const locale = localeFromParamSafe(params.lang);
     const t = getT(locale);
-    return [{ title: t("Вхід / Реєстрація | MIND BODY") }];
+    return [
+        { title: t("Вхід / Реєстрація | MIND BODY") },
+        { name: "robots", content: "noindex, nofollow" },
+    ];
 }
 
 type AuthMode = "login" | "register";

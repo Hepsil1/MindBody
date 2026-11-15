@@ -1,9 +1,50 @@
 import { LLink, useI18n } from "../i18n";
+import { localeFromParamSafe, OG_LOCALE, localizePath } from "../i18n/config";
+import { DEFAULT_SITE_URL } from "../utils/site-url";
 
 // Extensionless SSR routes ship no Cache-Control unless the route opts in
 // (Caddy's @html matcher only covers / and *.html). Match / and /about.
 export function headers() {
     return { "Cache-Control": "no-cache" };
+}
+
+const META = {
+    uk: {
+        title: "Доставка та оплата | MIND BODY",
+        description:
+            "Умови доставки та оплати замовлень спортивного одягу MIND BODY: Нова Пошта по Україні, оплата карткою або при отриманні.",
+    },
+    en: {
+        title: "Delivery & Payment | MIND BODY",
+        description:
+            "Delivery and payment terms for MIND BODY sportswear orders: Nova Poshta across Ukraine, card payment online or on delivery.",
+    },
+    ru: {
+        title: "Доставка и оплата | MIND BODY",
+        description:
+            "Условия доставки и оплаты заказов спортивной одежды MIND BODY: Новая Почта по Украине, оплата картой или при получении.",
+    },
+} as const;
+
+export function meta({ params }: { params: { lang?: string } }) {
+    const locale = localeFromParamSafe(params.lang);
+    const m = META[locale];
+    const url = `${DEFAULT_SITE_URL}${localizePath("/delivery", locale)}`;
+    return [
+        { title: m.title },
+        { name: "description", content: m.description },
+        { tagName: "link", rel: "canonical", href: url },
+        { property: "og:title", content: m.title },
+        { property: "og:description", content: m.description },
+        { property: "og:url", content: url },
+        { property: "og:image", content: `${DEFAULT_SITE_URL}/og-default.jpg` },
+        { property: "og:type", content: "website" },
+        { property: "og:locale", content: OG_LOCALE[locale] },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: m.title },
+        { name: "twitter:description", content: m.description },
+        { name: "twitter:image", content: `${DEFAULT_SITE_URL}/og-default.jpg` },
+    ];
 }
 
 const CONTENT = {

@@ -7,6 +7,9 @@ import {
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "../components/Toast";
 import ReviewsSection from "../components/ReviewsSection";
+import CompleteTheLook from "../components/CompleteTheLook";
+import BackInStockForm from "../components/BackInStockForm";
+import { getCompleteTheLook } from "../utils/completeTheLook.server";
 import { trackViewItem, trackAddToCart } from "../utils/analytics.client";
 import { prisma } from "../db.server";
 import { StorageUtils } from "../utils/storage";
@@ -20,6 +23,7 @@ import { localeFromParam, localeFromParamSafe, localizePath, OG_LOCALE } from ".
 import { localizeEntities } from "../utils/translations.server";
 import type { InventoryVariant, RelatedProductCard, FilterConfigData } from "../types/product";
 import { familyBaseFromSku, isSkuInFamily, type ColorSibling } from "../utils/productFamily";
+import { generateProductAltText, generateProductMetaDescription } from "../utils/seo";
 import "../styles/product-page.css";
 
 // NOTE: this route file exports a client component, so we can't import
@@ -41,9 +45,13 @@ export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
     const siteUrl = data?.siteUrl || DEFAULT_SITE_URL;
     const reviewStats = data?.reviewStats;
 
-    const desc = (
-        product.description || t("{name} — купити в MIND BODY", { name: product.name })
-    ).substring(0, 160);
+    const desc = generateProductMetaDescription({
+        title: product.name,
+        price: Number(product.price) || 0,
+        category: product.category,
+        description: product.description,
+        colors: product.colors,
+    });
     const image = product.images?.[0] || "/brand-sun.png";
     const fullImage = image.startsWith("http") ? image : `${siteUrl}${image}`;
     const price = Number(product.price) || 0;
@@ -87,19 +95,24 @@ export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
                 description: desc,
                 image: fullImage,
                 brand: { "@type": "Brand", name: "MIND BODY" },
+                sku: product.sku || product.id.slice(0, 8).toUpperCase(),
                 offers: {
                     "@type": "Offer",
                     url: canonicalUrl,
                     priceCurrency: "UAH",
                     price: price,
+                    itemCondition: "https://schema.org/NewCondition",
+                    priceValidUntil: `${new Date().getFullYear() + 1}-12-31`,
                     availability: inStock
                         ? "https://schema.org/InStock"
                         : "https://schema.org/OutOfStock",
                     seller: { "@type": "Organization", name: "MIND BODY" },
                     // Merchant listing fields (Search Console "Merchant listings"):
                     // delivery is always paid at the carrier's tariff (no free-shipping
-                    // offer), so no OfferShippingDetails is declared — the on-page copy
-                    // states the carrier-tariff wording. 14-day returns below.
+                    // offer), so no OfferShippingDetails is declared — a shippingDetails
+                    // block without shippingRate is flagged by Search Console and a 0 rate
+                    // would advertise free delivery. The on-page copy states the tariff.
+                    // 14-day returns below.
                     // Mirrors /delivery + /return-policy + checkout + utils/shipping.ts.
                     hasMerchantReturnPolicy: {
                         "@type": "MerchantReturnPolicy",
@@ -461,6 +474,12 @@ export async function loader({ params }: LoaderFunctionArgs) {
     ]);
     const localizedRelated = await localizeEntities("Product", relatedProducts, locale, ["name"]);
 
+    const rawCompleteTheLook = product ? await getCompleteTheLook(product) : [];
+    const localizedCompleteTheLook =
+        rawCompleteTheLook.length > 0
+            ? await localizeEntities("Product", rawCompleteTheLook, locale, ["name"])
+            : [];
+
     return {
         product: localizedProduct,
         filterConfig,
@@ -468,6 +487,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         siblings,
         reviewStats,
         siteUrl: resolveSiteUrl(),
+        completeTheLook: localizedCompleteTheLook,
     };
 }
 
@@ -530,8 +550,9 @@ function CtaSwap({
 }
 
 function ProductDetailView() {
-    const { product, filterConfig, relatedProducts, siblings } = useLoaderData<typeof loader>();
-    const { t } = useI18n();
+    const { product, filterConfig, relatedProducts, siblings, completeTheLook } =
+        useLoaderData<typeof loader>();
+    const { t, locale } = useI18n();
     const money = useMoney();
 
     // State
@@ -900,9 +921,13 @@ function ProductDetailView() {
                                                 />
                                                 <img
                                                     src={img}
-                                                    alt={t("{name} — фото {n}", {
-                                                        name: product.name,
-                                                        n: idx + 1,
+                                                    alt={generateProductAltText({
+                                                        title: product.name,
+                                                        category: product.category,
+                                                        color: selectedColor,
+                                                        index: idx,
+                                                        totalImages: galleryImages.length,
+                                                        locale,
                                                     })}
                                                     loading={idx === 0 ? "eager" : "lazy"}
                                                     decoding="async"
@@ -948,7 +973,14 @@ function ProductDetailView() {
                                                             e.currentTarget.src = img;
                                                         }
                                                     }}
-                                                    alt=""
+                                                    alt={generateProductAltText({
+                                                        title: product.name,
+                                                        category: product.category,
+                                                        color: selectedColor,
+                                                        index: idx,
+                                                        totalImages: galleryImages.length,
+                                                        locale,
+                                                    })}
                                                     width="80"
                                                     height="80"
                                                     loading="lazy"
@@ -994,7 +1026,14 @@ function ProductDetailView() {
                                         />
                                         <img
                                             src={galleryImages[activeImage] || galleryImages[0]}
-                                            alt={product.name}
+                                            alt={generateProductAltText({
+                                                title: product.name,
+                                                category: product.category,
+                                                color: selectedColor,
+                                                index: activeImage,
+                                                totalImages: galleryImages.length,
+                                                locale,
+                                            })}
                                             className="main-img"
                                             loading="eager"
                                             decoding="async"
@@ -1040,7 +1079,14 @@ function ProductDetailView() {
                                     </button>
                                     <img
                                         src={galleryImages[activeImage] || galleryImages[0]}
-                                        alt={product.name}
+                                        alt={generateProductAltText({
+                                            title: product.name,
+                                            category: product.category,
+                                            color: selectedColor,
+                                            index: activeImage,
+                                            totalImages: galleryImages.length,
+                                            locale,
+                                        })}
                                         className="zoom-overlay__img"
                                         onClick={(e) => e.stopPropagation()}
                                     />
@@ -1295,36 +1341,38 @@ function ProductDetailView() {
                                     >
                                         {isInStock ? (
                                             currentStock <= 5 ? (
-                                                <>
-                                                    <svg
-                                                        aria-hidden="true"
-                                                        width="16"
-                                                        height="16"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        strokeWidth="2"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        style={{
-                                                            marginRight: "4px",
-                                                            color: "#ef4444",
-                                                            verticalAlign: "-3px",
-                                                        }}
+                                                currentStock <= 2 ? (
+                                                    <div
+                                                        className="scarcity-badge-luxury"
+                                                        role="status"
+                                                        aria-live="polite"
                                                     >
-                                                        <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
-                                                    </svg>{" "}
-                                                    {currentStock === 1
-                                                        ? t("🔥 Останній — поспішіть!")
-                                                        : currentStock <= 2
-                                                          ? t(
-                                                                "🔥 Залишилось лише {n} шт — поспішіть!",
-                                                                { n: currentStock },
-                                                            )
-                                                          : t("Залишилось {n} шт", {
-                                                                n: currentStock,
-                                                            })}
-                                                </>
+                                                        <span
+                                                            className="scarcity-badge-luxury__dot"
+                                                            aria-hidden="true"
+                                                        ></span>
+                                                        <span>
+                                                            {currentStock === 1
+                                                                ? t(
+                                                                      "Останній екземпляр у розмірі {size}",
+                                                                      { size: selectedSize },
+                                                                  )
+                                                                : t(
+                                                                      "Залишилось лише {n} одиниці у розмірі {size}",
+                                                                      {
+                                                                          n: currentStock,
+                                                                          size: selectedSize,
+                                                                      },
+                                                                  )}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="stock-indicator__count">
+                                                        {t("Залишилось {n} шт", {
+                                                            n: currentStock,
+                                                        })}
+                                                    </span>
+                                                )
                                             ) : (
                                                 t("✓ В наявності: {n} шт", { n: currentStock })
                                             )
@@ -1465,6 +1513,14 @@ function ProductDetailView() {
                                         </svg>
                                     </button>
                                 </div>
+
+                                {!isInStock && product.inventory?.length > 0 && (
+                                    <BackInStockForm
+                                        productId={product.id}
+                                        size={selectedSize || ""}
+                                        color={selectedColor}
+                                    />
+                                )}
 
                                 {/* Quick Buy Modal */}
                                 {quickBuyOpen && (
@@ -1709,6 +1765,9 @@ function ProductDetailView() {
                             </div>
                         </div>
                     )}
+
+                    {/* ===== COMPLETE THE LOOK ===== */}
+                    <CompleteTheLook items={completeTheLook} />
 
                     {/* ===== REVIEWS SECTION ===== */}
                     <ReviewsSection productId={product.id} />

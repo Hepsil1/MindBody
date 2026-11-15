@@ -1,6 +1,9 @@
 import { createCookie } from "react-router";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import bcrypt from "bcryptjs";
+// Side effect: loads .env and repairs `$`-mangled values (bcrypt hash) before
+// ADMIN_* are read below.
+import "./env.server";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "default_dev_secret_replace_me_in_prod";
 

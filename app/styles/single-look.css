@@ -1,0 +1,336 @@
+/* ==========================================================================
+   THE SINGLE LOOK — ULTRA LUXURY HERO SLIDER (TIER-1 WORLD CLASS E-COMMERCE)
+   Pure 100vw × 100svh Cinematic Studio Cyclorama. Zero Compositing Seams.
+   Typography: Onest / Spectral / Manrope only. Reduce-motion safe.
+   ========================================================================== */
+
+.slook {
+    position: relative;
+    width: 100%;
+    height: calc(100svh - 38px);
+    min-height: 600px;
+    overflow: hidden;
+    background: #141216;
+    color: #faf8f5;
+    isolation: isolate;
+}
+
+/* === Stage (100vw Background Layer) === */
+.slook__stage {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.slook__look {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+        visibility 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity;
+}
+
+.slook__look.is-active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.slook__look picture,
+.slook__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.slook__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center bottom;
+}
+
+/* === Scrims (Light, Airy & Subtle - Zero Heavy Murk) === */
+.slook::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: clamp(100px, 14vh, 160px);
+    background: linear-gradient(
+        to bottom,
+        rgba(24, 20, 26, 0.12) 0%,
+        rgba(24, 20, 26, 0.04) 50%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 5;
+}
+
+.slook::after {
+    display: none;
+}
+
+/* === Center Brand Emblem & Wordmark (Living Luxury Emblem) === */
+.slook__center-brand {
+    position: absolute;
+    top: clamp(160px, 24vh, 235px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.slook__center-logo {
+    display: block;
+    width: clamp(210px, 18vw, 310px);
+    height: auto;
+    filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.16))
+        drop-shadow(0 0 26px rgba(255, 255, 255, 0.22));
+    user-select: none;
+    -webkit-user-drag: none;
+    animation: slookLogoBreathe 6s ease-in-out infinite;
+    will-change: transform, filter;
+}
+
+@keyframes slookLogoBreathe {
+    0%,
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.16))
+            drop-shadow(0 0 26px rgba(255, 255, 255, 0.22));
+    }
+    50% {
+        transform: scale(1.028);
+        filter: drop-shadow(0 6px 26px rgba(0, 0, 0, 0.22))
+            drop-shadow(0 0 42px rgba(255, 255, 255, 0.5));
+    }
+}
+
+/* === Bottom Editorial Overlay: Pure Centered Luxury CTA === */
+.slook__overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: clamp(20px, 3vh, 36px) clamp(20px, 3vw, 48px) clamp(32px, 5vh, 48px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    z-index: 20;
+    pointer-events: none;
+    gap: 16px;
+}
+
+.slook__info,
+.slook__info--centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    pointer-events: auto;
+}
+
+.slook__cta-btn,
+.slook__cta-btn--centered {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    padding: 0 42px;
+    background: #2a5a68;
+    color: #ffffff;
+    font-family: var(--font-body, "Manrope", sans-serif);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 100px;
+    border: none;
+    box-shadow: 0 8px 24px rgba(42, 90, 104, 0.28);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+}
+
+.slook__cta-btn:hover,
+.slook__cta-btn--centered:hover {
+    background: #1e444e;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(42, 90, 104, 0.4);
+}
+
+/* === Hairline Timeline (Apple / Bottega Style) === */
+.slook__timeline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    pointer-events: auto;
+    margin-bottom: 4px;
+}
+
+.slook__timeline-btn {
+    background: none;
+    border: 0;
+    padding: 10px 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    outline: none;
+}
+
+.slook__timeline-btn:focus,
+.slook__timeline-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.slook__timeline-line {
+    display: block;
+    width: 28px;
+    height: 2px;
+    background: rgba(24, 22, 26, 0.22);
+    border-radius: 2px;
+    overflow: hidden;
+    transition: background 0.3s ease;
+}
+
+/* No box around the dash: keyboard focus is shown ON the line (thicker + solid). */
+.slook__timeline-btn:focus,
+.slook__timeline-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.slook__timeline-btn:focus-visible .slook__timeline-line {
+    transform: scaleY(2);
+    background: #18161a;
+}
+
+/* Ultra-wide (>2:1, laptops at 125%): cover crops top/bottom — anchor low so feet + floor stay in frame (masters leave headroom above) */
+@media (min-aspect-ratio: 2/1) {
+    .slook__img {
+        object-position: center 78%;
+    }
+}
+
+.slook__timeline-btn:hover .slook__timeline-line {
+    background: rgba(24, 22, 26, 0.45);
+}
+
+.slook__timeline-btn.is-active .slook__timeline-line {
+    background: rgba(24, 22, 26, 0.35);
+}
+
+.slook__timeline-btn.is-active .slook__timeline-fill {
+    display: block;
+    height: 100%;
+    background: #18161a;
+    animation: slookTimelineFill 7s linear forwards;
+}
+
+.slook.is-paused .slook__timeline-fill {
+    animation-play-state: paused;
+}
+
+@keyframes slookTimelineFill {
+    from {
+        width: 0%;
+    }
+    to {
+        width: 100%;
+    }
+}
+
+/* === Responsive (Mobile Viewport < 769px) === */
+@media (max-width: 1024px) {
+    .slook__center-brand {
+        display: none !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .slook {
+        height: 100svh;
+        min-height: 580px;
+    }
+
+    .slook::before {
+        height: 100px;
+    }
+
+    .slook::after {
+        display: none !important;
+    }
+
+    .slook__overlay {
+        padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 14px;
+    }
+
+    .slook__info--centered {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .slook__cta-btn--centered {
+        width: 100%;
+        max-width: 340px;
+        height: 50px;
+        padding: 0 20px;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+    }
+
+    .slook__timeline {
+        width: 100%;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 2px;
+        margin-bottom: 0;
+    }
+
+    .slook__timeline-line {
+        width: 24px;
+    }
+}
+
+/* === Reduced Motion (WCAG 2.2 & Vestibular Safety) === */
+@media (prefers-reduced-motion: reduce) {
+    .slook__look {
+        transition: none !important;
+    }
+
+    .slook__center-logo {
+        animation: none !important;
+    }
+
+    /* Disable auto-advancing animation and moving fills for motion-sensitive users */
+    .slook__timeline-fill {
+        display: none !important;
+        animation: none !important;
+    }
+
+    /* Active dash is solidly illuminated in luxury obsidian */
+    .slook__timeline-btn.is-active .slook__timeline-line {
+        background: #18161a !important;
+    }
+}

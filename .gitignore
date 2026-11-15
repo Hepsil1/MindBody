@@ -66,3 +66,12 @@ tg-content/
 public/ChatExport_2026-06-15/
 public/_tmpframes/
 .thumbs/
+
+# Hero masters: only the live v4 set (desktop/mobile + width ladder) is tracked.
+# Colour-variant review files (v4_*__colour) and old concept renders stay local.
+/public/hero/masters/*
+!/public/hero/masters/v4_*
+/public/hero/masters/v4_*__*
+# Scratch work (hero compositor inputs/outputs, previews) — local only.
+/scratch/
+prisma/dev.db

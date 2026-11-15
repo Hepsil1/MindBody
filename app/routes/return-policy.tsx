@@ -151,6 +151,7 @@ export function meta({ params }: { params: { lang?: string } }) {
     const c = CONTENT[locale];
     const siteUrl = DEFAULT_SITE_URL;
     const url = `${siteUrl}${localizePath("/return-policy", locale)}`;
+    const ogImage = `${siteUrl}/og-default.jpg`;
     return [
         { title: c.metaTitle },
         {
@@ -159,9 +160,18 @@ export function meta({ params }: { params: { lang?: string } }) {
         },
         { tagName: "link", rel: "canonical", href: url },
         { property: "og:title", content: c.metaTitle },
+        { property: "og:description", content: c.metaDescription },
         { property: "og:url", content: url },
         { property: "og:type", content: "article" },
+        { property: "og:image", content: ogImage },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:type", content: "image/jpeg" },
         { property: "og:locale", content: OG_LOCALE[locale] },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: c.metaTitle },
+        { name: "twitter:description", content: c.metaDescription },
+        { name: "twitter:image", content: ogImage },
         { name: "robots", content: "index, follow" },
     ];
 }

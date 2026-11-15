@@ -567,6 +567,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
                     console.error("Product colorImages save failed (non-fatal):", e);
                 }
 
+                // Back-in-stock emails: fire-and-forget so the admin save never
+                // waits on Resend. No-op unless the product is live and the
+                // subscribed size/colour now has stock.
+                if (status === "active" && stock > 0) {
+                    void import("../../../services/stockSubscription.server").then(
+                        ({ notifyBackInStock }) => notifyBackInStock(id as string),
+                    );
+                }
+
                 return { success: true };
             } catch (e) {
                 console.error("Save failed:", e);

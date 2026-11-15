@@ -19,6 +19,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
     const desc = q
         ? t("Знайдено {count} товарів за запитом «{q}» в MIND BODY.", { count, q })
         : t("Знайди товари MIND BODY за назвою, категорією або кольором.");
+    const ogImage = `${SITE_URL}/og-default.jpg`;
     return [
         { title },
         { name: "description", content: desc },
@@ -31,6 +32,14 @@ export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
         { property: "og:description", content: desc },
         { property: "og:locale", content: OG_LOCALE[locale] },
         { property: "og:type", content: "website" },
+        { property: "og:image", content: ogImage },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:type", content: "image/jpeg" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: desc },
+        { name: "twitter:image", content: ogImage },
         // Search-result pages shouldn't be indexed individually
         { name: "robots", content: "noindex, follow" },
     ];

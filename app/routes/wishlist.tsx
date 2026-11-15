@@ -27,7 +27,9 @@ const META = {
 export function meta({ params }: { params: { lang?: string } }) {
     const locale = localeFromParamSafe(params.lang);
     const m = META[locale];
-    const url = `${DEFAULT_SITE_URL}${localizePath("/wishlist", locale)}`;
+    const siteUrl = DEFAULT_SITE_URL;
+    const url = `${siteUrl}${localizePath("/wishlist", locale)}`;
+    const ogImage = `${siteUrl}/og-default.jpg`;
     return [
         { title: m.title },
         { name: "description", content: m.description },
@@ -36,7 +38,15 @@ export function meta({ params }: { params: { lang?: string } }) {
         { property: "og:description", content: m.description },
         { property: "og:url", content: url },
         { property: "og:type", content: "website" },
+        { property: "og:image", content: ogImage },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:type", content: "image/jpeg" },
         { property: "og:locale", content: OG_LOCALE[locale] },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: m.title },
+        { name: "twitter:description", content: m.description },
+        { name: "twitter:image", content: ogImage },
     ];
 }
 

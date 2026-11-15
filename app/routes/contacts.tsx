@@ -41,8 +41,13 @@ export function meta({ params }: { params: { lang?: string } }) {
         { property: "og:title", content: m.title },
         { property: "og:description", content: m.description },
         { property: "og:url", content: url },
+        { property: "og:image", content: `${DEFAULT_SITE_URL}/og-default.jpg` },
         { property: "og:type", content: "website" },
         { property: "og:locale", content: OG_LOCALE[locale] },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: m.title },
+        { name: "twitter:description", content: m.description },
+        { name: "twitter:image", content: `${DEFAULT_SITE_URL}/og-default.jpg` },
     ];
 }
 

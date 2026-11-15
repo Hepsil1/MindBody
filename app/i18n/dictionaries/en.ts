@@ -67,6 +67,7 @@ export const en: Record<string, string> = {
     "Мова сайту": "Site language",
 
     // --- header ---
+    "ДОСЛІДИТИ КОЛЕКЦІЮ": "EXPLORE COLLECTION",
     "Про бренд": "About us",
     Контакти: "Contacts",
     Профіль: "Profile",

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
 import { StorageUtils, type CartItem } from "../utils/storage";
 import { AuthUtils } from "../utils/auth";
 import { useToast } from "../components/Toast";
@@ -6,7 +7,7 @@ import { trackBeginCheckout, trackPurchase } from "../utils/analytics.client";
 import { formatPhoneUA, getPhoneDigits } from "../utils/phone";
 import { productImageSrc, IMAGE_FALLBACK, formatPrice } from "../utils/format";
 import { getColorLabel } from "../utils/colors";
-import { splitLocalePath } from "../i18n/config";
+import { splitLocalePath, localizePath } from "../i18n/config";
 import { useI18n, useMoney, getT, LLink, plural } from "../i18n";
 import {
     useNovaPoshtaAutocomplete,
@@ -18,7 +19,7 @@ import "../styles/checkout.css";
 export function meta({ location }: { location: { pathname: string } }) {
     const t = getT(splitLocalePath(location.pathname).locale);
     return [
-        { title: `${t("Кошик")} | MIND BODY` },
+        { title: `${t("Оформлення замовлення")} | MIND BODY` },
         {
             name: "description",
             content: t(
@@ -64,6 +65,7 @@ export default function Checkout() {
     const [isLoading, setIsLoading] = useState(true);
     const [step, setStep] = useState<CheckoutStep>("cart");
     const { t, locale } = useI18n();
+    const navigate = useNavigate();
     const money = useMoney();
     const { showToast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +87,24 @@ export default function Checkout() {
         payment: "cash",
         delivery: "nova_poshta",
     });
+
+    const sessionKeyRef = useRef<string>("");
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        // Unguessable per-cart key (the server treats it as the only proof of
+        // ownership of a cart lead). Storage can throw (blocked site data) —
+        // then the lead simply isn't tracked.
+        try {
+            let key = localStorage.getItem("mb_cart_session");
+            if (!key || !/^cs_[0-9a-f-]{36}$/.test(key)) {
+                key = "cs_" + crypto.randomUUID();
+                localStorage.setItem("mb_cart_session", key);
+            }
+            sessionKeyRef.current = key;
+        } catch {
+            sessionKeyRef.current = "";
+        }
+    }, []);
 
     const [errors, setErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({});
 
@@ -233,6 +253,37 @@ export default function Checkout() {
         // showToast/t are stable for the component lifetime.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [subtotal, promoApplied]);
+
+    // Abandoned Cart lead tracking: capture customer contact before submit
+    useEffect(() => {
+        if (!customerInfo.email && !customerInfo.phone) return;
+        if (!items || items.length === 0) return;
+        if (!sessionKeyRef.current) return;
+
+        const timer = setTimeout(() => {
+            fetch("/api/cart/lead", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    sessionKey: sessionKeyRef.current,
+                    email: customerInfo.email,
+                    phone: customerInfo.phone,
+                    name: customerInfo.name,
+                    locale,
+                    subtotal: total,
+                    items: items.map((it) => ({
+                        productId: it.id,
+                        name: it.name,
+                        size: it.size,
+                        color: it.color,
+                        quantity: it.quantity,
+                    })),
+                }),
+            }).catch(() => {});
+        }, 1500);
+
+        return () => clearTimeout(timer);
+    }, [customerInfo.email, customerInfo.phone, customerInfo.name, items, locale, total]);
 
     // F-002 — funnel-step #3. Fire begin_checkout exactly once when the
     // visitor advances from "cart" to "info" (regardless of route: the
@@ -393,6 +444,7 @@ export default function Checkout() {
                     // Storefront language → confirmation-email language.
                     // Submit happens client-side only, so window is available.
                     locale: splitLocalePath(window.location.pathname).locale,
+                    sessionKey: sessionKeyRef.current,
                 }),
             });
 
@@ -402,16 +454,32 @@ export default function Checkout() {
                 // Promo code usage is already incremented server-side in api.orders.create
                 // Order placed — drop the key so a brand-new checkout gets a fresh one.
                 idempotencyKeyRef.current = null;
+                // The cart lead is now "recovered" — the next cart gets a fresh key
+                // so it is tracked as a new lead instead of updating this one.
+                try {
+                    localStorage.removeItem("mb_cart_session");
+                } catch {
+                    /* storage blocked — nothing to rotate */
+                }
+                sessionKeyRef.current = "";
                 setOrderNumber(result.orderId);
-                // F-002 — funnel-step #4. Fire BEFORE clearing the cart so
-                // we still have the items in `items` (they go straight into
-                // the GA4 e-commerce schema). Reading from the server's
-                // returned orderId keeps GA's transaction_id matched to
-                // what the customer sees on the confirmation screen.
+                StorageUtils.clearCart();
+                // Reset promo state so back-navigation to /checkout doesn't
+                // show stale "promo applied" UI on an empty cart.
+                setPromoApplied(null);
+                setPromoCode("");
+                setPromoError("");
+
+                // Modern e-commerce: redirect to isolated permanent order page (/order/:token)
+                // where the user can track status and where trackPurchase is fired cleanly.
+                if (result.orderToken) {
+                    navigate(localizePath(`/order/${result.orderToken}?new=1`, locale));
+                    return;
+                }
+
+                // Fallback for legacy flows without orderToken
                 trackPurchase({
                     orderId: String(result.orderId),
-                    // Prefer the server-authoritative total (the server recomputes
-                    // from live DB prices) so GA4 revenue matches the real order.
                     total: typeof result.finalTotal === "number" ? result.finalTotal : total,
                     items: items.map((it) => ({
                         id: String(it.id),
@@ -421,12 +489,6 @@ export default function Checkout() {
                         variant: it.size || undefined,
                     })),
                 });
-                StorageUtils.clearCart();
-                // Reset promo state so back-navigation to /checkout doesn't
-                // show stale "promo applied" UI on an empty cart.
-                setPromoApplied(null);
-                setPromoCode("");
-                setPromoError("");
                 setStep("success");
             } else if (result.code === "PRICE_MISMATCH") {
                 // Cart prices drifted from the DB between page-load and submit

@@ -8,47 +8,48 @@ datasource db {
 }
 
 model Product {
-  id              String      @id @default(uuid())
-  name            String
-  description     String?
-  price           Decimal
-  comparePrice    Decimal?
-  sku             String?     @unique
-  stock           Int         @default(0)
-  status          String      @default("draft")
-  category        String?
+  id                 String              @id @default(uuid())
+  name               String
+  description        String?
+  price              Decimal
+  comparePrice       Decimal?
+  sku                String?             @unique
+  stock              Int                 @default(0)
+  status             String              @default("draft")
+  category           String?
   // Deeper taxonomy (see app/utils/taxonomy.ts). Nullable; written/read via
   // raw SQL until a clean `prisma generate` (PM2 holds the engine DLL),
   // same pattern as Category.moodType.
-  fabric          String? // sport | cotton
-  sleeve          String? // long | short | sleeveless | velo
-  images          String?
+  fabric             String? // sport | cotton
+  sleeve             String? // long | short | sleeveless | velo
+  images             String?
   // Colourway model family grouping ("each colour is its own product").
   // Nullable: null = standalone single-colour product without a family.
-  familyId        String?
+  familyId           String?
   // Catalog visibility flag: true = visible as a card in /shop, false = hidden
   // from catalog listing but directly accessible via URL and via sibling swatches.
-  showInCatalog   Boolean     @default(true)
-  colors          String?
+  showInCatalog      Boolean             @default(true)
+  colors             String?
   // Per-colour gallery override: JSON {"black":["/uploads/a.webp",...],
   // "white":[...]}. When the buyer picks a colour on the PDP the gallery
   // switches to that colour's photos; colours without an entry fall back
   // to the shared `images` array, so partially-tagged products degrade
   // gracefully instead of going blank.
-  colorImages     String?
-  sizes           String?
-  inventory       String?
-  shopPageSlug    String?
+  colorImages        String?
+  sizes              String?
+  inventory          String?
+  shopPageSlug       String?
   // SEO fields — optional, fall back to name/description if empty
-  slug            String?     @unique
-  metaTitle       String?
-  metaDescription String?
+  slug               String?             @unique
+  metaTitle          String?
+  metaDescription    String?
   // i18n: JSON {"en":{"name":...,"description":...},"ru":{...}} — read/written
   // via raw SQL (the moodType pattern) until a clean `prisma generate`.
-  translations    String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  orderItems      OrderItem[]
+  translations       String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  orderItems         OrderItem[]
+  stockSubscriptions StockSubscription[]
 
   @@index([status])
   @@index([shopPageSlug])
@@ -103,6 +104,8 @@ model Order {
   deliveryMethod    String?
   paymentMethod     String?
   comment           String?
+  accessToken       String?              @unique
+  trackingNumber    String?
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
   customer          Customer             @relation(fields: [customerId], references: [id])
@@ -288,4 +291,44 @@ model SiteSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model AbandonedCart {
+  id               String    @id @default(uuid())
+  sessionKey       String    @unique
+  email            String?
+  phone            String?
+  name             String?
+  locale           String    @default("uk")
+  items            Json
+  itemCount        Int
+  subtotal         Decimal
+  status           String    @default("open")
+  remindersSent    Int       @default(0)
+  lastRemindedAt   DateTime?
+  recoveredOrderId String?
+  lastActivityAt   DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status, lastActivityAt])
+  @@index([email])
+  @@index([phone])
+}
+
+model StockSubscription {
+  id         String    @id @default(uuid())
+  productId  String
+  size       String
+  color      String    @default("")
+  email      String
+  locale     String    @default("uk")
+  status     String    @default("active")
+  unsubToken String    @unique
+  notifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, size, color, email])
+  @@index([productId, status])
 }

@@ -9,6 +9,7 @@ import {
 } from "../utils/email.server";
 import { logger } from "../utils/logger.server";
 import { createOrder, recordEmailStatus } from "../services/order.server";
+import { markCartRecovered } from "../services/abandonedCart.server";
 import { sendTelegramMessage } from "../utils/telegram.server";
 import { prisma } from "../db.server";
 
@@ -78,6 +79,7 @@ export async function action({ request }: ActionFunctionArgs) {
                 success: true,
                 orderId: result.orderNumber,
                 finalTotal: result.finalTotal,
+                orderToken: result.orderToken,
                 deduped: true,
             });
         }
@@ -202,7 +204,19 @@ export async function action({ request }: ActionFunctionArgs) {
                 });
         }
 
-        return json({ success: true, orderId: orderNumberInt, finalTotal: email.finalTotal });
+        if (parsed.data.sessionKey) {
+            void markCartRecovered(parsed.data.sessionKey, String(orderNumberInt), {
+                email: customer.email,
+                phone: customer.phone,
+            });
+        }
+
+        return json({
+            success: true,
+            orderId: orderNumberInt,
+            finalTotal: email.finalTotal,
+            orderToken: result.orderToken,
+        });
     } catch (error) {
         // Log the real error server-side; return a generic message so internal
         // detail (DB constraint text, third-party errors) never reaches the client.

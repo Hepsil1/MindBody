@@ -1,7 +1,8 @@
 import type { Route } from "./+types/home";
 import { useLoaderData } from "react-router";
 import { useEffect, useState, useRef, useCallback, Fragment } from "react";
-import HeroSlider, { defaultSlides, type SlideData } from "../components/HeroSlider";
+import SingleLookHero from "../components/SingleLookHero";
+import { getHeroLooks } from "../utils/heroLooks.server";
 import CategoryCard from "../components/CategoryCard";
 import { EditorAffordance } from "../components/EditorAffordance";
 import { useSiteSettings, type SiteSettings } from "../utils/site-settings";
@@ -12,7 +13,7 @@ import { cachedFetch } from "../utils/cache.server";
 import { collectFamilySwatches } from "../utils/shopProducts.server";
 import { readIgCache, checkImageVariantsExist } from "../services/instagram.server";
 import { IG_FALLBACK_CACHE } from "../data/ig-fallback";
-import { buildWebpSrcset, buildAvifSrcset, buildHeroAvifSrcset } from "../utils/responsive-image";
+import { buildWebpSrcset, buildAvifSrcset } from "../utils/responsive-image";
 import "../styles/home.css";
 import { DEFAULT_SITE_URL } from "../utils/site-url";
 import { useI18n, getT, LLink, useMoney } from "../i18n";
@@ -136,55 +137,36 @@ export function meta({ data, params }: Route.MetaArgs) {
     const homePath = localizePath("/", locale);
     const canonicalUrl = homePath === "/" ? siteUrl : `${siteUrl}${homePath}`;
 
-    // AVIF preloads for the REAL first slide (loader data, not the code
-    // defaults). The <picture> in HeroSlider lists AVIF first, so AVIF is
-    // what the browser will actually request — preloading WebP was a
-    // guaranteed cache miss. `type` lets non-AVIF browsers skip the hint.
-    const firstSlide = data?.slides?.[0] ?? defaultSlides[0];
-    const heroImgs: string[] = firstSlide?.frames
-        ? firstSlide.frames.map((f) => `/hero/${f.src}.avif`)
-        : [firstSlide?.image1, firstSlide?.image2, firstSlide?.image3].filter(
-              (x): x is string => typeof x === "string" && x.length > 0,
-          );
-    const isTriptych = heroImgs.length > 1;
-    const avif = (img: string) => img.replace(/\.(jpe?g|png|webp)$/i, ".avif");
-
-    // Viewport-split preload — the mobile and desktop heroes show DIFFERENT
-    // images, so a single preload set wastes bytes on whichever it's wrong
-    // for. Single slides with a dedicated `mobileImage` preload that 9:19
-    // portrait master at 100vw on mobile and the 16:9 canvas on desktop.
-    const middleIdx = isTriptych ? 1 : 0;
-    const isSingleHero = !isTriptych;
-    const mobilePreloadImg = firstSlide?.mobileImage || heroImgs[middleIdx];
-    const mobileHeroPreload = mobilePreloadImg
+    // Preload the first look's master (AVIF), split by the same breakpoint the
+    // <picture> in SingleLookHero uses — a phone must not fetch the 16:9 desktop
+    // master on the critical path and then download the portrait one again.
+    const firstLook = data?.looks?.[0];
+    const heroPreloads = firstLook
         ? [
               {
                   tagName: "link" as const,
                   rel: "preload" as const,
                   as: "image" as const,
                   type: "image/avif",
+                  media: "(min-width: 769px)",
+                  href: `${firstLook.imageDesktop}-1600w.avif`,
+                  imageSrcSet: buildAvifSrcset(firstLook.imageDesktop),
+                  imageSizes: "100vw",
+                  fetchPriority: "high" as const,
+              },
+              {
+                  tagName: "link" as const,
+                  rel: "preload" as const,
+                  as: "image" as const,
+                  type: "image/avif",
                   media: "(max-width: 768px)",
-                  href: avif(mobilePreloadImg),
-                  imageSrcSet: isSingleHero
-                      ? buildHeroAvifSrcset(mobilePreloadImg)
-                      : buildAvifSrcset(mobilePreloadImg),
-                  imageSizes: firstSlide?.mobileImage ? "100vw" : "200vw",
+                  href: `${firstLook.imageMobile}-800w.avif`,
+                  imageSrcSet: buildAvifSrcset(firstLook.imageMobile),
+                  imageSizes: "100vw",
                   fetchPriority: "high" as const,
               },
           ]
         : [];
-    const desktopHeroPreloads = heroImgs.map((img, i) => ({
-        tagName: "link" as const,
-        rel: "preload" as const,
-        as: "image" as const,
-        type: "image/avif",
-        media: "(min-width: 769px)",
-        href: avif(img),
-        imageSrcSet: isSingleHero ? buildHeroAvifSrcset(img) : buildAvifSrcset(img),
-        imageSizes: isTriptych ? "33vw" : "100vw",
-        ...(i === 0 ? { fetchPriority: "high" as const } : {}),
-    }));
-    const heroPreloads = [...mobileHeroPreload, ...desktopHeroPreloads];
 
     return [
         { title: t("MIND BODY — Спортивний одяг для йоги та активного життя") },
@@ -204,14 +186,10 @@ export function meta({ data, params }: Route.MetaArgs) {
             ),
         },
         { property: "og:type", content: "website" },
-        { property: "og:image", content: `${siteUrl}/brand-sun.png` },
-        // Declared dimensions of brand-sun.png. Telling Facebook/Twitter/
-        // Telegram the size upfront means the first share renders a real
-        // preview instead of a "fetching…" placeholder.
-        // TODO: ship a proper 1200x630 landscape OG image — current asset
-        // is square (504x503) and gets letterboxed in some clients.
-        { property: "og:image:width", content: "504" },
-        { property: "og:image:height", content: "503" },
+        { property: "og:image", content: `${siteUrl}/og-default.jpg` },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:type", content: "image/jpeg" },
         { property: "og:locale", content: OG_LOCALE[locale] },
         { property: "og:site_name", content: "MIND BODY" },
         { name: "twitter:card", content: "summary_large_image" },
@@ -220,20 +198,13 @@ export function meta({ data, params }: Route.MetaArgs) {
             name: "twitter:description",
             content: t("Український бренд спортивного одягу для жінок та дітей."),
         },
-        { name: "twitter:image", content: `${siteUrl}/brand-sun.png` },
+        { name: "twitter:image", content: `${siteUrl}/og-default.jpg` },
         // The white brand logo OVERLAYS the hero and is the page's measured
         // LCP element. It goes FIRST among image preloads: on HTTP/1.1 the
         // browser queues same-host requests, and a tiny logo stuck behind a
         // multi-hundred-KB slide is exactly the 500 ms+ queue delay the
         // trace measured. (Prod h2/h3 multiplexes anyway — order is then
         // just a priority hint.)
-        {
-            tagName: "link",
-            rel: "preload",
-            as: "image",
-            href: "/pics/mind_body_logo_white.webp",
-            fetchPriority: "high",
-        },
         // Hero preload — the perf trace caught TWO bugs in the old version:
         // (1) it preloaded the hardcoded DEFAULT slides while the live hero
         // comes from the DB (admin-managed /uploads/…), so on a real deploy
@@ -315,26 +286,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         const CACHE_TTL = 60_000;
 
         // Queries run in parallel with 60s in-memory cache
-        const [slides, categoriesFromDb, rawProducts, rawLooks] = await Promise.all([
-            // Slide.page is NOT NULL (default 'home'), so a typed read is safe.
-            cachedFetch("home:slides", CACHE_TTL, () =>
-                prisma.slide.findMany({
-                    where: { page: "home" },
-                    orderBy: { order: "asc" },
-                    select: {
-                        id: true,
-                        name: true,
-                        type: true,
-                        link: true,
-                        image1: true,
-                        image2: true,
-                        image3: true,
-                        image1Pos: true,
-                        image2Pos: true,
-                        image3Pos: true,
-                    },
-                }),
-            ),
+        const [looks, categoriesFromDb, rawProducts, rawLooks] = await Promise.all([
+            getHeroLooks(),
             cachedFetch("home:categories", CACHE_TTL, () =>
                 prisma.category.findMany({
                     orderBy: { order: "asc" },
@@ -473,8 +426,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
             };
         };
 
-        const slidesPayload: SlideData[] = defaultSlides;
-
         // Normalise into HomeCategoryCard[] so the render side doesn't have
         // to branch on a union — fallback array now has the same shape as DB rows.
         const FALLBACK_CATEGORIES: HomeCategoryCard[] = [
@@ -573,7 +524,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         };
 
         return {
-            slides: slidesPayload,
+            looks,
             categories,
             newProducts,
             lookProducts,
@@ -583,7 +534,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     } catch (error) {
         console.error("Failed to load home data:", error);
         return {
-            slides: [] as SlideData[],
+            looks: [] as Awaited<ReturnType<typeof getHeroLooks>>,
             categories: [] as HomeCategoryCard[],
             newProducts: [] as HomeProductCard[],
             lookProducts: [] as HomeProductCard[],
@@ -671,7 +622,7 @@ const FEATURE_ICONS = [
 ];
 
 export default function Home() {
-    const { slides, categories, newProducts, lookProducts, instagramData } =
+    const { looks, categories, newProducts, lookProducts, instagramData } =
         useLoaderData<typeof loader>();
     const { t, lp } = useI18n();
     const money = useMoney();
@@ -1005,7 +956,7 @@ export default function Home() {
                 label="Редагувати слайди"
                 message={{ type: "OPEN_HOME_SLIDES_EDITOR" }}
             >
-                <HeroSlider slides={slides} />
+                <SingleLookHero looks={looks} />
             </EditorAffordance>
             {/* Premium Features Bar — texts owner-editable (home_features);
                 the 4 icons are fixed in code, matched to items by index. */}

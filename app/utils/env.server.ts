@@ -7,6 +7,32 @@
 
 import { z } from "zod";
 import "dotenv/config";
+import { existsSync, readFileSync } from "node:fs";
+import { parse as parseDotenv } from "dotenv";
+
+// Vite (dev server / vite-node) pre-loads .env through dotenv-expand, which
+// treats every `$x` as a variable reference — a bcrypt hash like "$2b$12$…"
+// arrives truncated to "$2b$12", and plain dotenv won't override it. Restore
+// the literal .env value for any key whose raw value contains "$" and was
+// mangled. No-op when there is no .env file (prod injects real env vars).
+(function restoreDollarValues() {
+    try {
+        if (!existsSync(".env")) return;
+        const raw = parseDotenv(readFileSync(".env"));
+        for (const [k, v] of Object.entries(raw)) {
+            if (
+                v.includes("$") &&
+                process.env[k] !== undefined &&
+                process.env[k] !== v &&
+                v.startsWith(process.env[k]!)
+            ) {
+                process.env[k] = v;
+            }
+        }
+    } catch {
+        /* unreadable .env — keep whatever the environment provides */
+    }
+})();
 
 const EnvSchema = z.object({
     // ─── Required ─────────────────────────────────────────────────────

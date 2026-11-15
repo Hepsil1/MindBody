@@ -39,8 +39,9 @@ export function checkRateLimit(
     windowMs: number = 60_000,
 ): Response | null {
     const ip =
+        request.headers.get("cf-connecting-ip")?.trim() ||
         request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        request.headers.get("x-real-ip") ||
+        request.headers.get("x-real-ip")?.trim() ||
         "unknown";
 
     const compositeKey = `${key}:${ip}`;

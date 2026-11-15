@@ -8,6 +8,7 @@ import { type RouteConfig, route, layout } from "@react-router/dev/routes";
  * /api and /admin are intentionally NOT localized.
  */
 export default [
+    route("hero-gallery", "routes/hero-gallery.tsx"),
     route(":lang?", "routes/home.tsx"),
     route(":lang?/shop", "routes/shop.tsx"),
     route(":lang?/cart", "routes/cart.tsx"),
@@ -17,6 +18,7 @@ export default [
     route(":lang?/p/:slug", "routes/p.$slug.tsx"),
     route(":lang?/wishlist", "routes/wishlist.tsx"),
     route(":lang?/checkout", "routes/checkout.tsx"),
+    route(":lang?/order/:token", "routes/order.$token.tsx"),
     route(":lang?/about", "routes/about.tsx"),
     route(":lang?/contacts", "routes/contacts.tsx"),
     route(":lang?/delivery", "routes/delivery.tsx"),
@@ -51,7 +53,12 @@ export default [
     route("api/newsletter", "routes/api.newsletter.tsx"),
     route("api/health", "routes/api.health.tsx"),
     route("api/instagram/refresh", "routes/api.instagram.refresh.tsx"),
+    route("api/stock-subscribe", "routes/api.stock-subscribe.tsx"),
+    route("api/cart/lead", "routes/api.cart.lead.tsx"),
     route("sitemap.xml", "routes/sitemap[.]xml.tsx"),
+    route("feed.xml", "routes/feed[.]xml.ts"),
+    route("llms.txt", "routes/llms[.]txt.ts"),
+    route("llms-full.txt", "routes/llms-full[.]txt.ts"),
 
     // Admin Login & Logout (Separate from layout)
     route("admin/login", "routes/admin/login.tsx"),
