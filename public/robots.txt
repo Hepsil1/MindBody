@@ -2,7 +2,10 @@
 User-agent: *
 Allow: /
 Allow: /shop/
+Allow: /p/
 Allow: /product/
+Allow: /llms.txt
+Allow: /llms-full.txt
 
 Disallow: /admin
 Disallow: /admin/
@@ -16,5 +19,23 @@ Disallow: /wishlist
 # Politeness
 Crawl-delay: 1
 
-# Sitemap (must be absolute URL per specification, must match the live domain)
+# Modern AI Crawlers (Search & Assistant discovery allowed, checkout/admin protected)
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: PerplexityBot
+User-agent: Applebot-Extended
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /p/
+Allow: /shop/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /checkout/
+
+# Sitemaps & Machine-readable indices
 Sitemap: https://mindbody-sportwear.com/sitemap.xml
+# Google Merchant feed: https://mindbody-sportwear.com/feed.xml
+# LLM discovery index: https://mindbody-sportwear.com/llms.txt
+# LLM full catalog: https://mindbody-sportwear.com/llms-full.txt
