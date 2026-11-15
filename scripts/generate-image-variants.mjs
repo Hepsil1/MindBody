@@ -52,7 +52,7 @@
  *  - decorative artwork without variants needed (logos, icons in /pics/)
  */
 
-import { readdir, stat, access, writeFile } from "node:fs/promises";
+import { readdir, stat, access, writeFile, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -298,7 +298,27 @@ async function processBase(filePath) {
     let generated = 0;
     const seenBases = new Set();
 
+    // On the Coolify server /app/public/uploads is a persistent volume that already
+    // holds every variant (admin uploads generate them synchronously), and it hides
+    // the image's own public/uploads at runtime — re-encoding ~2000 product photos
+    // at build time only burns 10+ minutes. Keep their LQIP entries from the
+    // committed map so placeholders don't disappear.
+    const skipUploads = process.env.IMAGE_VARIANTS_SKIP_UPLOADS === "1";
+    if (skipUploads) {
+        try {
+            const prev = JSON.parse(await readFile(path.join(PUBLIC_DIR, "lqip.json"), "utf8"));
+            for (const [k, v] of Object.entries(prev))
+                if (k.startsWith("/uploads/")) lqipMap[k] = v;
+        } catch {
+            /* no previous map */
+        }
+        console.log(
+            "IMAGE_VARIANTS_SKIP_UPLOADS=1 — skipping public/uploads (served from the volume)",
+        );
+    }
+
     for (const dirName of TARGET_DIRS) {
+        if (skipUploads && dirName === "uploads") continue;
         const dir = path.join(PUBLIC_DIR, dirName);
         for await (const srcPath of walk(dir)) {
             const base = srcPath.replace(/\.(webp|jpe?g)$/i, "");
