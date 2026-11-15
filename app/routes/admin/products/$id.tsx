@@ -7,7 +7,7 @@ import {
     Link,
     isRouteErrorResponse,
 } from "react-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { prisma } from "../../../db.server";
 import { requireAdmin } from "../../../utils/admin-guard.server";
 import { uploadFile } from "../../../utils/upload.server";
@@ -809,27 +809,65 @@ export default function AdminProductEdit() {
         }
     }, [blocker]);
 
-    // Upload Handler
+    // Upload Handler — several photos can be picked at once; they are queued and
+    // uploaded one by one through the same fetcher (the server handles one file
+    // per request, and a second fetcher.submit would cancel the one in flight).
+    const [uploadQueue, setUploadQueue] = useState<File[]>([]);
+    const [uploadTotal, setUploadTotal] = useState(0);
+    const uploadInFlight = useRef(false);
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        // Clear the input so the SAME file can be re-picked after an error.
+        const files = Array.from(e.target.files ?? []);
+        // Clear the input so the SAME files can be re-picked after an error.
         e.target.value = "";
-        if (!file) return;
-        if (fetcher.state !== "idle") return; // one upload in flight at a time
+        if (files.length === 0) return;
         // Client-side pre-checks mirror the server limits for instant feedback.
-        if (!file.type.startsWith("image/")) {
-            void import("sonner").then(({ toast }) => toast.error("Підтримуються лише зображення"));
+        const accepted: File[] = [];
+        let heic = 0;
+        let rejected = 0;
+        for (const file of files) {
+            if (/\.(heic|heif)$/i.test(file.name) || /hei[cf]/i.test(file.type)) heic++;
+            else if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) rejected++;
+            else accepted.push(file);
+        }
+        if (heic > 0) {
+            void import("sonner").then(({ toast }) =>
+                toast.error(
+                    `HEIC з iPhone не підтримується (${heic} шт.). Камера → Формати → «Найбільш сумісний», або надішліть фото як JPG.`,
+                ),
+            );
+        }
+        if (rejected > 0) {
+            void import("sonner").then(({ toast }) =>
+                toast.error(`Пропущено ${rejected} файл(ів): не зображення або більше 10 МБ`),
+            );
+        }
+        if (accepted.length > 0) {
+            setUploadQueue((q) => [...q, ...accepted]);
+            setUploadTotal((t) => t + accepted.length);
+        }
+    };
+    useEffect(() => {
+        if (fetcher.state === "idle") uploadInFlight.current = false;
+    }, [fetcher.state]);
+    useEffect(() => {
+        if (uploadInFlight.current || fetcher.state !== "idle") return;
+        if (uploadQueue.length === 0) {
+            if (uploadTotal) setUploadTotal(0);
             return;
         }
-        if (file.size > 10 * 1024 * 1024) {
-            void import("sonner").then(({ toast }) => toast.error("Файл завеликий (макс. 10 МБ)"));
-            return;
-        }
+        const [next, ...rest] = uploadQueue;
+        uploadInFlight.current = true;
+        setUploadQueue(rest);
         const fd = new FormData();
         fd.append("intent", "upload_image");
-        fd.append("file", file);
+        fd.append("file", next);
         fetcher.submit(fd, { method: "post", encType: "multipart/form-data" });
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fetcher.state, uploadQueue]);
+    const uploadingNow =
+        fetcher.state !== "idle" && fetcher.formData?.get("intent") === "upload_image";
+    const uploadsLeft = uploadQueue.length + (uploadingNow ? 1 : 0);
+    const uploadDone = uploadTotal - uploadsLeft;
 
     // Append a freshly-uploaded image, de-duplicated (guards against React
     // strict-mode double-invoke and re-uploading an identical URL).
@@ -1969,22 +2007,33 @@ export default function AdminProductEdit() {
                                     <input
                                         type="file"
                                         accept="image/*"
+                                        multiple
                                         hidden
-                                        disabled={fetcher.state !== "idle"}
                                         onChange={handleImageUpload}
                                     />
-                                    {fetcher.state !== "idle" &&
-                                    fetcher.formData?.get("intent") === "upload_image" ? (
-                                        <div
-                                            style={{
-                                                width: "20px",
-                                                height: "20px",
-                                                border: "2px solid rgba(255,255,255,0.2)",
-                                                borderTopColor: "#fff",
-                                                borderRadius: "50%",
-                                                animation: "spin 1s linear infinite",
-                                            }}
-                                        ></div>
+                                    {uploadTotal > 0 ||
+                                    (fetcher.state !== "idle" &&
+                                        fetcher.formData?.get("intent") === "upload_image") ? (
+                                        <>
+                                            <div
+                                                style={{
+                                                    width: "20px",
+                                                    height: "20px",
+                                                    border: "2px solid rgba(255,255,255,0.2)",
+                                                    borderTopColor: "#fff",
+                                                    borderRadius: "50%",
+                                                    animation: "spin 1s linear infinite",
+                                                }}
+                                            ></div>
+                                            {uploadTotal > 1 && (
+                                                <span
+                                                    style={{ fontSize: "12px", marginTop: "8px" }}
+                                                >
+                                                    {Math.min(uploadDone + 1, uploadTotal)} /{" "}
+                                                    {uploadTotal}
+                                                </span>
+                                            )}
+                                        </>
                                     ) : (
                                         <>
                                             <UploadIcon />

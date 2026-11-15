@@ -1,6 +1,6 @@
 # MindBody — CLAUDE.md
 
-Украинский e-commerce (спортивная одежда). React Router 7 + Prisma 5 + PostgreSQL (локально, `mindbody_db`) + Vite. Прод на этом же Windows VPS: PM2 (`mindbody`, `caddy`) + Caddy → localhost:3000, домен mindbody-sportwear.com за Cloudflare. Языки uk/en/ru, заказ всегда в ₴ ($ по курсу НБУ).
+Украинский e-commerce (спортивная одежда). React Router 7 + Prisma 5 + PostgreSQL + Vite. **Прод: Linux 13.140.220.228 под Coolify** (http://13.140.220.228:8000), приложение `mind-body:main` (Nixpacks, ветка `main` репо Hepsil1/MindBody), домен mindbody-sportwear.com. Языки uk/en/ru, заказ всегда в ₴ ($ по курсу НБУ).
 
 ## Карта «мозгов» (куда смотреть в первую очередь)
 
@@ -34,13 +34,11 @@
 ## Команды и деплой
 
 - dev: `npm run dev` (порт 3000, иногда 3001); проверки: `npm run typecheck`, `lint`, `format` (CI падает на непроформатированном)
-- деплой: `npm run deploy` (вызывает powershell 5.1; pwsh НЕ установлен), timeout ~180с. Внутри `scripts/deploy.ps1`: image-варианты → `react-router build` БЕЗ `prisma generate` (PM2 держит DLL) → `pm2 restart mindbody` → smoke-check. При фейле билда PM2 не трогается (нет даунтайма). **Билдится РАБОЧЕЕ ДЕРЕВО, не git — уедут и незакоммиченные правки!**
-- **Ручной build только при остановленном PM2** (Prisma DLL EPERM); build без рестарта PM2 = сломанная гидратация
-- PM2 env: `ecosystem.config.cjs` сам парсит `.env` при старте → `pm2 restart` НЕ перечитывает .env, нужно `pm2 delete mindbody && pm2 start ecosystem.config.cjs`
-- Caddy тоже под PM2: правки Caddyfile → `pm2 restart caddy`
-- Кэш: HTML DYNAMIC/no-cache, ассеты immutable-hash. «Владелец не видит обновление» = ЕГО локальный кэш (особенно iOS Safari bfcache: pull-to-refresh не сбрасывает — приватная вкладка). Cloudflare НЕ чистить — HTML и так не кэшируется
-- git: stash НЕ работает (битые объекты, см. `.git_corrupt_bak/`); `"` внутри `git commit -m` в PS5.1 ломает аргументы — here-string
-- Бэкапы: `npm run backup:db`, папка `C:\mindbody_backups\`; autostart через Task Scheduler (MindBody-Startup/Watchdog)
+- деплой: push в `main` → **webhook НЕ настроен**, деплой запускается вручную в Coolify (Deploy) — либо через `php artisan tinker` в контейнере `coolify` (`queue_application_deployment`). Билдится git-коммит, не рабочее дерево. `prebuild` генерит image-варианты (1–3 мин).
+- **Фото товаров**: `/app/public/uploads` смонтирован с хоста `/data/mindbody/uploads` (Coolify persistent storage) — переживает редеплой. Файлы из git в `public/uploads` этим томом ПЕРЕКРЫВАЮТСЯ: новые фото только через админку (или копировать на хост).
+- БД прода: Postgres 18 в Coolify (`postgres`). **Локальная разработка — база `mindbody_dev`** (копия прода на том же сервере), НЕ прод. Миграции на прод вручную: `prisma migrate deploy` с прод-URL.
+- Бэкапы: Coolify ежедневно 03:00, хранится 14; ручные дампы — `/root/mindbody_backups/` на сервере и `C:\mindbody_backups\` локально.
+- Env прода — в Coolify (Environment Variables). `.env` с `$` (bcrypt) под Vite мангалится — `env.server.ts` чинит это при старте.
 
 ## Рецепты верификации (проверять живьём, не «по коду»)
 
