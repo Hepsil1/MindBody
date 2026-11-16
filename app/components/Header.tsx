@@ -155,7 +155,7 @@ export function Header() {
     // show the white "over a photo" header: the logo and icons would vanish on
     // the cream background. They get the solid (scrolled) look from the start.
     const isLightTop =
-        /^\/(?:(?:en|ru)\/)?(?:(?:p|product|order)\/|(?:delivery|faq|privacy|terms|return-policy|care-guide|size-guide|search)(?:\/|$))/.test(
+        /^\/(?:(?:en|ru)\/)?(?:(?:p|product|order)\/|(?:delivery|faq|privacy|terms|return-policy|care-guide|size-guide|search|checkout|cart)(?:\/|$))/.test(
             location.pathname,
         );
 

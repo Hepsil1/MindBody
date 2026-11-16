@@ -120,14 +120,14 @@ export default function ProductCard({
 
     // Badge: SALE wins over NEW. Sold-out wins over both.
     const badge = !is_stock
-        ? { label: "Sold out", type: "soldout" as const }
+        ? { label: t("Немає в наявності"), type: "soldout" as const }
         : is_sale && sale_price
           ? {
                 label: `−${discount_percent || Math.round((1 - sale_price / price) * 100)}%`,
                 type: "sale" as const,
             }
           : is_new
-            ? { label: "New", type: "new" as const }
+            ? { label: t("Новинка"), type: "new" as const }
             : null;
 
     // framer-motion removed — the hover-lift / tap-shrink is now pure CSS

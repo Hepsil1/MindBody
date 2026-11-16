@@ -443,3 +443,226 @@
         font-size: 16px !important;
     }
 }
+
+/* ============================================================
+   Design polish (2026-11): light editorial checkout header.
+   Was a dark teal gradient band with a two-tone 64px title and a
+   Tailwind-green stepper. Now: cream band, one-colour title, quiet
+   numbered text steps. Header stays solid (Header isLightTop).
+   ============================================================ */
+.checkout-hero {
+    background: #f4f1ec;
+    color: #1e2a2a;
+    padding: 150px 0 40px;
+    border-bottom: 1px solid #e6dfd4;
+}
+.checkout-hero .breadcrumb {
+    margin-bottom: 20px;
+    font-size: 12px;
+}
+.checkout-hero .breadcrumb a,
+.checkout-hero .breadcrumb span,
+.checkout-hero .breadcrumb button {
+    color: #7a746c;
+    font: inherit;
+}
+.checkout-hero .breadcrumb a:hover,
+.checkout-hero .breadcrumb button:hover {
+    color: #1e2a2a;
+}
+.checkout-hero .breadcrumb .active {
+    color: #1e2a2a;
+}
+.checkout-hero__title {
+    font-size: clamp(30px, 3.4vw, 40px);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    color: #1e2a2a;
+    margin-bottom: 0;
+}
+.checkout-hero__title em {
+    font-family: inherit;
+    font-style: normal;
+    color: inherit;
+}
+.checkout-hero__subtitle {
+    color: #6f6a63;
+    font-size: 15px;
+    margin-top: 10px;
+}
+.checkout-steps {
+    margin: 0 0 20px;
+}
+.checkout-steps__circle {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #cfc8bd;
+    background: transparent;
+    color: #a69c90;
+    font-size: 11px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    box-shadow: none;
+}
+.checkout-steps__item.active .checkout-steps__circle {
+    border-color: #1e2a2a;
+    background: #1e2a2a;
+    color: #f4f1ec;
+    box-shadow: none;
+}
+.checkout-steps__item.completed .checkout-steps__circle {
+    border-color: #1e2a2a;
+    background: transparent;
+    color: #1e2a2a;
+}
+.checkout-steps__label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #a69c90;
+}
+.checkout-steps__item.active .checkout-steps__label,
+.checkout-steps__item.completed .checkout-steps__label {
+    color: #1e2a2a;
+    font-weight: 500;
+}
+.checkout-steps__line {
+    width: 64px;
+    height: 1px;
+    background: #d9d3c9;
+}
+.checkout-steps__item.completed + .checkout-steps__line,
+.checkout-steps__line:has(+ .checkout-steps__item.active),
+.checkout-steps__line:has(+ .checkout-steps__item.completed) {
+    background: #1e2a2a;
+}
+.checkout-page .header__logo-img {
+    filter: none !important;
+}
+.checkout-page .header__action-btn svg,
+.checkout-page .header__nav-link {
+    color: inherit !important;
+}
+@media (max-width: 768px) {
+    .checkout-hero {
+        padding: calc(var(--header-height, 64px) + 20px) 0 20px;
+    }
+    .checkout-stepper-mobile__track {
+        background: #e6dfd4;
+    }
+    .checkout-stepper-mobile__bar {
+        background: #1e2a2a;
+    }
+}
+
+/* Cards on the cart / checkout steps: one quiet system — thin warm border,
+   4-6px corners, no shadows, no hover lift (was 16-24px radius + shadows,
+   items jumping up 4px on hover). Trust cards become a single text row. */
+.checkout-page .cart-item,
+.checkout-page .cart-summary__card,
+.checkout-page .order-summary,
+.checkout-page .form-section,
+.checkout-page .trust-card-premium {
+    background: #fbfaf7;
+    border: 1px solid #e6dfd4;
+    border-radius: 6px;
+    box-shadow: none;
+}
+.checkout-page .cart-item:hover,
+.checkout-page .trust-card-premium:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: #cfc8bd;
+}
+.checkout-page .cart-item__image {
+    border-radius: 2px;
+}
+.checkout-page .checkout-trust-premium {
+    grid-template-columns: repeat(3, auto);
+    justify-content: start;
+    gap: 8px 28px;
+    margin-top: 24px;
+}
+.checkout-page .trust-card-premium {
+    flex-direction: row;
+    gap: 8px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    text-align: left;
+}
+.checkout-page .trust-card-premium__icon {
+    width: auto;
+    height: auto;
+    background: none;
+    border-radius: 0;
+    color: #7a746c;
+}
+.checkout-page .trust-card-premium:hover .trust-card-premium__icon {
+    background: none;
+    color: #7a746c;
+}
+.checkout-page .trust-card-premium__icon svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 1.5;
+}
+.checkout-page .trust-card-premium span {
+    font-size: 12px;
+    color: #6f6a63;
+}
+.checkout-page .cart-page__content {
+    padding: 48px 0 96px;
+}
+@media (max-width: 768px) {
+    .checkout-page .checkout-trust-premium {
+        grid-template-columns: 1fr;
+    }
+    .checkout-page .cart-page__content {
+        padding: 24px 0 72px;
+    }
+}
+
+/* Delivery / payment options: calm rows. Carrier logos go monochrome
+   (were saturated red/yellow tiles), selected = dark border, no mint fill. */
+.checkout-page .delivery-option__content,
+.checkout-page .payment-option__content {
+    background: #fbfaf7;
+    border: 1px solid #e2ddd4;
+    border-radius: 4px;
+    box-shadow: none;
+}
+.checkout-page .delivery-option:hover .delivery-option__content,
+.checkout-page .payment-option:hover .payment-option__content {
+    background: #fbfaf7;
+    border-color: #b9b1a5;
+}
+.checkout-page .delivery-option.active .delivery-option__content,
+.checkout-page .payment-option.active .payment-option__content {
+    background: #fbfaf7;
+    border-color: #1e2a2a;
+    box-shadow: inset 0 0 0 1px #1e2a2a;
+}
+.checkout-page .delivery-option.active .delivery-option__name,
+.checkout-page .payment-option.active .payment-option__content span {
+    color: #1e2a2a;
+}
+.checkout-page .payment-option.active .payment-option__content svg {
+    color: #1e2a2a;
+}
+.checkout-page .delivery-option__logo,
+.checkout-page .delivery-option__logo.nova-poshta,
+.checkout-page .delivery-option__logo.ukrposhta {
+    width: 40px;
+    height: 40px;
+    border-radius: 2px;
+    background: #ece7df;
+    color: #1e2a2a;
+}
+.checkout-page .delivery-option__logo img,
+.checkout-page .delivery-option__logo svg {
+    filter: grayscale(1) contrast(1.1);
+}
+.checkout-page .delivery-option__desc {
+    color: #7a746c;
+}

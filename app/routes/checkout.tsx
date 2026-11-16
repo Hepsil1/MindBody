@@ -1285,7 +1285,9 @@ export default function Checkout() {
                                                     width="28"
                                                     height="28"
                                                 >
-                                                    <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                                                    {/* parcel (pay on delivery) — was a "$" sign on a ₴-only shop */}
+                                                    <path d="M21 8l-9-5-9 5v8l9 5 9-5V8z" />
+                                                    <path d="M3 8l9 5 9-5M12 13v8" />
                                                 </svg>
                                                 <span>
                                                     {t("Накладений платіж (оплата при отриманні)")}
@@ -1597,7 +1599,7 @@ export default function Checkout() {
                                         <span>{t("За тарифами перевізника")}</span>
                                     </div>
                                     {promoApplied && (
-                                        <div className="summary-line" style={{ color: "#10b981" }}>
+                                        <div className="summary-line" style={{ color: "#5f7a5a" }}>
                                             <span>🏷️ {promoApplied.code}</span>
                                             <span>-{money(promoDiscount)}</span>
                                         </div>

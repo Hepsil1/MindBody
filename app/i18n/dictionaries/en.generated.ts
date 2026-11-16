@@ -342,6 +342,7 @@ export const enGenerated: Record<string, string> = {
     "Нічого не знайдено за запитом «{query}»": "Nothing found for “{query}”",
     "Нова Пошта": "Nova Poshta",
     "Новий пароль": "New password",
+    Новинка: "New",
     "Новинка {n} з {total}": "New arrival {n} of {total}",
     Новинки: "New in",
     "Нові надходження": "New arrivals",

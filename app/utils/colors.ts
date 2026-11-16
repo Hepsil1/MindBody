@@ -4,6 +4,8 @@
  *
  * Values are calibrated to the real fabrics in the studio photos (muted,
  * not Tailwind primaries), so a navy jumpsuit never shows a bright-blue dot.
+ * "blue" in the catalogue is the dark ink-blue Supplex (SWEET BERRY, ICE
+ * CREAM, CHINCHILLA), so it sits next to navy rather than cobalt.
  *
  * Keep the keys in lowercase. When DB contains a code we don't know about,
  * we fall back to the raw value (which may itself be a valid CSS color).
@@ -11,7 +13,7 @@
 export const COLOR_MAP: Record<string, string> = {
     black: "#1a1a1a",
     white: "#f4f1ec",
-    blue: "#2f4a9e",
+    blue: "#262c45",
     pink: "#c8517a",
     green: "#3e4c37",
     gray: "#5b5b60",

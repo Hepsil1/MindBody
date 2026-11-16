@@ -363,7 +363,6 @@ export default function ShopCategory() {
     const fallbackLabels = shopPageLabel(category);
     const prefixLabel = shopPage?.prefixLabel || t(fallbackLabels.tagline) || "For active life";
     const mainLabel = shopPage?.title || t(fallbackLabels.title);
-    const layerLabel = "MIND BODY";
 
     // Parse Image Position. Default = "50% 30%" (face-safe crop for
     // figure-of-woman product photography).
@@ -735,9 +734,7 @@ export default function ShopCategory() {
                 <div
                     className="shop-hero-luxe__background"
                     style={{ opacity: shopPage?.heroImage ? 0.3 : 1 }}
-                >
-                    <span className="stroke-text">{layerLabel}</span>
-                </div>
+                ></div>
                 <div className="container" style={{ position: "relative", zIndex: 1 }}>
                     <div className="shop-hero-luxe__content">
                         <nav className="luxe-breadcrumb">
@@ -749,23 +746,15 @@ export default function ShopCategory() {
                         <div className="hero-composition">
                             {/* Left side: Main title block */}
                             <div className="hero-title-block">
+                                {/* Compact editorial header: eyebrow + one title, no
+                                    decorative watermark / signature line — products
+                                    start in the first screen. */}
+                                {/* prefixLabel is owner-editable (admin → shop pages):
+                                    shown as a quiet eyebrow above the title */}
+                                <p className="luxe-title__prefix">{prefixLabel}</p>
                                 <h1 className="luxe-title">
                                     <span className="luxe-title__main">{mainLabel}</span>
-                                    <span className="luxe-title__sub">{t("колекція")}</span>
                                 </h1>
-                                <div className="luxe-signature">
-                                    <span className="line"></span>
-                                    <span className="text">mind body</span>
-                                </div>
-                            </div>
-
-                            {/* Right side: Special tagline */}
-                            <div className="hero-tagline-block">
-                                <div className="tagline-accent">
-                                    <span className="tagline-line"></span>
-                                    <span className="tagline-text">{prefixLabel}</span>
-                                    <span className="tagline-line"></span>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -1326,33 +1315,9 @@ export default function ShopCategory() {
                                 <main className="mb-shop-content">
                                     {/* MB sorting Toolbar */}
                                     <div className="mb-toolbar">
+                                        {/* One quiet row: count left, native sort select right
+                                            (was four uppercase chips that wrapped to two lines). */}
                                         <div className="toolbar-top-row">
-                                            <div className="sort-label">{t("СОРТУВАТИ ЗА:")}</div>
-                                            <div className="sort-chips">
-                                                {[
-                                                    { id: "default", label: "За релевантністю" },
-                                                    {
-                                                        id: "price-asc",
-                                                        label: "Ціна: за зростанням",
-                                                    },
-                                                    {
-                                                        id: "price-desc",
-                                                        label: "Ціна: за зменшенням",
-                                                    },
-                                                    { id: "newest", label: "Новинки" },
-                                                ].map((option) => (
-                                                    <button
-                                                        key={option.id}
-                                                        className={`sort-chip ${sortBy === option.id ? "active" : ""}`}
-                                                        onClick={() => setSortBy(option.id)}
-                                                    >
-                                                        {t(option.label)}
-                                                        {sortBy === option.id && (
-                                                            <span className="close-x">✕</span>
-                                                        )}
-                                                    </button>
-                                                ))}
-                                            </div>
                                             <div className="product-count">
                                                 {visibleProducts.length < filteredProducts.length
                                                     ? t("{shown} з {total} ТОВАРІВ", {
@@ -1363,6 +1328,35 @@ export default function ShopCategory() {
                                                           n: filteredProducts.length,
                                                       })}
                                             </div>
+                                            <label className="sort-select">
+                                                <span className="sort-label">
+                                                    {t("СОРТУВАТИ ЗА:")}
+                                                </span>
+                                                <select
+                                                    value={sortBy}
+                                                    onChange={(e) => setSortBy(e.target.value)}
+                                                >
+                                                    {[
+                                                        {
+                                                            id: "default",
+                                                            label: "За релевантністю",
+                                                        },
+                                                        {
+                                                            id: "price-asc",
+                                                            label: "Ціна: за зростанням",
+                                                        },
+                                                        {
+                                                            id: "price-desc",
+                                                            label: "Ціна: за зменшенням",
+                                                        },
+                                                        { id: "newest", label: "Новинки" },
+                                                    ].map((option) => (
+                                                        <option key={option.id} value={option.id}>
+                                                            {t(option.label)}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </label>
                                         </div>
                                     </div>
 
