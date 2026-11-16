@@ -54,13 +54,15 @@ export default function HeroGallery() {
         <main style={{ background: "#111" }}>
             <nav
                 style={{
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 100,
+                    // Static, below the site's fixed header: as a sticky bar at
+                    // top 0 it slid under the header and the buttons were
+                    // unreadable. Colours reload the page anyway.
+                    position: "relative",
+                    zIndex: 1,
                     display: "flex",
                     flexWrap: "wrap",
                     gap: 8,
-                    padding: "10px 16px",
+                    padding: "136px 16px 16px",
                     background: "rgba(17,17,17,.92)",
                     font: "600 13px/1 Onest, sans-serif",
                 }}
