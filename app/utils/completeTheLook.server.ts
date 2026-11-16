@@ -4,8 +4,17 @@ import type { RelatedProductCard } from "../types/product";
 // Complete the Look — editorial cross-merchandising engine.
 // Pairs primary garments (e.g. yoga jumpsuits, sport sets) with complementary
 // layering pieces (oversize shirts, hoodies, accessories) to inspire complete outfits.
+// Model key: the quoted model name («HYPNOSE»), so colourways and sleeve
+// variants of one model count as the same piece. Falls back to the full name.
+function modelKey(name: string | null | undefined): string {
+    const n = (name || "").trim().toLowerCase();
+    const m = n.match(/«([^»]+)»/);
+    return (m ? m[1] : n).trim();
+}
+
 export async function getCompleteTheLook(currentProduct: {
     id: string;
+    name?: string | null;
     category: string | null;
     shopPageSlug: string | null;
     familyId?: string | null;
@@ -36,7 +45,12 @@ export async function getCompleteTheLook(currentProduct: {
                 status: "active",
                 slug: { not: null },
                 id: { notIn: excludeIds },
-                ...(currentProduct.familyId ? { familyId: { not: currentProduct.familyId } } : {}),
+                // `not` alone drops NULL families in SQL — keep them explicitly.
+                ...(currentProduct.familyId
+                    ? {
+                          OR: [{ familyId: null }, { familyId: { not: currentProduct.familyId } }],
+                      }
+                    : {}),
                 ...(targetShopPages.length > 0 ? { shopPageSlug: { in: targetShopPages } } : {}),
             },
             select: {
@@ -48,18 +62,27 @@ export async function getCompleteTheLook(currentProduct: {
                 category: true,
                 shopPageSlug: true,
             },
-            take: 8,
+            take: 24,
             orderBy: { updatedAt: "desc" },
         });
 
-        if (candidates.length === 0) return [];
+        // Never offer the same model (other colourway / sleeve) or two
+        // variants of one model side by side.
+        const seenModels = new Set<string>([modelKey(currentProduct.name)]);
+        const pool = candidates.filter((c) => {
+            const k = modelKey(c.name);
+            if (!k || seenModels.has(k)) return false;
+            seenModels.add(k);
+            return true;
+        });
+        if (pool.length === 0) return [];
 
         // Pick distinct categories to offer a balanced outfit look
         const chosen: typeof candidates = [];
         const seenCategories = new Set<string>();
 
         // First pass: try to pick items with categories different from current product
-        for (const item of candidates) {
+        for (const item of pool) {
             const cat = item.category || item.shopPageSlug || "other";
             if (cat !== currentProduct.category && !seenCategories.has(cat)) {
                 chosen.push(item);
@@ -70,7 +93,7 @@ export async function getCompleteTheLook(currentProduct: {
 
         // Second pass: fill up to 3 items if needed
         if (chosen.length < 3) {
-            for (const item of candidates) {
+            for (const item of pool) {
                 if (!chosen.some((c) => c.id === item.id)) {
                     chosen.push(item);
                     if (chosen.length >= 3) break;
