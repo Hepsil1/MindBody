@@ -7,9 +7,9 @@
     "en": "Enter a valid phone number or email",
     "ru": "Введите корректный номер телефона или email"
   },
-  "Дякуємо! Ми зв'яжемось з вами найближчим часом ✨": {
-    "en": "Thank you! We'll be in touch shortly ✨",
-    "ru": "Спасибо! Мы свяжемся с вами в ближайшее время ✨"
+  "Дякуємо. Ми зв'яжемося з вами найближчим часом.": {
+    "en": "Thank you. We'll be in touch shortly.",
+    "ru": "Спасибо. Мы свяжемся с вами в ближайшее время."
   },
   "Помилка при відправці": {
     "en": "Something went wrong while sending",

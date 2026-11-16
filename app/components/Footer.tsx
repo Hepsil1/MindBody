@@ -33,7 +33,7 @@ export default function Footer() {
                 body: JSON.stringify({ contact: trimmed }),
             });
             if (res.ok) {
-                showToast(t("Дякуємо! Ми зв'яжемось з вами найближчим часом ✨"));
+                showToast(t("Дякуємо. Ми зв'яжемося з вами найближчим часом."));
                 setContact("");
             } else {
                 showToast(t("Помилка при відправці"), "error");

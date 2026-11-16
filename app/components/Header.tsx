@@ -151,6 +151,14 @@ export function Header() {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Pages with a light top (PDP, text pages, search, size guide, order) never
+    // show the white "over a photo" header: the logo and icons would vanish on
+    // the cream background. They get the solid (scrolled) look from the start.
+    const isLightTop =
+        /^\/(?:(?:en|ru)\/)?(?:(?:p|product|order)\/|(?:delivery|faq|privacy|terms|return-policy|care-guide|size-guide|search)(?:\/|$))/.test(
+            location.pathname,
+        );
+
     // Auto-close mobile menu on any route change
     useEffect(() => {
         setIsMenuOpen(false);
@@ -448,7 +456,7 @@ export function Header() {
             </div>
 
             <header
-                className={`header ${isScrolled ? "is-scrolled" : ""} ${isMenuOpen ? "is-menu-open" : ""}`}
+                className={`header ${isScrolled || isLightTop ? "is-scrolled" : ""} ${isLightTop && !isScrolled ? "is-light-top" : ""} ${isMenuOpen ? "is-menu-open" : ""}`}
                 id="header"
                 onBlur={(e) => {
                     // Focus left the header entirely (tab-out or click on the

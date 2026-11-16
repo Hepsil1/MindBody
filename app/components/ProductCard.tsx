@@ -115,7 +115,7 @@ export default function ProductCard({
             image,
             category: product.category || "",
         });
-        showToast(t("Додано до улюбленого ✦"));
+        showToast(t("Збережено в обране"));
     };
 
     // Badge: SALE wins over NEW. Sold-out wins over both.

@@ -1,3 +1,4 @@
+import { getColorHex as paletteHex } from "../utils/colors";
 import {
     useLoaderData,
     useSearchParams,
@@ -196,23 +197,7 @@ export function headers() {
     };
 }
 
-const COLOR_MAP: Record<string, string> = {
-    black: "#1a1a1a",
-    white: "#ffffff",
-    blue: "#3b82f6",
-    pink: "#ec4899",
-    green: "#22c55e",
-    gray: "#6b7280",
-    red: "#ef4444",
-    purple: "#a855f7",
-    yellow: "#eab308",
-    orange: "#f97316",
-    teal: "#14b8a6",
-    brown: "#78350f",
-    navy: "#1e3a8a",
-    beige: "#f5f5dc",
-    marsala: "#722F37",
-};
+// Swatch colours come from the shared, fabric-calibrated palette (utils/colors).
 
 // Narrow JSON parser that preserves the fallback's type.
 function parseJson<T>(str: string | null | undefined, fallback: T): T {
@@ -724,7 +709,7 @@ function ProductDetailView() {
                 node.focus({ preventScroll: true });
                 setTimeout(() => setSizeFlash(false), 900);
             }
-            showToast(t("Спершу оберіть розмір"), "warning");
+            // The inline hint under the sizes says what to do; no toast on top.
             return;
         }
 
@@ -764,16 +749,9 @@ function ProductDetailView() {
         setJustAdded(true);
         setTimeout(() => setJustAdded(false), 1200);
 
-        showToast(
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <span style={{ fontWeight: 600 }}>{t("Додано у кошик! ✨")}</span>
-                <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
-                    {product.name} {selectedSize ? `(${selectedSize})` : ""}
-                </span>
-            </div>,
-            "success",
-            product.images[0],
-        );
+        // No toast here: adding opens the cart drawer (Header listens for
+        // "cart-item-added"), and the drawer itself is the confirmation. A toast
+        // on top of it covered the drawer's close button.
     };
 
     // Heart mirrors the wishlist store (localStorage → client-only, so it
@@ -808,13 +786,13 @@ function ProductDetailView() {
         if (added) {
             setWishPop(true);
             setTimeout(() => setWishPop(false), 500);
-            showToast(t("Додано до улюбленого ❤️"));
+            showToast(t("Збережено в обране"));
         } else showToast(t("Вже у списку"), "info");
     };
 
     const getColorLabel = (code: string) => filterConfig?.colors?.[code] || code;
     const getColorHex = (code: string) =>
-        (code && typeof code === "string" ? COLOR_MAP[code.toLowerCase()] : code) || code;
+        (code && typeof code === "string" ? paletteHex(code) : code) || code;
 
     // Swatch row = this product's own colours + its colourway siblings, in
     // stable SKU order so a swatch never jumps position between sibling pages.

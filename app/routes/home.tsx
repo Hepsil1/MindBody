@@ -19,7 +19,6 @@ import { DEFAULT_SITE_URL } from "../utils/site-url";
 import { useI18n, getT, LLink, useMoney } from "../i18n";
 import { localeFromParam, localeFromParamSafe, OG_LOCALE, localizePath } from "../i18n/config";
 import { localizeEntities } from "../utils/translations.server";
-import { useSmoothScroll } from "../hooks/useSmoothScroll";
 
 // Onest (the owner-approved /about voice) — route-scoped, only for the cinematic
 // "Наш Instagram" title-card; the rest of home keeps its global fonts.
@@ -627,7 +626,6 @@ export default function Home() {
     const { t, lp } = useI18n();
     const money = useMoney();
     // Same buttery Lenis smooth-scroll the /about page uses (owner request).
-    useSmoothScroll();
     // Owner-editable home content (admin → Редактор сайту → Налаштування).
     const { homeFeatures, homeBrandWorld }: SiteSettings = useSiteSettings();
     const igUsername = instagramData?.username || "mindbody_sportwear";

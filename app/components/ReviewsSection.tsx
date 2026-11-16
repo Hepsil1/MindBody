@@ -62,7 +62,7 @@ export default function ReviewsSection({ productId }: { productId: string }) {
             });
             if (res.ok) {
                 const data = await res.json();
-                showToast(data.message || t("Дякуємо за ваш відгук! ✨"));
+                showToast(data.message || t("Відгук надіслано. Дякуємо."));
                 setFormName("");
                 setFormText("");
                 setFormRating(5);
@@ -146,7 +146,9 @@ export default function ReviewsSection({ productId }: { productId: string }) {
                     ))}
                 </div>
             ) : (
-                <p className="reviews-empty">{t("Поки що немає відгуків. Будьте першими! ✨")}</p>
+                <p className="reviews-empty">
+                    {t("Відгуків ще немає — поділіться враженнями першою.")}
+                </p>
             )}
 
             {!showForm ? (

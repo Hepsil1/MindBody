@@ -71,7 +71,11 @@
     /* === Typography - Design System (Stage 2) === */
     --font-display: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-heading: var(--font-display);
-    --font-accent: "Italiana", "Georgia", serif;
+    /* Editorial serif accent. Italiana was never loaded (it rendered as Georgia);
+       --font-script was used in ~25 rules but never defined. Both → Spectral. */
+    --font-serif: "Spectral", Georgia, serif;
+    --font-accent: var(--font-serif);
+    --font-script: var(--font-serif);
     --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
 
     --text-xs: 0.75rem;
@@ -173,7 +177,9 @@
 
 html {
     font-size: 16px;
-    scroll-behavior: smooth;
+    /* No global smooth scrolling: React Router's scroll restoration calls
+       scrollTo() on every navigation, and smooth made each new page visibly
+       slide up from the old position. Anchors/"to top" animate in JS. */
     -webkit-font-smoothing: antialiased;
     -webkit-text-size-adjust: 100%;
     /* Clip horizontal overflow at the viewport-establishing element.
@@ -235,20 +241,6 @@ a {
     }
 }
 
-/* Lenis smooth-scroll (home + /about via useSmoothScroll). Lenis adds these
-   classes to <html>; the override neutralises the native `scroll-behavior:
-   smooth` above, which would otherwise fight Lenis's JS smoothing. */
-html.lenis,
-html.lenis body {
-    height: auto;
-}
-.lenis.lenis-smooth {
-    scroll-behavior: auto !important;
-}
-.lenis.lenis-stopped {
-    overflow: clip;
-}
-
 a {
     color: inherit;
     text-decoration: none;
@@ -263,6 +255,22 @@ img {
     max-width: 100%;
     height: auto;
     display: block;
+}
+
+/* Form fields don't inherit the page font by default (they rendered in Arial). */
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
+/* iOS Safari zooms the page when a focused field's text is under 16px. */
+@media (max-width: 768px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea {
+        font-size: max(16px, 1em);
+    }
 }
 
 button {
@@ -1516,6 +1524,15 @@ h3 {
     background: rgba(255, 255, 255, 0.95);
 
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Light-topped pages (PDP, text pages…): solid header colours from the start,
+   but at the very top it still sits below the 38px service bar like on the
+   other pages (is-scrolled alone would slide it over the bar). */
+@media (min-width: 769px) {
+    .header.is-light-top {
+        top: 38px;
+    }
 }
 
 .header--static {
@@ -4760,7 +4777,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     padding-top: 80px;
     /* Increased padding for more breathing room */
     padding-bottom: 30px;
-    font-family: "Inter", sans-serif;
+    font-family: var(--font-body);
     border-top: 2px solid rgba(74, 138, 138, 0.4);
     /* More visible teal border */
     display: flex;
@@ -5121,9 +5138,17 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     padding: 12px 10px;
     /* Added side padding for the new background */
     color: #fff;
-    font-size: 14px;
+    font-family: var(--font-body);
+    /* 16px: iOS Safari zooms the page on focus for anything smaller */
+    font-size: 16px;
     outline: none;
-    transition: all 0.3s;
+    transition:
+        background-color 0.3s,
+        border-color 0.3s;
+}
+.mind-feedback__input:focus-visible {
+    outline: 2px solid #f4efe6;
+    outline-offset: 2px;
 }
 
 .mind-feedback__input:focus {
@@ -5148,7 +5173,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
     /* Slightly shorter height */
     font-size: 12px;
     /* Slightly smaller font */
-    font-weight: 900;
+    font-weight: 700;
     /* Extra bold */
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -10852,7 +10877,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 
 .sidebar-luxe-header .index {
     font-size: 9px;
-    font-weight: 900;
+    font-weight: 700;
     letter-spacing: 0.5em;
     color: #000;
     opacity: 0.4;
@@ -10878,7 +10903,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 
 .group-header .num {
     font-size: 11px;
-    font-weight: 900;
+    font-weight: 700;
     color: var(--color-primary);
     font-family: var(--font-display);
 }
@@ -11138,7 +11163,7 @@ body:has(.product-page) .footer-puma .footer__logo-link img {
 .empty-num {
     font-family: var(--font-display);
     font-size: 80px;
-    font-weight: 900;
+    font-weight: 700;
     color: #f0f0f0;
     display: block;
     margin-bottom: 20px;
@@ -12131,7 +12156,7 @@ body:has(.filter-drawer-overlay) .floating-contact {
     border: none !important;
     outline: none !important;
     font-size: 1.15rem;
-    font-family: var(--font-body, "Inter", sans-serif);
+    font-family: var(--font-body);
     color: #ffffff;
     letter-spacing: 0.03em;
     caret-color: rgba(61, 122, 140, 0.8);
@@ -14020,6 +14045,20 @@ button:disabled:hover {
     box-shadow: none;
 }
 
+/* PDP "Оберіть розмір": aria-disabled only means "not ready yet". The click
+   must still reach addToCart(), which scrolls to the sizes, highlights them and
+   explains what to pick (F-029). The global rule above used to swallow it with
+   pointer-events:none, so the button looked dead. Hollow outline = "pick first". */
+.btn-primary-add[aria-disabled="true"]:not(:disabled),
+.mobile-sticky-cta__btn[aria-disabled="true"]:not(:disabled) {
+    pointer-events: auto;
+    cursor: pointer;
+    opacity: 1;
+    background-color: transparent !important;
+    color: var(--pdp-btn-ink, #1e2a2a) !important;
+    border: 1px solid var(--pdp-btn-ink, #1e2a2a);
+}
+
 /* Mobile press feedback: touch devices don't get :hover, so :active
    must do all the work. Slightly stronger scaling reads as "tapped". */
 @media (hover: none) {
@@ -14493,7 +14532,7 @@ select {
         border-radius: 999px !important;
         color: #f0ece4 !important;
         font-family: var(--font-body) !important;
-        font-size: 14px !important;
+        font-size: 16px !important;
         min-height: 48px;
         outline: 0;
         transition: border-color 0.2s ease;
@@ -15189,5 +15228,103 @@ select {
         width: 100%;
         height: max(100%, 54px);
         transform: translate(-50%, -50%);
+    }
+}
+
+/* ============================================================
+   Toast — quiet brand notification (components/Toast.tsx).
+   Dark ink panel, top-right under the header (bottom on phones), status as a
+   2px left rule. Motion: short fade+rise; reduced motion = fade.
+   ============================================================ */
+.toast-container {
+    position: fixed;
+    right: 24px;
+    /* below the 38px service bar + 80px header, clear of the messenger buttons */
+    top: 134px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+.toast-item {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 260px;
+    max-width: 380px;
+    padding: 12px 16px;
+    background: #241d15;
+    color: #f4efe6;
+    border-left: 2px solid #8a9a82;
+    border-radius: 2px;
+    box-shadow: 0 12px 32px -12px rgba(36, 29, 21, 0.45);
+    font-family: "Manrope", var(--font-body, sans-serif);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.45;
+    cursor: pointer;
+    animation: toast-in 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.toast-item--error {
+    border-left-color: #c0705f;
+}
+.toast-item--warning {
+    border-left-color: #c9a46a;
+}
+.toast-item--info {
+    border-left-color: #a69c90;
+}
+.toast-item__thumb {
+    width: 40px;
+    height: 50px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 2px;
+    background: #3a3128;
+}
+.toast-item__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.toast-item__text {
+    flex: 1;
+}
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@media (max-width: 768px) {
+    .toast-container {
+        top: auto;
+        left: 12px;
+        right: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+    .toast-item {
+        min-width: 0;
+        max-width: none;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .toast-item {
+        animation: toast-fade 0.16s linear;
+    }
+    @keyframes toast-fade {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
     }
 }

@@ -66,11 +66,12 @@ export const links: Route.LinksFunction = () => [
        hit by warming up DNS + TCP + TLS handshake. */
     { rel: "preconnect", href: "https://api.novaposhta.ua", crossOrigin: "anonymous" },
     { rel: "preconnect", href: "https://api.telegram.org", crossOrigin: "anonymous" },
-    /* Fonts: Onest (display/headings 400-700) + Manrope (body/UI 400-700).
+    /* Fonts: Onest (display/headings 400-700) + Manrope (body/UI 400-700)
+       + Spectral (editorial serif accent; --font-accent / --font-script).
        Clean single stylesheet as specified by Lead Architect (Stage 2.1). */
     {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Onest:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Onest:wght@400;500;600;700;800&family=Spectral:ital,wght@0,400;1,400;1,500&display=swap",
     },
     { rel: "stylesheet", href: appCss },
     { rel: "stylesheet", href: cartStyles },
