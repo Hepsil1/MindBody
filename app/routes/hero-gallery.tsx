@@ -1,8 +1,10 @@
 /**
  * /hero-gallery — review page: every hero slide stacked, each rendered by the
  * real SingleLookHero (same header, logo, CTA, crops) so the owner can compare
- * all concepts on the live layout. `?bg=sand|clay|sage|mist|blush` swaps in the
- * background-colour variants (v4_<slide>__<colour>). Not linked anywhere; noindex.
+ * all concepts on the live layout. `?bg=sand|clay|sage|mist|blush|lilac` swaps in the
+ * background-colour variants (v4_<slide>__<colour>); `?bg=match` shows each slide on
+ * the wall colour picked for its outfit, with stage light (v4_<slide>__match).
+ * Not linked anywhere; noindex.
  */
 import { Link, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
@@ -11,11 +13,17 @@ import { getHeroLooks } from "../utils/heroLooks.server";
 
 const COLORS = [
     { id: "", label: "Оригінал", swatch: "#d9d6da" },
+    {
+        id: "match",
+        label: "В тон образу + світло",
+        swatch: "conic-gradient(#c4b29c, #b28068, #96a08c, #9caaba, #c4a098, #b0a4c0, #c4b29c)",
+    },
     { id: "sand", label: "Sand", swatch: "#c4b29c" },
     { id: "clay", label: "Clay", swatch: "#b28068" },
     { id: "sage", label: "Sage", swatch: "#96a08c" },
     { id: "mist", label: "Mist", swatch: "#9caaba" },
     { id: "blush", label: "Blush", swatch: "#c4a098" },
+    { id: "lilac", label: "Lilac", swatch: "#b0a4c0" },
 ] as const;
 
 export function meta() {
