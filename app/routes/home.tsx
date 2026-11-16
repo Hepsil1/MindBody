@@ -681,13 +681,42 @@ export default function Home() {
     const scrollCarousel = useCallback((dir: "prev" | "next") => {
         const el = carouselRef.current;
         if (!el) return;
-        const cardEl = el.querySelector(".product-card") as HTMLElement;
-        const cardW = cardEl ? cardEl.offsetWidth + 24 : CARD_WIDTH + 24; // 24 = gap
+        const cardEl = el.firstElementChild as HTMLElement | null;
+        const gap = parseFloat(getComputedStyle(el).columnGap) || 24;
+        const cardW = cardEl ? cardEl.offsetWidth + gap : CARD_WIDTH + gap;
+        // page by the number of whole cards in view (3 on desktop, 1 on phones)
+        const perPage = Math.max(1, Math.floor((el.clientWidth + gap) / cardW)) || VISIBLE;
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         el.scrollBy({
-            left: dir === "next" ? cardW * VISIBLE : -cardW * VISIBLE,
-            behavior: "smooth",
+            left: dir === "next" ? cardW * perPage : -cardW * perPage,
+            behavior: reduce ? "auto" : "smooth",
         });
     }, []);
+
+    // New Arrivals arrows: disabled at the ends of the track.
+    const [arrivalEdges, setArrivalEdges] = useState({ start: true, end: false });
+    useEffect(() => {
+        const el = carouselRef.current;
+        if (!el) return;
+        const update = () => {
+            setArrivalEdges({
+                start: el.scrollLeft <= 4,
+                end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4,
+            });
+            // counter = first card in view
+            const first = el.firstElementChild as HTMLElement | null;
+            const gap = parseFloat(getComputedStyle(el).columnGap) || 0;
+            const step = first ? first.offsetWidth + gap : 0;
+            if (step > 0) setActiveArrival(Math.round(el.scrollLeft / step));
+        };
+        update();
+        el.addEventListener("scroll", update, { passive: true });
+        window.addEventListener("resize", update);
+        return () => {
+            el.removeEventListener("scroll", update);
+            window.removeEventListener("resize", update);
+        };
+    }, [newProducts.length]);
 
     // Touch swipe fallback for non-snap viewports; on mobile (<=768px), native
     // CSS scroll-snap-type: x mandatory handles fluid 1-by-1 momentum swipes.
@@ -728,7 +757,6 @@ export default function Home() {
             cards.forEach((c) => io.observe(c));
             observers.push(io);
         };
-        observeChildren(carouselRef.current, setActiveArrival);
         observeChildren(bwFeaturesRef.current, setActiveFeature);
         return () => observers.forEach((o) => o.disconnect());
     }, [newProducts.length]);
@@ -1025,58 +1053,78 @@ export default function Home() {
                     </EditorAffordance>
                 </div>
 
-                {/* Sub-section: New Arrivals */}
-                <div className="container" id="new-collections">
-                    <div className="new-arrivals-header">
-                        <div className="new-arrivals-header__text">
-                            <span className="new-arrivals-badge">
-                                <span className="new-arrivals-badge__dot" />
-                                {t("Новинки")}{" "}
-                                <span suppressHydrationWarning>{new Date().getFullYear()}</span>
+                {/* Sub-section: New Arrivals — editorial split.
+                    Left: quiet intro (eyebrow, title, line, count, arrows, link),
+                    sticky on desktop. Right: a horizontal track of studio cards
+                    (3 in view + a peek). Own class names (na-*) so the legacy
+                    .products-carousel overrides don't apply. */}
+                <section className="na container" id="new-collections" aria-labelledby="na-title">
+                    <div className="na__intro">
+                        <p className="na__eyebrow">
+                            {t("Новинки")}{" "}
+                            <span suppressHydrationWarning>{new Date().getFullYear()}</span>
+                        </p>
+                        <h2 className="na__title" id="na-title">
+                            {t("Нові надходження")}
+                        </h2>
+                        <p className="na__lead">{t("Сезонні новинки з усіх колекцій")}</p>
+                        <p className="na__count" aria-live="polite">
+                            <span className="na__count-num">
+                                {String(activeArrival + 1).padStart(2, "0")}
                             </span>
-                            <h2 className="section__title">{t("Нові надходження")}</h2>
-                            <p className="section__subtitle">
-                                {t("Сезонні новинки з усіх колекцій")}
-                            </p>
-                        </div>
-                        <div className="new-arrivals-header__controls">
+                            <span className="na__count-sep" aria-hidden="true" />
+                            <span className="na__count-total">
+                                {String(newProducts.length).padStart(2, "0")}
+                            </span>
+                        </p>
+                        <div className="na__arrows">
                             <button
-                                className="carousel-btn carousel-btn--prev"
+                                type="button"
+                                className="na__arrow"
                                 aria-label={t("Попередні товари")}
+                                disabled={arrivalEdges.start}
                                 onClick={() => scrollCarousel("prev")}
                             >
                                 <svg
-                                    width="20"
-                                    height="20"
+                                    width="18"
+                                    height="18"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
-                                    strokeWidth="1.8"
+                                    strokeWidth="1.4"
+                                    aria-hidden="true"
                                 >
                                     <path d="M15 18l-6-6 6-6" />
                                 </svg>
                             </button>
                             <button
-                                className="carousel-btn carousel-btn--next"
+                                type="button"
+                                className="na__arrow"
                                 aria-label={t("Наступні товари")}
+                                disabled={arrivalEdges.end}
                                 onClick={() => scrollCarousel("next")}
                             >
                                 <svg
-                                    width="20"
-                                    height="20"
+                                    width="18"
+                                    height="18"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
-                                    strokeWidth="1.8"
+                                    strokeWidth="1.4"
+                                    aria-hidden="true"
                                 >
                                     <path d="M9 18l6-6-6-6" />
                                 </svg>
                             </button>
                         </div>
+                        <LLink to="/shop/yoga" className="na__all">
+                            {t("Переглянути всі новинки")}
+                            <span aria-hidden="true"> →</span>
+                        </LLink>
                     </div>
 
                     <div
-                        className="products-carousel"
+                        className="na__track"
                         ref={carouselRef}
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
@@ -1085,43 +1133,12 @@ export default function Home() {
                             <ProductCard
                                 key={p.id}
                                 product={p}
-                                priority={i < 4}
-                                imageSizes="(max-width: 768px) 62vw, 25vw"
+                                priority={i < 3}
+                                imageSizes="(max-width: 768px) 72vw, 26vw"
                             />
                         ))}
                     </div>
-
-                    {/* Mobile counter — "01 — 12" in Cormorant italic, large.
-                        Editorial pacing cue: signals curation ("12 chosen
-                        pieces") rather than inventory. Desktop hides via CSS
-                        @media. aria-live announces position to AT. */}
-                    <div
-                        className="arrival-counter"
-                        role="status"
-                        aria-live="polite"
-                        aria-atomic="true"
-                        aria-label={t("Новинка {n} з {total}", {
-                            n: activeArrival + 1,
-                            total: newProducts.length,
-                        })}
-                    >
-                        <span className="arrival-counter__num">
-                            {String(activeArrival + 1).padStart(2, "0")}
-                        </span>
-                        <span className="arrival-counter__sep" aria-hidden="true">
-                            —
-                        </span>
-                        <span className="arrival-counter__total">
-                            {String(newProducts.length).padStart(2, "0")}
-                        </span>
-                    </div>
-
-                    <div className="section__cta-center">
-                        <LLink to="/shop/yoga" className="btn btn--outline">
-                            {t("Переглянути всі новинки")} →
-                        </LLink>
-                    </div>
-                </div>
+                </section>
                 <section className="bw-unified-section bw-v3" id="about">
                     <div className="container">
                         <div className="bw-v3-layout">

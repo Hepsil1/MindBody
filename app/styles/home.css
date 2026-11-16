@@ -6050,3 +6050,222 @@
    real Instagram numbers (the whole point of the live feed), so they show on
    mobile too — the old "hide vanity counters on mobile" rule was from before the
    live feed existed and made the mock look broken (missing info) on phones. */
+
+/* ============================================================
+   NEW ARRIVALS — editorial split (2026-11 redesign).
+   Desktop: sticky intro column (eyebrow, title, line, counter,
+   arrows, link) + horizontal track, 3 cards in view + peek.
+   Phone: intro on top, track with 1 card + peek. No pills, no
+   reveal transforms (the old carousel clipped the card tops).
+   ============================================================ */
+.na {
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+    gap: 56px;
+    align-items: start;
+    padding-block: clamp(64px, 7vw, 112px);
+}
+.na__intro {
+    position: sticky;
+    top: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.na__eyebrow {
+    margin: 0 0 18px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #7a746c;
+}
+.na__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(34px, 3.2vw, 46px);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #1c1a17;
+    text-wrap: balance;
+}
+.na__lead {
+    margin: 16px 0 0;
+    max-width: 30ch;
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.55;
+    color: #6f6a63;
+}
+.na__count {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 40px 0 0;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: #1c1a17;
+}
+.na__count-sep {
+    width: 40px;
+    height: 1px;
+    background: #cfc8bd;
+}
+.na__count-total {
+    color: #a69c90;
+}
+.na__arrows {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+}
+.na__arrow {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #cfc8bd;
+    border-radius: 2px;
+    background: transparent;
+    color: #1c1a17;
+    cursor: pointer;
+    transition:
+        border-color 0.16s ease,
+        background-color 0.16s ease,
+        color 0.16s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+    .na__arrow:hover:not(:disabled) {
+        background: #1c1a17;
+        border-color: #1c1a17;
+        color: #f4efe6;
+    }
+}
+.na__arrow:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+.na__arrow:focus-visible {
+    outline: 2px solid #1c1a17;
+    outline-offset: 2px;
+}
+.na__all {
+    margin-top: 32px;
+    padding-block: 12px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #1c1a17;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 6px;
+}
+.na__all:hover {
+    text-decoration-color: transparent;
+}
+.na__track {
+    display: grid;
+    grid-auto-flow: column;
+    /* 3 whole cards + a ~30% peek of the 4th */
+    grid-auto-columns: calc((100% - 2 * 24px) / 3.3);
+    column-gap: 24px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+}
+.na__track::-webkit-scrollbar {
+    display: none;
+}
+.na__track > * {
+    scroll-snap-align: start;
+    min-width: 0;
+    /* no reveal animations / lift inside the track */
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+}
+
+@media (max-width: 1024px) {
+    .na {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+    .na__intro {
+        position: static;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "eyebrow eyebrow"
+            "title arrows"
+            "lead lead";
+        align-items: end;
+        column-gap: 16px;
+    }
+    .na__eyebrow {
+        grid-area: eyebrow;
+        margin-bottom: 12px;
+    }
+    .na__title {
+        grid-area: title;
+    }
+    .na__lead {
+        grid-area: lead;
+        margin-top: 10px;
+    }
+    .na__arrows {
+        grid-area: arrows;
+        margin: 0;
+    }
+    .na__count {
+        display: none;
+    }
+    .na__all {
+        display: none;
+    }
+    .na__track {
+        grid-auto-columns: calc((100% - 2 * 16px) / 2.4);
+        column-gap: 16px;
+    }
+}
+@media (max-width: 768px) {
+    .na {
+        padding-block: 56px;
+    }
+    .na__arrows {
+        display: none;
+    }
+    .na__intro {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "eyebrow"
+            "title"
+            "lead";
+    }
+    .na__track {
+        /* full-bleed strip: cards start at the content edge, run to the screen edge */
+        margin-inline: calc(-1 * var(--container-padding, 16px));
+        padding-inline: var(--container-padding, 16px);
+        scroll-padding-inline: var(--container-padding, 16px);
+        grid-auto-columns: 68vw;
+        column-gap: 12px;
+    }
+    .na__all {
+        display: inline-block;
+        grid-column: 1 / -1;
+        margin-top: 8px;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .na__track {
+        scroll-behavior: auto;
+    }
+}
