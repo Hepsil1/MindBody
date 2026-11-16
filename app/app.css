@@ -15296,3 +15296,45 @@ select {
         }
     }
 }
+
+/* ============================================================
+   HEADER AT LAPTOP/TABLET WIDTHS (769–1199px)
+   The centred absolute nav pill (6 labels, 40px gaps, 0.22em
+   tracking) is ~560px wide; between 769 and ~1180px it ran under
+   the logo and the action icons. Here the pill joins the flex row
+   (sits between logo and icons, never over them) and tightens.
+   ============================================================ */
+@media (min-width: 769px) and (max-width: 1199px) {
+    .header__nav {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+        margin: 0 auto;
+        padding: 10px 22px;
+    }
+    .header.is-scrolled .header__nav,
+    .header--static .header__nav {
+        padding: 8px 20px;
+    }
+    .header__nav-list {
+        gap: 20px;
+    }
+    .header__nav-link {
+        letter-spacing: 0.14em;
+    }
+    .header__actions {
+        gap: 4px;
+    }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+    .header__container {
+        padding: 0 40px;
+    }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+    .top-bar__container {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+}
