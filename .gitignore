@@ -72,6 +72,8 @@ public/_tmpframes/
 /public/hero/masters/*
 !/public/hero/masters/v4_*
 /public/hero/masters/v4_*__*
+# …except the outfit-matched set, which the live /hero-gallery?bg=match shows.
+!/public/hero/masters/v4_*__match*
 # Scratch work (hero compositor inputs/outputs, previews) — local only.
 /scratch/
 prisma/dev.db
