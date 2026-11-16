@@ -4,9 +4,10 @@
  * all concepts on the live layout. `?bg=sand|clay|sage|mist|blush|lilac` swaps in the
  * background-colour variants (v4_<slide>__<colour>); `?bg=match` shows each slide on
  * the wall colour picked for its outfit, with stage light (v4_<slide>__match).
- * Not linked anywhere; noindex.
+ * The colour is chosen only by URL (no switcher bar — the client sees just the
+ * slides). Not linked anywhere; noindex.
  */
-import { Link, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import SingleLookHero from "../components/SingleLookHero";
 import { getHeroLooks } from "../utils/heroLooks.server";
@@ -49,58 +50,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function HeroGallery() {
-    const { looks, bg } = useLoaderData<typeof loader>();
+    const { looks } = useLoaderData<typeof loader>();
     return (
-        <main style={{ background: "#111" }}>
-            <nav
-                style={{
-                    // Static, below the site's fixed header: as a sticky bar at
-                    // top 0 it slid under the header and the buttons were
-                    // unreadable. Colours reload the page anyway.
-                    position: "relative",
-                    zIndex: 1,
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 8,
-                    padding: "136px 16px 16px",
-                    background: "rgba(17,17,17,.92)",
-                    font: "600 13px/1 Onest, sans-serif",
-                }}
-            >
-                {COLORS.map((c) => (
-                    <Link
-                        key={c.id || "orig"}
-                        to={c.id ? `?bg=${c.id}` : "?"}
-                        reloadDocument
-                        style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 8,
-                            padding: "8px 12px",
-                            borderRadius: 999,
-                            color: "#fff",
-                            textDecoration: "none",
-                            border: `1px solid ${bg === c.id ? "#fff" : "rgba(255,255,255,.2)"}`,
-                        }}
-                    >
-                        <span
-                            style={{
-                                width: 14,
-                                height: 14,
-                                borderRadius: "50%",
-                                background: c.swatch,
-                            }}
-                        />
-                        {c.label}
-                    </Link>
-                ))}
-            </nav>
+        <main style={{ background: "#f4f1ec" }}>
             {looks.map((look) => (
-                <div key={look.slug} style={{ position: "relative", marginBottom: 24 }}>
+                <div key={look.slug} style={{ position: "relative", marginBottom: 12 }}>
                     <div
                         style={{
                             position: "absolute",
-                            top: 76,
+                            top: 132,
                             left: 16,
                             zIndex: 50,
                             background: "#D97757",
