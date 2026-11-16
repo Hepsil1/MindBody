@@ -1,0 +1,20 @@
+# Keep the build context small: everything here is unused by the build or
+# the running app. Coolify/Nixpacks honours this file.
+
+# Product photos: /app/public/uploads is a Coolify persistent volume, which
+# hides whatever the image ships there, and the prebuild skips it
+# (IMAGE_VARIANTS_SKIP_UPLOADS=1). Shipping the git copy (~200 MB) only
+# slowed every deploy.
+public/uploads
+
+# Dev-only material
+.git
+node_modules
+build
+scratch
+screenshots
+test-results
+playwright-report
+graphify-out
+caddy.exe
+*.log

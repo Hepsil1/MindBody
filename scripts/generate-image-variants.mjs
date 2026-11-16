@@ -52,7 +52,8 @@
  *  - decorative artwork without variants needed (logos, icons in /pics/)
  */
 
-import { readdir, stat, access, writeFile, readFile } from "node:fs/promises";
+import { readdir, stat, access, writeFile, readFile, copyFile, mkdir } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { constants } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -93,6 +94,56 @@ const JPG_RE = /\.(jpe?g)$/i;
 
 // In-memory LQIP map: collected during walk, written to disk at end.
 const lqipMap = {};
+
+// Content-addressed encode cache. Every deploy builds from a fresh checkout,
+// so the variants from the previous build are gone and the mtime check below
+// can't tell what is current — without this every build re-encoded every
+// photo (~9 min). Nixpacks mounts node_modules/.cache as a persistent BuildKit
+// cache for the build step, so encoded files parked there survive between
+// deploys. Key = source bytes + output settings: a changed photo or quality
+// setting misses the cache and is encoded fresh.
+const CACHE_DIR =
+    process.env.IMAGE_VARIANTS_CACHE ||
+    path.resolve(__dirname, "..", "node_modules", ".cache", "image-variants");
+const cacheStats = { hit: 0, miss: 0 };
+const sourceHashes = new Map();
+
+async function sourceHash(sourcePath) {
+    let h = sourceHashes.get(sourcePath);
+    if (!h) {
+        h = createHash("sha1")
+            .update(await readFile(sourcePath))
+            .digest("hex");
+        sourceHashes.set(sourcePath, h);
+    }
+    return h;
+}
+
+// Produce `dst` from the cache when possible, otherwise run `encode(dst)` and
+// park the result in the cache. A cache failure never fails the build.
+async function cachedEncode(sourcePath, dst, settings, encode) {
+    const key = createHash("sha1")
+        .update(`${await sourceHash(sourcePath)}|${settings}`)
+        .digest("hex");
+    const cached = path.join(CACHE_DIR, key.slice(0, 2), key + path.extname(dst));
+    if (!FORCE && (await fileExists(cached))) {
+        try {
+            await copyFile(cached, dst);
+            cacheStats.hit++;
+            return;
+        } catch {
+            // fall through to a real encode
+        }
+    }
+    await encode(dst);
+    cacheStats.miss++;
+    try {
+        await mkdir(path.dirname(cached), { recursive: true });
+        await copyFile(dst, cached);
+    } catch {
+        // cache is best-effort
+    }
+}
 
 async function* walk(dir) {
     let entries;
@@ -244,10 +295,16 @@ async function processBase(filePath) {
     if (!SKIP_AVIF) {
         const masterAvifDst = `${basePath}.avif`;
         if (FORCE || !(await fileExists(masterAvifDst))) {
-            await sharp(sourcePath)
-                .resize({ width: MASTER_MAX_WIDTH, withoutEnlargement: true })
-                .avif({ quality: AVIF_QUALITY, effort: AVIF_EFFORT })
-                .toFile(masterAvifDst);
+            await cachedEncode(
+                sourcePath,
+                masterAvifDst,
+                `master|${MASTER_MAX_WIDTH}|avif|${AVIF_QUALITY}|${AVIF_EFFORT}`,
+                (dst) =>
+                    sharp(sourcePath)
+                        .resize({ width: MASTER_MAX_WIDTH, withoutEnlargement: true })
+                        .avif({ quality: AVIF_QUALITY, effort: AVIF_EFFORT })
+                        .toFile(dst),
+            );
             generated++;
             actions.push(`master (avif)`);
         }
@@ -261,10 +318,12 @@ async function processBase(filePath) {
 
         const webpDst = `${basePath}-${w}w.webp`;
         if (!(await isUpToDate(sourcePath, webpDst))) {
-            await sharp(sourcePath)
-                .resize({ width: w, withoutEnlargement: true })
-                .webp({ quality: WEBP_QUALITY })
-                .toFile(webpDst);
+            await cachedEncode(sourcePath, webpDst, `${w}|webp|${WEBP_QUALITY}`, (dst) =>
+                sharp(sourcePath)
+                    .resize({ width: w, withoutEnlargement: true })
+                    .webp({ quality: WEBP_QUALITY })
+                    .toFile(dst),
+            );
             generated++;
             actions.push(`${w}w (webp)`);
         }
@@ -272,10 +331,16 @@ async function processBase(filePath) {
         if (!SKIP_AVIF) {
             const avifDst = `${basePath}-${w}w.avif`;
             if (!(await isUpToDate(sourcePath, avifDst))) {
-                await sharp(sourcePath)
-                    .resize({ width: w, withoutEnlargement: true })
-                    .avif({ quality: AVIF_QUALITY, effort: AVIF_EFFORT })
-                    .toFile(avifDst);
+                await cachedEncode(
+                    sourcePath,
+                    avifDst,
+                    `${w}|avif|${AVIF_QUALITY}|${AVIF_EFFORT}`,
+                    (dst) =>
+                        sharp(sourcePath)
+                            .resize({ width: w, withoutEnlargement: true })
+                            .avif({ quality: AVIF_QUALITY, effort: AVIF_EFFORT })
+                            .toFile(dst),
+                );
                 generated++;
                 actions.push(`${w}w (avif)`);
             }
@@ -354,7 +419,8 @@ async function processBase(filePath) {
     await writeFile(lqipPath, JSON.stringify(lqipMap, null, 0), "utf8");
     const lqipKb = (JSON.stringify(lqipMap).length / 1024).toFixed(1);
 
-    console.log(`\nDone. Processed ${total} masters, generated ${generated} files.`);
+    console.log(`
+Done. Processed ${total} masters, generated ${generated} files (cache: ${cacheStats.hit} reused, ${cacheStats.miss} encoded).`);
     console.log(
         `LQIP map: ${Object.keys(lqipMap).length} entries, ${lqipKb} KB at public/lqip.json`,
     );
