@@ -1,0 +1,170 @@
+/* /hero-lab experimental hero — see app/components/HeroLabStage.tsx.
+   Durations carry !important so the site-wide reduced-motion rule (which
+   zeroes every transition) doesn't flatten the lab: the owner reviews with
+   reduce-motion ON. Revisit before anything here ships to the home page. */
+
+.hlab__stage {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    container-type: size;
+}
+
+/* 16:9 box sized like object-fit: cover, anchored bottom-centre */
+.hlab__canvas {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: max(100cqw, calc(100cqh * 16 / 9));
+    aspect-ratio: 16 / 9;
+    transform: translateX(-50%);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+@media (min-aspect-ratio: 2/1) {
+    .hlab__canvas {
+        bottom: auto;
+        top: calc((100cqh - 100cqw * 9 / 16) * 0.78);
+    }
+}
+
+.hlab__canvas picture,
+.hlab__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.hlab__fx,
+.hlab__fx > div:not(.hlab__caption) {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.hlab__fx > div:not(.hlab__caption) {
+    -webkit-mask-image: var(--mask);
+    mask-image: var(--mask);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
+/* --- 2 · Spotlight: everything but the chosen model sinks into soft shade */
+.hlab .hlab__dim {
+    background: rgba(30, 22, 36, 0.4);
+    opacity: 0;
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.hlab--caption .hlab__dim {
+    background: rgba(30, 22, 36, 0.26);
+}
+.hlab .hlab__fx.is-on .hlab__dim {
+    opacity: 1;
+}
+
+/* --- 3 · Rim light: a thin studio back-light traces the silhouette */
+.hlab .hlab__rim {
+    background: #fff6ea;
+    mix-blend-mode: screen;
+    opacity: 0;
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.hlab .hlab__fx.is-on .hlab__rim {
+    opacity: 0.62;
+    animation: hlabRimBreathe 3.2s ease-in-out 0.6s infinite !important;
+}
+@keyframes hlabRimBreathe {
+    0%,
+    100% {
+        opacity: 0.62;
+    }
+    50% {
+        opacity: 0.42;
+    }
+}
+
+/* --- 4 · Fabric: only the garment lights up, as if a soft light was turned
+   on it (overlay keeps the hue — the knit is matte, so no glossy sweep). */
+.hlab .hlab__sheen {
+    background: radial-gradient(
+        ellipse 9% 42% at var(--cx) 46%,
+        rgba(255, 255, 255, 0.4),
+        rgba(255, 255, 255, 0.2)
+    );
+    mix-blend-mode: overlay;
+    opacity: 0;
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.hlab .hlab__fx.is-on .hlab__sheen {
+    opacity: 1;
+}
+
+/* --- 5 · Quiet caption under the feet (spotlight, lighter) */
+.hlab .hlab__caption {
+    position: absolute;
+    top: calc(var(--feet) + 3.2%);
+    transform: translate(-50%, 6px);
+    white-space: nowrap;
+    font: 500 12px/1 var(--font-body, "Manrope", sans-serif);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 1px 10px rgba(20, 14, 24, 0.45);
+    opacity: 0;
+    transition:
+        opacity 0.5s ease 0.15s,
+        transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.15s !important;
+}
+.hlab .hlab__fx.is-on .hlab__caption {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+/* keyboard / screen-reader links (focus lights the model) */
+.hlab__sr a {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* --- Phone: keep the 16:9 duo at full height and drift between the models */
+@media (max-width: 768px) {
+    .hlab__canvas {
+        width: auto;
+        height: 100%;
+        top: 0;
+        bottom: auto;
+        transform: translateX(var(--p0));
+        animation: hlabPan 16s ease-in-out infinite !important;
+    }
+    .hlab.has-active .hlab__canvas {
+        animation-play-state: paused !important;
+    }
+    /* phone: the CTA sits under the feet, so the caption goes above the head */
+    .hlab .hlab__caption {
+        top: calc(var(--head) - 5%);
+        font-size: 11px;
+    }
+}
+@keyframes hlabPan {
+    0%,
+    28% {
+        transform: translateX(var(--p0));
+    }
+    50%,
+    78% {
+        transform: translateX(var(--p1));
+    }
+    100% {
+        transform: translateX(var(--p0));
+    }
+}
