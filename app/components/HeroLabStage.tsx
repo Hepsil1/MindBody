@@ -67,13 +67,18 @@ const FX: Record<LabMode, FxSet> = {
     scan: { frame: "lit", reveal: "scan", cam: true },
     beams: { frame: "lit", reveal: "fade", dim: true, beams: true },
     cinema: { frame: "aura", reveal: "grow", cam: true, auto: true },
-    // --- with minimal info on the chosen model ---
-    // no camera push here: it would lift the tag into the header
+    // --- with minimal info on the chosen model. Deliberately all different:
+    //     light effect / info form / typeface / bottom button
+    // 11 colour aura      · glass tag above the head    · Manrope caps  · solid teal button
     tag: { frame: "aura", reveal: "grow", hint: true, info: "tag" },
+    // 12 white light wave · name printed on the floor   · Spectral italic · underlined text link
     floor: { frame: "back", reveal: "wave", hint: true, info: "floor" },
-    editorial: { frame: "lit", reveal: "fade", hint: true, info: "editorial" },
-    cursor: { frame: "back", reveal: "fade", cam: true, hint: true, info: "cursor" },
-    cta: { frame: "aura", reveal: "grow", cam: true, hint: true, info: "cta" },
+    // 13 spotlight (rest goes dark) · giant word behind her · Onest 800 · glass outline button
+    editorial: { frame: "lit", reveal: "fade", dim: true, info: "editorial" },
+    // 14 floor ripples    · round price disc on the cursor · numerals-first · white button
+    cursor: { frame: "lit", reveal: "fade", ripple: true, cam: true, hint: true, info: "cursor" },
+    // 15 scan line        · the button itself becomes the outfit
+    cta: { frame: "lit", reveal: "scan", cam: true, hint: true, info: "cta" },
 };
 
 export interface LabModel {
@@ -93,6 +98,20 @@ interface Props {
     models: LabModel[];
     mode: LabMode;
     studioBg?: string;
+}
+
+/** Round price badge: the price is the hero, name above, colour below. */
+function Disc({ title, sub }: { title: string; sub: string }) {
+    const parts = sub.split(" · ").filter(Boolean);
+    const main = parts.length > 1 ? parts[parts.length - 1] : (parts[0] ?? "");
+    const minor = parts.length > 1 ? parts.slice(0, -1).join(" · ") : "";
+    return (
+        <span className="hlab__disc">
+            <b>{title}</b>
+            <strong>{main}</strong>
+            {minor && <i>{minor}</i>}
+        </span>
+    );
 }
 
 const CAM_SCALE = 1.08;
@@ -346,19 +365,24 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                                     )}
                                     {fx.info === "floor" && (
                                         <div className="hlab__info hlab__floor">
-                                            <b>{m.title}</b>
+                                            <b>
+                                                {m.title.charAt(0) + m.title.slice(1).toLowerCase()}
+                                            </b>
                                             <i>{m.sub}</i>
                                         </div>
                                     )}
-                                    {(fx.info === "tag" || fx.info === "cursor") && (
-                                        <div
-                                            className={`hlab__info hlab__tag ${fx.info === "cursor" ? "hlab__tag--touch" : ""}`}
-                                        >
+                                    {fx.info === "tag" && (
+                                        <div className="hlab__info hlab__tag">
                                             <span className="hlab__pill">
                                                 <b>{m.title}</b>
                                                 <i>{m.sub}</i>
                                             </span>
                                             <span className="hlab__stem" />
+                                        </div>
+                                    )}
+                                    {fx.info === "cursor" && (
+                                        <div className="hlab__info hlab__disc-touch">
+                                            <Disc title={m.title} sub={m.sub} />
                                         </div>
                                     )}
                                     {fx.caption && (
@@ -406,11 +430,7 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
 
             {fx.info === "cursor" && (
                 <div ref={cursorRef} className="hlab__cursor" aria-hidden="true">
-                    <span className="hlab__pill">
-                        <b>{fm.title}</b>
-                        <i>{fm.sub}</i>
-                        <em>→</em>
-                    </span>
+                    <Disc title={fm.title} sub={fm.sub} />
                 </div>
             )}
 
@@ -433,8 +453,11 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                             </span>
                         </LLink>
                     ) : (
-                        <LLink to="/shop/yoga" className="slook__cta-btn slook__cta-btn--centered">
-                            {t("Переглянути колекцію")}
+                        <LLink
+                            to="/shop/yoga"
+                            className="slook__cta-btn slook__cta-btn--centered hlab__btn"
+                        >
+                            <span>{t("Переглянути колекцію")}</span>
                         </LLink>
                     )}
                 </div>
