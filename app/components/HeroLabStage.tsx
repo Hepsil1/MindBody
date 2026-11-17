@@ -18,7 +18,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { LLink, useI18n } from "../i18n";
-import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
 import "../styles/single-look.css";
 import "../styles/hero-lab.css";
 
@@ -95,13 +94,14 @@ export interface LabModel {
     cx: number;
     head: number;
     feet: number;
+    /** where each light frame (an RGBA crop) sits on the canvas: [x, y, w, h] fractions */
+    frames: Record<"lit" | "back" | "aura", number[]>;
     /** false when the slide has no real product behind it: the button then keeps
      *  its generic label instead of advertising a name/price that leads nowhere */
     linked?: boolean;
 }
 
 interface Props {
-    image: string;
     maskDir: string;
     models: LabModel[];
     mode: LabMode;
@@ -137,7 +137,6 @@ const SHOW_TO = 0.83;
 const USER_HOLD = 8000;
 
 export default function HeroLabStage({
-    image,
     maskDir,
     models,
     mode,
@@ -309,24 +308,16 @@ export default function HeroLabStage({
                         }}
                         onClick={onClick}
                     >
-                        <picture>
-                            <source
-                                type="image/avif"
-                                srcSet={buildAvifSrcset(image)}
-                                sizes="(max-width: 768px) 300vw, 100vw"
-                            />
-                            <source
-                                type="image/webp"
-                                srcSet={buildWebpSrcset(image)}
-                                sizes="(max-width: 768px) 300vw, 100vw"
-                            />
-                            <img
-                                src={`${image}.webp`}
-                                alt=""
-                                className="hlab__img"
-                                decoding="async"
-                            />
-                        </picture>
+                        {/* own high-quality base: the shipped masters are compressed
+                            until knit and hair turn to wax */}
+                        <img
+                            src={`${maskDir}/base.webp`}
+                            srcSet={`${maskDir}/base-1600.webp 1600w, ${maskDir}/base.webp 2560w`}
+                            sizes="(max-width: 768px) 300vw, 100vw"
+                            alt=""
+                            className="hlab__img"
+                            decoding="async"
+                        />
                         {models.map((m, k) => {
                             const on = active === k;
                             const run = on ? pulse : "idle";
@@ -343,13 +334,22 @@ export default function HeroLabStage({
                                     }}
                                 >
                                     {fx.frame && (
-                                        <img
-                                            src={`${maskDir}/${fx.frame}${k}.webp`}
-                                            alt=""
-                                            loading={eager ? "eager" : "lazy"}
-                                            decoding="async"
+                                        <div
                                             className={`hlab__frame hlab__frame--${fx.reveal} ${fx.hint ? "has-hint" : ""}`}
-                                        />
+                                        >
+                                            <img
+                                                src={`${maskDir}/${fx.frame}${k}.webp`}
+                                                alt=""
+                                                loading={eager ? "eager" : "lazy"}
+                                                decoding="async"
+                                                style={{
+                                                    left: `${m.frames[fx.frame][0] * 100}%`,
+                                                    top: `${m.frames[fx.frame][1] * 100}%`,
+                                                    width: `${m.frames[fx.frame][2] * 100}%`,
+                                                    height: `${m.frames[fx.frame][3] * 100}%`,
+                                                }}
+                                            />
+                                        </div>
                                     )}
                                     {fx.dim && <div className="hlab__dim" style={mask("inv", k)} />}
                                     {fx.beams && (

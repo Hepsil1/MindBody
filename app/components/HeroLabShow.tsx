@@ -7,11 +7,9 @@
  */
 import { useEffect, useState } from "react";
 import HeroLabStage, { type LabMode, type LabModel } from "./HeroLabStage";
-import { buildAvifSrcset, buildWebpSrcset } from "../utils/responsive-image";
 
 export interface ShowSlide {
     sid: string;
-    image: string;
     maskDir: string;
     studioBg?: string;
     models: LabModel[];
@@ -51,19 +49,13 @@ export default function HeroLabShow({ slides, mode }: { slides: ShowSlide[]; mod
                                 ["--vx" as string]: under.models[under.models.length - 1].cx,
                             }}
                         >
-                            <picture>
-                                <source
-                                    type="image/avif"
-                                    srcSet={buildAvifSrcset(under.image)}
-                                    sizes="(max-width: 768px) 300vw, 100vw"
-                                />
-                                <source
-                                    type="image/webp"
-                                    srcSet={buildWebpSrcset(under.image)}
-                                    sizes="(max-width: 768px) 300vw, 100vw"
-                                />
-                                <img src={`${under.image}.webp`} alt="" className="hlab__img" />
-                            </picture>
+                            <img
+                                src={`${under.maskDir}/base.webp`}
+                                srcSet={`${under.maskDir}/base-1600.webp 1600w, ${under.maskDir}/base.webp 2560w`}
+                                sizes="(max-width: 768px) 300vw, 100vw"
+                                alt=""
+                                className="hlab__img"
+                            />
                         </div>
                     </div>
                 </div>
@@ -71,7 +63,6 @@ export default function HeroLabShow({ slides, mode }: { slides: ShowSlide[]; mod
 
             <div key={cur.sid} className="hshow__top">
                 <HeroLabStage
-                    image={cur.image}
                     maskDir={cur.maskDir}
                     studioBg={cur.studioBg}
                     models={cur.models}
@@ -100,7 +91,12 @@ export default function HeroLabShow({ slides, mode }: { slides: ShowSlide[]; mod
 
             {/* warm the next slide so its light is ready when its turn comes */}
             <div hidden>
-                <img src={`${next.image}.webp`} alt="" />
+                <img
+                    src={`${next.maskDir}/base.webp`}
+                    srcSet={`${next.maskDir}/base-1600.webp 1600w, ${next.maskDir}/base.webp 2560w`}
+                    sizes="(max-width: 768px) 300vw, 100vw"
+                    alt=""
+                />
                 <img src={`${next.maskDir}/aura0.webp`} alt="" />
             </div>
         </div>

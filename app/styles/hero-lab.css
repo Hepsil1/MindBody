@@ -92,6 +92,15 @@
     mask-repeat: no-repeat;
 }
 
+/* the frame is an RGBA crop placed by its rect; the wrapper carries the reveal */
+.hlab__frame img {
+    position: absolute;
+    display: block;
+    max-width: none;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
 /* --- Pre-rendered light frame + the ways it is revealed ------------------ */
 .hlab .hlab__frame {
     opacity: 0;

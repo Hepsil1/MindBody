@@ -69,7 +69,12 @@ const MODES: Record<string, LabMode | null> = {
 };
 
 interface LabMeta {
-    models: Array<{ cx: number; head: number; feet: number }>;
+    models: Array<{
+        cx: number;
+        head: number;
+        feet: number;
+        frames: Record<"lit" | "back" | "aura", number[]>;
+    }>;
 }
 
 export function meta() {
@@ -129,7 +134,6 @@ export default function HeroLab() {
         return {
             sid,
             look,
-            image: look.imageDesktop,
             maskDir: `/hero/lab/${sid}`,
             studioBg: look.studioBg,
             models: models.map(
@@ -144,6 +148,7 @@ export default function HeroLab() {
                     cx: m.cx,
                     head: m.head,
                     feet: m.feet,
+                    frames: m.frames,
                     linked: !!colors,
                 }),
             ),

@@ -10,7 +10,8 @@ B is estimated from the surrounding backdrop, F is un-mixed, so hair strands
 and body edges stay clean. Only the garment (never skin/hair/floor) is lit.
 
 Writes public/hero/lab/<sid>/ :
-  lit<k>.webp   frame with model k's garment lit
+  base.webp     the slide itself, high quality, from the lossless build
+  lit<k>.webp   RGBA crop (only what changes): model k's garment lit
   back<k>.webp  + white back-light on the wall behind her + light pool at the feet
   aura<k>.webp  + wall behind her tinted in the garment's colour
   g<k>.png      garment mask (scan line)      out<k>.png  everything but model k
@@ -70,19 +71,60 @@ def save_mask(alpha, path, size=(OW, OH)):
     Image.fromarray(np.dstack([np.full_like(a, 255)] * 3 + [a]), "RGBA").save(path, optimize=True)
 
 
-def save_frame(rgb, path):
-    im = Image.fromarray(np.clip(rgb + 0.5, 0, 255).astype(np.uint8)).resize((OW, OH), Image.Resampling.LANCZOS)
-    im.save(path, quality=90, method=6)
+Q = 93  # the shipped hero masters are ~120 KB for 2560 px: knit and hair turn to wax
+
+
+def save_frame(frame, base, path):
+    """Save only what differs from the base, full resolution, as an RGBA crop.
+
+    Untouched pixels stay transparent, so the base is never encoded twice and a
+    light state can't soften the rest of the picture. Returns the crop rect as
+    canvas fractions [x, y, w, h].
+    """
+    H, W = base.shape[:2]
+    diff = np.abs(frame - base).max(axis=2)
+    alpha = smooth(blur(diff, 1.2), 0.35, 2.2)
+    alpha = np.maximum(alpha, smooth(blur(cv2.dilate(alpha, np.ones((5, 5), np.uint8)), 2.0), 0.05, 0.6))
+    ys, xs = np.where(alpha > 0.004)
+    if len(xs) == 0:
+        x0, y0, x1, y1 = 0, 0, 8, 8
+    else:
+        pad = 8
+        x0, x1 = max(0, xs.min() - pad), min(W, xs.max() + pad + 1)
+        y0, y1 = max(0, ys.min() - pad), min(H, ys.max() + pad + 1)
+    rgb8 = np.clip(frame[y0:y1, x0:x1] + 0.5, 0, 255).astype(np.uint8)
+    a8 = (np.clip(alpha[y0:y1, x0:x1], 0, 1) * 255 + 0.5).astype(np.uint8)
+    Image.fromarray(np.dstack([rgb8, a8]), "RGBA").save(path, quality=Q, method=6, exact=True)
+    return [round(x0 / W, 5), round(y0 / H, 5), round((x1 - x0) / W, 5), round((y1 - y0) / H, 5)]
+
+
+def lossless_slide(sid, variant):
+    """The slide exactly as shipped, but from the lossless build (no webp/avif pass)."""
+    sys.path.insert(0, os.path.join(ROOT, "scratch"))
+    os.environ.setdefault("HERO_LIGHT", "0.35")
+    import recolor_hero_bg as R
+    rgb = np.asarray(Image.open(f"{R.BASE}/{sid}.png").convert("RGB"))
+    if variant == "match":
+        import export_u_slides as E
+        matte = np.asarray(Image.open(f"{R.BASE}/{sid}_matte.png")).astype(np.float32) / 255
+        rgb = R.recolor(rgb, matte, R.PALETTE[E.MATCH[sid]], refine=not sid.startswith("u"))
+    elif variant:
+        raise SystemExit(f"unknown variant {variant}")
+    return np.asarray(rgb).astype(np.float32)
 
 
 def main(spec):
     sid, _, variant = spec.partition(":")
     name = f"v4_{sid}__{variant}" if variant else f"v4_{sid}"
-    rgb = np.asarray(Image.open(f"{ROOT}/public/hero/masters/{name}.webp").convert("RGB")).astype(np.float32)
+    rgb = lossless_slide(sid, variant)
     matte = np.asarray(Image.open(f"{ROOT}/scratch/hero_v4_base/{sid}_matte.png")).astype(np.float32) / 255
     H, W = matte.shape
     out_dir = f"{ROOT}/public/hero/lab/{sid}"
     os.makedirs(out_dir, exist_ok=True)
+    # the lab shows its own high-quality base, not the over-compressed master
+    Image.fromarray(np.clip(rgb + 0.5, 0, 255).astype(np.uint8)).save(f"{out_dir}/base.webp", quality=Q, method=6)
+    Image.fromarray(np.clip(rgb + 0.5, 0, 255).astype(np.uint8)).resize((1600, 900), Image.Resampling.LANCZOS).save(
+        f"{out_dir}/base-1600.webp", quality=Q, method=6)
 
     n, cl, st, _ = cv2.connectedComponentsWithStats((matte > 0.5).astype(np.uint8))
     comps = sorted([i for i in range(1, n) if st[i, 4] > 20000], key=lambda i: st[i, 0])
@@ -147,21 +189,20 @@ def main(spec):
         # below ~12 the hue is noise (brown, black, grey) -> neutral white light instead
         tone_ab = ab / max(chroma, 1e-3) * 44 if chroma > 12 else None
 
-        # --- F' : lit garment (lift + a little more colour), skin untouched ---
-        LFl = LF.copy()
-        # lift lightness; chroma follows so darks don't go grey, but an already
-        # vivid fabric (red, fuchsia) gets less lift and no extra chroma (no neon)
+        # --- F' : lit garment = more EXPOSURE, in linear light. A plain lift in
+        # Lab flattened the folds (shadows rose more than highlights) and the
+        # fabric went plastic; multiplying linear light keeps every shading ratio,
+        # hue and saturation — exactly what a brighter lamp does.
         vivid = smooth(np.hypot(A_, B_), 30, 60)
-        # already-light parts (mesh inserts, white piping) are left almost alone:
-        # lifting them blows out to white and exposes every mask pin-hole
-        light = smooth(L, 48, 72)
-        lift = gsoft * (5 + 0.3 * L) * (1 - 0.55 * vivid) * (1 - 0.9 * light)
-        cgain = 1 + gsoft * (0.6 * (1 - vivid)) * (1 - 0.9 * light)
-        LFl[..., 0] = L + lift
-        LFl[..., 1] = A_ * cgain
-        LFl[..., 2] = B_ * cgain
-        Flit = unlab(LFl)
-        # keep F exact where nothing changed (no colour-space round trip on skin)
+        light = smooth(L, 48, 72)  # mesh inserts / white piping: leave almost alone
+        gain = 1 + gsoft * 0.5 * (1 - 0.3 * vivid) * (1 - 0.9 * light)
+        lin = (F / 255.0) ** 2.2 * gain[..., None]
+        # soft shoulder on the brightest channel so saturated reds don't clip to neon
+        mx = lin.max(axis=2)
+        knee = 0.72
+        mx2 = np.where(mx > knee, knee + (1 - knee) * np.tanh((mx - knee) / (1 - knee)), mx)
+        lin = lin * (mx2 / np.maximum(mx, 1e-6))[..., None]
+        Flit = np.clip(lin, 0, 1) ** (1 / 2.2) * 255.0
         Flit = np.where(gsoft[..., None] > 0.004, Flit, F)
 
         solid = (a > 0.5).astype(np.float32)
@@ -197,9 +238,11 @@ def main(spec):
         else:
             Baura = Bback
 
-        save_frame(compose(Flit, Bfull), f"{out_dir}/lit{k}.webp")
-        save_frame(compose(Flit, Bback), f"{out_dir}/back{k}.webp")
-        save_frame(compose(Flit, Baura), f"{out_dir}/aura{k}.webp")
+        rects = {
+            "lit": save_frame(compose(Flit, Bfull), rgb, f"{out_dir}/lit{k}.webp"),
+            "back": save_frame(compose(Flit, Bback), rgb, f"{out_dir}/back{k}.webp"),
+            "aura": save_frame(compose(Flit, Baura), rgb, f"{out_dir}/aura{k}.webp"),
+        }
 
         save_mask(gsoft, f"{out_dir}/g{k}.png")
         save_mask(1 - a, f"{out_dir}/out{k}.png")
@@ -210,7 +253,7 @@ def main(spec):
         hit[small > 60] = (k + 1) * 50
 
         tone_rgb = unlab(np.array([[[62, tone_ab[0], tone_ab[1]]]], np.float32))[0, 0] if tone_ab is not None else np.array([255, 246, 234])
-        meta.append({"cx": round(float(cxp) / W, 4), "head": round(y / H, 4), "feet": round((y + h) / H, 4),
+        meta.append({"cx": round(float(cxp) / W, 4), "head": round(y / H, 4), "feet": round((y + h) / H, 4), "frames": rects,
                      "tone": "#%02x%02x%02x" % tuple(int(v) for v in tone_rgb), "colourful": tone_ab is not None})
 
         qa = qa * (1 - 0.55 * gsoft[..., None]) + np.array([0, 255, 0]) * 0.55 * gsoft[..., None]
