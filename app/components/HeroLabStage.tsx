@@ -31,10 +31,17 @@ export type LabMode =
     | "ripple"
     | "scan"
     | "beams"
-    | "cinema";
+    | "cinema"
+    | "tag"
+    | "floor"
+    | "editorial"
+    | "cursor"
+    | "cta";
 
 type Frame = "lit" | "back" | "aura";
 type Reveal = "fade" | "wave" | "grow" | "scan";
+/** how the outfit's name / colour / price is shown while a model is chosen */
+type Info = "tag" | "floor" | "editorial" | "cursor" | "cta";
 
 interface FxSet {
     /** which pre-rendered frame this concept shows, and how it is revealed */
@@ -47,6 +54,7 @@ interface FxSet {
     beams?: boolean;
     caption?: boolean;
     auto?: boolean;
+    info?: Info;
 }
 
 const FX: Record<LabMode, FxSet> = {
@@ -59,11 +67,21 @@ const FX: Record<LabMode, FxSet> = {
     scan: { frame: "lit", reveal: "scan", cam: true },
     beams: { frame: "lit", reveal: "fade", dim: true, beams: true },
     cinema: { frame: "aura", reveal: "grow", cam: true, auto: true },
+    // --- with minimal info on the chosen model ---
+    // no camera push here: it would lift the tag into the header
+    tag: { frame: "aura", reveal: "grow", hint: true, info: "tag" },
+    floor: { frame: "back", reveal: "wave", hint: true, info: "floor" },
+    editorial: { frame: "lit", reveal: "fade", hint: true, info: "editorial" },
+    cursor: { frame: "back", reveal: "fade", cam: true, hint: true, info: "cursor" },
+    cta: { frame: "aura", reveal: "grow", cam: true, hint: true, info: "cta" },
 };
 
 export interface LabModel {
     href: string;
-    caption: string;
+    /** short outfit name, e.g. "WINGS" */
+    title: string;
+    /** second line: colour · price (or a short descriptor) */
+    sub: string;
     cx: number;
     head: number;
     feet: number;
@@ -88,6 +106,9 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
     const { t } = useI18n();
     const navigate = useNavigate();
     const camRef = useRef<HTMLDivElement>(null);
+    const sectionRef = useRef<HTMLElement>(null);
+    const cursorRef = useRef<HTMLDivElement>(null);
+    const leaveTimer = useRef<number | undefined>(undefined);
     const hitRef = useRef<ImageData | null>(null);
     const userAt = useRef(-Infinity);
     const activeRef = useRef<number | null>(null);
@@ -166,7 +187,12 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
 
     const onPointerMove = (e: React.PointerEvent) => {
         if (e.pointerType !== "mouse") return;
+        window.clearTimeout(leaveTimer.current);
         const k = modelAt(e.clientX, e.clientY);
+        if (fx.info === "cursor" && cursorRef.current && sectionRef.current) {
+            const box = sectionRef.current.getBoundingClientRect();
+            cursorRef.current.style.transform = `translate(${e.clientX - box.left}px, ${e.clientY - box.top}px)`;
+        }
         if (fx.auto) {
             // in cinema only a model under the cursor takes over
             if (k === null) return;
@@ -195,6 +221,7 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
 
     return (
         <section
+            ref={sectionRef}
             className={`slook hlab hlab--${mode} ${active !== null ? "has-active" : ""} ${held ? "is-held" : ""}`}
             aria-label={t("Вітрина бренду MIND BODY")}
         >
@@ -207,11 +234,20 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                             ["--fx" as string]: fm.cx,
                             ["--fy" as string]: (fm.head + fm.feet) / 2,
                             ["--s" as string]: fx.cam && active !== null ? CAM_SCALE : 1,
-                            cursor: active !== null ? "pointer" : undefined,
+                            cursor:
+                                active === null
+                                    ? undefined
+                                    : fx.info === "cursor"
+                                      ? "none"
+                                      : "pointer",
                         }}
                         onPointerMove={onPointerMove}
                         onPointerLeave={(e) => {
-                            if (e.pointerType === "mouse" && !fx.auto) activate(null);
+                            if (e.pointerType !== "mouse" || fx.auto) return;
+                            // "cta": give the cursor time to travel to the button
+                            if (fx.info === "cta") {
+                                leaveTimer.current = window.setTimeout(() => activate(null), 900);
+                            } else activate(null);
                         }}
                         onClick={onClick}
                     >
@@ -290,12 +326,47 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                                             style={mask("g", k)}
                                         />
                                     )}
+                                    {fx.info === "editorial" && (
+                                        <div
+                                            className="hlab__word"
+                                            style={{
+                                                ["--mask" as string]: `url(${maskDir}/outall.png)`,
+                                                ["--len" as string]: Math.max(m.title.length, 4),
+                                            }}
+                                        >
+                                            <span>
+                                                <b>{m.title}</b>
+                                                <i>
+                                                    {m.sub.split(" · ").map((part) => (
+                                                        <u key={part}>{part}</u>
+                                                    ))}
+                                                </i>
+                                            </span>
+                                        </div>
+                                    )}
+                                    {fx.info === "floor" && (
+                                        <div className="hlab__info hlab__floor">
+                                            <b>{m.title}</b>
+                                            <i>{m.sub}</i>
+                                        </div>
+                                    )}
+                                    {(fx.info === "tag" || fx.info === "cursor") && (
+                                        <div
+                                            className={`hlab__info hlab__tag ${fx.info === "cursor" ? "hlab__tag--touch" : ""}`}
+                                        >
+                                            <span className="hlab__pill">
+                                                <b>{m.title}</b>
+                                                <i>{m.sub}</i>
+                                            </span>
+                                            <span className="hlab__stem" />
+                                        </div>
+                                    )}
                                     {fx.caption && (
                                         <div
                                             className="hlab__caption"
                                             style={{ left: `${m.cx * 100}%` }}
                                         >
-                                            {m.caption}
+                                            {m.title} · {m.sub}
                                         </div>
                                     )}
                                 </div>
@@ -314,7 +385,7 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                         onFocus={() => activate(k)}
                         onBlur={() => activate(null)}
                     >
-                        {m.caption}
+                        {m.title} · {m.sub}
                     </LLink>
                 ))}
             </nav>
@@ -333,11 +404,39 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                 </picture>
             </div>
 
+            {fx.info === "cursor" && (
+                <div ref={cursorRef} className="hlab__cursor" aria-hidden="true">
+                    <span className="hlab__pill">
+                        <b>{fm.title}</b>
+                        <i>{fm.sub}</i>
+                        <em>→</em>
+                    </span>
+                </div>
+            )}
+
             <div className="slook__overlay">
                 <div className="slook__info slook__info--centered">
-                    <LLink to="/shop/yoga" className="slook__cta-btn slook__cta-btn--centered">
-                        {t("Переглянути колекцію")}
-                    </LLink>
+                    {fx.info === "cta" ? (
+                        <LLink
+                            to={active !== null ? fm.href : "/shop/yoga"}
+                            className={`slook__cta-btn slook__cta-btn--centered hlab__cta ${active !== null ? "is-product" : ""}`}
+                            onPointerEnter={() => window.clearTimeout(leaveTimer.current)}
+                            onPointerLeave={(e) => {
+                                if (e.pointerType === "mouse") activate(null);
+                            }}
+                        >
+                            <span className="hlab__cta-a">{t("Переглянути колекцію")}</span>
+                            <span className="hlab__cta-b">
+                                <b>{fm.title}</b>
+                                <i>{fm.sub}</i>
+                                <em>→</em>
+                            </span>
+                        </LLink>
+                    ) : (
+                        <LLink to="/shop/yoga" className="slook__cta-btn slook__cta-btn--centered">
+                            {t("Переглянути колекцію")}
+                        </LLink>
+                    )}
                 </div>
             </div>
         </section>

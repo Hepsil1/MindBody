@@ -14,6 +14,12 @@
  *   /hero-lab/8   → a scan line runs head → feet and switches the fabric on
  *   /hero-lab/9   → stage beams fall behind the model, the rest goes dark
  *   /hero-lab/10  → cinema: the slide shows each model in turn by itself
+ * With minimal info (name · colour · price) on the chosen model:
+ *   /hero-lab/11  → glass tag above the head (colour aura)
+ *   /hero-lab/12  → name printed on the mirror floor under the feet (light wave)
+ *   /hero-lab/13  → editorial: the name in huge type BEHIND the model
+ *   /hero-lab/14  → the cursor itself becomes the label (tag on touch)
+ *   /hero-lab/15  → no new element: the CTA button turns into that outfit
  * 2–10: click / second tap opens that outfit; on phones the view glides from
  * model to model. Light frames + masks: scratch/build_hero_lab_v2.py.
  * Not linked anywhere; noindex.
@@ -24,11 +30,16 @@ import { data, redirect, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import SingleLookHero from "../components/SingleLookHero";
 import HeroLabStage, { type LabMode } from "../components/HeroLabStage";
+import { useI18n, useMoney } from "../i18n";
+import { getColorLabel } from "../utils/colors";
 import { getHeroLooks } from "../utils/heroLooks.server";
 
 /** slides that have light frames in public/hero/lab/<sid>/ (variant = wall colour set) */
-const SLIDES: Array<{ sid: string; variant: "" | "match" }> = [
-    { sid: "s1_duo", variant: "match" },
+// `colors`: per model, left → right, only where the slide is tied to a real product.
+// The other slides are concept shots with no product behind them yet, so they show
+// the look's own name and NO price (never invent one).
+const SLIDES: Array<{ sid: string; variant: "" | "match"; colors?: string[] }> = [
+    { sid: "s1_duo", variant: "match", colors: ["green", "marsala"] },
     { sid: "u21_palette", variant: "match" },
     { sid: "n3_red360", variant: "match" },
     { sid: "u15_fuchsia", variant: "" },
@@ -46,6 +57,11 @@ const MODES: Record<string, LabMode | null> = {
     "8": "scan",
     "9": "beams",
     "10": "cinema",
+    "11": "tag",
+    "12": "floor",
+    "13": "editorial",
+    "14": "cursor",
+    "15": "cta",
 };
 
 interface LabMeta {
@@ -62,13 +78,14 @@ export async function loader({ params }: LoaderFunctionArgs) {
     const mode = MODES[params.n];
     const looks = await getHeroLooks({ includeReview: true });
     const slides = [];
-    for (const { sid, variant } of mode ? SLIDES : SLIDES.slice(0, 1)) {
+    for (const { sid, variant, colors } of mode ? SLIDES : SLIDES.slice(0, 1)) {
         const look = looks.find((l) => l.imageDesktop === `/hero/masters/v4_${sid}`);
         if (!look) continue;
         const metaPath = path.join(process.cwd(), "public", "hero", "lab", sid, "meta.json");
         const labMeta = JSON.parse(await readFile(metaPath, "utf8")) as LabMeta;
         slides.push({
             sid,
+            colors: colors ?? null,
             models: labMeta.models,
             look: variant
                 ? {
@@ -85,10 +102,13 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function HeroLab() {
     const { mode, slides } = useLoaderData<typeof loader>();
+    const { t } = useI18n();
+    const money = useMoney();
     return (
         <main style={{ background: "#f4f1ec" }}>
-            {slides.map(({ sid, look, models }) => {
-                const short = look.name.match(/«([^»]+)»/)?.[1] ?? look.name;
+            {slides.map(({ sid, look, models, colors }) => {
+                const short = (look.name.match(/«([^»]+)»/)?.[1] ?? look.name).toUpperCase();
+                const [lookName, lookNote] = look.kicker.split(" · ");
                 return (
                     <div key={sid} style={{ marginBottom: 12 }}>
                         {mode ? (
@@ -97,9 +117,14 @@ export default function HeroLab() {
                                 maskDir={`/hero/lab/${sid}`}
                                 mode={mode}
                                 studioBg={look.studioBg}
-                                models={models.map((m) => ({
-                                    href: `/p/${look.productSlug}`,
-                                    caption: short,
+                                models={models.map((m, k) => ({
+                                    href: colors
+                                        ? `/p/${look.productSlug}?color=${colors[k]}`
+                                        : `/p/${look.productSlug}`,
+                                    title: colors ? short : lookName,
+                                    sub: colors
+                                        ? `${t(getColorLabel(colors[k]))} · ${money(look.price)}`
+                                        : (lookNote ?? ""),
                                     cx: m.cx,
                                     head: m.head,
                                     feet: m.feet,

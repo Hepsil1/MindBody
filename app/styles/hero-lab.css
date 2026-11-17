@@ -37,6 +37,8 @@
     width: max(100cqw, calc(100cqh * 16 / 9));
     aspect-ratio: 16 / 9;
     transform: translateX(-50%);
+    /* canvas height, for type sized relative to the picture */
+    --ch: max(100cqh, 56.25cqw);
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
@@ -74,14 +76,14 @@
 }
 
 .hlab__fx,
-.hlab__fx > div:not(.hlab__caption),
+.hlab__fx > div:not(.hlab__caption):not(.hlab__info),
 .hlab__frame {
     position: absolute;
     inset: 0;
     pointer-events: none;
 }
 
-.hlab__fx > div:not(.hlab__caption) {
+.hlab__fx > div:not(.hlab__caption):not(.hlab__info) {
     -webkit-mask-image: var(--mask);
     mask-image: var(--mask);
     -webkit-mask-size: 100% 100%;
@@ -388,6 +390,262 @@
     transform: translate(-50%, 0);
 }
 
+/* ===== Minimal info on the chosen model (concepts 11–15) ================== */
+.hlab .hlab__info b,
+.hlab .hlab__cursor b,
+.hlab .hlab__cta-b b,
+.hlab .hlab__word b {
+    font-weight: 700;
+    font-style: normal;
+}
+.hlab .hlab__info i,
+.hlab .hlab__cursor i,
+.hlab .hlab__cta-b i,
+.hlab .hlab__word i {
+    font-style: normal;
+    font-weight: 500;
+}
+
+/* shared glass pill (tag above the head, cursor label) */
+.hlab .hlab__pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 8px 15px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    backdrop-filter: blur(16px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 8px 28px rgba(30, 20, 40, 0.16);
+    color: #fff;
+    white-space: nowrap;
+    font-family: var(--font-body, "Manrope", sans-serif);
+    text-shadow: 0 1px 6px rgba(30, 20, 40, 0.28);
+}
+.hlab .hlab__pill b {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+.hlab .hlab__pill i {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    opacity: 0.92;
+}
+.hlab .hlab__pill i:empty {
+    display: none;
+}
+
+/* --- 11 · Tag: a glass label rises above the head on a hairline stem */
+.hlab .hlab__tag {
+    position: absolute;
+    left: var(--cx);
+    top: calc(var(--head) - 1.2%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translate(-50%, -100%);
+}
+.hlab .hlab__tag .hlab__pill {
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+        opacity 0.45s ease,
+        transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.hlab .hlab__stem {
+    width: 1px;
+    height: 14px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.2));
+    transform: scaleY(0);
+    transform-origin: 50% 100%;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.hlab .hlab__fx.is-on .hlab__stem {
+    transform: scaleY(1);
+    transition-delay: 0.25s !important;
+}
+.hlab .hlab__fx.is-on .hlab__tag .hlab__pill {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.45s !important;
+}
+/* in the cursor concept the tag is only the touch fallback */
+@media (hover: hover) {
+    .hlab .hlab__tag--touch {
+        display: none;
+    }
+}
+
+/* --- 12 · Floor: the name is printed on the mirror floor under her feet */
+.hlab .hlab__floor {
+    position: absolute;
+    left: var(--cx);
+    top: calc(var(--feet) + 1.6%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5em;
+    white-space: nowrap;
+    font-family: var(--font-body, "Manrope", sans-serif);
+    text-transform: uppercase;
+    color: rgba(38, 26, 46, 0.78);
+    mix-blend-mode: multiply;
+    transform: translateX(-50%) perspective(520px) rotateX(56deg) translateY(14px);
+    transform-origin: 50% 0;
+    opacity: 0;
+    transition:
+        opacity 0.5s ease,
+        transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.hlab .hlab__floor b {
+    font-size: calc(var(--ch) * 0.034);
+    letter-spacing: 0.5em;
+    margin-right: -0.5em;
+    transition: letter-spacing 1.1s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.hlab .hlab__floor i {
+    font-size: calc(var(--ch) * 0.019);
+    letter-spacing: 0.22em;
+}
+.hlab .hlab__fx.is-on .hlab__floor {
+    opacity: 1;
+    transform: translateX(-50%) perspective(520px) rotateX(56deg) translateY(0);
+    transition-delay: 0.5s !important;
+}
+.hlab .hlab__fx.is-on .hlab__floor b {
+    letter-spacing: 0.32em;
+    margin-right: -0.32em;
+    transition-delay: 0.5s !important;
+}
+
+/* --- 13 · Editorial: the name in huge type BEHIND the model (masked by every
+   model's silhouette, so the type sits between the wall and the girls) */
+.hlab .hlab__word span {
+    position: absolute;
+    left: var(--cx);
+    top: calc((var(--head) + var(--feet)) / 2 - 6%);
+    display: flex;
+    flex-direction: column;
+    /* second line hugs the word's left edge, so the body doesn't hide it */
+    align-items: flex-start;
+    white-space: nowrap;
+    color: #fff;
+    transform: translate(-50%, -38%);
+    opacity: 0;
+    transition:
+        opacity 0.6s ease,
+        transform 1.1s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.hlab .hlab__word b {
+    /* fit ~0.42 × canvas height wide whatever the word length */
+    font:
+        800 calc(var(--ch) * min(0.2, 0.68 / var(--len))) / 0.86 "Onest",
+        sans-serif;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 40px rgba(40, 26, 50, 0.1);
+}
+/* colour at the word's left edge, price at its right: the body hides the middle */
+.hlab .hlab__word u {
+    text-decoration: none;
+}
+.hlab .hlab__word i {
+    display: flex;
+    justify-content: space-between;
+    gap: 2em;
+    width: 100%;
+    margin-top: 0.9em;
+    font: 600 calc(var(--ch) * 0.017) / 1 var(--font-body, "Manrope", sans-serif);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    opacity: 0.95;
+}
+.hlab .hlab__fx.is-on .hlab__word span {
+    opacity: 0.94;
+    transform: translate(-50%, -50%);
+}
+
+/* --- 14 · Cursor: the pointer itself becomes the label */
+.hlab .hlab__cursor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 30;
+    pointer-events: none;
+    will-change: transform;
+}
+.hlab .hlab__cursor .hlab__pill {
+    transform: translate(-50%, -160%) scale(0.6);
+    opacity: 0;
+    transition:
+        opacity 0.25s ease,
+        transform 0.5s cubic-bezier(0.22, 1.3, 0.36, 1) !important;
+}
+.hlab .hlab__cursor em,
+.hlab .hlab__cta-b em {
+    font-style: normal;
+    font-size: 14px;
+    transform: translateY(1px);
+}
+.hlab.has-active .hlab__cursor .hlab__pill {
+    transform: translate(-50%, -160%) scale(1);
+    opacity: 1;
+}
+@media (hover: none) {
+    .hlab .hlab__cursor {
+        display: none;
+    }
+}
+
+/* --- 15 · CTA: nothing new on the slide — the one button becomes that outfit */
+.hlab .hlab__cta {
+    display: inline-grid;
+    overflow: hidden;
+    transition:
+        background 0.5s ease,
+        box-shadow 0.5s ease,
+        transform 0.25s ease !important;
+}
+.hlab .hlab__cta > span {
+    grid-area: 1 / 1;
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 10px;
+    white-space: nowrap;
+    transition:
+        transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.35s ease !important;
+}
+.hlab .hlab__cta-b {
+    transform: translateY(140%);
+    opacity: 0;
+}
+.hlab .hlab__cta-b i {
+    letter-spacing: 0.06em;
+    text-transform: none;
+    opacity: 0.9;
+}
+.hlab .hlab__cta.is-product {
+    background: #fff;
+    color: #24303a;
+    box-shadow: 0 10px 34px rgba(30, 20, 40, 0.22);
+}
+.hlab .hlab__cta.is-product:hover {
+    background: #fff;
+    color: #24303a;
+}
+.hlab .hlab__cta.is-product .hlab__cta-a {
+    transform: translateY(-140%);
+    opacity: 0;
+}
+.hlab .hlab__cta.is-product .hlab__cta-b {
+    transform: translateY(0);
+    opacity: 1;
+}
+
 /* keyboard / screen-reader links (focus lights the model) */
 .hlab__sr a {
     position: absolute;
@@ -408,6 +666,33 @@
         bottom: auto;
         transform: translateX(calc(var(--vx, 0.5) * -100%));
         transition: transform 2.2s cubic-bezier(0.45, 0, 0.2, 1) !important;
+    }
+    .hlab__canvas {
+        --ch: 100cqh;
+    }
+    /* phone: floor type would sit under the CTA → it becomes a line above the head */
+    .hlab .hlab__floor {
+        top: calc(var(--head) - 3%);
+        transform: translate(-50%, -100%);
+        color: #fff;
+        mix-blend-mode: normal;
+        text-shadow: 0 1px 10px rgba(20, 14, 24, 0.4);
+    }
+    .hlab .hlab__fx.is-on .hlab__floor {
+        transform: translate(-50%, -100%);
+    }
+    .hlab .hlab__floor b {
+        font-size: 15px;
+    }
+    .hlab .hlab__floor i {
+        font-size: 11px;
+    }
+    /* phone: the big word must fit the narrow screen with the body in front */
+    .hlab .hlab__word b {
+        font-size: calc(var(--ch) * min(0.15, 0.5 / var(--len)));
+    }
+    .hlab .hlab__word i {
+        font-size: 10px;
     }
     /* phone: the CTA sits under the feet, so the caption goes above the head */
     .hlab .hlab__caption {

@@ -14,6 +14,7 @@ Writes public/hero/lab/<sid>/ :
   back<k>.webp  + white back-light on the wall behind her + light pool at the feet
   aura<k>.webp  + wall behind her tinted in the garment's colour
   g<k>.png      garment mask (scan line)      out<k>.png  everything but model k
+  outall.png    everything but all models (type behind the group)
   inv<k>.png    spotlight dim mask            hit.png     R = (k+1)*50 label map
   meta.json     per model: cx / head / feet (canvas fractions), tone
   _qa.jpg       mask overlay for eyeballing (not shipped)
@@ -217,6 +218,10 @@ def main(spec):
         qa[edge] = [255, 0, 0]
         print(sid, k, "bbox", x, y, w, h, "chroma %.0f" % chroma, meta[-1]["tone"], flush=True)
 
+    # everything except ALL models (big type that sits behind the whole group)
+    outs = [np.asarray(Image.open(f"{out_dir}/out{k}.png"))[..., 3] for k in range(len(comps))]
+    oa = np.minimum.reduce(outs)
+    Image.fromarray(np.dstack([np.full_like(oa, 255)] * 3 + [oa]), "RGBA").save(f"{out_dir}/outall.png", optimize=True)
     Image.fromarray(hit, "L").save(f"{out_dir}/hit.png", optimize=True)
     json.dump({"slide": name, "models": meta}, open(f"{out_dir}/meta.json", "w"), indent=1)
     Image.fromarray(np.clip(qa, 0, 255).astype(np.uint8)).save(f"{ROOT}/scratch/audit_shots/labqa_{sid}.jpg", quality=92)
