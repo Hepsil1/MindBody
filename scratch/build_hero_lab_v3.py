@@ -6,6 +6,9 @@ Same rule as v2: nothing is faked with CSS blends over the finished photo.
 Every state is rendered here from the lossless build with real matting
 (I = a*F + (1-a)*B), so hair and body edges stay clean.
 
+SUPERSEDED by build_hero_lab_v4.py (only contour_path is still used from here; the
+other concepts were dropped and their assets deleted).
+
 Adds to public/hero/lab/<sid>/ (per model k):
   cut<k>.webp     the model alone (un-mixed foreground, RGBA crop)
   erase<k>.webp   the backdrop behind her (RGBA crop) - goes under a moving cut

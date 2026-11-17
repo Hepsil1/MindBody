@@ -1,45 +1,33 @@
 /**
- * HeroLabStage2 — the 12 concepts of /hero-lab/best. Same hero as the live one
- * (stage photo, centre logo, single CTA); the models are the interaction:
- * hover / tap a model → her concept plays, click / second tap opens the outfit.
+ * HeroLabStage2 — the concepts of /hero-lab. Same hero as the live one (stage
+ * photo, centre logo, single CTA); the models are the interaction: hover / tap
+ * a model → her concept plays, click / second tap opens the outfit.
  *
- * None of the earlier lab effects are reused (no glow, aura, wave, scan, beams,
- * ripples, push-in, dimming). Every picture state is pre-rendered with real
- * matting by scratch/build_hero_lab_v3.py; CSS only reveals or moves it.
+ * Every picture state is pre-rendered with real matting by
+ * scratch/build_hero_lab_v4.py; CSS only reveals it.
  *
- *   step     she steps forward (her cut-out grows from the feet) · vertical label
- *   depth    2.5D: the models shift against the wall with the pointer · corner index
- *   mono     the studio turns black & white, she keeps her colour · serif signature
- *   focus    everything else goes out of focus · letter-by-letter caption
- *   column   a column of her colour unrolls on the wall · paint-chip label
- *   contour  a hairline draws itself round her · text set on that line
- *   finder   camera viewfinder brackets snap onto her · readout on the frame
- *   marquee  an outlined line of type runs behind the models
- *   callout  dot on the garment + leader line + note
- *   flash    on-camera flash, hard shadow on the wall · label-maker strips
- *   thread   a plumb line drops to her from above · hanging note
- *   window   window light slides onto the wall behind her · note in the light
+ *   column      a column of her colour unrolls on the wall like a paper backdrop
+ *               · label printed on the colour
+ *   contour     a hairline draws itself round her from both feet up to the head
+ *               · text set on that line, written as the line passes
+ *   flash       on-camera flash (pre-flash + flash), hard shadow on the wall
+ *               · label-maker strips
+ *   colcontour  the column unrolls, then the outline is drawn over it
+ *   colflash    the flash fires and the colour backdrop is there, shadow on it
+ *   all         column unrolls → flash → outline; text on the line
+ *
+ * Idle: when a slide first comes into view one model plays her concept once, so
+ * it is clear the models react. On touch screens the view glides from model to
+ * model and each one plays in turn.
  */
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { LLink, useI18n } from "../i18n";
 import "../styles/single-look.css";
 import "../styles/hero-lab.css";
 import "../styles/hero-lab2.css";
 
-export type Lab2Mode =
-    | "step"
-    | "depth"
-    | "mono"
-    | "focus"
-    | "column"
-    | "contour"
-    | "finder"
-    | "marquee"
-    | "callout"
-    | "flash"
-    | "thread"
-    | "window";
+export type Lab2Mode = "column" | "contour" | "flash" | "colcontour" | "colflash" | "all";
 
 export interface Lab2Model {
     href: string;
@@ -52,17 +40,14 @@ export interface Lab2Model {
     feet: number;
     x0: number;
     x1: number;
-    /** silhouette extent (arms included) at chest height */
-    row: number[];
-    /** point on the garment (torso) */
-    gx: number;
-    gy: number;
     /** side with more free room: -1 left, 1 right */
     side: number;
+    /** colour column: left / right edge */
     col: number[];
     colDark: boolean;
-    win: number[];
-    /** outline path, viewBox 1600x900 */
+    /** lightness (Lab L) of the wall round her */
+    wallL: number;
+    /** outline path, viewBox 1600x900: left foot → over the head → right foot */
     path: string;
     /** rects [x, y, w, h] (canvas fractions) of the pre-rendered layers */
     r: Record<string, number[]>;
@@ -75,9 +60,9 @@ interface Props {
     studioBg?: string;
 }
 
-const FRAME_MODES: Lab2Mode[] = ["mono", "focus", "column", "flash", "window"];
-const USER_HOLD = 8000;
-const SLOT = 5200;
+const USER_HOLD = 9000;
+const SLOT = 5600;
+const DEMO_MS = 3400;
 
 const rect = (r: number[]): React.CSSProperties => ({
     left: `${r[0] * 100}%`,
@@ -86,7 +71,74 @@ const rect = (r: number[]): React.CSSProperties => ({
     height: `${r[3] * 100}%`,
 });
 const pct = (v: number) => `${(v * 100).toFixed(3)}%`;
-const sentence = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+
+const lineText = (m: Lab2Model) => {
+    const parts = m.sub.split(" · ").filter(Boolean);
+    return parts.length ? `${m.title} — ${parts.join(" · ")}` : m.title;
+};
+
+/**
+ * The line the text is set on. Type set straight on the outline breaks apart at
+ * every elbow and hip, so: take the straightest stretch of the outline on her
+ * free side that is long enough, smooth it into one calm curve, and move that
+ * curve just outside the outline. Returns an SVG path (viewBox 1600x900).
+ */
+function textLine(path: string, chars: number, side: number): string {
+    const n = path.match(/-?[\d.]+/g)?.map(Number) ?? [];
+    const pts: number[][] = [];
+    for (let i = 0; i + 1 < n.length; i += 2) pts.push([n[i], n[i + 1]]);
+    if (pts.length < 40) return path;
+    const s = [0];
+    const th: number[] = [];
+    for (let i = 1; i < pts.length; i++) {
+        const dx = pts[i][0] - pts[i - 1][0];
+        const dy = pts[i][1] - pts[i - 1][1];
+        s.push(s[i - 1] + Math.hypot(dx, dy));
+        th.push(Math.atan2(dy, dx));
+    }
+    const total = s[s.length - 1];
+    const acc = [0];
+    th.forEach((a, i) => {
+        let d = i ? a - th[i - 1] : 0;
+        while (d > Math.PI) d -= 2 * Math.PI;
+        while (d < -Math.PI) d += 2 * Math.PI;
+        acc.push(acc[acc.length - 1] + Math.abs(d));
+    });
+    const need = chars * 10.9 + 40;
+    const [lo, hi] = side > 0 ? [0.56 * total, 0.97 * total] : [0.03 * total, 0.44 * total];
+    let best = Infinity;
+    let bi = -1;
+    let bj = -1;
+    for (let i = 0, j = 0; i < pts.length; i++) {
+        if (s[i] < lo) continue;
+        while (j < pts.length - 1 && s[j] - s[i] < need) j++;
+        if (s[j] - s[i] < need || s[j] > hi) break;
+        const cost = acc[j] - acc[i];
+        if (cost < best - 1e-6) {
+            best = cost;
+            bi = i;
+            bj = j;
+        }
+    }
+    if (bi < 0) return path;
+    const seg = pts.slice(bi, bj + 1);
+    // the sides of a standing figure run top to bottom: smooth x along the run
+    let xs = seg.map((p) => p[0]);
+    const R = 14;
+    for (let pass = 0; pass < 3; pass++) {
+        xs = xs.map((_, i) => {
+            let sum = 0;
+            for (let d = -R; d <= R; d++) sum += xs[Math.min(xs.length - 1, Math.max(0, i + d))];
+            return sum / (2 * R + 1);
+        });
+    }
+    // outward = left on her left side, right on her right side
+    const out = side > 0 ? 1 : -1;
+    const gap = Math.max(...seg.map((p, i) => (p[0] - xs[i]) * out)) + 13;
+    return (
+        "M" + seg.map((p, i) => `${(xs[i] + gap * out).toFixed(1)} ${p[1].toFixed(1)}`).join(" L")
+    );
+}
 
 export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props) {
     const { t } = useI18n();
@@ -96,12 +148,18 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
     const sectionRef = useRef<HTMLElement>(null);
     const hitRef = useRef<ImageData | null>(null);
     const userAt = useRef(-Infinity);
+    const demoUntil = useRef(0);
     const activeRef = useRef<number | null>(null);
     const [active, setActive] = useState<number | null>(null);
-    const [focus, setFocus] = useState(0);
     const [view, setView] = useState(0);
     const [pulse, setPulse] = useState(0);
     const count = models.length;
+
+    const hasColumn = mode === "column" || mode === "colcontour" || mode === "all";
+    const hasContour = mode === "contour" || mode === "colcontour" || mode === "all";
+    const snap =
+        mode === "flash" ? "flash" : mode === "colflash" || mode === "all" ? "colflash" : "";
+    const hasDymo = mode === "flash" || mode === "colflash";
 
     useEffect(() => {
         const img = new Image();
@@ -122,22 +180,61 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
         activeRef.current = k;
         setActive(k);
         if (k !== null) {
-            setFocus(k);
             setView(k);
             setPulse((p) => p + 1);
         }
     };
 
-    // phone: the view glides from model to model until the visitor takes over
+    // idle behaviour, only while the slide is on screen
     useEffect(() => {
+        const el = sectionRef.current;
+        if (!el) return;
+        const touch = !matchMedia("(hover: hover)").matches;
+        const demoK = count > 2 ? 1 : 0;
+        let visible = false;
+        let demoed = false;
         let ph = 0;
-        const id = window.setInterval(() => {
-            if (performance.now() - userAt.current < USER_HOLD) return;
-            if (activeRef.current !== null) return;
-            ph += 400;
-            setView(Math.floor(ph / SLOT) % count);
-        }, 400);
-        return () => window.clearInterval(id);
+        let off = 0;
+        const io = new IntersectionObserver(
+            ([e]) => {
+                visible = e.intersectionRatio > 0.55;
+                if (visible && !touch && !demoed) {
+                    demoed = true;
+                    window.setTimeout(() => {
+                        if (activeRef.current !== null) return;
+                        if (performance.now() - userAt.current < USER_HOLD) return;
+                        demoUntil.current = performance.now() + DEMO_MS;
+                        activate(demoK);
+                        off = window.setTimeout(() => {
+                            if (demoUntil.current) activate(null);
+                            demoUntil.current = 0;
+                        }, DEMO_MS);
+                    }, 500);
+                }
+            },
+            { threshold: [0, 0.55, 1] },
+        );
+        io.observe(el);
+        // touch: glide to the next model, let her play, clear, move on
+        const id = touch
+            ? window.setInterval(() => {
+                  if (!visible) return;
+                  if (performance.now() - userAt.current < USER_HOLD) return;
+                  const k = Math.floor(ph / SLOT) % count;
+                  const at = ph % SLOT;
+                  if (at === 0) {
+                      activate(null);
+                      setView(k);
+                  } else if (at === 800) activate(k);
+                  else if (at === SLOT - 800) activate(null);
+                  ph += 400;
+              }, 400)
+            : 0;
+        return () => {
+            io.disconnect();
+            window.clearInterval(id);
+            window.clearTimeout(off);
+        };
     }, [count]);
 
     const modelAt = (clientX: number, clientY: number): number | null => {
@@ -153,18 +250,16 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
 
     const onPointerMove = (e: React.PointerEvent) => {
         if (e.pointerType !== "mouse") return;
-        if (mode === "depth" && sectionRef.current && camRef.current) {
-            const box = sectionRef.current.getBoundingClientRect();
-            const px = ((e.clientX - box.left) / box.width) * 2 - 1;
-            const py = ((e.clientY - box.top) / box.height) * 2 - 1;
-            camRef.current.style.setProperty("--px", px.toFixed(3));
-            camRef.current.style.setProperty("--py", py.toFixed(3));
-        }
-        activate(modelAt(e.clientX, e.clientY));
+        const k = modelAt(e.clientX, e.clientY);
+        // don't cut the one-off demo short just because the mouse crossed the wall
+        if (k === null && performance.now() < demoUntil.current) return;
+        if (k !== null) demoUntil.current = 0;
+        activate(k);
     };
 
     const onClick = (e: React.MouseEvent) => {
         userAt.current = performance.now();
+        demoUntil.current = 0;
         const k = modelAt(e.clientX, e.clientY);
         const touch =
             (e.nativeEvent as PointerEvent).pointerType === "touch" ||
@@ -174,15 +269,11 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
         navigate(models[k].href);
     };
 
-    const fm = models[focus] ?? models[0];
     const vm = models[view] ?? models[0];
-    // nearer the camera (feet lower in the frame) = moves more; equal → alternate
-    const feetMin = Math.min(...models.map((m) => m.feet));
-    const feetMax = Math.max(...models.map((m) => m.feet));
-    const depthOf = (m: Lab2Model, k: number) =>
-        feetMax - feetMin > 0.004
-            ? 0.55 + (0.45 * (m.feet - feetMin)) / (feetMax - feetMin)
-            : [1, 0.5, 0.8, 0.35][k % 4];
+    const textLines = useMemo(
+        () => models.map((m) => textLine(m.path, lineText(m).length, m.side)),
+        [models],
+    );
 
     return (
         <section
@@ -198,7 +289,9 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                         style={{ cursor: active === null ? undefined : "pointer" }}
                         onPointerMove={onPointerMove}
                         onPointerLeave={(e) => {
-                            if (e.pointerType === "mouse") activate(null);
+                            if (e.pointerType !== "mouse") return;
+                            demoUntil.current = 0;
+                            activate(null);
                         }}
                         onClick={onClick}
                     >
@@ -211,219 +304,132 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                             decoding="async"
                         />
 
-                        {mode === "marquee" && (
-                            <div
-                                className="hl2__marq"
-                                style={{
-                                    ["--mask" as string]: `url(${maskDir}/outall.png)`,
-                                    ["--y" as string]: pct(fm.head + (fm.feet - fm.head) * 0.47),
-                                }}
-                            >
-                                <div className="hl2__marq-track" key={focus}>
-                                    {[0, 1].map((half) => (
-                                        <span key={half}>
-                                            {Array.from({ length: 6 }, (_, i) => (
-                                                <i key={i}>
-                                                    {sentence(fm.title)}
-                                                    {fm.sub
-                                                        .split(" · ")
-                                                        .filter(Boolean)
-                                                        .map((p) => (
-                                                            <u key={p}>{p}</u>
-                                                        ))}
-                                                </i>
-                                            ))}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {models.map((m, k) => {
                             const on = active === k;
                             const parts = m.sub.split(" · ").filter(Boolean);
-                            const out = m.side > 0 ? m.row[1] : m.row[0];
+                            // ink of the outline / label: white unless it sits on something light
+                            const onLight = hasColumn ? !m.colDark : m.wallL > 76;
                             const style = {
                                 ["--cx" as string]: pct(m.cx),
                                 ["--head" as string]: pct(m.head),
                                 ["--feet" as string]: pct(m.feet),
                                 ["--x0" as string]: pct(m.x0),
                                 ["--x1" as string]: pct(m.x1),
-                                ["--gx" as string]: pct(m.gx),
-                                ["--gy" as string]: pct(m.gy),
-                                ["--d" as string]: depthOf(m, k),
+                                ["--c0" as string]: pct(m.col[0]),
+                                ["--cw" as string]: pct(m.col[1] - m.col[0]),
                             };
                             return (
                                 <div
                                     key={k}
-                                    className={`hl2__m ${on ? "is-on" : ""} ${m.side > 0 ? "is-r" : "is-l"}`}
+                                    className={`hl2__m ${on ? "is-on" : ""} ${m.side > 0 ? "is-r" : "is-l"} ${onLight ? "is-ink" : ""}`}
                                     style={style}
                                 >
-                                    {(mode === "step" || mode === "depth") && (
+                                    {hasColumn && (
                                         <>
                                             <img
-                                                className="hl2__erase"
-                                                src={`${maskDir}/erase${k}.webp`}
+                                                className="hl2__frm hl2__frm--column"
+                                                src={`${maskDir}/column${k}.webp`}
                                                 alt=""
+                                                loading="lazy"
                                                 decoding="async"
-                                                style={rect(m.r.erase)}
+                                                style={rect(m.r.column)}
                                             />
-                                            {mode === "step" && <span className="hl2__contact" />}
-                                            <img
-                                                className="hl2__cut"
-                                                src={`${maskDir}/cut${k}.webp`}
-                                                alt=""
-                                                decoding="async"
+                                            {/* the roll of paper at the column's leading edge;
+                                                masked so it passes behind the models */}
+                                            <div
+                                                className="hl2__rollbox"
                                                 style={{
-                                                    ...rect(m.r.cut),
-                                                    transformOrigin: `${((m.cx - m.r.cut[0]) / m.r.cut[2]) * 100}% ${((m.feet - m.r.cut[1]) / m.r.cut[3]) * 100}%`,
+                                                    ["--mask" as string]: `url(${maskDir}/outall.png)`,
                                                 }}
-                                            />
+                                            >
+                                                <span className="hl2__roll" />
+                                            </div>
                                         </>
                                     )}
 
-                                    {FRAME_MODES.includes(mode) && (
+                                    {snap && (
                                         <img
-                                            className={`hl2__frm hl2__frm--${mode}`}
-                                            src={`${maskDir}/${mode}${k}.webp`}
+                                            className="hl2__frm hl2__frm--snap"
+                                            src={`${maskDir}/${snap}${k}.webp`}
                                             alt=""
                                             loading="lazy"
                                             decoding="async"
-                                            style={rect(m.r[mode])}
+                                            style={rect(m.r[snap])}
                                         />
                                     )}
-                                    {mode === "flash" && on && (
-                                        <span key={pulse} className="hl2__pop" />
-                                    )}
-
-                                    {mode === "step" && (
-                                        <div className="hl2__vlabel">
-                                            <b>{m.title}</b>
-                                            {parts.map((p) => (
-                                                <i key={p}>{p}</i>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {mode === "mono" && (
-                                        <div className="hl2__sig">
-                                            <b>{sentence(m.title)}</b>
-                                            <span />
-                                            <i>{m.sub}</i>
-                                        </div>
-                                    )}
-
-                                    {mode === "focus" && (
-                                        <div className="hl2__cap" aria-hidden="true">
-                                            {`${m.title} — ${m.sub}`.split("").map((ch, i) => (
-                                                <span key={i} style={{ ["--i" as string]: i }}>
-                                                    {ch === " " ? " " : ch}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
+                                    {snap && on && <span key={pulse} className="hl2__pop" />}
 
                                     {mode === "column" && (
                                         <div
-                                            className={`hl2__chip ${m.colDark ? "" : "is-ink"}`}
-                                            style={{
-                                                left: pct((m.col[0] + m.col[1]) / 2),
-                                            }}
+                                            className="hl2__chip"
+                                            style={{ left: pct((m.col[0] + m.col[1]) / 2) }}
                                         >
-                                            <b>{parts[0] ?? m.title}</b>
-                                            <i>{parts.length > 1 ? parts[1] : m.title}</i>
+                                            <b>
+                                                <span>{parts[0] ?? m.title}</span>
+                                            </b>
+                                            <u />
+                                            <i>
+                                                <span>{parts.length > 1 ? parts[1] : m.title}</span>
+                                            </i>
                                         </div>
                                     )}
 
-                                    {mode === "contour" && (
+                                    {hasContour && (
                                         <svg
                                             className="hl2__ct"
                                             viewBox="0 0 1600 900"
                                             preserveAspectRatio="none"
                                             aria-hidden="true"
                                         >
+                                            <defs>
+                                                <mask
+                                                    id={`${uid}k${k}`}
+                                                    maskUnits="userSpaceOnUse"
+                                                    x="0"
+                                                    y="0"
+                                                    width="1600"
+                                                    height="900"
+                                                >
+                                                    <path
+                                                        d={m.path}
+                                                        pathLength={1}
+                                                        className="hl2__ct-mask"
+                                                    />
+                                                </mask>
+                                            </defs>
+                                            <path id={`${uid}t${k}`} d={textLines[k]} />
                                             <path
-                                                id={`${uid}c${k}`}
                                                 d={m.path}
                                                 pathLength={1}
                                                 className="hl2__ct-line"
                                             />
-                                            <text className="hl2__ct-text" dy="-9">
-                                                <textPath href={`#${uid}c${k}`} startOffset="3.5%">
-                                                    {m.title}
-                                                    {parts.length
-                                                        ? `  —  ${parts.join("  ·  ")}`
-                                                        : ""}
-                                                </textPath>
-                                            </text>
+                                            <path
+                                                d={m.path}
+                                                pathLength={1}
+                                                className="hl2__ct-pen hl2__ct-pen--a"
+                                            />
+                                            <path
+                                                d={m.path}
+                                                pathLength={1}
+                                                className="hl2__ct-pen hl2__ct-pen--b"
+                                            />
+                                            <g mask={`url(#${uid}k${k})`}>
+                                                <text className="hl2__ct-text">
+                                                    <textPath
+                                                        href={`#${uid}t${k}`}
+                                                        startOffset="12"
+                                                    >
+                                                        {lineText(m)}
+                                                    </textPath>
+                                                </text>
+                                            </g>
                                         </svg>
                                     )}
 
-                                    {mode === "finder" && (
-                                        <>
-                                            <div className="hl2__vf">
-                                                <span />
-                                                <span />
-                                                <span />
-                                                <span />
-                                                <b>{m.title}</b>
-                                                <i>{parts[parts.length - 1]}</i>
-                                                {parts.length > 1 && <u>{parts[0]}</u>}
-                                            </div>
-                                            <span className="hl2__vf-cross" />
-                                        </>
-                                    )}
-
-                                    {mode === "callout" && (
-                                        <>
-                                            <span className="hl2__dot" />
-                                            <span
-                                                className="hl2__lead"
-                                                style={{
-                                                    left: pct(Math.min(m.gx, out + m.side * 0.03)),
-                                                    width: pct(
-                                                        Math.abs(out + m.side * 0.03 - m.gx),
-                                                    ),
-                                                }}
-                                            />
-                                            <div
-                                                className="hl2__note"
-                                                style={{ left: pct(out + m.side * 0.03) }}
-                                            >
-                                                <b>{sentence(m.title)}</b>
-                                                {parts.map((p) => (
-                                                    <i key={p}>{p}</i>
-                                                ))}
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {mode === "flash" && (
+                                    {hasDymo && (
                                         <div className="hl2__dymo">
                                             <b>{m.title}</b>
                                             {parts.length > 0 && <i>{parts[parts.length - 1]}</i>}
-                                        </div>
-                                    )}
-
-                                    {mode === "thread" && (
-                                        <>
-                                            <span className="hl2__thread" />
-                                            <div className="hl2__hang">
-                                                <b>{sentence(m.title)}</b>
-                                                <i>{m.sub}</i>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {mode === "window" && (
-                                        <div
-                                            className="hl2__pane"
-                                            style={{ left: pct(m.win[0]), top: pct(m.win[1]) }}
-                                        >
-                                            <b>{sentence(m.title)}</b>
-                                            {parts.map((p) => (
-                                                <i key={p}>{p}</i>
-                                            ))}
                                         </div>
                                     )}
                                 </div>
@@ -460,23 +466,6 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                     />
                 </picture>
             </div>
-
-            {mode === "depth" && (
-                <div className="hl2__index" aria-hidden="true">
-                    <div className="hl2__index-n">
-                        <span style={{ transform: `translateY(${-focus}em)` }}>
-                            {models.map((_, k) => (
-                                <em key={k}>{String(k + 1).padStart(2, "0")}</em>
-                            ))}
-                        </span>
-                        <small>/ {String(count).padStart(2, "0")}</small>
-                    </div>
-                    <div className="hl2__index-t" key={focus}>
-                        <b>{fm.title}</b>
-                        <i>{fm.sub}</i>
-                    </div>
-                </div>
-            )}
 
             <div className="slook__overlay">
                 <div className="slook__info slook__info--centered">

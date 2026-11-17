@@ -3,8 +3,10 @@
  * page stays the client's untouched review set). Each page shows ONE concept on
  * a stack of slides with different models, so it can be judged on more than a
  * single photo.
- *   /hero-lab/best  12 new concepts (HeroLabStage2), each on its own slide; none
- *                   of the effects of pages 2-15 are reused there
+ *   /hero-lab     the set offered to the client: three concepts (colour column,
+ *                 outline, flash) and their combinations — HeroLabStage2. Every
+ *                 variant can be switched to any of the five slides.
+ * Older experiments, kept for reference only:
  *   /hero-lab/1   reference — the DUO CONTRAST slide exactly as in the gallery
  *   /hero-lab/2   tap/hover a model → spotlight (the rest sinks into shade)
  *   /hero-lab/3   → white back-light on the wall behind her
@@ -28,6 +30,7 @@
  */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { useState } from "react";
 import { data, redirect, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import SingleLookHero from "../components/SingleLookHero";
@@ -67,20 +70,44 @@ const MODES: Record<string, LabMode | null> = {
     "15": "cta",
 };
 
-/** /hero-lab/best: concept → label + which slide (index in SLIDES) it is shown on */
-const CONCEPTS: Array<{ mode: Lab2Mode; label: string; slide: number }> = [
-    { mode: "step", label: "Крок уперед", slide: 0 },
-    { mode: "depth", label: "Глибина", slide: 1 },
-    { mode: "mono", label: "Чорно-біла студія", slide: 2 },
-    { mode: "focus", label: "Фокус", slide: 3 },
-    { mode: "column", label: "Колона кольору", slide: 1 },
-    { mode: "contour", label: "Контур", slide: 4 },
-    { mode: "finder", label: "Видошукач", slide: 0 },
-    { mode: "marquee", label: "Рухомий рядок", slide: 2 },
-    { mode: "callout", label: "Виноска", slide: 3 },
-    { mode: "flash", label: "Спалах", slide: 4 },
-    { mode: "thread", label: "Нитка", slide: 2 },
-    { mode: "window", label: "Світло з вікна", slide: 3 },
+/** /hero-lab: variant → label, what happens, and the slide it opens on */
+const CONCEPTS: Array<{ mode: Lab2Mode; label: string; note: string; slide: number }> = [
+    {
+        mode: "column",
+        label: "Колона кольору",
+        note: "За моделлю розгортається паперовий фон кольору її костюма",
+        slide: 1,
+    },
+    {
+        mode: "contour",
+        label: "Контур",
+        note: "Тонка лінія обводить модель від стоп до голови, текст пишеться по лінії",
+        slide: 4,
+    },
+    {
+        mode: "flash",
+        label: "Спалах",
+        note: "Спалах камери: різка тінь на стіні та наліпки з назвою",
+        slide: 2,
+    },
+    {
+        mode: "colcontour",
+        label: "Колона + Контур",
+        note: "Спершу розгортається колір, потім по ньому малюється контур",
+        slide: 0,
+    },
+    {
+        mode: "colflash",
+        label: "Спалах + Колона",
+        note: "Спалах — і за моделлю вже стоїть кольоровий фон з її тінню",
+        slide: 3,
+    },
+    {
+        mode: "all",
+        label: "Усе разом",
+        note: "Колір розгортається, спалах, контур з підписом",
+        slide: 1,
+    },
 ];
 
 type Geo = Omit<Lab2Model, "href" | "title" | "sub">;
@@ -99,10 +126,10 @@ export function meta() {
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
-    if (!params.n) throw redirect("/hero-lab/best");
-    const best = params.n === "best";
-    if (!best && !(params.n in MODES)) throw data("Not found", { status: 404 });
-    const mode = best ? ("signature" as LabMode) : MODES[params.n];
+    if (params.n === "best") throw redirect("/hero-lab");
+    const best = !params.n;
+    if (!best && !(params.n! in MODES)) throw data("Not found", { status: 404 });
+    const mode = best ? ("spot" as LabMode) : MODES[params.n!];
     const looks = await getHeroLooks({ includeReview: true });
     const slides = [];
     for (const { sid, variant, colors } of mode ? SLIDES : SLIDES.slice(0, 1)) {
@@ -113,7 +140,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         const geo = best
             ? (
                   JSON.parse(
-                      await readFile(metaPath.replace("meta.json", "meta3.json"), "utf8"),
+                      await readFile(metaPath.replace("meta.json", "meta4.json"), "utf8"),
                   ) as { models: Geo[] }
               ).models
             : null;
@@ -134,19 +161,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
     if (!slides.length) throw data("Not found", { status: 404 });
     return { mode, slides, best };
 }
-
-const chip: React.CSSProperties = {
-    position: "absolute",
-    bottom: 16,
-    left: 16,
-    zIndex: 50,
-    background: "#D97757",
-    color: "#fff",
-    font: "700 13px/1 Onest, sans-serif",
-    letterSpacing: "0.08em",
-    padding: "8px 12px",
-    borderRadius: 4,
-};
 
 export default function HeroLab() {
     const { mode, slides, best } = useLoaderData<typeof loader>();
@@ -183,32 +197,10 @@ export default function HeroLab() {
 
     if (best) {
         return (
-            <main style={{ background: "#f4f1ec" }}>
-                {CONCEPTS.map(({ mode: m2, label, slide }, i) => {
-                    const st = stages[slide];
-                    if (!st?.geo) return null;
-                    const models2 = st.geo.map(
-                        (g, k): Lab2Model => ({
-                            ...g,
-                            href: st.models[k].href,
-                            title: st.models[k].title,
-                            sub: st.models[k].sub,
-                        }),
-                    );
-                    return (
-                        <div key={m2} style={{ position: "relative", marginBottom: 12 }}>
-                            <div style={chip}>
-                                {String(i + 1).padStart(2, "0")} · {label.toUpperCase()}
-                            </div>
-                            <HeroLabStage2
-                                maskDir={st.maskDir}
-                                studioBg={st.studioBg}
-                                models={models2}
-                                mode={m2}
-                            />
-                        </div>
-                    );
-                })}
+            <main className="hlabx">
+                {CONCEPTS.map((c, i) => (
+                    <Variant key={c.mode} n={i + 1} concept={c} stages={stages} />
+                ))}
             </main>
         );
     }
@@ -225,5 +217,66 @@ export default function HeroLab() {
                 </div>
             ))}
         </main>
+    );
+}
+
+interface StageData {
+    sid: string;
+    maskDir: string;
+    studioBg?: string;
+    geo: Geo[] | null;
+    models: LabModel[];
+}
+
+/** one variant: a caption bar (outside the hero) + the hero on a chosen slide */
+function Variant({
+    n,
+    concept,
+    stages,
+}: {
+    n: number;
+    concept: (typeof CONCEPTS)[number];
+    stages: StageData[];
+}) {
+    const [slide, setSlide] = useState(Math.min(concept.slide, stages.length - 1));
+    const st = stages[slide];
+    if (!st?.geo) return null;
+    const models = st.geo.map(
+        (g, k): Lab2Model => ({
+            ...g,
+            href: st.models[k].href,
+            title: st.models[k].title,
+            sub: st.models[k].sub,
+        }),
+    );
+    return (
+        <article className="hlabx__item">
+            <header className="hlabx__bar">
+                <b>{String(n).padStart(2, "0")}</b>
+                <h2>{concept.label}</h2>
+                <p>{concept.note}</p>
+                <div className="hlabx__slides" role="tablist" aria-label="Слайд">
+                    {stages.map((s, i) => (
+                        <button
+                            key={s.sid}
+                            type="button"
+                            role="tab"
+                            aria-selected={i === slide}
+                            className={i === slide ? "is-on" : ""}
+                            onClick={() => setSlide(i)}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+                </div>
+            </header>
+            <HeroLabStage2
+                key={st.sid}
+                maskDir={st.maskDir}
+                studioBg={st.studioBg}
+                models={models}
+                mode={concept.mode}
+            />
+        </article>
     );
 }
