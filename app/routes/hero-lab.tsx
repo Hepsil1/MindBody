@@ -3,9 +3,8 @@
  * page stays the client's untouched review set). Each page shows ONE concept on
  * a stack of slides with different models, so it can be judged on more than a
  * single photo.
- *   /hero-lab/best  THE PICK — finished page: self-running slideshow of all slides
- *                   (colour aura + gentle push-in per model, the one button becomes
- *                   her outfit) + the two runner-up concepts underneath
+ *   /hero-lab/best  12 new concepts (HeroLabStage2), each on its own slide; none
+ *                   of the effects of pages 2-15 are reused there
  *   /hero-lab/1   reference — the DUO CONTRAST slide exactly as in the gallery
  *   /hero-lab/2   tap/hover a model → spotlight (the rest sinks into shade)
  *   /hero-lab/3   → white back-light on the wall behind her
@@ -33,7 +32,7 @@ import { data, redirect, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import SingleLookHero from "../components/SingleLookHero";
 import HeroLabStage, { type LabMode, type LabModel } from "../components/HeroLabStage";
-import HeroLabShow from "../components/HeroLabShow";
+import HeroLabStage2, { type Lab2Mode, type Lab2Model } from "../components/HeroLabStage2";
 import { useI18n, useMoney } from "../i18n";
 import { getColorLabel } from "../utils/colors";
 import { getHeroLooks } from "../utils/heroLooks.server";
@@ -68,6 +67,24 @@ const MODES: Record<string, LabMode | null> = {
     "15": "cta",
 };
 
+/** /hero-lab/best: concept → label + which slide (index in SLIDES) it is shown on */
+const CONCEPTS: Array<{ mode: Lab2Mode; label: string; slide: number }> = [
+    { mode: "step", label: "Крок уперед", slide: 0 },
+    { mode: "depth", label: "Глибина", slide: 1 },
+    { mode: "mono", label: "Чорно-біла студія", slide: 2 },
+    { mode: "focus", label: "Фокус", slide: 3 },
+    { mode: "column", label: "Колона кольору", slide: 1 },
+    { mode: "contour", label: "Контур", slide: 4 },
+    { mode: "finder", label: "Видошукач", slide: 0 },
+    { mode: "marquee", label: "Рухомий рядок", slide: 2 },
+    { mode: "callout", label: "Виноска", slide: 3 },
+    { mode: "flash", label: "Спалах", slide: 4 },
+    { mode: "thread", label: "Нитка", slide: 2 },
+    { mode: "window", label: "Світло з вікна", slide: 3 },
+];
+
+type Geo = Omit<Lab2Model, "href" | "title" | "sub">;
+
 interface LabMeta {
     models: Array<{
         cx: number;
@@ -93,8 +110,16 @@ export async function loader({ params }: LoaderFunctionArgs) {
         if (!look) continue;
         const metaPath = path.join(process.cwd(), "public", "hero", "lab", sid, "meta.json");
         const labMeta = JSON.parse(await readFile(metaPath, "utf8")) as LabMeta;
+        const geo = best
+            ? (
+                  JSON.parse(
+                      await readFile(metaPath.replace("meta.json", "meta3.json"), "utf8"),
+                  ) as { models: Geo[] }
+              ).models
+            : null;
         slides.push({
             sid,
+            geo,
             colors: colors ?? null,
             models: labMeta.models,
             look: variant
@@ -112,7 +137,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 const chip: React.CSSProperties = {
     position: "absolute",
-    top: 132,
+    bottom: 16,
     left: 16,
     zIndex: 50,
     background: "#D97757",
@@ -128,12 +153,13 @@ export default function HeroLab() {
     const { t } = useI18n();
     const money = useMoney();
 
-    const stages = slides.map(({ sid, look, models, colors }) => {
+    const stages = slides.map(({ sid, look, models, colors, geo }) => {
         const short = (look.name.match(/«([^»]+)»/)?.[1] ?? look.name).toUpperCase();
         const [lookName, lookNote] = look.kicker.split(" · ");
         return {
             sid,
             look,
+            geo,
             maskDir: `/hero/lab/${sid}`,
             studioBg: look.studioBg,
             models: models.map(
@@ -156,28 +182,40 @@ export default function HeroLab() {
     });
 
     if (best) {
-        const first = stages[0];
         return (
             <main style={{ background: "#f4f1ec" }}>
-                <div style={{ position: "relative", marginBottom: 12 }}>
-                    <div style={chip}>A · ОСНОВНИЙ — КІНО + АУРА + КНОПКА</div>
-                    <HeroLabShow slides={stages} mode="signature" />
-                </div>
-                <div style={{ position: "relative", marginBottom: 12 }}>
-                    <div style={chip}>B · ЗАПАСНИЙ — ПІДПИС НА ПІДЛОЗІ</div>
-                    <HeroLabStage {...first} mode="floor" />
-                </div>
-                <div style={{ position: "relative", marginBottom: 12 }}>
-                    <div style={chip}>C · ЗАПАСНИЙ — ЖУРНАЛ</div>
-                    <HeroLabStage {...first} mode="editorial" />
-                </div>
+                {CONCEPTS.map(({ mode: m2, label, slide }, i) => {
+                    const st = stages[slide];
+                    if (!st?.geo) return null;
+                    const models2 = st.geo.map(
+                        (g, k): Lab2Model => ({
+                            ...g,
+                            href: st.models[k].href,
+                            title: st.models[k].title,
+                            sub: st.models[k].sub,
+                        }),
+                    );
+                    return (
+                        <div key={m2} style={{ position: "relative", marginBottom: 12 }}>
+                            <div style={chip}>
+                                {String(i + 1).padStart(2, "0")} · {label.toUpperCase()}
+                            </div>
+                            <HeroLabStage2
+                                maskDir={st.maskDir}
+                                studioBg={st.studioBg}
+                                models={models2}
+                                mode={m2}
+                            />
+                        </div>
+                    );
+                })}
             </main>
         );
     }
 
     return (
         <main style={{ background: "#f4f1ec" }}>
-            {stages.map(({ sid, look, ...stage }) => (
+            {stages.map(({ sid, look, geo: _geo, ...stage }) => (
                 <div key={sid} style={{ marginBottom: 12 }}>
                     {mode ? (
                         <HeroLabStage {...stage} mode={mode} />
