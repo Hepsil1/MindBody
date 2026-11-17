@@ -1,0 +1,33 @@
+{
+ "slide": "v4_u21_palette__match",
+ "models": [
+  {
+   "cx": 0.1291,
+   "head": 0.2431,
+   "feet": 0.8688,
+   "tone": "#fff6ea",
+   "colourful": false
+  },
+  {
+   "cx": 0.3127,
+   "head": 0.2431,
+   "feet": 0.8688,
+   "tone": "#c07fc2",
+   "colourful": true
+  },
+  {
+   "cx": 0.6955,
+   "head": 0.2431,
+   "feet": 0.8688,
+   "tone": "#df7684",
+   "colourful": true
+  },
+  {
+   "cx": 0.8754,
+   "head": 0.2431,
+   "feet": 0.8681,
+   "tone": "#fff6ea",
+   "colourful": false
+  }
+ ]
+}

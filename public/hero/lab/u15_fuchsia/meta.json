@@ -1,0 +1,19 @@
+{
+ "slide": "v4_u15_fuchsia",
+ "models": [
+  {
+   "cx": 0.2189,
+   "head": 0.2222,
+   "feet": 0.8681,
+   "tone": "#df7684",
+   "colourful": true
+  },
+  {
+   "cx": 0.7814,
+   "head": 0.2222,
+   "feet": 0.8688,
+   "tone": "#df7682",
+   "colourful": true
+  }
+ ]
+}

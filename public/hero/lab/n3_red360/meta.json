@@ -1,0 +1,19 @@
+{
+ "slide": "v4_n3_red360__match",
+ "models": [
+  {
+   "cx": 0.2189,
+   "head": 0.2222,
+   "feet": 0.8688,
+   "tone": "#dd7974",
+   "colourful": true
+  },
+  {
+   "cx": 0.7814,
+   "head": 0.2222,
+   "feet": 0.8688,
+   "tone": "#dc7a6f",
+   "colourful": true
+  }
+ ]
+}

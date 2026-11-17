@@ -1,37 +1,38 @@
 /**
- * /hero-lab/:n — experiment sandbox, one hero slide per example, fully
- * separate from /hero-gallery (that page stays the client's untouched
- * review set).
+ * /hero-lab/:n — experiment sandbox, fully separate from /hero-gallery (that
+ * page stays the client's untouched review set). Each page shows ONE concept on
+ * a stack of slides with different models, so it can be judged on more than a
+ * single photo.
  *   /hero-lab/1   reference — the DUO CONTRAST slide exactly as in the gallery
  *   /hero-lab/2   tap/hover a model → spotlight (the rest sinks into shade)
- *   /hero-lab/3   → rim light traces the silhouette
- *   /hero-lab/4   → camera push-in, light wave up the outfit, garment lights up,
- *                 wall back-light; idle: models take turns glowing ("tap me")
+ *   /hero-lab/3   → white back-light on the wall behind her
+ *   /hero-lab/4   → camera push-in, light wave up the outfit, back-light;
+ *                 idle: the models take turns glowing ("tap me")
  *   /hero-lab/5   → light spotlight + quiet caption under the feet
  *   /hero-lab/6   → colour aura: the wall takes the outfit's colour
  *   /hero-lab/7   → light ripples spread over the mirror floor from the feet
  *   /hero-lab/8   → a scan line runs head → feet and switches the fabric on
- *   /hero-lab/9   → stage beams fall on the model, the rest goes dark
+ *   /hero-lab/9   → stage beams fall behind the model, the rest goes dark
  *   /hero-lab/10  → cinema: the slide shows each model in turn by itself
- * 2–5: click / second tap opens that outfit (with its colour); on phones the
- * 16:9 frame pans between the two models. Masks: scratch/build_hero_lab_masks.py.
+ * 2–10: click / second tap opens that outfit; on phones the view glides from
+ * model to model. Light frames + masks: scratch/build_hero_lab_v2.py.
  * Not linked anywhere; noindex.
  */
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { data, redirect, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import SingleLookHero from "../components/SingleLookHero";
 import HeroLabStage, { type LabMode } from "../components/HeroLabStage";
-import { useMoney } from "../i18n";
 import { getHeroLooks } from "../utils/heroLooks.server";
-import { getColorLabel } from "../utils/colors";
 
-const SLIDE = "v4_s1_duo";
-const VARIANT = "match";
-const MASKS = "/hero/lab/s1_duo";
-/** left → right, matches the order of the generated masks */
-const MODELS = [
-    { color: "green", tone: "#1f9a94", cx: 0.2191, head: 0.2222, feet: 0.8688 },
-    { color: "marsala", tone: "#b8327a", cx: 0.7854, head: 0.2222, feet: 0.8688 },
+/** slides that have light frames in public/hero/lab/<sid>/ (variant = wall colour set) */
+const SLIDES: Array<{ sid: string; variant: "" | "match" }> = [
+    { sid: "s1_duo", variant: "match" },
+    { sid: "u21_palette", variant: "match" },
+    { sid: "n3_red360", variant: "match" },
+    { sid: "u15_fuchsia", variant: "" },
+    { sid: "u05_forest_set", variant: "match" },
 ];
 
 const MODES: Record<string, LabMode | null> = {
@@ -47,6 +48,10 @@ const MODES: Record<string, LabMode | null> = {
     "10": "cinema",
 };
 
+interface LabMeta {
+    models: Array<{ cx: number; head: number; feet: number }>;
+}
+
 export function meta() {
     return [{ title: "Hero lab — MIND BODY" }, { name: "robots", content: "noindex, nofollow" }];
 }
@@ -54,44 +59,58 @@ export function meta() {
 export async function loader({ params }: LoaderFunctionArgs) {
     if (!params.n) throw redirect("/hero-lab/1");
     if (!(params.n in MODES)) throw data("Not found", { status: 404 });
-    const look = (await getHeroLooks({ includeReview: true })).find(
-        (l) => l.imageDesktop === `/hero/masters/${SLIDE}`,
-    );
-    if (!look) throw data("Not found", { status: 404 });
-    return {
-        mode: MODES[params.n],
-        look: {
-            ...look,
-            imageDesktop: `${look.imageDesktop}__${VARIANT}`,
-            imageMobile: look.imageMobile.replace(/_mobile$/, `__${VARIANT}_mobile`),
-        },
-    };
+    const mode = MODES[params.n];
+    const looks = await getHeroLooks({ includeReview: true });
+    const slides = [];
+    for (const { sid, variant } of mode ? SLIDES : SLIDES.slice(0, 1)) {
+        const look = looks.find((l) => l.imageDesktop === `/hero/masters/v4_${sid}`);
+        if (!look) continue;
+        const metaPath = path.join(process.cwd(), "public", "hero", "lab", sid, "meta.json");
+        const labMeta = JSON.parse(await readFile(metaPath, "utf8")) as LabMeta;
+        slides.push({
+            sid,
+            models: labMeta.models,
+            look: variant
+                ? {
+                      ...look,
+                      imageDesktop: `${look.imageDesktop}__${variant}`,
+                      imageMobile: look.imageMobile.replace(/_mobile$/, `__${variant}_mobile`),
+                  }
+                : look,
+        });
+    }
+    if (!slides.length) throw data("Not found", { status: 404 });
+    return { mode, slides };
 }
 
 export default function HeroLab() {
-    const { look, mode } = useLoaderData<typeof loader>();
-    const money = useMoney();
-    const short = (look.name.match(/«([^»]+)»/)?.[1] ?? look.name).toUpperCase();
+    const { mode, slides } = useLoaderData<typeof loader>();
     return (
         <main style={{ background: "#f4f1ec" }}>
-            {mode ? (
-                <HeroLabStage
-                    image={look.imageDesktop}
-                    maskDir={MASKS}
-                    mode={mode}
-                    studioBg={look.studioBg}
-                    models={MODELS.map((m) => ({
-                        href: `/p/${look.productSlug}?color=${m.color}`,
-                        caption: `${short} · ${getColorLabel(m.color)} · ${money(look.price)}`,
-                        cx: m.cx,
-                        head: m.head,
-                        feet: m.feet,
-                        tone: m.tone,
-                    }))}
-                />
-            ) : (
-                <SingleLookHero looks={[look]} />
-            )}
+            {slides.map(({ sid, look, models }) => {
+                const short = look.name.match(/«([^»]+)»/)?.[1] ?? look.name;
+                return (
+                    <div key={sid} style={{ marginBottom: 12 }}>
+                        {mode ? (
+                            <HeroLabStage
+                                image={look.imageDesktop}
+                                maskDir={`/hero/lab/${sid}`}
+                                mode={mode}
+                                studioBg={look.studioBg}
+                                models={models.map((m) => ({
+                                    href: `/p/${look.productSlug}`,
+                                    caption: short,
+                                    cx: m.cx,
+                                    head: m.head,
+                                    feet: m.feet,
+                                }))}
+                            />
+                        ) : (
+                            <SingleLookHero looks={[look]} />
+                        )}
+                    </div>
+                );
+            })}
         </main>
     );
 }

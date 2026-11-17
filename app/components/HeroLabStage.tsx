@@ -1,14 +1,19 @@
 /**
  * HeroLabStage — experimental hero for /hero-lab: same look as SingleLookHero
  * (stage photo, centre logo, single CTA) but the models themselves are the
- * interaction. Hover/tap a model → it lights up (effect set chosen by `mode`);
+ * interaction. Hover/tap a model → her light state appears (concept = `mode`);
  * click (mouse) or a second tap (touch) opens that outfit's product page.
  *
- * Image + all effect layers live in one 16:9 "canvas" box sized like
- * object-fit: cover, so the per-model masks (public/hero/lab/<sid>/) line up
- * exactly. Inside it a "camera" wrapper can push in toward the chosen model.
- * On phones the canvas keeps the desktop 16:9 frame at full height and slowly
- * pans between the two models, so the duo survives on mobile.
+ * Quality rule: light is never faked with CSS blends over the photo. Every
+ * light state is a frame pre-rendered with real matting by
+ * scratch/build_hero_lab_v2.py (lit / back / aura per model); the page only
+ * REVEALS that frame (fade, rising wave, growing circle, scan). Skin, hair and
+ * floor are therefore never touched.
+ *
+ * Image + layers live in one 16:9 "canvas" box sized like object-fit: cover so
+ * everything lines up; a "camera" wrapper can push in toward the chosen model.
+ * On phones the canvas keeps the 16:9 frame at full height and the view glides
+ * from model to model, so duos / groups survive on mobile.
  */
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -28,33 +33,32 @@ export type LabMode =
     | "beams"
     | "cinema";
 
+type Frame = "lit" | "back" | "aura";
+type Reveal = "fade" | "wave" | "grow" | "scan";
+
 interface FxSet {
+    /** which pre-rendered frame this concept shows, and how it is revealed */
+    frame?: Frame;
+    reveal?: Reveal;
     cam?: boolean;
     dim?: boolean;
-    rim?: boolean;
-    glow?: boolean;
-    wave?: boolean;
     hint?: boolean;
-    aura?: boolean;
     ripple?: boolean;
-    scan?: boolean;
     beams?: boolean;
-    pool?: boolean;
     caption?: boolean;
     auto?: boolean;
 }
 
-/** Which layers each concept uses. */
 const FX: Record<LabMode, FxSet> = {
     spot: { dim: true },
-    rim: { rim: true },
-    fabric: { cam: true, glow: true, wave: true, rim: true, pool: true, hint: true },
+    rim: { frame: "back", reveal: "fade" },
+    fabric: { frame: "back", reveal: "wave", cam: true, hint: true },
     caption: { dim: true, caption: true },
-    aura: { cam: true, glow: true, aura: true, hint: true },
-    ripple: { glow: true, ripple: true, rim: true, hint: true },
-    scan: { cam: true, dim: true, scan: true },
-    beams: { dim: true, beams: true, glow: true },
-    cinema: { cam: true, glow: true, wave: true, aura: true, auto: true },
+    aura: { frame: "aura", reveal: "grow", cam: true, hint: true },
+    ripple: { frame: "lit", reveal: "fade", ripple: true, hint: true },
+    scan: { frame: "lit", reveal: "scan", cam: true },
+    beams: { frame: "lit", reveal: "fade", dim: true, beams: true },
+    cinema: { frame: "aura", reveal: "grow", cam: true, auto: true },
 };
 
 export interface LabModel {
@@ -63,8 +67,6 @@ export interface LabModel {
     cx: number;
     head: number;
     feet: number;
-    /** saturated garment colour for coloured light (aura) */
-    tone: string;
 }
 
 interface Props {
@@ -76,12 +78,10 @@ interface Props {
 }
 
 const CAM_SCALE = 1.08;
-/** auto-play timeline (ms in a 16 s loop, synced with the phone pan) */
-const AUTO_LOOP = 16000;
-const AUTO_STEPS: Array<[number, number, number]> = [
-    [700, 4300, 0],
-    [8700, 12300, 1],
-];
+/** one model's turn in the self-running loop */
+const SLOT = 5400;
+const SHOW_FROM = 1300;
+const SHOW_TO = 4500;
 const USER_HOLD = 8000;
 
 export default function HeroLabStage({ image, maskDir, models, mode, studioBg }: Props) {
@@ -90,18 +90,14 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
     const camRef = useRef<HTMLDivElement>(null);
     const hitRef = useRef<ImageData | null>(null);
     const userAt = useRef(-Infinity);
+    const activeRef = useRef<number | null>(null);
     const [active, setActive] = useState<number | null>(null);
     const [focus, setFocus] = useState(0);
+    const [view, setView] = useState(0);
     const [pulse, setPulse] = useState(0);
-    // a real tap/click "holds" the stage: the phone pan stops on that model
     const [held, setHeld] = useState(false);
     const fx = FX[mode];
-
-    useEffect(() => {
-        if (!held) return;
-        const id = window.setTimeout(() => setHeld(false), USER_HOLD);
-        return () => window.clearTimeout(id);
-    }, [held, pulse]);
+    const count = models.length;
 
     useEffect(() => {
         const img = new Image();
@@ -118,34 +114,44 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
     }, [maskDir]);
 
     const show = (k: number | null) => {
+        activeRef.current = k;
         setActive(k);
         if (k !== null) {
             setFocus(k);
+            setView(k);
             setPulse((p) => p + 1);
         }
     };
     const activate = (k: number | null) => {
-        if (k !== active) show(k);
+        if (k !== activeRef.current) show(k);
     };
 
-    // "Cinema": the slide directs itself — each model gets its moment in turn.
-    // Any real interaction takes over for USER_HOLD ms.
     useEffect(() => {
-        if (!fx.auto) return;
+        if (!held) return;
+        const id = window.setTimeout(() => setHeld(false), USER_HOLD);
+        return () => window.clearTimeout(id);
+    }, [held, pulse]);
+
+    // Self-running loop. Phone view glides from model to model in every concept;
+    // in "cinema" the stage also lights each model in turn. Real interaction
+    // takes over for USER_HOLD ms.
+    useEffect(() => {
         const t0 = performance.now();
-        let last: number | null | undefined;
         const id = window.setInterval(() => {
             if (performance.now() - userAt.current < USER_HOLD) return;
-            const ph = (performance.now() - t0) % AUTO_LOOP;
-            const step = AUTO_STEPS.find(([a, b]) => ph >= a && ph < b);
-            const k = step ? step[2] : null;
-            if (k !== last) {
-                last = k;
-                show(k);
+            const ph = performance.now() - t0;
+            const idx = Math.floor(ph / SLOT) % count;
+            if (fx.auto) {
+                const within = ph % SLOT;
+                const k = within >= SHOW_FROM && within < SHOW_TO ? idx : null;
+                setView(idx);
+                if (k !== activeRef.current) show(k);
+            } else if (activeRef.current === null) {
+                setView(idx);
             }
-        }, 120);
+        }, 150);
         return () => window.clearInterval(id);
-    }, [fx.auto]);
+    }, [fx.auto, count]);
 
     const modelAt = (clientX: number, clientY: number): number | null => {
         const box = camRef.current?.getBoundingClientRect();
@@ -154,16 +160,15 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
         const x = Math.floor(((clientX - box.left) / box.width) * hit.width);
         const y = Math.floor(((clientY - box.top) / box.height) * hit.height);
         if (x < 0 || y < 0 || x >= hit.width || y >= hit.height) return null;
-        const o = (y * hit.width + x) * 4;
-        for (let k = 0; k < Math.min(models.length, 3); k++) if (hit.data[o + k] > 127) return k;
-        return null;
+        const k = Math.round(hit.data[(y * hit.width + x) * 4] / 50) - 1;
+        return k >= 0 && k < count ? k : null;
     };
 
     const onPointerMove = (e: React.PointerEvent) => {
         if (e.pointerType !== "mouse") return;
         const k = modelAt(e.clientX, e.clientY);
         if (fx.auto) {
-            // in cinema mode only a model under the cursor takes over
+            // in cinema only a model under the cursor takes over
             if (k === null) return;
             userAt.current = performance.now();
         }
@@ -178,11 +183,12 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
             (e.nativeEvent as PointerEvent).pointerType === "touch" ||
             !matchMedia("(hover: hover)").matches;
         if (k === null) return activate(null);
-        if (touch && active !== k) return activate(k);
+        if (touch && activeRef.current !== k) return activate(k);
         navigate(models[k].href);
     };
 
     const fm = models[focus] ?? models[0];
+    const vm = models[view] ?? models[0];
     const mask = (name: string, k: number) => ({
         ["--mask" as string]: `url(${maskDir}/${name}${k}.png)`,
     });
@@ -193,13 +199,7 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
             aria-label={t("Вітрина бренду MIND BODY")}
         >
             <div className="hlab__stage" style={{ backgroundColor: studioBg || "#dedad4" }}>
-                <div
-                    className="hlab__canvas"
-                    style={{
-                        ["--p0" as string]: `${-(models[0]?.cx ?? 0.5) * 100}%`,
-                        ["--p1" as string]: `${-(models[models.length - 1]?.cx ?? 0.5) * 100}%`,
-                    }}
-                >
+                <div className="hlab__canvas" style={{ ["--vx" as string]: vm.cx }}>
                     <div
                         ref={camRef}
                         className="hlab__cam"
@@ -230,7 +230,6 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                                 src={`${image}.webp`}
                                 alt=""
                                 className="hlab__img"
-                                fetchPriority="high"
                                 decoding="async"
                             />
                         </picture>
@@ -245,16 +244,20 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                                         ["--cx" as string]: `${m.cx * 100}%`,
                                         ["--head" as string]: `${m.head * 100}%`,
                                         ["--feet" as string]: `${m.feet * 100}%`,
-                                        ["--tone" as string]: m.tone,
                                         ["--k" as string]: k,
+                                        ["--n" as string]: count,
                                     }}
                                 >
-                                    {fx.aura && (
-                                        <div className="hlab__aura" style={mask("aura", k)} />
+                                    {fx.frame && (
+                                        <img
+                                            src={`${maskDir}/${fx.frame}${k}.webp`}
+                                            alt=""
+                                            loading="lazy"
+                                            decoding="async"
+                                            className={`hlab__frame hlab__frame--${fx.reveal} ${fx.hint ? "has-hint" : ""}`}
+                                        />
                                     )}
                                     {fx.dim && <div className="hlab__dim" style={mask("inv", k)} />}
-                                    {fx.rim && <div className="hlab__rim" style={mask("rim", k)} />}
-                                    {fx.pool && <span className="hlab__pool hlab__pool--solo" />}
                                     {fx.beams && (
                                         <div className="hlab__beams" style={mask("out", k)}>
                                             <span className="hlab__beam hlab__beam--a" />
@@ -273,28 +276,19 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                                             <span />
                                         </div>
                                     )}
-                                    {fx.hint && <div className="hlab__hint" style={mask("g", k)} />}
-                                    {fx.glow && <div className="hlab__glow" style={mask("g", k)} />}
-                                    {fx.wave && (
+                                    {fx.reveal === "wave" && (
                                         <div
                                             key={`w${run}`}
                                             className="hlab__wave"
                                             style={mask("g", k)}
                                         />
                                     )}
-                                    {fx.scan && (
-                                        <>
-                                            <div
-                                                key={`s${run}`}
-                                                className="hlab__scanlit"
-                                                style={mask("g", k)}
-                                            />
-                                            <div
-                                                key={`l${run}`}
-                                                className="hlab__scanline"
-                                                style={mask("m", k)}
-                                            />
-                                        </>
+                                    {fx.reveal === "scan" && (
+                                        <div
+                                            key={`l${run}`}
+                                            className="hlab__scanline"
+                                            style={mask("g", k)}
+                                        />
                                     )}
                                     {fx.caption && (
                                         <div
