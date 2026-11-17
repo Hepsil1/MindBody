@@ -9,6 +9,7 @@ import { type RouteConfig, route, layout } from "@react-router/dev/routes";
  */
 export default [
     route("hero-gallery", "routes/hero-gallery.tsx"),
+    route("hero-lab/:n?", "routes/hero-lab.tsx"),
     route(":lang?", "routes/home.tsx"),
     route(":lang?/shop", "routes/shop.tsx"),
     route(":lang?/cart", "routes/cart.tsx"),
