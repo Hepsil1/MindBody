@@ -3,6 +3,9 @@
  * page stays the client's untouched review set). Each page shows ONE concept on
  * a stack of slides with different models, so it can be judged on more than a
  * single photo.
+ *   /hero-lab/best  THE PICK — finished page: self-running slideshow of all slides
+ *                   (colour aura + gentle push-in per model, the one button becomes
+ *                   her outfit) + the two runner-up concepts underneath
  *   /hero-lab/1   reference — the DUO CONTRAST slide exactly as in the gallery
  *   /hero-lab/2   tap/hover a model → spotlight (the rest sinks into shade)
  *   /hero-lab/3   → white back-light on the wall behind her
@@ -29,7 +32,8 @@ import path from "node:path";
 import { data, redirect, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import SingleLookHero from "../components/SingleLookHero";
-import HeroLabStage, { type LabMode } from "../components/HeroLabStage";
+import HeroLabStage, { type LabMode, type LabModel } from "../components/HeroLabStage";
+import HeroLabShow from "../components/HeroLabShow";
 import { useI18n, useMoney } from "../i18n";
 import { getColorLabel } from "../utils/colors";
 import { getHeroLooks } from "../utils/heroLooks.server";
@@ -73,9 +77,10 @@ export function meta() {
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
-    if (!params.n) throw redirect("/hero-lab/1");
-    if (!(params.n in MODES)) throw data("Not found", { status: 404 });
-    const mode = MODES[params.n];
+    if (!params.n) throw redirect("/hero-lab/best");
+    const best = params.n === "best";
+    if (!best && !(params.n in MODES)) throw data("Not found", { status: 404 });
+    const mode = best ? ("signature" as LabMode) : MODES[params.n];
     const looks = await getHeroLooks({ includeReview: true });
     const slides = [];
     for (const { sid, variant, colors } of mode ? SLIDES : SLIDES.slice(0, 1)) {
@@ -97,45 +102,85 @@ export async function loader({ params }: LoaderFunctionArgs) {
         });
     }
     if (!slides.length) throw data("Not found", { status: 404 });
-    return { mode, slides };
+    return { mode, slides, best };
 }
 
+const chip: React.CSSProperties = {
+    position: "absolute",
+    top: 132,
+    left: 16,
+    zIndex: 50,
+    background: "#D97757",
+    color: "#fff",
+    font: "700 13px/1 Onest, sans-serif",
+    letterSpacing: "0.08em",
+    padding: "8px 12px",
+    borderRadius: 4,
+};
+
 export default function HeroLab() {
-    const { mode, slides } = useLoaderData<typeof loader>();
+    const { mode, slides, best } = useLoaderData<typeof loader>();
     const { t } = useI18n();
     const money = useMoney();
+
+    const stages = slides.map(({ sid, look, models, colors }) => {
+        const short = (look.name.match(/«([^»]+)»/)?.[1] ?? look.name).toUpperCase();
+        const [lookName, lookNote] = look.kicker.split(" · ");
+        return {
+            sid,
+            look,
+            image: look.imageDesktop,
+            maskDir: `/hero/lab/${sid}`,
+            studioBg: look.studioBg,
+            models: models.map(
+                (m, k): LabModel => ({
+                    href: colors
+                        ? `/p/${look.productSlug}?color=${colors[k]}`
+                        : `/p/${look.productSlug}`,
+                    title: colors ? short : lookName,
+                    sub: colors
+                        ? `${t(getColorLabel(colors[k]))} · ${money(look.price)}`
+                        : (lookNote ?? ""),
+                    cx: m.cx,
+                    head: m.head,
+                    feet: m.feet,
+                    linked: !!colors,
+                }),
+            ),
+        };
+    });
+
+    if (best) {
+        const first = stages[0];
+        return (
+            <main style={{ background: "#f4f1ec" }}>
+                <div style={{ position: "relative", marginBottom: 12 }}>
+                    <div style={chip}>A · ОСНОВНИЙ — КІНО + АУРА + КНОПКА</div>
+                    <HeroLabShow slides={stages} mode="signature" />
+                </div>
+                <div style={{ position: "relative", marginBottom: 12 }}>
+                    <div style={chip}>B · ЗАПАСНИЙ — ПІДПИС НА ПІДЛОЗІ</div>
+                    <HeroLabStage {...first} mode="floor" />
+                </div>
+                <div style={{ position: "relative", marginBottom: 12 }}>
+                    <div style={chip}>C · ЗАПАСНИЙ — ЖУРНАЛ</div>
+                    <HeroLabStage {...first} mode="editorial" />
+                </div>
+            </main>
+        );
+    }
+
     return (
         <main style={{ background: "#f4f1ec" }}>
-            {slides.map(({ sid, look, models, colors }) => {
-                const short = (look.name.match(/«([^»]+)»/)?.[1] ?? look.name).toUpperCase();
-                const [lookName, lookNote] = look.kicker.split(" · ");
-                return (
-                    <div key={sid} style={{ marginBottom: 12 }}>
-                        {mode ? (
-                            <HeroLabStage
-                                image={look.imageDesktop}
-                                maskDir={`/hero/lab/${sid}`}
-                                mode={mode}
-                                studioBg={look.studioBg}
-                                models={models.map((m, k) => ({
-                                    href: colors
-                                        ? `/p/${look.productSlug}?color=${colors[k]}`
-                                        : `/p/${look.productSlug}`,
-                                    title: colors ? short : lookName,
-                                    sub: colors
-                                        ? `${t(getColorLabel(colors[k]))} · ${money(look.price)}`
-                                        : (lookNote ?? ""),
-                                    cx: m.cx,
-                                    head: m.head,
-                                    feet: m.feet,
-                                }))}
-                            />
-                        ) : (
-                            <SingleLookHero looks={[look]} />
-                        )}
-                    </div>
-                );
-            })}
+            {stages.map(({ sid, look, ...stage }) => (
+                <div key={sid} style={{ marginBottom: 12 }}>
+                    {mode ? (
+                        <HeroLabStage {...stage} mode={mode} />
+                    ) : (
+                        <SingleLookHero looks={[look]} />
+                    )}
+                </div>
+            ))}
         </main>
     );
 }

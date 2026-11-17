@@ -823,3 +823,75 @@
         font-size: 11px;
     }
 }
+
+/* ===== /hero-lab/best — self-running slideshow of stages ================== */
+.hshow {
+    position: relative;
+    overflow: hidden;
+}
+/* the slide that just left: a still copy underneath, same geometry as the stage */
+.hshow__under {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+.hshow__under .hlab__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.hshow .hshow__top {
+    position: relative;
+    z-index: 1;
+    animation: hshowIn 1.1s cubic-bezier(0.4, 0, 0.2, 1) both !important;
+}
+@keyframes hshowIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+/* gentler camera for a hero that moves by itself all the time */
+.hlab--signature .hlab__cam {
+    transition: transform 2.2s cubic-bezier(0.33, 0, 0.2, 1) !important;
+}
+.hshow__dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 14px;
+    z-index: 25;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+.hshow__dots button {
+    padding: 8px 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+.hshow__dots span {
+    display: block;
+    width: 26px;
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.45);
+    transition:
+        background 0.4s ease,
+        width 0.5s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.hshow__dots button.is-active span {
+    width: 44px;
+    background: #fff;
+}
+@media (max-width: 768px) {
+    .hshow__dots {
+        bottom: 4px;
+    }
+    .hshow .slook__overlay {
+        padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+    }
+}

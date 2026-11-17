@@ -36,7 +36,8 @@ export type LabMode =
     | "floor"
     | "editorial"
     | "cursor"
-    | "cta";
+    | "cta"
+    | "signature";
 
 type Frame = "lit" | "back" | "aura";
 type Reveal = "fade" | "wave" | "grow" | "scan";
@@ -79,6 +80,10 @@ const FX: Record<LabMode, FxSet> = {
     cursor: { frame: "lit", reveal: "fade", ripple: true, cam: true, hint: true, info: "cursor" },
     // 15 scan line        · the button itself becomes the outfit
     cta: { frame: "lit", reveal: "scan", cam: true, hint: true, info: "cta" },
+    // THE PICK (/hero-lab/best): the stage directs itself — each model in turn gets
+    // her colour aura and a gentle push-in while the one button becomes her outfit.
+    // Nothing is added to the slide; works with no hover at all (phones).
+    signature: { frame: "aura", reveal: "grow", cam: true, auto: true, info: "cta" },
 };
 
 export interface LabModel {
@@ -90,6 +95,9 @@ export interface LabModel {
     cx: number;
     head: number;
     feet: number;
+    /** false when the slide has no real product behind it: the button then keeps
+     *  its generic label instead of advertising a name/price that leads nowhere */
+    linked?: boolean;
 }
 
 interface Props {
@@ -98,6 +106,12 @@ interface Props {
     models: LabModel[];
     mode: LabMode;
     studioBg?: string;
+    /** ms each model gets in the self-running loop */
+    slot?: number;
+    /** called once every model has had her turn (slideshow advances) */
+    onDone?: () => void;
+    /** load the light frames right away (slideshow) instead of lazily */
+    eager?: boolean;
 }
 
 /** Round price badge: the price is the hero, name above, colour below. */
@@ -117,17 +131,32 @@ function Disc({ title, sub }: { title: string; sub: string }) {
 const CAM_SCALE = 1.08;
 /** one model's turn in the self-running loop */
 const SLOT = 5400;
-const SHOW_FROM = 1300;
-const SHOW_TO = 4500;
+/** the lit part of a slot, as fractions of it */
+const SHOW_FROM = 0.24;
+const SHOW_TO = 0.83;
 const USER_HOLD = 8000;
 
-export default function HeroLabStage({ image, maskDir, models, mode, studioBg }: Props) {
+export default function HeroLabStage({
+    image,
+    maskDir,
+    models,
+    mode,
+    studioBg,
+    slot = SLOT,
+    onDone,
+    eager,
+}: Props) {
     const { t } = useI18n();
     const navigate = useNavigate();
     const camRef = useRef<HTMLDivElement>(null);
     const sectionRef = useRef<HTMLElement>(null);
     const cursorRef = useRef<HTMLDivElement>(null);
     const leaveTimer = useRef<number | undefined>(undefined);
+    const overCta = useRef(false);
+    const onDoneRef = useRef(onDone);
+    useEffect(() => {
+        onDoneRef.current = onDone;
+    }, [onDone]);
     const hitRef = useRef<ImageData | null>(null);
     const userAt = useRef(-Infinity);
     const activeRef = useRef<number | null>(null);
@@ -176,22 +205,32 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
     // in "cinema" the stage also lights each model in turn. Real interaction
     // takes over for USER_HOLD ms.
     useEffect(() => {
-        const t0 = performance.now();
+        const TICK = 150;
+        // own clock: it only runs while the visitor isn't holding the stage
+        let ph = 0;
+        let done = false;
         const id = window.setInterval(() => {
-            if (performance.now() - userAt.current < USER_HOLD) return;
-            const ph = performance.now() - t0;
-            const idx = Math.floor(ph / SLOT) % count;
+            if (overCta.current || performance.now() - userAt.current < USER_HOLD) return;
+            ph += TICK;
+            const idx = Math.floor(ph / slot) % count;
             if (fx.auto) {
-                const within = ph % SLOT;
-                const k = within >= SHOW_FROM && within < SHOW_TO ? idx : null;
+                // every model has had her turn (+ time for the camera to settle)
+                if (!done && onDoneRef.current && ph >= count * slot + 500) {
+                    done = true;
+                    onDoneRef.current();
+                    return;
+                }
+                if (done) return;
+                const within = ph % slot;
+                const k = within >= slot * SHOW_FROM && within < slot * SHOW_TO ? idx : null;
                 setView(idx);
                 if (k !== activeRef.current) show(k);
             } else if (activeRef.current === null) {
                 setView(idx);
             }
-        }, 150);
+        }, TICK);
         return () => window.clearInterval(id);
-    }, [fx.auto, count]);
+    }, [fx.auto, count, slot]);
 
     const modelAt = (clientX: number, clientY: number): number | null => {
         const box = camRef.current?.getBoundingClientRect();
@@ -307,7 +346,7 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                                         <img
                                             src={`${maskDir}/${fx.frame}${k}.webp`}
                                             alt=""
-                                            loading="lazy"
+                                            loading={eager ? "eager" : "lazy"}
                                             decoding="async"
                                             className={`hlab__frame hlab__frame--${fx.reveal} ${fx.hint ? "has-hint" : ""}`}
                                         />
@@ -438,11 +477,16 @@ export default function HeroLabStage({ image, maskDir, models, mode, studioBg }:
                 <div className="slook__info slook__info--centered">
                     {fx.info === "cta" ? (
                         <LLink
-                            to={active !== null ? fm.href : "/shop/yoga"}
-                            className={`slook__cta-btn slook__cta-btn--centered hlab__cta ${active !== null ? "is-product" : ""}`}
-                            onPointerEnter={() => window.clearTimeout(leaveTimer.current)}
+                            to={active !== null && fm.linked !== false ? fm.href : "/shop/yoga"}
+                            className={`slook__cta-btn slook__cta-btn--centered hlab__cta ${active !== null && fm.linked !== false ? "is-product" : ""}`}
+                            onPointerEnter={(e) => {
+                                window.clearTimeout(leaveTimer.current);
+                                // the button must not change under the cursor
+                                if (e.pointerType === "mouse") overCta.current = true;
+                            }}
                             onPointerLeave={(e) => {
-                                if (e.pointerType === "mouse") activate(null);
+                                overCta.current = false;
+                                if (e.pointerType === "mouse" && !fx.auto) activate(null);
                             }}
                         >
                             <span className="hlab__cta-a">{t("Переглянути колекцію")}</span>
