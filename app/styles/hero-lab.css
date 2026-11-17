@@ -40,7 +40,8 @@
 }
 
 .hlab__fx,
-.hlab__fx > div:not(.hlab__caption) {
+.hlab__fx > div:not(.hlab__caption),
+.hlab__beams {
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -89,20 +90,296 @@
     }
 }
 
-/* --- 4 · Fabric: only the garment lights up, as if a soft light was turned
-   on it (overlay keeps the hue — the knit is matte, so no glossy sweep). */
-.hlab .hlab__sheen {
+/* --- Camera: pushes in toward the chosen model. translate+scale (origin 0 0)
+   so switching models interpolates smoothly instead of jumping. */
+.hlab .hlab__cam {
+    position: absolute;
+    inset: 0;
+    transform-origin: 0 0;
+    transform: translate(
+            calc((1 - var(--s, 1)) * var(--fx, 0.5) * 100%),
+            calc((1 - var(--s, 1)) * var(--fy, 0.5) * 100%)
+        )
+        scale(var(--s, 1));
+    transition: transform 1.6s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    will-change: transform;
+}
+
+@property --wy {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: -20%;
+}
+@property --sy {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: -10%;
+}
+
+/* --- Garment light: only the outfit lights up (overlay keeps hue + knit) */
+.hlab .hlab__glow {
     background: radial-gradient(
-        ellipse 9% 42% at var(--cx) 46%,
-        rgba(255, 255, 255, 0.4),
-        rgba(255, 255, 255, 0.2)
+        ellipse 10% 44% at var(--cx) 48%,
+        rgba(255, 255, 255, 0.62),
+        rgba(255, 255, 255, 0.34)
     );
     mix-blend-mode: overlay;
     opacity: 0;
-    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    transition: opacity 0.6s ease !important;
 }
-.hlab .hlab__fx.is-on .hlab__sheen {
+.hlab .hlab__fx.is-on .hlab__glow {
     opacity: 1;
+    transition: opacity 0.9s ease 0.35s !important;
+}
+
+/* light wave rising from the feet to the shoulders as the outfit switches on */
+.hlab .hlab__wave {
+    --wy: -20%;
+    background: linear-gradient(
+        to top,
+        transparent calc(var(--wy) - 10%),
+        rgba(255, 255, 255, 1) var(--wy),
+        transparent calc(var(--wy) + 7%)
+    );
+    mix-blend-mode: overlay;
+    opacity: 0;
+}
+.hlab .hlab__fx.is-on .hlab__wave {
+    animation:
+        hlabWave 1.25s cubic-bezier(0.3, 0, 0.2, 1) forwards,
+        hlabFadeOut 1.4s ease forwards !important;
+}
+@keyframes hlabWave {
+    from {
+        --wy: calc(100% - var(--feet) - 2%);
+    }
+    to {
+        --wy: calc(100% - var(--head) + 12%);
+    }
+}
+@keyframes hlabFadeOut {
+    0% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* idle invitation: the models take turns giving a soft glow (they are clickable) */
+.hlab .hlab__hint {
+    background: rgba(255, 255, 255, 0.55);
+    mix-blend-mode: overlay;
+    opacity: 0;
+    animation: hlabHint 7s ease-in-out infinite !important;
+    animation-delay: calc(var(--k) * 3.5s + 1.2s) !important;
+}
+.hlab.has-active .hlab__hint {
+    animation: none !important;
+    opacity: 0;
+}
+@keyframes hlabHint {
+    0%,
+    100% {
+        opacity: 0;
+    }
+    9% {
+        opacity: 0.85;
+    }
+    22% {
+        opacity: 0;
+    }
+}
+
+/* --- 6 · Colour aura: the wall behind the model takes the outfit's colour */
+.hlab .hlab__aura {
+    background: var(--tone);
+    mix-blend-mode: color;
+    opacity: 0;
+    transform: scale(0.82);
+    transform-origin: var(--cx) 55%;
+    transition:
+        opacity 0.8s ease,
+        transform 1.4s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.hlab .hlab__fx.is-on .hlab__aura {
+    opacity: 0.95;
+    transform: scale(1);
+}
+
+/* --- 7 · Ripples: light rings spread over the mirror floor from the feet */
+.hlab .hlab__ripples span {
+    position: absolute;
+    left: var(--cx);
+    top: calc(var(--feet) - 0.6%);
+    width: 24%;
+    aspect-ratio: 5 / 1;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    box-shadow:
+        0 0 22px rgba(255, 255, 255, 0.6),
+        inset 0 0 14px rgba(255, 255, 255, 0.4);
+    transform: translate(-50%, -50%) scale(0.12);
+    opacity: 0;
+}
+.hlab .hlab__fx.is-on .hlab__ripples span {
+    animation: hlabRipple 2.7s cubic-bezier(0.15, 0.55, 0.3, 1) infinite !important;
+}
+.hlab .hlab__fx.is-on .hlab__ripples span:nth-child(2) {
+    animation-delay: 0.9s !important;
+}
+.hlab .hlab__fx.is-on .hlab__ripples span:nth-child(3) {
+    animation-delay: 1.8s !important;
+}
+@keyframes hlabRipple {
+    0% {
+        transform: translate(-50%, -50%) scale(0.12);
+        opacity: 0;
+    }
+    12% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.6);
+        opacity: 0;
+    }
+}
+
+/* --- 8 · Scan: a line of light runs head to feet and switches the fabric on */
+.hlab .hlab__scanlit {
+    --sy: -10%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.58) 0,
+        rgba(255, 255, 255, 0.58) var(--sy),
+        transparent calc(var(--sy) + 0.2%)
+    );
+    mix-blend-mode: overlay;
+    opacity: 0;
+    transition: opacity 0.5s ease !important;
+}
+.hlab .hlab__fx.is-on .hlab__scanlit {
+    opacity: 1;
+    animation: hlabScan 1.5s cubic-bezier(0.45, 0, 0.2, 1) 0.25s forwards !important;
+}
+.hlab .hlab__scanline {
+    --sy: -10%;
+    background: linear-gradient(
+        to bottom,
+        transparent calc(var(--sy) - 1.6%),
+        rgba(255, 255, 255, 0.95) var(--sy),
+        transparent calc(var(--sy) + 0.35%)
+    );
+    mix-blend-mode: screen;
+    opacity: 0;
+}
+.hlab .hlab__fx.is-on .hlab__scanline {
+    animation:
+        hlabScan 1.5s cubic-bezier(0.45, 0, 0.2, 1) 0.25s forwards,
+        hlabScanLine 1.85s ease forwards !important;
+}
+@keyframes hlabScan {
+    from {
+        --sy: calc(var(--head) - 2%);
+    }
+    to {
+        --sy: calc(var(--feet) + 1%);
+    }
+}
+@keyframes hlabScanLine {
+    0% {
+        opacity: 0;
+    }
+    14% {
+        opacity: 1;
+    }
+    88% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* --- 9 · Stage beams: soft light cones fall on the chosen model */
+.hlab--beams .hlab__dim {
+    background: rgba(22, 16, 28, 0.46);
+}
+.hlab .hlab__beam,
+.hlab .hlab__pool {
+    position: absolute;
+    mix-blend-mode: screen;
+    opacity: 0;
+    transition: opacity 0.9s ease !important;
+}
+.hlab .hlab__beam {
+    top: -8%;
+    height: calc(var(--feet) + 10%);
+    filter: blur(14px);
+    transform-origin: 50% 0;
+}
+.hlab .hlab__beam::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 247, 232, 0.95),
+        rgba(255, 247, 232, 0.4) 65%,
+        rgba(255, 247, 232, 0)
+    );
+}
+.hlab .hlab__beam--a {
+    left: calc(var(--cx) - 13%);
+    width: 26%;
+}
+.hlab .hlab__beam--a::before {
+    clip-path: polygon(45% 0, 55% 0, 92% 100%, 8% 100%);
+}
+.hlab .hlab__beam--b {
+    left: calc(var(--cx) - 24%);
+    width: 30%;
+}
+.hlab .hlab__beam--b::before {
+    clip-path: polygon(10% 0, 17% 0, 88% 100%, 50% 100%);
+}
+.hlab .hlab__pool {
+    left: var(--cx);
+    top: calc(var(--feet) - 1%);
+    width: 22%;
+    aspect-ratio: 4 / 1;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(closest-side, rgba(255, 249, 238, 0.9), rgba(255, 249, 238, 0));
+}
+.hlab .hlab__fx.is-on .hlab__beam--a {
+    opacity: 0.6;
+    animation: hlabSway 5.5s ease-in-out infinite alternate !important;
+}
+.hlab .hlab__fx.is-on .hlab__beam--b {
+    opacity: 0.3;
+    transition-delay: 0.25s !important;
+    animation: hlabSway 7s ease-in-out -2s infinite alternate-reverse !important;
+}
+.hlab .hlab__fx.is-on .hlab__pool {
+    opacity: 0.75;
+}
+.hlab .hlab__pool--solo {
+    width: 18%;
+}
+.hlab .hlab__fx.is-on .hlab__pool--solo {
+    opacity: 0.6;
+    transition-delay: 0.3s !important;
+}
+@keyframes hlabSway {
+    from {
+        transform: rotate(-2.2deg);
+    }
+    to {
+        transform: rotate(2.2deg);
+    }
 }
 
 /* --- 5 · Quiet caption under the feet (spotlight, lighter) */
@@ -146,7 +423,9 @@
         transform: translateX(var(--p0));
         animation: hlabPan 16s ease-in-out infinite !important;
     }
-    .hlab.has-active .hlab__canvas {
+    /* the pan stops on a model the visitor picked — not on cinema's own beats */
+    .hlab.has-active:not(.hlab--cinema) .hlab__canvas,
+    .hlab--cinema.is-held .hlab__canvas {
         animation-play-state: paused !important;
     }
     /* phone: the CTA sits under the feet, so the caption goes above the head */
@@ -167,4 +446,10 @@
     100% {
         transform: translateX(var(--p0));
     }
+}
+
+/* concept 4 runs the back-light brighter than the plain rim concept */
+.hlab--fabric .hlab__fx.is-on .hlab__rim {
+    opacity: 0.85;
+    animation: none !important;
 }

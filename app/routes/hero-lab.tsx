@@ -5,8 +5,14 @@
  *   /hero-lab/1   reference — the DUO CONTRAST slide exactly as in the gallery
  *   /hero-lab/2   tap/hover a model → spotlight (the rest sinks into shade)
  *   /hero-lab/3   → rim light traces the silhouette
- *   /hero-lab/4   → soft light sweep across the garment only
+ *   /hero-lab/4   → camera push-in, light wave up the outfit, garment lights up,
+ *                 wall back-light; idle: models take turns glowing ("tap me")
  *   /hero-lab/5   → light spotlight + quiet caption under the feet
+ *   /hero-lab/6   → colour aura: the wall takes the outfit's colour
+ *   /hero-lab/7   → light ripples spread over the mirror floor from the feet
+ *   /hero-lab/8   → a scan line runs head → feet and switches the fabric on
+ *   /hero-lab/9   → stage beams fall on the model, the rest goes dark
+ *   /hero-lab/10  → cinema: the slide shows each model in turn by itself
  * 2–5: click / second tap opens that outfit (with its colour); on phones the
  * 16:9 frame pans between the two models. Masks: scratch/build_hero_lab_masks.py.
  * Not linked anywhere; noindex.
@@ -24,8 +30,8 @@ const VARIANT = "match";
 const MASKS = "/hero/lab/s1_duo";
 /** left → right, matches the order of the generated masks */
 const MODELS = [
-    { color: "green", cx: 0.2191, head: 0.2222, feet: 0.8688 },
-    { color: "marsala", cx: 0.7854, head: 0.2222, feet: 0.8688 },
+    { color: "green", tone: "#1f9a94", cx: 0.2191, head: 0.2222, feet: 0.8688 },
+    { color: "marsala", tone: "#b8327a", cx: 0.7854, head: 0.2222, feet: 0.8688 },
 ];
 
 const MODES: Record<string, LabMode | null> = {
@@ -34,6 +40,11 @@ const MODES: Record<string, LabMode | null> = {
     "3": "rim",
     "4": "fabric",
     "5": "caption",
+    "6": "aura",
+    "7": "ripple",
+    "8": "scan",
+    "9": "beams",
+    "10": "cinema",
 };
 
 export function meta() {
@@ -75,6 +86,7 @@ export default function HeroLab() {
                         cx: m.cx,
                         head: m.head,
                         feet: m.feet,
+                        tone: m.tone,
                     }))}
                 />
             ) : (

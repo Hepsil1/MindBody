@@ -7,6 +7,8 @@ Writes public/hero/lab/<sid>/ :
   inv<i>.png  everything except model i with a soft light falloff (spotlight dim)
   rim<i>.png  thin inner edge + soft outer halo (rim light)
   g<i>.png    garment only (model pixels whose Lab b* is not skin/hair yellow)
+  out<i>.png  everything except model i (floor effects pass behind the legs)
+  aura<i>.png wide glow on the wall behind model i (tinted in CSS)
   hit.png     320x180 hit map: R = model 0, G = model 1 (dilated for easy taps)
   meta.json   per model: bbox centre / feet in canvas fractions
 Models are ordered left → right.
@@ -59,6 +61,13 @@ def main(sid):
         bloom = np.clip(bloom / max(bloom.max(), 1e-6) * 1.15, 0, 1) * (1 - m)
         rgba(np.clip(bloom + inner * 0.35, 0, 1)).save(f"{out_dir}/rim{k}.png", optimize=True)
 
+        # everything except the model (floor ripples pass behind the legs)
+        rgba(1 - m).save(f"{out_dir}/out{k}.png", optimize=True)
+        # wide coloured aura on the wall behind the model
+        aura = cv2.GaussianBlur(m, (0, 0), 150)
+        aura = np.clip(aura / max(aura.max(), 1e-6) * 1.3, 0, 1) * (1 - m)
+        rgba(aura).save(f"{out_dir}/aura{k}.png", optimize=True)
+
         g = ((m > 0.5) & (bstar < 8)).astype(np.uint8)
         g = cv2.morphologyEx(g, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
         g = cv2.morphologyEx(g, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
@@ -71,7 +80,14 @@ def main(sid):
         hit[..., k] = np.maximum(hit[..., k], (small > 60) * 255)
 
         x, y, w, h = st[ci, :4]
-        meta.append({"cx": round((x + w / 2) / W, 4), "top": round(y / H, 4), "feet": round((y + h) / H, 4), "w": round(w / W, 4)})
+        gm = g > 0.5
+        med = np.median(rgb[gm], axis=0) if gm.any() else np.array([128, 128, 128])
+        hsv = cv2.cvtColor(np.uint8([[med]]), cv2.COLOR_RGB2HSV)[0, 0].astype(np.float32)
+        hsv[1] = min(255, hsv[1] * 1.35)
+        hsv[2] = max(hsv[2], 190)
+        tone = cv2.cvtColor(np.uint8([[hsv]]), cv2.COLOR_HSV2RGB)[0, 0]
+        meta.append({"cx": round((x + w / 2) / W, 4), "top": round(y / H, 4), "feet": round((y + h) / H, 4), "w": round(w / W, 4),
+                     "garment": "#%02x%02x%02x" % tuple(int(v) for v in med), "tone": "#%02x%02x%02x" % tuple(int(v) for v in tone)})
         print(sid, k, "bbox", x, y, w, h, flush=True)
     Image.fromarray(hit, "RGB").save(f"{out_dir}/hit.png", optimize=True)
     json.dump({"models": meta}, open(f"{out_dir}/meta.json", "w"), indent=1)
