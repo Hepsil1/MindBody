@@ -1,21 +1,13 @@
 /* /hero-lab — see app/components/HeroLabStage2.tsx.
-   Picture states are pre-rendered (scratch/build_hero_lab_v4.py); CSS only
+   Picture states are pre-rendered (scratch/build_hero_lab_v5.py); CSS only
    reveals them. Durations carry !important so the site-wide reduced-motion
    rule doesn't flatten the lab (the owner reviews with reduce-motion ON).
-   Revisit before anything here ships to the home page. */
+   Revisit before anything here ships to the home page.
+   Timing vars come from the recipe: --fl flash, --ct line start, --cd caption. */
 
 .hl2 {
     --ink: #241d2b;
-    /* when the flash fires / the outline starts, after the model is chosen */
-    --fl: 0s;
-    --ct: 0s;
-}
-.hl2--colcontour {
-    --ct: 0.7s;
-}
-.hl2--all {
-    --fl: 0.95s;
-    --ct: 1.3s;
+    --rl: 16.5%;
 }
 .hl2__cam,
 .hl2__m {
@@ -46,7 +38,11 @@
     text-decoration: none;
 }
 
-/* ===== column: unrolls from the top like a paper backdrop ================ */
+/* ===================================================================== */
+/* FILLS — colour / shadow behind her, each with its own way of arriving  */
+/* ===================================================================== */
+
+/* column: unrolls from the top like a paper backdrop */
 .hl2__frm--column {
     clip-path: inset(0 0 100% 0);
     transition: clip-path 0.55s cubic-bezier(0.55, 0, 0.9, 0.5) !important;
@@ -56,7 +52,8 @@
     transition: clip-path 1.15s cubic-bezier(0.5, 0.05, 0.2, 1) !important;
 }
 /* the roll itself: a lit cylinder with a shadow under it, riding the edge */
-.hl2__rollbox {
+.hl2__rollbox,
+.hl2__behind {
     inset: 0;
     overflow: hidden;
     -webkit-mask: var(--mask) 0 0 / 100% 100% no-repeat;
@@ -110,7 +107,347 @@
     }
 }
 
-/* label printed on the colour: two lines rise out of a hairline */
+/* arch: rises from the floor */
+.hl2__frm--arch {
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path 0.5s cubic-bezier(0.55, 0, 0.9, 0.5) !important;
+}
+.is-on > .hl2__frm--arch {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 1.2s cubic-bezier(0.3, 0.6, 0.15, 1) !important;
+}
+
+/* disc: opens from its centre */
+.hl2__frm--disc {
+    clip-path: circle(0% at 50% 50%);
+    transition: clip-path 0.45s cubic-bezier(0.5, 0, 0.9, 0.5) !important;
+}
+.is-on > .hl2__frm--disc {
+    clip-path: circle(64% at 50% 50%);
+    transition: clip-path 1.25s cubic-bezier(0.35, 0.45, 0.15, 1) !important;
+}
+
+/* dado / wall: the paint runs out from her to both sides */
+.hl2__frm--dado,
+.hl2__frm--wall {
+    clip-path: inset(0 calc(100% - var(--cx)) 0 var(--cx));
+    transition: clip-path 0.6s cubic-bezier(0.55, 0, 0.9, 0.5) !important;
+}
+.is-on > .hl2__frm--dado {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 1.3s cubic-bezier(0.45, 0.05, 0.15, 1) !important;
+}
+.is-on > .hl2__frm--wall {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 1.5s cubic-bezier(0.45, 0.05, 0.15, 1) !important;
+}
+
+/* block / silhouette / evening shadow: slide out from behind her */
+.hl2__frm--block,
+.hl2__frm--silh,
+.hl2__frm--evening {
+    transition: clip-path 0.45s cubic-bezier(0.55, 0, 0.9, 0.5) !important;
+}
+.is-r > .hl2__frm--block,
+.is-r > .hl2__frm--silh,
+.is-r > .hl2__frm--evening {
+    clip-path: inset(0 100% 0 0);
+}
+.is-l > .hl2__frm--block,
+.is-l > .hl2__frm--silh,
+.is-l > .hl2__frm--evening {
+    clip-path: inset(0 0 0 100%);
+}
+.is-on > .hl2__frm--block {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 0.9s cubic-bezier(0.25, 0.8, 0.2, 1) !important;
+}
+.is-on > .hl2__frm--silh {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 0.8s cubic-bezier(0.25, 0.8, 0.2, 1) !important;
+}
+.is-on > .hl2__frm--evening {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 1.7s cubic-bezier(0.3, 0.4, 0.2, 1) !important;
+}
+
+/* stripes: three tones drop one after the other */
+.hl2__frm--stripes {
+    clip-path: inset(0 calc((2 - var(--i)) * 33.4%) 100% calc(var(--i) * 33.3%));
+    transition: clip-path 0.45s cubic-bezier(0.55, 0, 0.9, 0.5) !important;
+}
+.is-on > .hl2__frm--stripes {
+    clip-path: inset(0 calc((2 - var(--i)) * 33.4%) 0 calc(var(--i) * 33.3%));
+    transition: clip-path 1s cubic-bezier(0.5, 0.05, 0.2, 1) calc(var(--i) * 0.16s) !important;
+}
+
+/* slash: cut from the top down */
+.hl2__frm--slash {
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 0.45s cubic-bezier(0.55, 0, 0.9, 0.5) !important;
+}
+.is-on > .hl2__frm--slash {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 0.95s cubic-bezier(0.6, 0, 0.2, 1) !important;
+}
+
+/* noir: the lamp comes up slowly */
+.hl2__frm--noir {
+    opacity: 0;
+    transition: opacity 0.6s ease !important;
+}
+.is-on > .hl2__frm--noir {
+    opacity: 1;
+    transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ===== flash: pre-flash, flash, the frame it leaves ====================== */
+.hl2__frm--snap {
+    opacity: 0;
+    transition: opacity 0.55s ease !important;
+}
+.is-on > .hl2__frm--snap {
+    opacity: 1;
+    transition: opacity 0s linear calc(var(--fl) + 0.2s) !important;
+}
+.hl2__pop {
+    inset: 0;
+    background: radial-gradient(
+        ellipse 46% 96% at var(--cx) 52%,
+        #fff 0%,
+        rgba(255, 255, 255, 0.72) 42%,
+        rgba(255, 255, 255, 0.4) 100%
+    );
+    opacity: 0;
+    animation: hl2Pop 0.95s linear var(--fl) both !important;
+}
+@keyframes hl2Pop {
+    0% {
+        opacity: 0;
+    }
+    3% {
+        opacity: 0.3;
+    }
+    11%,
+    18% {
+        opacity: 0;
+    }
+    22% {
+        opacity: 0.74;
+    }
+    34% {
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* ===================================================================== */
+/* LINES                                                                  */
+/* ===================================================================== */
+.hl2__svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+.hl2__svg path {
+    fill: none;
+}
+/* drawn from both ends at once, meeting in the middle */
+.hl2__draw,
+.hl2__ct-mask {
+    stroke-dasharray: 0 1 0 0;
+    transition: stroke-dasharray 0.45s ease !important;
+}
+.hl2__draw {
+    stroke: currentColor;
+    stroke-width: 1.35;
+    stroke-linejoin: round;
+    opacity: 0;
+    transition:
+        stroke-dasharray 0.45s ease,
+        opacity 0.05s linear 0.42s !important;
+}
+.hl2__draw--thin {
+    stroke-width: 0.8;
+}
+.hl2__m:not(.is-ink) .hl2__draw,
+.hl2__m:not(.is-ink) .hl2__draw1,
+.hl2__m:not(.is-ink) .hl2__stitch {
+    filter: drop-shadow(0 0 1.2px rgba(30, 20, 40, 0.38));
+}
+.hl2__ct-mask {
+    stroke: #fff;
+    stroke-width: 130;
+}
+.is-on .hl2__draw,
+.is-on .hl2__ct-mask {
+    stroke-dasharray: 0.5 0 0.5 0;
+    transition: stroke-dasharray 1.3s cubic-bezier(0.5, 0, 0.15, 1) calc(var(--ct) + var(--d, 0s)) !important;
+}
+.is-on .hl2__draw {
+    opacity: 1;
+    transition:
+        stroke-dasharray 1.3s cubic-bezier(0.5, 0, 0.15, 1) calc(var(--ct) + var(--d, 0s)),
+        opacity 0.01s linear calc(var(--ct) + var(--d, 0s)) !important;
+}
+.is-on .hl2__draw--thin {
+    opacity: 0.62;
+}
+/* drawn from its start to its end */
+.hl2__draw1 {
+    stroke: currentColor;
+    stroke-width: 1.35;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.4s ease !important;
+}
+.is-on .hl2__draw1 {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s cubic-bezier(0.5, 0, 0.15, 1) calc(var(--ct) + var(--d, 0s)) !important;
+}
+/* the two pen points of the outline */
+.hl2__pen {
+    stroke: currentColor;
+    stroke-width: 4.4;
+    stroke-linecap: round;
+    stroke-dasharray: 0.0001 3;
+    opacity: 0;
+    transition: stroke-dashoffset 0.01s linear 0.5s !important;
+}
+.hl2__pen--a {
+    stroke-dashoffset: 0;
+}
+.hl2__pen--b {
+    stroke-dashoffset: -0.9999;
+}
+.is-on .hl2__pen {
+    stroke-dashoffset: -0.5;
+    transition: stroke-dashoffset 1.3s cubic-bezier(0.5, 0, 0.15, 1) var(--ct) !important;
+    animation: hl2Pen 1.3s linear var(--ct) both !important;
+}
+@keyframes hl2Pen {
+    0% {
+        opacity: 0;
+    }
+    5%,
+    82% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+/* stitch: a tailor's running stitch that keeps moving while she is chosen */
+.hl2__stitch {
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-dasharray: 7 6.5;
+}
+.is-on .hl2__stitch {
+    animation: hl2March 1.1s linear infinite !important;
+}
+@keyframes hl2March {
+    to {
+        stroke-dashoffset: -13.5;
+    }
+}
+.hl2__svgtext {
+    fill: currentColor;
+    font:
+        700 11.5px "Manrope",
+        sans-serif;
+    letter-spacing: 3.2px;
+    text-transform: uppercase;
+}
+.hl2__svgtext--fade {
+    opacity: 0;
+    transition: opacity 0.2s ease !important;
+}
+.is-on .hl2__svgtext--fade {
+    opacity: 1;
+    transition: opacity 0.8s ease calc(var(--ct) + var(--cd)) !important;
+}
+
+/* rule: an editorial hairline that runs out from behind her */
+.hl2__rule {
+    position: absolute;
+    top: calc(var(--head) + var(--body) * 17%);
+    width: var(--rl);
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transition: transform 0.4s ease !important;
+}
+.is-r .hl2__rule {
+    left: calc(var(--cx) - 2%);
+    transform-origin: left;
+}
+.is-l .hl2__rule {
+    right: calc(100% - var(--cx) - 2%);
+    transform-origin: right;
+}
+.is-on .hl2__rule {
+    transform: none;
+    transition: transform 1.1s cubic-bezier(0.5, 0, 0.15, 1) !important;
+}
+.hl2__ruletext {
+    top: calc(var(--head) + var(--body) * 17%);
+    transform: translateY(-21px);
+    white-space: nowrap;
+}
+.is-r > .hl2__ruletext {
+    left: calc(var(--x1) + 2.2%);
+}
+.is-l > .hl2__ruletext {
+    right: calc(100% - var(--x0) + 2.2%);
+    text-align: right;
+}
+.hl2__ruletext b,
+.hl2__ruletext i {
+    display: block;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+        opacity 0.2s ease,
+        translate 0.2s ease !important;
+}
+.hl2__ruletext b {
+    height: 21px;
+    font:
+        800 12px/14px "Onest",
+        sans-serif;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    translate: 0 10px;
+}
+.hl2__ruletext i {
+    padding-top: 8px;
+    font:
+        500 10.5px/1.2 "Manrope",
+        sans-serif;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    translate: 0 -10px;
+}
+.is-on > .hl2__ruletext b,
+.is-on > .hl2__ruletext i {
+    opacity: 1;
+    translate: 0 0;
+    transition:
+        opacity 0.5s ease 0.55s,
+        translate 0.7s cubic-bezier(0.2, 0.9, 0.2, 1) 0.55s !important;
+}
+
+/* ===================================================================== */
+/* CAPTIONS                                                               */
+/* ===================================================================== */
+
+/* chip: two lines rise out of a hairline, printed on the colour */
 .hl2__chip {
     top: calc(var(--head) - 7.4%);
     transform: translateX(-50%);
@@ -161,56 +498,238 @@
 }
 .is-on > .hl2__chip span {
     transform: none;
-    transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.2, 1) 0.62s !important;
+    transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.2, 1) calc(var(--cd) + 0.17s) !important;
 }
 .is-on > .hl2__chip u {
     transform: none;
-    transition: transform 0.5s cubic-bezier(0.3, 0, 0.1, 1) 0.42s !important;
+    transition: transform 0.5s cubic-bezier(0.3, 0, 0.1, 1) var(--cd) !important;
 }
 
-/* ===== flash: pre-flash, flash, the frame it leaves ====================== */
-.hl2__frm--snap {
+/* every other caption fades up after its picture has arrived */
+.hl2__cap {
+    white-space: nowrap;
     opacity: 0;
-    transition: opacity 0.55s ease !important;
+    translate: 0 7px;
+    transition:
+        opacity 0.2s ease,
+        translate 0.2s ease !important;
 }
-.is-on > .hl2__frm--snap {
+.is-on > .hl2__cap {
     opacity: 1;
-    transition: opacity 0s linear calc(var(--fl) + 0.2s) !important;
+    translate: 0 0;
+    transition:
+        opacity 0.55s ease var(--cd),
+        translate 0.75s cubic-bezier(0.2, 0.9, 0.2, 1) var(--cd) !important;
 }
-.hl2__pop {
-    inset: 0;
-    background: radial-gradient(
-        ellipse 46% 96% at var(--cx) 52%,
-        #fff 0%,
-        rgba(255, 255, 255, 0.72) 42%,
-        rgba(255, 255, 255, 0.4) 100%
-    );
-    opacity: 0;
-    animation: hl2Pop 0.95s linear var(--fl) both !important;
+.hl2__cap b,
+.hl2__cap i {
+    text-transform: uppercase;
 }
-@keyframes hl2Pop {
-    0% {
-        opacity: 0;
-    }
-    3% {
-        opacity: 0.3;
-    }
-    11%,
-    18% {
-        opacity: 0;
-    }
-    22% {
-        opacity: 0.74;
-    }
-    34% {
-        opacity: 0.3;
-    }
-    100% {
-        opacity: 0;
-    }
+.is-l > .hl2__cap.is-side {
+    text-align: right;
 }
 
-/* label-maker strips, slapped on one after the other */
+/* serif: classic italic name over small caps, centred above her */
+.hl2__cap--serif {
+    left: var(--cx);
+    top: calc(var(--head) - 7%);
+    transform: translateX(-50%);
+    text-align: center;
+}
+.hl2__cap--serif b {
+    display: block;
+    font:
+        italic 500 22px/1 "Spectral",
+        Georgia,
+        serif;
+    letter-spacing: 0.01em;
+    text-transform: none;
+}
+.hl2__cap--serif i {
+    display: block;
+    margin-top: 7px;
+    font:
+        600 9.5px/1 "Manrope",
+        sans-serif;
+    letter-spacing: 0.24em;
+    text-indent: 0.24em;
+    opacity: 0.88;
+}
+
+/* topcaps: one small line with a tick pointing down at her */
+.hl2__cap--topcaps {
+    left: var(--cx);
+    top: calc(var(--head) - 5.6%);
+    transform: translateX(-50%);
+    text-align: center;
+}
+.hl2__cap--topcaps b {
+    font:
+        800 11px/1 "Onest",
+        sans-serif;
+    letter-spacing: 0.26em;
+}
+.hl2__cap--topcaps i {
+    margin-left: 10px;
+    font:
+        500 10px/1 "Manrope",
+        sans-serif;
+    letter-spacing: 0.14em;
+    opacity: 0.86;
+}
+.hl2__cap--topcaps::after {
+    content: "";
+    display: block;
+    width: 1px;
+    height: 13px;
+    margin: 8px auto 0;
+    background: currentColor;
+    opacity: 0.75;
+}
+
+/* edge: sits on the rail of the dado */
+.hl2__cap--edge b,
+.hl2__cap--rot b,
+.hl2__cap--vert b {
+    font:
+        800 11px/1 "Onest",
+        sans-serif;
+    letter-spacing: 0.26em;
+}
+.hl2__cap--edge i,
+.hl2__cap--rot i,
+.hl2__cap--vert i {
+    font:
+        500 10px/1 "Manrope",
+        sans-serif;
+    letter-spacing: 0.14em;
+    opacity: 0.86;
+}
+.hl2__cap--edge i {
+    margin-left: 12px;
+}
+.hl2__cap--rot b,
+.hl2__cap--rot i {
+    display: block;
+}
+.hl2__cap--rot i {
+    margin-top: 8px;
+}
+
+/* corner: set in the far corner of the block */
+.hl2__cap--corner {
+    text-align: left;
+}
+.is-r > .hl2__cap--corner {
+    text-align: right;
+}
+.hl2__cap--corner b {
+    display: block;
+    font:
+        800 12px/1 "Onest",
+        sans-serif;
+    letter-spacing: 0.22em;
+}
+.hl2__cap--corner i {
+    display: block;
+    margin-top: 6px;
+    font:
+        500 10px/1 "Manrope",
+        sans-serif;
+    letter-spacing: 0.12em;
+    opacity: 0.86;
+}
+
+/* vert: runs up the side of the stripes */
+.hl2__cap--vert {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+}
+.hl2__cap--vert i {
+    margin-top: 12px;
+}
+
+/* rot: lies along the slash */
+.hl2__cap--rot {
+    transform: translate(-50%, -50%) rotate(var(--rot));
+}
+
+/* plate: a small museum label on the wall */
+.hl2__cap--plate {
+    padding: 9px 14px 10px;
+    background: #fbfaf6;
+    color: var(--ink);
+    border: 1px solid rgba(36, 29, 43, 0.14);
+    box-shadow: 0 3px 10px rgba(30, 20, 40, 0.13);
+    text-align: left !important;
+}
+.hl2__cap--plate b {
+    display: block;
+    font:
+        italic 500 17px/1 "Spectral",
+        Georgia,
+        serif;
+    text-transform: none;
+}
+.hl2__cap--plate i {
+    display: block;
+    margin-top: 6px;
+    font:
+        600 8.5px/1 "Manrope",
+        sans-serif;
+    letter-spacing: 0.2em;
+    opacity: 0.68;
+}
+
+/* sideserif: large italic name, hairline, small caps */
+.hl2__cap--sideserif b {
+    display: block;
+    font:
+        italic 500 26px/1 "Spectral",
+        Georgia,
+        serif;
+    text-transform: none;
+}
+.hl2__cap--sideserif u,
+.hl2__cap--sidecaps u {
+    display: block;
+    width: 30px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.75;
+}
+.hl2__cap--sideserif u {
+    margin: 11px 0 10px;
+}
+.is-l > .hl2__cap--sideserif u,
+.is-l > .hl2__cap--sidecaps u {
+    margin-left: auto;
+}
+.hl2__cap--sideserif i,
+.hl2__cap--sidecaps i {
+    display: block;
+    font:
+        600 10px/1 "Manrope",
+        sans-serif;
+    letter-spacing: 0.2em;
+    opacity: 0.88;
+}
+
+/* sidecaps: tick, name, note */
+.hl2__cap--sidecaps u {
+    width: 20px;
+    margin-bottom: 10px;
+}
+.hl2__cap--sidecaps b {
+    display: block;
+    margin-bottom: 7px;
+    font:
+        800 12px/1 "Onest",
+        sans-serif;
+    letter-spacing: 0.24em;
+}
+
+/* dymo: label-maker strips, slapped on one after the other */
 .hl2__dymo {
     top: calc(var(--feet) - 15%);
     display: flex;
@@ -266,116 +785,120 @@
     transition-delay: calc(var(--fl) + 0.47s) !important;
 }
 
-/* ===== contour: a hairline drawn from both feet, meeting above the head == */
-.hl2__ct {
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
+/* no room beside her (next model or the logo is too close): the captions that
+   stand at mid height go above her head instead */
+.hl2__m.is-tight {
+    --rl: 8.5%;
 }
-.hl2__ct path {
-    fill: none;
+.hl2 .is-tight > .hl2__cap--sideserif,
+.hl2 .is-tight > .hl2__cap--sidecaps,
+.hl2 .is-tight > .hl2__ruletext {
+    left: var(--cx) !important;
+    right: auto !important;
+    top: calc(var(--head) - 2.5%) !important;
+    transform: translate(-50%, -100%);
+    text-align: center;
 }
-.hl2__ct-line,
-.hl2__ct-mask {
-    stroke-dasharray: 0 1 0 0;
-    transition: stroke-dasharray 0.45s ease !important;
-}
-.hl2__ct-line {
-    stroke: currentColor;
-    stroke-width: 1.35;
-    stroke-linejoin: round;
-    opacity: 0;
-    transition:
-        stroke-dasharray 0.45s ease,
-        opacity 0.05s linear 0.42s !important;
-}
-.hl2__m:not(.is-ink) .hl2__ct-line {
-    filter: drop-shadow(0 0 1.2px rgba(30, 20, 40, 0.38));
-}
-.hl2__ct-mask {
-    stroke: #fff;
-    stroke-width: 130;
-}
-.is-on .hl2__ct-line,
-.is-on .hl2__ct-mask {
-    stroke-dasharray: 0.5 0 0.5 0;
-    transition: stroke-dasharray 1.3s cubic-bezier(0.5, 0, 0.15, 1) var(--ct) !important;
-}
-.is-on .hl2__ct-line {
-    opacity: 1;
-    transition:
-        stroke-dasharray 1.3s cubic-bezier(0.5, 0, 0.15, 1) var(--ct),
-        opacity 0.01s linear var(--ct) !important;
-}
-/* the two pen points */
-.hl2__ct-pen {
-    stroke: currentColor;
-    stroke-width: 4.4;
-    stroke-linecap: round;
-    stroke-dasharray: 0.0001 3;
-    opacity: 0;
-    transition: stroke-dashoffset 0.01s linear 0.5s !important;
-}
-.hl2__ct-pen--a {
-    stroke-dashoffset: 0;
-}
-.hl2__ct-pen--b {
-    stroke-dashoffset: -0.9999;
-}
-.is-on .hl2__ct-pen {
-    stroke-dashoffset: -0.5;
-    transition: stroke-dashoffset 1.3s cubic-bezier(0.5, 0, 0.15, 1) var(--ct) !important;
-    animation: hl2Pen 1.3s linear var(--ct) both !important;
-}
-@keyframes hl2Pen {
-    0% {
-        opacity: 0;
-    }
-    5%,
-    82% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
-}
-.hl2__ct-text {
-    fill: currentColor;
-    font:
-        700 11.5px "Manrope",
-        sans-serif;
-    letter-spacing: 3.2px;
-    text-transform: uppercase;
+.hl2 .is-tight > .hl2__cap--sideserif u,
+.hl2 .is-tight > .hl2__cap--sidecaps u {
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* ===== phone ============================================================ */
 @media (max-width: 768px) {
-    /* beside the model there is ~90 px of room: the strips go above her head */
+    .hl2 {
+        --rl: 12.5%;
+    }
+    /* beside the model there is ~90 px of room: side captions go above her head */
+    .hl2 .hl2__cap.is-side,
+    .hl2 .hl2__ruletext,
     .hl2 .hl2__dymo {
-        left: var(--cx);
-        right: auto;
-        top: calc(var(--head) - 2.5%);
+        left: var(--cx) !important;
+        right: auto !important;
+        top: calc(var(--head) - 2.5%) !important;
+        bottom: auto !important;
         transform: translate(-50%, -100%);
+        text-align: center;
         align-items: center;
+    }
+    .hl2 .hl2__cap.is-side u {
+        margin-left: auto;
+        margin-right: auto;
     }
     .hl2 .hl2__dymo i {
         translate: 0 0;
     }
 }
 
-/* ===== the lab page itself: caption bar above each variant =============== */
+/* ===================================================================== */
+/* the lab page itself: index + caption bar above each variant            */
+/* ===================================================================== */
 .hlabx {
     background: #f4f1ec;
 }
+.hlabx__index {
+    padding: 132px clamp(16px, 4vw, 56px) 30px;
+    background: #1d1a20;
+    color: #fff;
+}
+.hlabx__index h1 {
+    margin: 0 0 6px;
+    font:
+        700 22px/1.2 "Onest",
+        sans-serif;
+    letter-spacing: 0.02em;
+}
+.hlabx__index > p {
+    margin: 0 0 20px;
+    max-width: 760px;
+    font:
+        400 14px/1.5 "Manrope",
+        sans-serif;
+    color: rgba(255, 255, 255, 0.68);
+}
+.hlabx__groups {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px 28px;
+}
+.hlabx__groups h3 {
+    margin: 0 0 8px;
+    font:
+        700 11px/1 "Onest",
+        sans-serif;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #e08a66;
+}
+.hlabx__groups a {
+    display: block;
+    padding: 4px 0;
+    font:
+        500 13.5px/1.3 "Manrope",
+        sans-serif;
+    color: rgba(255, 255, 255, 0.86);
+    text-decoration: none;
+}
+.hlabx__groups a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+.hlabx__groups a span {
+    display: inline-block;
+    width: 26px;
+    color: rgba(255, 255, 255, 0.45);
+    font-variant-numeric: tabular-nums;
+}
 .hlabx__item {
     margin-bottom: 14px;
+    scroll-margin-top: 80px;
 }
 .hlabx__bar {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 14px clamp(16px, 4vw, 56px);
+    padding: 12px clamp(16px, 4vw, 56px);
     background: #1d1a20;
     color: #fff;
 }
@@ -406,17 +929,20 @@
 }
 .hlabx__slides {
     display: flex;
-    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 5px;
 }
 .hlabx__slides button {
-    width: 32px;
-    height: 32px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.26);
     border-radius: 50%;
     background: none;
     color: #fff;
     font:
-        600 12px/1 "Manrope",
+        600 11px/1 "Manrope",
         sans-serif;
     cursor: pointer;
 }
@@ -428,7 +954,10 @@
     border-color: #fff;
     color: #1d1a20;
 }
-@media (max-width: 768px) {
+@media (max-width: 900px) {
+    .hlabx__groups {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
     .hlabx__bar {
         flex-wrap: wrap;
         gap: 6px 10px;
@@ -440,10 +969,8 @@
         font-size: 12px;
     }
     .hlabx__slides {
-        margin-left: auto;
-    }
-    .hlabx__slides button {
-        width: 30px;
-        height: 30px;
+        order: 4;
+        flex-basis: 100%;
+        justify-content: flex-start;
     }
 }

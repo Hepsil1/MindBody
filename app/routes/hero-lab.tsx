@@ -3,9 +3,10 @@
  * page stays the client's untouched review set). Each page shows ONE concept on
  * a stack of slides with different models, so it can be judged on more than a
  * single photo.
- *   /hero-lab     the set offered to the client: three concepts (colour column,
- *                 outline, flash) and their combinations — HeroLabStage2. Every
- *                 variant can be switched to any of the five slides.
+ *   /hero-lab     the set offered to the client: 30 variants grown from the three
+ *                 ideas the owner kept (colour behind the model, a drawn line,
+ *                 camera light) — HeroLabStage2. Every variant can be switched
+ *                 to any of 15 slides.
  * Older experiments, kept for reference only:
  *   /hero-lab/1   reference — the DUO CONTRAST slide exactly as in the gallery
  *   /hero-lab/2   tap/hover a model → spotlight (the rest sinks into shade)
@@ -70,43 +71,221 @@ const MODES: Record<string, LabMode | null> = {
     "15": "cta",
 };
 
-/** /hero-lab: variant → label, what happens, and the slide it opens on */
-const CONCEPTS: Array<{ mode: Lab2Mode; label: string; note: string; slide: number }> = [
+/** slides of /hero-lab: the five above + ten more, so the variants meet different models */
+const LAB_SLIDES: typeof SLIDES = [
+    ...SLIDES,
+    { sid: "s2_cocoa360", variant: "match" },
+    { sid: "u01_leo", variant: "match" },
+    { sid: "u04_violet", variant: "match" },
+    { sid: "u06_rose_set", variant: "match" },
+    { sid: "u09_navy", variant: "match" },
+    { sid: "u12_noir", variant: "match" },
+    { sid: "u13_stripe", variant: "match" },
+    { sid: "u16_lilac", variant: "match" },
+    { sid: "u17_piping", variant: "match" },
+    { sid: "u18_sky_zip", variant: "match" },
+];
+
+/** /hero-lab: variant → group, label, what happens, and the slide (index in LAB_SLIDES) it opens on */
+const GROUPS = ["Колір за моделлю", "Світло і тінь", "Лінія", "Поєднання"];
+const CONCEPTS: Array<{ mode: Lab2Mode; g: number; label: string; note: string; slide: number }> = [
     {
         mode: "column",
-        label: "Колона кольору",
-        note: "За моделлю розгортається паперовий фон кольору її костюма",
+        g: 0,
+        label: "Колона",
+        note: "Паперовий фон кольору костюма розгортається згори",
         slide: 1,
     },
     {
-        mode: "contour",
-        label: "Контур",
-        note: "Тонка лінія обводить модель від стоп до голови, текст пишеться по лінії",
+        mode: "arch",
+        g: 0,
+        label: "Арка",
+        note: "Класична арка в кольорі костюма виростає від підлоги",
+        slide: 7,
+    },
+    {
+        mode: "disc",
+        g: 0,
+        label: "Коло",
+        note: "Коло кольору розкривається за плечима, підпис іде по дузі",
+        slide: 3,
+    },
+    {
+        mode: "dado",
+        g: 0,
+        label: "Панель",
+        note: "Нижня частина стіни фарбується від моделі в обидва боки",
         slide: 4,
     },
     {
-        mode: "flash",
-        label: "Спалах",
-        note: "Спалах камери: різка тінь на стіні та наліпки з назвою",
+        mode: "block",
+        g: 0,
+        label: "Квадрат",
+        note: "Кольоровий квадрат виїжджає з-за плеча, підпис у його куті",
         slide: 2,
     },
     {
+        mode: "stripes",
+        g: 0,
+        label: "Палітра",
+        note: "Три відтінки кольору костюма падають смугами по черзі",
+        slide: 12,
+    },
+    {
+        mode: "slash",
+        g: 0,
+        label: "Діагональ",
+        note: "Навскісна смуга кольору, підпис лежить уздовж неї",
+        slide: 0,
+    },
+    {
+        mode: "wall",
+        g: 0,
+        label: "Студія в кольорі",
+        note: "Уся стіна перефарбовується в колір костюма",
+        slide: 9,
+    },
+    {
+        mode: "silh",
+        g: 0,
+        label: "Кольоровий силует",
+        note: "З-за моделі виходить її силует у кольорі костюма",
+        slide: 5,
+    },
+    {
+        mode: "flash",
+        g: 1,
+        label: "Спалах",
+        note: "Спалах камери: різка тінь на стіні, наліпки з назвою",
+        slide: 13,
+    },
+    {
+        mode: "noir",
+        g: 1,
+        label: "Нуар",
+        note: "Повільно загоряється лампа — велика м’яка тінь на стіні",
+        slide: 10,
+    },
+    {
+        mode: "evening",
+        g: 1,
+        label: "Вечірнє світло",
+        note: "Довга тінь лягає на підлогу, як від низького сонця",
+        slide: 14,
+    },
+    {
+        mode: "contour",
+        g: 2,
+        label: "Контур",
+        note: "Тонка лінія обводить модель, текст пишеться по лінії",
+        slide: 4,
+    },
+    {
+        mode: "stitch",
+        g: 2,
+        label: "Викрійка",
+        note: "Пунктир кравецького шва обходить модель і рухається",
+        slide: 8,
+    },
+    {
+        mode: "echo",
+        g: 2,
+        label: "Подвійний контур",
+        note: "Дві лінії одна за одною, поруч назва курсивом",
+        slide: 6,
+    },
+    {
+        mode: "frame",
+        g: 2,
+        label: "Рамка",
+        note: "Подвійна рамка, як у галереї, і табличка з назвою",
+        slide: 11,
+    },
+    {
+        mode: "archline",
+        g: 2,
+        label: "Арка лінією",
+        note: "Арка малюється від підлоги до вершини, підпис по дузі",
+        slide: 10,
+    },
+    { mode: "ring", g: 2, label: "Кільце", note: "Тонке кільце проходить за моделлю", slide: 6 },
+    {
+        mode: "measure",
+        g: 2,
+        label: "Мірка",
+        note: "Кравецька розмірна лінія на весь зріст з підписом",
+        slide: 13,
+    },
+    {
+        mode: "rule",
+        g: 2,
+        label: "Рядок",
+        note: "Журнальна лінія виходить з-за плеча, назва стоїть на ній",
+        slide: 8,
+    },
+    { mode: "parens", g: 2, label: "Дужки", note: "Дві дуги беруть модель у дужки", slide: 11 },
+    {
+        mode: "pillars",
+        g: 2,
+        label: "Дві лінії",
+        note: "Дві вертикалі опускаються по боках, підпис між ними",
+        slide: 14,
+    },
+    {
         mode: "colcontour",
-        label: "Колона + Контур",
-        note: "Спершу розгортається колір, потім по ньому малюється контур",
+        g: 3,
+        label: "Колона + контур",
+        note: "Колір розгортається, потім по ньому малюється контур",
         slide: 0,
     },
     {
         mode: "colflash",
-        label: "Спалах + Колона",
-        note: "Спалах — і за моделлю вже стоїть кольоровий фон з її тінню",
+        g: 3,
+        label: "Колона + спалах",
+        note: "Спалах — і за моделлю вже кольоровий фон з її тінню",
         slide: 3,
     },
     {
         mode: "all",
-        label: "Усе разом",
-        note: "Колір розгортається, спалах, контур з підписом",
+        g: 3,
+        label: "Колона + спалах + контур",
+        note: "Колір, спалах і контур одне за одним",
         slide: 1,
+    },
+    {
+        mode: "archflash",
+        g: 3,
+        label: "Арка + спалах",
+        note: "Спалах відкриває арку з різкою тінню, поруч табличка",
+        slide: 5,
+    },
+    {
+        mode: "disccontour",
+        g: 3,
+        label: "Коло + контур",
+        note: "Коло розкривається, по ньому проходить контур",
+        slide: 12,
+    },
+    {
+        mode: "frameflash",
+        g: 3,
+        label: "Рамка + спалах",
+        note: "Рамка домальовується — і спалах, як знімок у галереї",
+        slide: 9,
+    },
+    {
+        mode: "wallcontour",
+        g: 3,
+        label: "Студія в кольорі + контур",
+        note: "Стіна в кольорі костюма, модель обведена лінією",
+        slide: 7,
+    },
+    {
+        mode: "silhcontour",
+        g: 3,
+        label: "Силует + контур",
+        note: "Кольоровий силует і біла лінія навколо моделі",
+        slide: 2,
     },
 ];
 
@@ -132,15 +311,18 @@ export async function loader({ params }: LoaderFunctionArgs) {
     const mode = best ? ("spot" as LabMode) : MODES[params.n!];
     const looks = await getHeroLooks({ includeReview: true });
     const slides = [];
-    for (const { sid, variant, colors } of mode ? SLIDES : SLIDES.slice(0, 1)) {
+    const list = best ? LAB_SLIDES : mode ? SLIDES : SLIDES.slice(0, 1);
+    for (const { sid, variant, colors } of list) {
         const look = looks.find((l) => l.imageDesktop === `/hero/masters/v4_${sid}`);
         if (!look) continue;
         const metaPath = path.join(process.cwd(), "public", "hero", "lab", sid, "meta.json");
-        const labMeta = JSON.parse(await readFile(metaPath, "utf8")) as LabMeta;
+        const labMeta = best
+            ? { models: [] }
+            : (JSON.parse(await readFile(metaPath, "utf8")) as LabMeta);
         const geo = best
             ? (
                   JSON.parse(
-                      await readFile(metaPath.replace("meta.json", "meta4.json"), "utf8"),
+                      await readFile(metaPath.replace("meta.json", "meta5.json"), "utf8"),
                   ) as { models: Geo[] }
               ).models
             : null;
@@ -170,21 +352,22 @@ export default function HeroLab() {
     const stages = slides.map(({ sid, look, models, colors, geo }) => {
         const short = (look.name.match(/«([^»]+)»/)?.[1] ?? look.name).toUpperCase();
         const [lookName, lookNote] = look.kicker.split(" · ");
+        const info = (k: number) => ({
+            href: colors ? `/p/${look.productSlug}?color=${colors[k]}` : `/p/${look.productSlug}`,
+            title: colors ? short : lookName,
+            sub: colors
+                ? `${t(getColorLabel(colors[k]))} · ${money(look.price)}`
+                : (lookNote ?? ""),
+        });
         return {
             sid,
             look,
-            geo,
             maskDir: `/hero/lab/${sid}`,
             studioBg: look.studioBg,
+            models2: (geo ?? []).map((g, k): Lab2Model => ({ ...g, ...info(k) })),
             models: models.map(
                 (m, k): LabModel => ({
-                    href: colors
-                        ? `/p/${look.productSlug}?color=${colors[k]}`
-                        : `/p/${look.productSlug}`,
-                    title: colors ? short : lookName,
-                    sub: colors
-                        ? `${t(getColorLabel(colors[k]))} · ${money(look.price)}`
-                        : (lookNote ?? ""),
+                    ...info(k),
                     cx: m.cx,
                     head: m.head,
                     feet: m.feet,
@@ -198,6 +381,29 @@ export default function HeroLab() {
     if (best) {
         return (
             <main className="hlabx">
+                <section className="hlabx__index">
+                    <h1>Hero lab · {CONCEPTS.length} варіантів</h1>
+                    <p>
+                        Наведіть на модель (на телефоні — торкніться): спрацює варіант, клік
+                        відкриває товар. Кружечки з цифрами праворуч перемикають слайд — будь-який
+                        варіант можна подивитися на {stages.length} слайдах з різними моделями.
+                    </p>
+                    <div className="hlabx__groups">
+                        {GROUPS.map((g, gi) => (
+                            <div key={g}>
+                                <h3>{g}</h3>
+                                {CONCEPTS.map((c, i) =>
+                                    c.g === gi ? (
+                                        <a key={c.mode} href={`#v${i + 1}`}>
+                                            <span>{String(i + 1).padStart(2, "0")}</span>
+                                            {c.label}
+                                        </a>
+                                    ) : null,
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </section>
                 {CONCEPTS.map((c, i) => (
                     <Variant key={c.mode} n={i + 1} concept={c} stages={stages} />
                 ))}
@@ -207,7 +413,7 @@ export default function HeroLab() {
 
     return (
         <main style={{ background: "#f4f1ec" }}>
-            {stages.map(({ sid, look, geo: _geo, ...stage }) => (
+            {stages.map(({ sid, look, models2: _m2, ...stage }) => (
                 <div key={sid} style={{ marginBottom: 12 }}>
                     {mode ? (
                         <HeroLabStage {...stage} mode={mode} />
@@ -224,8 +430,7 @@ interface StageData {
     sid: string;
     maskDir: string;
     studioBg?: string;
-    geo: Geo[] | null;
-    models: LabModel[];
+    models2: Lab2Model[];
 }
 
 /** one variant: a caption bar (outside the hero) + the hero on a chosen slide */
@@ -240,17 +445,9 @@ function Variant({
 }) {
     const [slide, setSlide] = useState(Math.min(concept.slide, stages.length - 1));
     const st = stages[slide];
-    if (!st?.geo) return null;
-    const models = st.geo.map(
-        (g, k): Lab2Model => ({
-            ...g,
-            href: st.models[k].href,
-            title: st.models[k].title,
-            sub: st.models[k].sub,
-        }),
-    );
+    if (!st?.models2.length) return null;
     return (
-        <article className="hlabx__item">
+        <article className="hlabx__item" id={`v${n}`}>
             <header className="hlabx__bar">
                 <b>{String(n).padStart(2, "0")}</b>
                 <h2>{concept.label}</h2>
@@ -274,7 +471,7 @@ function Variant({
                 key={st.sid}
                 maskDir={st.maskDir}
                 studioBg={st.studioBg}
-                models={models}
+                models={st.models2}
                 mode={concept.mode}
             />
         </article>

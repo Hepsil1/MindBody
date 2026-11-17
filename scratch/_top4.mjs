@@ -1,0 +1,14 @@
+import { chromium } from "playwright";
+const b = await chromium.launch();
+const p = await (await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" })).newPage();
+const errs = []; p.on("pageerror", (e) => errs.push(e.message)); p.on("console", (m) => m.type() === "error" && errs.push(m.text().slice(0, 160)));
+const t0 = Date.now();
+await p.goto("http://localhost:3000/hero-lab", { waitUntil: "networkidle" });
+console.log("load ms", Date.now() - t0, "items", await p.locator(".hlabx__item").count());
+await p.locator(".cookie-banner button").last().click().catch(() => {});
+await p.screenshot({ path: "scratch/audit_shots/l5_top.png" });
+await p.locator('.hlabx__groups a[href="#v17"]').click();
+await p.waitForTimeout(1500);
+await p.screenshot({ path: "scratch/audit_shots/l5_jump.png" });
+console.log("errors", JSON.stringify(errs));
+await b.close();
