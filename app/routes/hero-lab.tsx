@@ -86,7 +86,7 @@ const LAB_SLIDES: typeof SLIDES = [
     { sid: "u18_sky_zip", variant: "match" },
 ];
 
-/** /hero-lab: the four effects, in the order of the dock */
+/** /hero-lab: the effects, in the order of the dock */
 const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
     {
         mode: "contour",
@@ -94,19 +94,49 @@ const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
         hint: "Лінія починається там, де ви торкнулись моделі, і обходить її; намистинка їде по лінії за курсором",
     },
     {
-        mode: "light",
-        label: "Світло",
-        hint: "Курсор — це лампа: спалах, і тінь на стіні рухається за ним",
+        mode: "arch",
+        label: "Арка",
+        hint: "Арка малюється двома лініями від підлоги до вершини, назва лягає на її дугу",
     },
     {
-        mode: "gel",
-        label: "Кольорова тінь",
-        hint: "Дві тіні кольору костюма розходяться за моделлю і йдуть за курсором",
+        mode: "shadow",
+        label: "Тінь",
+        hint: "Курсор — це лампа: тінь виростає зі ступнів і хилиться від світла",
     },
     {
-        mode: "column",
-        label: "Колона",
-        hint: "Розгортається паперовий фон кольору костюма, тінь моделі падає на нього",
+        mode: "duo",
+        label: "Кольорові тіні",
+        hint: "Дві лампи — дві тіні в кольорах костюма, рухаються за курсором",
+    },
+    {
+        mode: "ripple",
+        label: "Хвилі",
+        hint: "Чотири контури розходяться від моделі, як кола на воді, і дихають",
+    },
+    {
+        mode: "loop",
+        label: "Рядок",
+        hint: "Назва безперервно біжить навколо моделі вздовж її силуету",
+    },
+    {
+        mode: "stitch",
+        label: "Викрійка",
+        hint: "Кравецький шов обходить модель, по ньому ходить голка",
+    },
+    {
+        mode: "measure",
+        label: "Мірка",
+        hint: "Кравецька мірка на весь зріст: поділки відлічуються зверху вниз",
+    },
+    {
+        mode: "offset",
+        label: "Зсув",
+        hint: "Два контури — білий і в кольорі костюма — розходяться за курсором, як друк зі зсувом",
+    },
+    {
+        mode: "duet",
+        label: "Контур і тінь",
+        hint: "Тінь від лампи і лінія навколо моделі разом",
     },
 ];
 
@@ -233,7 +263,8 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
         const onKey = (e: KeyboardEvent) => {
             if (e.target instanceof HTMLInputElement) return;
             const n = Number(e.key);
-            if (n >= 1 && n <= EFFECTS.length) setFx(n - 1);
+            if (e.key === "0") setFx(9);
+            else if (n >= 1 && n <= EFFECTS.length) setFx(n - 1);
             if (e.key === "ArrowRight") go(1);
             if (e.key === "ArrowLeft") go(-1);
         };
@@ -276,43 +307,45 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
                         </button>
                     ))}
                 </div>
-                <div className="hldock__slides">
-                    <button
-                        type="button"
-                        className="hldock__arrow"
-                        aria-label="Попередній слайд"
-                        onClick={() => go(-1)}
-                    >
-                        ‹
-                    </button>
-                    <div className="hldock__thumbs" role="tablist" aria-label="Слайд">
-                        {stages.map((s, i) => (
-                            <button
-                                key={s.sid}
-                                type="button"
-                                role="tab"
-                                aria-selected={i === slide}
-                                aria-label={`Слайд ${i + 1}`}
-                                className={i === slide ? "is-on" : ""}
-                                onClick={() => setSlide(i)}
-                            >
-                                <img src={`${s.maskDir}/thumb.webp`} alt="" loading="lazy" />
-                            </button>
-                        ))}
+                <div className="hldock__row">
+                    <div className="hldock__slides">
+                        <button
+                            type="button"
+                            className="hldock__arrow"
+                            aria-label="Попередній слайд"
+                            onClick={() => go(-1)}
+                        >
+                            ‹
+                        </button>
+                        <div className="hldock__thumbs" role="tablist" aria-label="Слайд">
+                            {stages.map((s, i) => (
+                                <button
+                                    key={s.sid}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={i === slide}
+                                    aria-label={`Слайд ${i + 1}`}
+                                    className={i === slide ? "is-on" : ""}
+                                    onClick={() => setSlide(i)}
+                                >
+                                    <img src={`${s.maskDir}/thumb.webp`} alt="" loading="lazy" />
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            type="button"
+                            className="hldock__arrow"
+                            aria-label="Наступний слайд"
+                            onClick={() => go(1)}
+                        >
+                            ›
+                        </button>
                     </div>
-                    <button
-                        type="button"
-                        className="hldock__arrow"
-                        aria-label="Наступний слайд"
-                        onClick={() => go(1)}
-                    >
-                        ›
-                    </button>
+                    <p className="hldock__hint">
+                        <b>{e.label}</b>
+                        {e.hint}
+                    </p>
                 </div>
-                <p className="hldock__hint">
-                    <b>{e.label}</b>
-                    {e.hint}
-                </p>
             </nav>
         </main>
     );

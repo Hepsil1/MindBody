@@ -19,7 +19,7 @@ const r = await sec.locator(".hl3__cam").boundingBox();
 const m = sec.locator(".hl3__m").nth(+mi);
 const g = await m.evaluate((e) => ["--cx", "--head", "--feet"].map((v) => parseFloat(getComputedStyle(e).getPropertyValue(v)) / 100));
 const [cx, head, feet] = g;
-const mode = ["contour", "light", "gel", "column"][+fx];
+const mode = ["contour", "arch", "shadow", "duo", "ripple", "loop", "stitch", "measure", "offset", "duet"][+fx];
 const files = [];
 let t0 = 0;
 if (!phone) {

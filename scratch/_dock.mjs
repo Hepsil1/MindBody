@@ -1,0 +1,10 @@
+import { chromium } from "playwright";
+const b = await chromium.launch();
+const p = await (await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" })).newPage();
+const errs = []; p.on("pageerror", (e) => errs.push(e.message));
+await p.goto("http://localhost:3000/hero-lab", { waitUntil: "networkidle" });
+await p.locator(".cookie-banner button").last().click().catch(() => {});
+await p.waitForTimeout(800);
+await p.screenshot({ path: "scratch/audit_shots/dock2.png" });
+console.log(await p.evaluate(() => { const r = (s) => JSON.stringify(document.querySelector(s)?.getBoundingClientRect()); return [r(".hldock"), r(".hldock__fx"), r(".hldock__row"), getComputedStyle(document.querySelector(".hldock")).height]; }), errs);
+await b.close();

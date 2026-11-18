@@ -6,18 +6,23 @@
  * The slide is a LAYERED scene, split the way it is matted (see
  * scratch/build_hero_lab_v6.py):
  *     plate (studio, nobody in it) → what goes behind her → the cut-out models
- * so anything put behind a model is composited exactly like the photograph —
- * and can move. Every effect here comes from the model herself and answers the
- * pointer:
- *   contour  the outline starts where she was touched and runs round her both
- *            ways; the text is written along it; a bead rides the line with
- *            the pointer
- *   light    the pointer is the lamp: flash, then her hard shadow on the wall
- *            swings as the pointer moves
- *   gel      two shadows in the colour of her outfit fan out behind her and
- *            follow the pointer
- *   column   a paper column of her colour unrolls; her shadow falls on it and
- *            follows the pointer
+ * so anything put behind a model is composited exactly like the photograph and
+ * can move. Every effect comes from the model herself:
+ *
+ *   contour   a hairline starts where she was touched and runs round her both
+ *             ways; text written beside it; a bead rides it with the pointer
+ *   arch      an arch drawn in two lines from both feet up to the keystone;
+ *             the name set on its curve
+ *   shadow    the pointer is the lamp: her shadow grows out of her feet, leans
+ *             away from the light, sharp at the feet and soft at the head
+ *   duo       two lamps, two shadows in the colours of her outfit
+ *   ripple    four outlines spread out from her like rings on water, then breathe
+ *   loop      her name runs round her, along a line just off her body
+ *   stitch    a tailor's running stitch round her, a needle point travelling it
+ *   measure   a tailor's height rule beside her, ticks counted off top to bottom
+ *   offset    her outline printed twice, white and in her colour, slightly off
+ *             register; the two drift apart with the pointer
+ *   duet      contour + shadow
  * No pointer (first view, touch, keyboard): the lamp circles slowly by itself.
  */
 import { useEffect, useId, useMemo, useRef, useState } from "react";
@@ -27,7 +32,17 @@ import "../styles/single-look.css";
 import "../styles/hero-lab.css";
 import "../styles/hero-lab3.css";
 
-export type LiveMode = "contour" | "light" | "gel" | "column";
+export type LiveMode =
+    | "contour"
+    | "arch"
+    | "shadow"
+    | "duo"
+    | "ripple"
+    | "loop"
+    | "stitch"
+    | "measure"
+    | "offset"
+    | "duet";
 
 export interface LiveModel {
     href: string;
@@ -42,17 +57,21 @@ export interface LiveModel {
     x1: number;
     /** side with more free room: -1 left, 1 right */
     side: number;
-    /** colour column: left / right edge */
+    /** half-width band round her (used for the arch) */
     col: number[];
-    colDark: boolean;
     /** lightness (Lab L) of the wall round her */
     wallL: number;
-    /** her outfit's colour, as the shadows carry it */
+    /** her outfit's colour, and a lighter second tone */
     hex: string;
+    hex2: string;
+    /** the colour her shadow takes on this wall */
+    ground: string;
     /** outline path, viewBox 1600x900: left foot → over the head → right foot */
     path: string;
+    /** outlines further and further out: [~14, ~30, ~50, ~74 px] */
+    paths: string[];
     /** rects [x, y, w, h] (canvas fractions) of the layers */
-    r: Record<"cut" | "sil" | "colbg", number[]>;
+    r: Record<"cut" | "sil", number[]>;
 }
 
 interface Props {
@@ -63,8 +82,14 @@ interface Props {
 }
 
 const USER_HOLD = 9000;
-const SLOT = 6000;
-const DEMO_MS = 4200;
+const SLOT = 6400;
+const DEMO_MS = 4400;
+/** the centre logo keeps this band of the slide to itself */
+const LOGO = [0.395, 0.605];
+
+const SHADOWS: LiveMode[] = ["shadow", "duo", "duet"];
+const HAS_TEXTLINE: LiveMode[] = ["contour", "stitch", "duet"];
+const TOP_CAPTION: LiveMode[] = ["shadow", "duo", "ripple", "offset"];
 
 const rect = (r: number[]): React.CSSProperties => ({
     left: `${r[0] * 100}%`,
@@ -75,6 +100,8 @@ const rect = (r: number[]): React.CSSProperties => ({
 const pct = (v: number) => `${(v * 100).toFixed(3)}%`;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const sentence = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+const X = (f: number) => +(f * 1600).toFixed(1);
+const Y = (f: number) => +(f * 900).toFixed(1);
 
 const lineText = (m: LiveModel) => {
     const parts = m.sub.split(" · ").filter(Boolean);
@@ -147,6 +174,16 @@ function textLine(tr: ReturnType<typeof trace>, chars: number, side: number): st
     );
 }
 
+/** a line drawn from the point --p both ways (two strokes on one path) */
+function Both({ d, cls = "", style }: { d: string; cls?: string; style?: React.CSSProperties }) {
+    return (
+        <>
+            <path d={d} pathLength={1} className={`hl3__ln hl3__ln--a ${cls}`} style={style} />
+            <path d={d} pathLength={1} className={`hl3__ln hl3__ln--b ${cls}`} style={style} />
+        </>
+    );
+}
+
 export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) {
     const { t } = useI18n();
     const navigate = useNavigate();
@@ -155,6 +192,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
     const sectionRef = useRef<HTMLElement>(null);
     const hitRef = useRef<ImageData | null>(null);
     const mRefs = useRef<Array<HTMLDivElement | null>>([]);
+    const loopRefs = useRef<Array<SVGTextPathElement | null>>([]);
     const userAt = useRef(-Infinity);
     const demoUntil = useRef(0);
     const activeRef = useRef<number | null>(null);
@@ -163,13 +201,21 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
     const lastSign = useRef<number[]>([]);
     const [active, setActive] = useState<number | null>(null);
     const [view, setView] = useState(0);
-    const [pulse, setPulse] = useState(0);
     const count = models.length;
 
     const traces = useMemo(() => models.map((m) => trace(m.path)), [models]);
     const textLines = useMemo(
         () => models.map((m, k) => textLine(traces[k], lineText(m).length, m.side)),
         [models, traces],
+    );
+    const loopText = useMemo(
+        () =>
+            models.map((m) => {
+                const unit = `${lineText(m)}   ·   `;
+                const len = trace(m.paths?.[1] ?? m.path).total;
+                return unit.repeat(Math.ceil(len / (unit.length * 10.5)) + 2);
+            }),
+        [models],
     );
 
     useEffect(() => {
@@ -193,22 +239,30 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         return { x: (clientX - box.left) / box.width, y: (clientY - box.top) / box.height };
     };
 
-    /** the lamp is at (px, py): where her shadow falls */
+    /** the lamp is at (px, py): how her shadow leans and how long it is */
     const setLight = (k: number, px: number, py: number) => {
         const m = models[k];
         const el = mRefs.current[k];
         if (!el) return;
-        const vx = m.cx - px; // the shadow falls away from the lamp
-        const vy = m.head + (m.feet - m.head) * 0.4 - py;
-        // never straight behind her: keep it to one side, and don't flicker across
+        const body = m.feet - m.head;
+        const dx = px - m.cx;
+        // the shadow falls away from the lamp; never straight behind her, and it
+        // doesn't flicker from side to side when the lamp is right in front
         let sign = lastSign.current[k] ?? m.side;
-        if (Math.abs(vx) > 0.006) sign = vx > 0 ? 1 : -1;
+        if (Math.abs(dx) > 0.008) sign = dx < 0 ? 1 : -1;
         lastSign.current[k] = sign;
-        const lx = sign * Math.max(0.013, Math.min(0.056, Math.abs(vx) * 1.25));
-        const ly = clamp(vy * 0.1, -0.03, 0.012);
-        el.style.setProperty("--lx", lx.toFixed(4));
-        el.style.setProperty("--ly", ly.toFixed(4));
-        el.style.setProperty("--ls", (1.03 + Math.abs(lx) * 0.9).toFixed(4));
+        const lean = clamp(Math.abs(dx) * 480, 12, 30);
+        const sk = -sign * lean; // skewX: negative leans the top to the right
+        // a low lamp throws a long shadow, a high one a short one
+        const sy = clamp(0.8 + (py - (m.head + body * 0.25)) * 0.95, 0.62, 1.05);
+        el.style.setProperty("--sk", sk.toFixed(2));
+        el.style.setProperty("--sy", sy.toFixed(3));
+        // offset print: the two outlines drift apart with the pointer
+        el.style.setProperty(
+            "--mx",
+            (Math.sign(dx || 1) * clamp(4 + Math.abs(dx) * 200, 4, 13)).toFixed(2),
+        );
+        el.style.setProperty("--my", clamp((py - (m.head + body * 0.4)) * 40, -5, 5).toFixed(2));
     };
 
     /** nearest point of her outline to (px, py) */
@@ -230,7 +284,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
 
     const setBead = (k: number, px: number, py: number) => {
         const el = mRefs.current[k];
-        if (!el || mode !== "contour") return;
+        if (!el) return;
         const n = nearest(k, px, py);
         el.style.setProperty("--bx", `${n.x.toFixed(1)}px`);
         el.style.setProperty("--by", `${n.y.toFixed(1)}px`);
@@ -243,18 +297,17 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
             const m = models[k];
             const el = mRefs.current[k];
             pointerLed.current = !!at;
-            // the outline starts where she was touched (or at the top of her head)
+            // lines start where she was touched (or at the top of her head)
             const start = at ? nearest(k, at.x, at.y) : nearest(k, m.cx, m.head - 0.05);
             el?.style.setProperty("--p", clamp(start.f, 0.02, 0.98).toFixed(4));
             if (at) {
                 setLight(k, at.x, at.y);
                 setBead(k, at.x, at.y);
             } else {
-                setLight(k, m.cx - m.side * 0.03, m.head + (m.feet - m.head) * 0.3);
+                setLight(k, m.cx - m.side * 0.04, m.head + (m.feet - m.head) * 0.3);
                 setBead(k, m.cx, m.head - 0.05);
             }
             setView(k);
-            setPulse((p) => p + 1);
         }
         setActive(k);
     };
@@ -268,12 +321,13 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         const id = window.setInterval(() => {
             if (pointerLed.current) return;
             const tt = (performance.now() - t0) / 1000;
-            const px = m.cx - m.side * (0.028 + 0.02 * Math.sin(tt * 1.1));
-            const py = m.head + (m.feet - m.head) * (0.35 + 0.22 * Math.cos(tt * 0.8));
+            const px = m.cx - m.side * (0.034 + 0.016 * Math.sin(tt * 0.9));
+            const py = m.head + (m.feet - m.head) * (0.32 + 0.2 * Math.cos(tt * 0.7));
             setLight(k, px, py);
-            const sweep = clamp(0.5 + 0.42 * Math.sin(tt * 0.7), 0.04, 0.96);
             const tr = traces[k];
-            const i = Math.round(sweep * (tr.pts.length - 1));
+            const i = Math.round(
+                clamp(0.5 + 0.42 * Math.sin(tt * 0.7), 0.04, 0.96) * (tr.pts.length - 1),
+            );
             const el = mRefs.current[k];
             if (el && tr.pts[i] && tt > 1.6) {
                 el.style.setProperty("--bx", `${tr.pts[i][0].toFixed(1)}px`);
@@ -283,6 +337,25 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         return () => window.clearInterval(id);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [active]);
+
+    // loop: her name keeps running round her while she is chosen
+    useEffect(() => {
+        if (mode !== "loop" || active === null) return;
+        const tp = loopRefs.current[active];
+        const txt = tp?.parentElement as unknown as SVGTextElement | null;
+        if (!tp || !txt) return;
+        const copies = Math.max(1, loopText[active].split("   ·   ").length - 1);
+        const unit = txt.getComputedTextLength() / copies || 300;
+        let raf = 0;
+        const t0 = performance.now();
+        const tick = (now: number) => {
+            const off = -(((now - t0) / 1000) * 34) % unit;
+            tp.setAttribute("startOffset", off.toFixed(1));
+            raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
+    }, [mode, active, loopText]);
 
     // idle behaviour, only while the slide is on screen
     useEffect(() => {
@@ -411,27 +484,67 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                         {models.map((m, k) => {
                             const on = active === k;
                             const parts = m.sub.split(" · ").filter(Boolean);
-                            const onLight = mode === "column" ? !m.colDark : m.wallL > 76;
+                            const onLight = m.wallL > 76;
+                            const body = m.feet - m.head;
                             const sil = m.r.sil;
+                            const paths = m.paths ?? [m.path];
                             const style = {
                                 ["--cx" as string]: pct(m.cx),
                                 ["--head" as string]: pct(m.head),
                                 ["--feet" as string]: pct(m.feet),
+                                ["--bh" as string]: pct(body),
                                 ["--x0" as string]: pct(m.x0),
                                 ["--x1" as string]: pct(m.x1),
-                                ["--c0" as string]: pct(m.col[0]),
-                                ["--cw" as string]: pct(m.col[1] - m.col[0]),
                                 ["--hex" as string]: m.hex,
+                                ["--hex2" as string]: m.hex2,
+                                ["--ground" as string]: m.ground,
                                 ["--sil" as string]: `url(${maskDir}/sil${k}.webp)`,
-                                // her shadow turns about her feet
+                                // her shadow grows out of her feet
                                 ["--ox" as string]: pct((m.cx - sil[0]) / sil[2]),
                                 ["--oy" as string]: pct((m.feet - sil[1]) / sil[3]),
                             };
+
+                            /** her shadow: sharp at the feet, softer towards the head */
                             const shadow = (cls: string) => (
-                                <div className="hl3__shw">
-                                    <span className={`hl3__sh ${cls}`} style={rect(sil)} />
+                                <div className={`hl3__shw ${cls}`}>
+                                    <div className="hl3__shb hl3__shb--hard">
+                                        <span className="hl3__sh" style={rect(sil)} />
+                                    </div>
+                                    <div className="hl3__shb hl3__shb--soft">
+                                        <span className="hl3__sh" style={rect(sil)} />
+                                    </div>
                                 </div>
                             );
+
+                            // the arch: centred on her, a little wider than her
+                            const ar = Math.max(X(m.col[1] - m.col[0]) / 2, 96);
+                            const acx = X(m.cx);
+                            const apex = Y(Math.max(m.head - 0.075, 0.13));
+                            const archY = apex + ar;
+                            const base = Y(m.feet);
+                            const archD = (o: number) =>
+                                `M${acx - ar + o} ${base} V${archY} A${ar - o} ${ar - o} 0 0 1 ${acx + ar - o} ${archY} V${base}`;
+
+                            // the rule: on her free side, or the other one if that is cramped
+                            const prev = models[k - 1];
+                            const next = models[k + 1];
+                            const roomAt = (sd: number) =>
+                                sd > 0
+                                    ? Math.min(next ? next.x0 : 1, m.cx < 0.5 ? LOGO[0] : 1) - m.x1
+                                    : m.x0 - Math.max(prev ? prev.x1 : 0, m.cx > 0.5 ? LOGO[1] : 0);
+                            const rs = roomAt(m.side) >= 0.07 ? m.side : -m.side;
+                            const rx = X(rs > 0 ? m.x1 + 0.028 : m.x0 - 0.028);
+                            const ry0 = Y(m.head);
+                            const ry1 = Y(m.feet);
+                            const rmid = (ry0 + ry1) / 2;
+                            const rhalf = (lineText(m).length * 9.6 + 30) / 2;
+                            const ticks = Array.from({ length: 41 }, (_, i) => {
+                                const y = ry0 + ((ry1 - ry0) * i) / 40;
+                                if (Math.abs(y - rmid) < rhalf + 4) return "";
+                                const len = i % 5 === 0 ? 11 : 5;
+                                return `M${rx} ${y.toFixed(1)} h${rs * len}`;
+                            }).join(" ");
+
                             return (
                                 <div
                                     key={k}
@@ -441,22 +554,15 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                     className={`hl3__m ${on ? "is-on" : ""} ${m.side > 0 ? "is-r" : "is-l"} ${onLight ? "is-ink" : ""}`}
                                     style={style}
                                 >
-                                    {/* 2 — what stands behind her */}
-                                    {mode === "column" && (
+                                    {/* 2 — behind her */}
+                                    {(mode === "shadow" || mode === "duet") &&
+                                        shadow("hl3__shw--key")}
+                                    {mode === "duo" && (
                                         <>
-                                            <img
-                                                className="hl3__col"
-                                                src={`${maskDir}/colbg${k}.webp`}
-                                                alt=""
-                                                loading="lazy"
-                                                decoding="async"
-                                                style={rect(m.r.colbg)}
-                                            />
-                                            <span className="hl3__roll" />
+                                            {shadow("hl3__shw--gel hl3__shw--g1")}
+                                            {shadow("hl3__shw--gel hl3__shw--g2")}
                                         </>
                                     )}
-                                    {mode === "gel" && shadow("hl3__sh--far")}
-                                    {mode !== "contour" && shadow("hl3__sh--near")}
 
                                     {/* 3 — the model herself */}
                                     <img
@@ -468,11 +574,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                     />
 
                                     {/* 4 — in front of her */}
-                                    {mode === "light" && on && (
-                                        <span key={pulse} className="hl3__pop" />
-                                    )}
-
-                                    {mode === "contour" && (
+                                    {!SHADOWS.includes(mode) || mode === "duet" ? (
                                         <svg
                                             className="hl3__svg"
                                             viewBox="0 0 1600 900"
@@ -480,84 +582,252 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                             aria-hidden="true"
                                         >
                                             <defs>
-                                                <mask
-                                                    id={`${uid}x${k}`}
-                                                    maskUnits="userSpaceOnUse"
-                                                    x="0"
-                                                    y="0"
-                                                    width="1600"
-                                                    height="900"
-                                                >
-                                                    <path
-                                                        d={textLines[k]}
-                                                        pathLength={1}
-                                                        className="hl3__tx-mask"
-                                                    />
-                                                </mask>
+                                                {HAS_TEXTLINE.includes(mode) && (
+                                                    <mask
+                                                        id={`${uid}x${k}`}
+                                                        maskUnits="userSpaceOnUse"
+                                                        x="0"
+                                                        y="0"
+                                                        width="1600"
+                                                        height="900"
+                                                    >
+                                                        <path
+                                                            d={textLines[k]}
+                                                            pathLength={1}
+                                                            className="hl3__tx-mask"
+                                                        />
+                                                    </mask>
+                                                )}
+                                                {(mode === "loop" || mode === "stitch") && (
+                                                    <mask
+                                                        id={`${uid}r${k}`}
+                                                        maskUnits="userSpaceOnUse"
+                                                        x="0"
+                                                        y="0"
+                                                        width="1600"
+                                                        height="900"
+                                                    >
+                                                        <Both
+                                                            d={
+                                                                mode === "loop"
+                                                                    ? paths[1]
+                                                                    : paths[0]
+                                                            }
+                                                            cls="hl3__ln--mask"
+                                                        />
+                                                    </mask>
+                                                )}
+                                                {mode === "measure" && (
+                                                    <mask
+                                                        id={`${uid}m${k}`}
+                                                        maskUnits="userSpaceOnUse"
+                                                        x="0"
+                                                        y="0"
+                                                        width="1600"
+                                                        height="900"
+                                                    >
+                                                        <rect
+                                                            x={rx - 20}
+                                                            y={ry0 - 2}
+                                                            width="40"
+                                                            height={ry1 - ry0 + 4}
+                                                            className="hl3__tickmask"
+                                                        />
+                                                    </mask>
+                                                )}
                                             </defs>
-                                            {/* from the touched point: one line back, one forward */}
-                                            <path
-                                                d={m.path}
-                                                pathLength={1}
-                                                className="hl3__ln hl3__ln--a"
-                                            />
-                                            <path
-                                                d={m.path}
-                                                pathLength={1}
-                                                className="hl3__ln hl3__ln--b"
-                                            />
-                                            <path
-                                                d={m.path}
-                                                pathLength={1}
-                                                className="hl3__pen hl3__pen--a"
-                                            />
-                                            <path
-                                                d={m.path}
-                                                pathLength={1}
-                                                className="hl3__pen hl3__pen--b"
-                                            />
-                                            <g className="hl3__bead">
-                                                <circle r="7.5" className="hl3__bead-ring" />
-                                                <circle r="2.6" className="hl3__bead-dot" />
-                                            </g>
-                                            <path id={`${uid}t${k}`} d={textLines[k]} />
-                                            <g mask={`url(#${uid}x${k})`}>
-                                                <text className="hl3__svgtext">
-                                                    <textPath
-                                                        href={`#${uid}t${k}`}
-                                                        startOffset="12"
+
+                                            {(mode === "contour" || mode === "duet") && (
+                                                <>
+                                                    <Both d={m.path} />
+                                                    <path
+                                                        d={m.path}
+                                                        pathLength={1}
+                                                        className="hl3__pen hl3__pen--a"
+                                                    />
+                                                    <path
+                                                        d={m.path}
+                                                        pathLength={1}
+                                                        className="hl3__pen hl3__pen--b"
+                                                    />
+                                                    {mode === "contour" && (
+                                                        <g className="hl3__bead">
+                                                            <circle
+                                                                r="7.5"
+                                                                className="hl3__bead-ring"
+                                                            />
+                                                            <circle
+                                                                r="2.6"
+                                                                className="hl3__bead-dot"
+                                                            />
+                                                        </g>
+                                                    )}
+                                                </>
+                                            )}
+
+                                            {mode === "arch" && (
+                                                <>
+                                                    <path
+                                                        d={archD(0)}
+                                                        pathLength={1}
+                                                        className="hl3__draw"
+                                                    />
+                                                    <path
+                                                        d={archD(9)}
+                                                        pathLength={1}
+                                                        className="hl3__draw hl3__draw--thin"
+                                                    />
+                                                    {[-1, 1].map((sd) => (
+                                                        <path
+                                                            key={sd}
+                                                            className="hl3__draw1"
+                                                            pathLength={1}
+                                                            d={`M${acx + sd * (ar - 18)} ${base} H${acx + sd * (ar + 12)}`}
+                                                        />
+                                                    ))}
+                                                    <path
+                                                        className="hl3__draw1 hl3__key"
+                                                        pathLength={1}
+                                                        d={`M${acx} ${apex - 7} V${apex + 11}`}
+                                                    />
+                                                    <path
+                                                        id={`${uid}a${k}`}
+                                                        d={`M${acx - ar - 24} ${archY} A${ar + 24} ${ar + 24} 0 0 1 ${acx + ar + 24} ${archY}`}
+                                                    />
+                                                    <text className="hl3__svgtext hl3__arctext">
+                                                        <textPath
+                                                            href={`#${uid}a${k}`}
+                                                            startOffset="50%"
+                                                            textAnchor="middle"
+                                                        >
+                                                            {lineText(m)}
+                                                        </textPath>
+                                                    </text>
+                                                </>
+                                            )}
+
+                                            {mode === "ripple" &&
+                                                paths.map((d, i) => (
+                                                    <g
+                                                        key={i}
+                                                        className="hl3__ring"
+                                                        style={{ ["--i" as string]: i }}
+                                                    >
+                                                        <Both
+                                                            d={d}
+                                                            cls={i ? "hl3__ln--thin" : ""}
+                                                            style={{
+                                                                ["--d" as string]: `${i * 0.14}s`,
+                                                            }}
+                                                        />
+                                                    </g>
+                                                ))}
+
+                                            {mode === "loop" && (
+                                                <>
+                                                    <Both d={paths[0]} cls="hl3__ln--thin" />
+                                                    <path id={`${uid}l${k}`} d={paths[1]} />
+                                                    <g mask={`url(#${uid}r${k})`}>
+                                                        <text className="hl3__svgtext hl3__looptext">
+                                                            <textPath
+                                                                ref={(el) => {
+                                                                    loopRefs.current[k] = el;
+                                                                }}
+                                                                href={`#${uid}l${k}`}
+                                                                startOffset="0"
+                                                            >
+                                                                {loopText[k]}
+                                                            </textPath>
+                                                        </text>
+                                                    </g>
+                                                </>
+                                            )}
+
+                                            {mode === "stitch" && (
+                                                <>
+                                                    <g mask={`url(#${uid}r${k})`}>
+                                                        <path
+                                                            d={paths[0]}
+                                                            className="hl3__stitch"
+                                                        />
+                                                    </g>
+                                                    <path
+                                                        d={paths[0]}
+                                                        pathLength={1}
+                                                        className="hl3__needle"
+                                                    />
+                                                </>
+                                            )}
+
+                                            {mode === "measure" && (
+                                                <>
+                                                    {/* from her head and her feet out to the rule */}
+                                                    {[ry0, ry1].map((y, i) => (
+                                                        <path
+                                                            key={i}
+                                                            className="hl3__draw1 hl3__draw1--thin"
+                                                            pathLength={1}
+                                                            d={`M${X(rs > 0 ? m.x1 - 0.004 : m.x0 + 0.004)} ${y} H${rx + rs * 14}`}
+                                                        />
+                                                    ))}
+                                                    <path
+                                                        className="hl3__draw1 hl3__rule"
+                                                        pathLength={1}
+                                                        d={`M${rx} ${ry0} V${rmid - rhalf}`}
+                                                    />
+                                                    <path
+                                                        className="hl3__draw1 hl3__rule"
+                                                        pathLength={1}
+                                                        d={`M${rx} ${ry1} V${rmid + rhalf}`}
+                                                    />
+                                                    <g mask={`url(#${uid}m${k})`}>
+                                                        <path d={ticks} className="hl3__ticks" />
+                                                    </g>
+                                                    <text
+                                                        className="hl3__svgtext hl3__ruletext"
+                                                        x={rx}
+                                                        y={rmid + 4}
+                                                        textAnchor="middle"
+                                                        transform={`rotate(-90 ${rx} ${rmid})`}
                                                     >
                                                         {lineText(m)}
-                                                    </textPath>
-                                                </text>
-                                            </g>
-                                        </svg>
-                                    )}
+                                                    </text>
+                                                </>
+                                            )}
 
-                                    {mode === "column" && (
-                                        <div
-                                            className="hl3__chip"
-                                            style={{ left: pct((m.col[0] + m.col[1]) / 2) }}
-                                        >
-                                            <b>
-                                                <span>{parts[0] ?? m.title}</span>
-                                            </b>
-                                            <u />
-                                            <i>
-                                                <span>{parts.length > 1 ? parts[1] : m.title}</span>
-                                            </i>
-                                        </div>
-                                    )}
-                                    {mode === "gel" && (
+                                            {mode === "offset" && (
+                                                <>
+                                                    <g className="hl3__off hl3__off--c">
+                                                        <Both d={m.path} cls="hl3__ln--col" />
+                                                    </g>
+                                                    <g className="hl3__off hl3__off--w">
+                                                        <Both d={m.path} />
+                                                    </g>
+                                                </>
+                                            )}
+
+                                            {HAS_TEXTLINE.includes(mode) && (
+                                                <>
+                                                    <path id={`${uid}t${k}`} d={textLines[k]} />
+                                                    <g mask={`url(#${uid}x${k})`}>
+                                                        <text className="hl3__svgtext">
+                                                            <textPath
+                                                                href={`#${uid}t${k}`}
+                                                                startOffset="12"
+                                                            >
+                                                                {lineText(m)}
+                                                            </textPath>
+                                                        </text>
+                                                    </g>
+                                                </>
+                                            )}
+                                        </svg>
+                                    ) : null}
+
+                                    {TOP_CAPTION.includes(mode) && (
                                         <div className="hl3__serif">
                                             <b>{sentence(m.title)}</b>
-                                            <i>{m.sub}</i>
-                                        </div>
-                                    )}
-                                    {mode === "light" && (
-                                        <div className="hl3__dymo">
-                                            <b>{m.title}</b>
-                                            {parts.length > 0 && <i>{parts[parts.length - 1]}</i>}
+                                            {parts.length > 0 && <i>{m.sub}</i>}
                                         </div>
                                     )}
                                 </div>
