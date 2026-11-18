@@ -13,9 +13,10 @@
  *             ways; text written beside it; a bead rides it with the pointer
  *   arch      an arch drawn in two lines from both feet up to the keystone;
  *             the name set on its curve
- *   shadow    the pointer is the lamp: her shadow grows out of her feet, leans
- *             away from the light, sharp at the feet and soft at the head
- *   duo       two lamps, two shadows in the colours of her outfit
+ *   shadow    a camera flash: her shadow lands on the wall close behind her, in
+ *             the wall's own colour; the pointer is the lamp, the shadow slides
+ *             round her as it moves
+ *   duo       her silhouette twice in the colours of her outfit, stepping aside
  *   ripple    four outlines spread out from her like rings on water, then breathe
  *   loop      her name runs round her, along a line just off her body
  *   stitch    a tailor's running stitch round her, a needle point travelling it
@@ -23,7 +24,11 @@
  *   offset    her outline printed twice, white and in her colour, slightly off
  *             register; the two drift apart with the pointer
  *   duet      contour + shadow
- * No pointer (first view, touch, keyboard): the lamp circles slowly by itself.
+ * No pointer (first view, touch, keyboard): the lamp sways slowly by itself.
+ *
+ * Nothing is placed above her head: on most screens that is where the site
+ * header is (and on wide short screens the picture is cropped there). Captions
+ * run down her free side; lines that reach the header fade out under it.
  */
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -87,9 +92,23 @@ const DEMO_MS = 4400;
 /** the centre logo keeps this band of the slide to itself */
 const LOGO = [0.395, 0.605];
 
-const SHADOWS: LiveMode[] = ["shadow", "duo", "duet"];
-const HAS_TEXTLINE: LiveMode[] = ["contour", "stitch", "duet"];
-const TOP_CAPTION: LiveMode[] = ["shadow", "duo", "ripple", "offset"];
+const HAS_TEXTLINE: LiveMode[] = ["contour", "stitch", "duet", "ripple"];
+const SIDE_CAPTION: LiveMode[] = ["shadow", "duo", "offset"];
+/** letters of the line text: width of one, in em */
+const EM = 0.93;
+
+interface Geo {
+    /** screen px per unit of the 1600x900 viewBox */
+    u: number;
+    /** canvas fraction where the free picture starts (under the site header) */
+    top: number;
+    /** visible part of the canvas, left and right */
+    vx0: number;
+    vx1: number;
+    /** phone: the picture pans to the chosen model; half the screen, in canvas widths */
+    half: number;
+    narrow: boolean;
+}
 
 const rect = (r: number[]): React.CSSProperties => ({
     left: `${r[0] * 100}%`,
@@ -126,9 +145,24 @@ function trace(path: string) {
  * free side that is long enough, smooth it into one calm curve, and move that
  * curve just outside the outline. Returns an SVG path (viewBox 1600x900).
  */
-function textLine(tr: ReturnType<typeof trace>, chars: number, side: number): string {
+function textLine(
+    tr: ReturnType<typeof trace>,
+    m: LiveModel,
+    chars: number,
+    side: number,
+    fs: number,
+    extra: number,
+    top: number,
+): string {
     const { pts, s, total } = tr;
-    if (pts.length < 40) return "";
+    const need = chars * fs * EM + 40;
+    // no calm stretch long enough: a straight line beside her
+    const straight = () => {
+        const x = side > 0 ? X(m.x1) + 20 + extra : X(m.x0) - 20 - extra;
+        const y0 = Math.max(Y(m.head + (m.feet - m.head) * 0.16), top * 900 + 10);
+        return side > 0 ? `M${x} ${y0} V${y0 + need}` : `M${x} ${y0 + need} V${y0}`;
+    };
+    if (pts.length < 40) return straight();
     const acc = [0];
     let prev = 0;
     for (let i = 1; i < pts.length; i++) {
@@ -139,7 +173,6 @@ function textLine(tr: ReturnType<typeof trace>, chars: number, side: number): st
         acc.push(acc[acc.length - 1] + Math.abs(d));
         prev = a;
     }
-    const need = chars * 11.6 + 40;
     const [lo, hi] = side > 0 ? [0.56 * total, 0.97 * total] : [0.03 * total, 0.44 * total];
     let best = Infinity;
     let bi = -1;
@@ -148,6 +181,8 @@ function textLine(tr: ReturnType<typeof trace>, chars: number, side: number): st
         if (s[i] < lo) continue;
         while (j < pts.length - 1 && s[j] - s[i] < need) j++;
         if (s[j] - s[i] < need || s[j] > hi) break;
+        // not under the site header
+        if (Math.min(pts[i][1], pts[j][1]) < top * 900 + 6) continue;
         const cost = acc[j] - acc[i];
         if (cost < best - 1e-6) {
             best = cost;
@@ -155,7 +190,7 @@ function textLine(tr: ReturnType<typeof trace>, chars: number, side: number): st
             bj = j;
         }
     }
-    if (bi < 0) return "";
+    if (bi < 0) return straight();
     const seg = pts.slice(bi, bj + 1);
     // the sides of a standing figure run top to bottom: smooth x along the run
     let xs = seg.map((p) => p[0]);
@@ -168,7 +203,7 @@ function textLine(tr: ReturnType<typeof trace>, chars: number, side: number): st
         });
     }
     const out = side > 0 ? 1 : -1;
-    const gap = Math.max(...seg.map((p, i) => (p[0] - xs[i]) * out)) + 14;
+    const gap = Math.max(...seg.map((p, i) => (p[0] - xs[i]) * out)) + 14 + extra;
     return (
         "M" + seg.map((p, i) => `${(xs[i] + gap * out).toFixed(1)} ${p[1].toFixed(1)}`).join(" L")
     );
@@ -196,24 +231,103 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
     const userAt = useRef(-Infinity);
     const demoUntil = useRef(0);
     const activeRef = useRef<number | null>(null);
-    /** true while the lamp is driven by a real pointer (otherwise it circles by itself) */
+    /** true while the lamp is driven by a real pointer (otherwise it sways by itself) */
     const pointerLed = useRef(false);
-    const lastSign = useRef<number[]>([]);
+    /** the lamp, relative to her: -1..1 across, -1..1 up/down; eased towards its target */
+    const lamp = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
+    const lampSide = useRef(0);
     const [active, setActive] = useState<number | null>(null);
     const [view, setView] = useState(0);
+    const [geo, setGeo] = useState<Geo>({
+        u: 1,
+        top: 0,
+        vx0: 0,
+        vx1: 1,
+        half: 0.14,
+        narrow: false,
+    });
     const count = models.length;
+
+    // what of the picture is actually on screen, and how big a unit is
+    useEffect(() => {
+        const measure = () => {
+            const cam = camRef.current?.getBoundingClientRect();
+            const sec = sectionRef.current?.getBoundingClientRect();
+            if (!cam || !sec || !cam.width) return;
+            const hdr = document.querySelector("header.header")?.getBoundingClientRect();
+            const band = hdr ? clamp(hdr.bottom - 14 - sec.top, 0, 140) : 0;
+            const narrow = sec.width <= 768;
+            const r3 = (v: number) => Math.round(v * 1000) / 1000;
+            const next: Geo = {
+                u: r3(cam.width / 1600),
+                top: r3((sec.top - cam.top + band) / cam.height),
+                vx0: narrow ? 0 : r3((sec.left - cam.left) / cam.width),
+                vx1: narrow ? 1 : r3((sec.right - cam.left) / cam.width),
+                half: r3(sec.width / 2 / cam.width),
+                narrow,
+            };
+            setGeo((g) => (JSON.stringify(g) === JSON.stringify(next) ? g : next));
+        };
+        measure();
+        const ro = new ResizeObserver(measure);
+        if (sectionRef.current) ro.observe(sectionRef.current);
+        window.addEventListener("resize", measure);
+        return () => {
+            ro.disconnect();
+            window.removeEventListener("resize", measure);
+        };
+    }, []);
+
+    /** type never gets smaller than ~11 px on screen */
+    const fs = Math.max(12.5, +(11 / geo.u).toFixed(2));
+
+    /** the side of each model with room for type: her free side, unless it is cramped */
+    const sides = useMemo(
+        () =>
+            models.map((m, k) => {
+                const prev = models[k - 1];
+                const next = models[k + 1];
+                // the chat buttons live in the right corner of a desktop screen
+                const vr = geo.narrow ? m.cx + geo.half - 0.01 : geo.vx1 - 0.05;
+                const vl = geo.narrow ? m.cx - geo.half + 0.01 : geo.vx0 + 0.01;
+                const logoR = !geo.narrow && m.cx < 0.5 ? LOGO[0] : 1;
+                const logoL = !geo.narrow && m.cx > 0.5 ? LOGO[1] : 0;
+                const room = (sd: number) =>
+                    sd > 0
+                        ? Math.min(next ? next.x0 : 1, logoR, vr) - m.x1
+                        : m.x0 - Math.max(prev ? prev.x1 : 0, logoL, vl);
+                const a = room(m.side);
+                return a >= 0.07 || a >= room(-m.side) ? m.side : -m.side;
+            }),
+        [models, geo],
+    );
+    const sidesRef = useRef(sides);
+    useEffect(() => {
+        sidesRef.current = sides;
+    }, [sides]);
 
     const traces = useMemo(() => models.map((m) => trace(m.path)), [models]);
     const textLines = useMemo(
-        () => models.map((m, k) => textLine(traces[k], lineText(m).length, m.side)),
-        [models, traces],
+        () =>
+            models.map((m, k) =>
+                textLine(
+                    traces[k],
+                    m,
+                    lineText(m).length,
+                    sides[k],
+                    fs,
+                    mode === "ripple" ? 40 : 0,
+                    geo.top,
+                ),
+            ),
+        [models, traces, sides, fs, mode, geo.top],
     );
     const loopText = useMemo(
         () =>
             models.map((m) => {
                 const unit = `${lineText(m)}   ·   `;
                 const len = trace(m.paths?.[1] ?? m.path).total;
-                return unit.repeat(Math.ceil(len / (unit.length * 10.5)) + 2);
+                return unit.repeat(Math.ceil(len / (unit.length * 10)) + 2);
             }),
         [models],
     );
@@ -239,30 +353,18 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         return { x: (clientX - box.left) / box.width, y: (clientY - box.top) / box.height };
     };
 
-    /** the lamp is at (px, py): how her shadow leans and how long it is */
+    /** the lamp is at (px, py): where it stands relative to her */
     const setLight = (k: number, px: number, py: number) => {
         const m = models[k];
-        const el = mRefs.current[k];
-        if (!el) return;
         const body = m.feet - m.head;
         const dx = px - m.cx;
-        // the shadow falls away from the lamp; never straight behind her, and it
-        // doesn't flicker from side to side when the lamp is right in front
-        let sign = lastSign.current[k] ?? m.side;
-        if (Math.abs(dx) > 0.008) sign = dx < 0 ? 1 : -1;
-        lastSign.current[k] = sign;
-        const lean = clamp(Math.abs(dx) * 480, 12, 30);
-        const sk = -sign * lean; // skewX: negative leans the top to the right
-        // a low lamp throws a long shadow, a high one a short one
-        const sy = clamp(0.8 + (py - (m.head + body * 0.25)) * 0.95, 0.62, 1.05);
-        el.style.setProperty("--sk", sk.toFixed(2));
-        el.style.setProperty("--sy", sy.toFixed(3));
-        // offset print: the two outlines drift apart with the pointer
-        el.style.setProperty(
-            "--mx",
-            (Math.sign(dx || 1) * clamp(4 + Math.abs(dx) * 200, 4, 13)).toFixed(2),
-        );
-        el.style.setProperty("--my", clamp((py - (m.head + body * 0.4)) * 40, -5, 5).toFixed(2));
+        // the lamp is never dead in front of her (the shadow would hide behind her):
+        // it keeps to one side, and changes side only once the pointer has crossed her
+        let sign = lampSide.current || -sidesRef.current[k];
+        if (Math.abs(dx) > 0.006) sign = Math.sign(dx);
+        lampSide.current = sign;
+        lamp.current.tx = sign * Math.max(0.5, clamp(Math.abs(dx) / 0.05, 0, 1) ** 0.6);
+        lamp.current.ty = clamp((py - (m.head + body * 0.4)) / (body * 0.5), -1, 1);
     };
 
     /** nearest point of her outline to (px, py) */
@@ -290,51 +392,70 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         el.style.setProperty("--by", `${n.y.toFixed(1)}px`);
     };
 
-    const activate = (k: number | null, at?: { x: number; y: number }) => {
+    const activate = (k: number | null, at?: { x: number; y: number }, led = false) => {
         if (k === activeRef.current) return;
         activeRef.current = k;
         if (k !== null) {
             const m = models[k];
             const el = mRefs.current[k];
-            pointerLed.current = !!at;
+            pointerLed.current = led && !!at;
+            lampSide.current = 0;
             // lines start where she was touched (or at the top of her head)
             const start = at ? nearest(k, at.x, at.y) : nearest(k, m.cx, m.head - 0.05);
             el?.style.setProperty("--p", clamp(start.f, 0.02, 0.98).toFixed(4));
-            if (at) {
-                setLight(k, at.x, at.y);
-                setBead(k, at.x, at.y);
-            } else {
-                setLight(k, m.cx - m.side * 0.04, m.head + (m.feet - m.head) * 0.3);
-                setBead(k, m.cx, m.head - 0.05);
+            const L = lamp.current;
+            if (pointerLed.current && at) setLight(k, at.x, at.y);
+            else {
+                // the lamp stands on her crowded side: the shadow falls where there is room
+                L.tx = -sidesRef.current[k] * 0.8;
+                L.ty = 0.2;
             }
+            // the shadow comes out from behind her
+            L.x = L.tx * 0.3;
+            L.y = L.ty;
+            el?.style.setProperty("--lx", L.x.toFixed(4));
+            el?.style.setProperty("--ly", L.y.toFixed(4));
+            if (at) setBead(k, at.x, at.y);
+            else setBead(k, m.cx, m.head - 0.05);
             setView(k);
         }
         setActive(k);
     };
 
-    // no pointer on her: the lamp circles slowly by itself, so the shadow is alive
+    // the lamp eases towards where it should be; with no pointer it sways by itself
     useEffect(() => {
         if (active === null) return;
         const k = active;
-        const m = models[k];
+        const el = mRefs.current[k];
+        const tr = traces[k];
         const t0 = performance.now();
-        const id = window.setInterval(() => {
-            if (pointerLed.current) return;
-            const tt = (performance.now() - t0) / 1000;
-            const px = m.cx - m.side * (0.034 + 0.016 * Math.sin(tt * 0.9));
-            const py = m.head + (m.feet - m.head) * (0.32 + 0.2 * Math.cos(tt * 0.7));
-            setLight(k, px, py);
-            const tr = traces[k];
-            const i = Math.round(
-                clamp(0.5 + 0.42 * Math.sin(tt * 0.7), 0.04, 0.96) * (tr.pts.length - 1),
-            );
-            const el = mRefs.current[k];
-            if (el && tr.pts[i] && tt > 1.6) {
-                el.style.setProperty("--bx", `${tr.pts[i][0].toFixed(1)}px`);
-                el.style.setProperty("--by", `${tr.pts[i][1].toFixed(1)}px`);
+        let last = t0;
+        let raf = 0;
+        const tick = (now: number) => {
+            const dt = Math.min(0.05, (now - last) / 1000);
+            last = now;
+            const L = lamp.current;
+            if (!pointerLed.current) {
+                const tt = (now - t0) / 1000;
+                L.tx = -sidesRef.current[k] * (0.74 + 0.2 * Math.sin(tt * 0.7));
+                L.ty = 0.1 + 0.4 * Math.cos(tt * 0.5);
+                const i = Math.round(
+                    clamp(0.5 + 0.42 * Math.sin(tt * 0.7), 0.04, 0.96) * (tr.pts.length - 1),
+                );
+                if (el && tr.pts[i] && tt > 1.6) {
+                    el.style.setProperty("--bx", `${tr.pts[i][0].toFixed(1)}px`);
+                    el.style.setProperty("--by", `${tr.pts[i][1].toFixed(1)}px`);
+                }
             }
-        }, 60);
-        return () => window.clearInterval(id);
+            const f = 1 - Math.exp(-dt / 0.14);
+            L.x += (L.tx - L.x) * f;
+            L.y += (L.ty - L.y) * f;
+            el?.style.setProperty("--lx", L.x.toFixed(4));
+            el?.style.setProperty("--ly", L.y.toFixed(4));
+            raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [active]);
 
@@ -434,7 +555,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
             setBead(k, at.x, at.y);
             return;
         }
-        activate(k, at ?? undefined);
+        activate(k, at ?? undefined, true);
     };
 
     const onClick = (e: React.MouseEvent) => {
@@ -445,7 +566,8 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
             (e.nativeEvent as PointerEvent).pointerType === "touch" ||
             !matchMedia("(hover: hover)").matches;
         if (k === null) return activate(null);
-        if (touch && activeRef.current !== k) return activate(k);
+        if (touch && activeRef.current !== k)
+            return activate(k, canvasPoint(e.clientX, e.clientY) ?? undefined);
         navigate(models[k].href);
     };
 
@@ -455,6 +577,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         <section
             ref={sectionRef}
             className={`slook hlab hl3 hl3--${mode} ${active !== null ? "has-active" : ""}`}
+            style={{ ["--fs" as string]: `${fs}px` }}
             aria-label={t("Вітрина бренду MIND BODY")}
         >
             <div className="hlab__stage" style={{ backgroundColor: studioBg || "#dedad4" }}>
@@ -488,6 +611,10 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                             const body = m.feet - m.head;
                             const sil = m.r.sil;
                             const paths = m.paths ?? [m.path];
+                            /** the side with room for type */
+                            const rs = sides[k];
+                            /** where the free picture starts, in viewBox units */
+                            const T = geo.top * 900;
                             const style = {
                                 ["--cx" as string]: pct(m.cx),
                                 ["--head" as string]: pct(m.head),
@@ -499,45 +626,51 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                 ["--hex2" as string]: m.hex2,
                                 ["--ground" as string]: m.ground,
                                 ["--sil" as string]: `url(${maskDir}/sil${k}.webp)`,
-                                // her shadow grows out of her feet
-                                ["--ox" as string]: pct((m.cx - sil[0]) / sil[2]),
-                                ["--oy" as string]: pct((m.feet - sil[1]) / sil[3]),
+                                // her shadow is on the wall: it thins out towards the floor
+                                ["--f0" as string]: pct((m.feet - 0.17 - sil[1]) / sil[3]),
+                                ["--f1" as string]: pct((m.feet - 0.06 - sil[1]) / sil[3]),
                             };
 
-                            /** her shadow: sharp at the feet, softer towards the head */
+                            /** her silhouette on the wall behind her */
                             const shadow = (cls: string) => (
                                 <div className={`hl3__shw ${cls}`}>
-                                    <div className="hl3__shb hl3__shb--hard">
-                                        <span className="hl3__sh" style={rect(sil)} />
-                                    </div>
-                                    <div className="hl3__shb hl3__shb--soft">
+                                    <div className="hl3__shb">
                                         <span className="hl3__sh" style={rect(sil)} />
                                     </div>
                                 </div>
                             );
 
-                            // the arch: centred on her, a little wider than her
+                            // the arch: centred on her, a little wider than her, and
+                            // never taller than the free picture
                             const ar = Math.max(X(m.col[1] - m.col[0]) / 2, 96);
                             const acx = X(m.cx);
-                            const apex = Y(Math.max(m.head - 0.075, 0.13));
+                            const apex = Y(
+                                clamp(
+                                    Math.max(m.head - 0.075, geo.top + 0.02),
+                                    0,
+                                    m.head + body * 0.12,
+                                ),
+                            );
                             const archY = apex + ar;
                             const base = Y(m.feet);
                             const archD = (o: number) =>
                                 `M${acx - ar + o} ${base} V${archY} A${ar - o} ${ar - o} 0 0 1 ${acx + ar - o} ${archY} V${base}`;
+                            // the name is set on the outside of the arch, down her free side
+                            const aR = ar + 12;
+                            const aQuarter = (Math.PI * aR) / 2;
+                            const aTotal = aQuarter + (base - archY);
+                            const aStart = Math.max(aQuarter * 0.42, 64);
+                            const archText =
+                                rs > 0
+                                    ? `M${acx} ${apex - 12} A${aR} ${aR} 0 0 1 ${acx + aR} ${archY} V${base}`
+                                    : `M${acx - aR} ${base} V${archY} A${aR} ${aR} 0 0 1 ${acx} ${apex - 12}`;
 
-                            // the rule: on her free side, or the other one if that is cramped
-                            const prev = models[k - 1];
-                            const next = models[k + 1];
-                            const roomAt = (sd: number) =>
-                                sd > 0
-                                    ? Math.min(next ? next.x0 : 1, m.cx < 0.5 ? LOGO[0] : 1) - m.x1
-                                    : m.x0 - Math.max(prev ? prev.x1 : 0, m.cx > 0.5 ? LOGO[1] : 0);
-                            const rs = roomAt(m.side) >= 0.07 ? m.side : -m.side;
+                            // the rule: on the side with room
                             const rx = X(rs > 0 ? m.x1 + 0.028 : m.x0 - 0.028);
                             const ry0 = Y(m.head);
                             const ry1 = Y(m.feet);
-                            const rmid = (ry0 + ry1) / 2;
-                            const rhalf = (lineText(m).length * 9.6 + 30) / 2;
+                            const rmid = (Math.max(ry0, T) + ry1) / 2;
+                            const rhalf = (lineText(m).length * fs * EM + 30) / 2;
                             const ticks = Array.from({ length: 41 }, (_, i) => {
                                 const y = ry0 + ((ry1 - ry0) * i) / 40;
                                 if (Math.abs(y - rmid) < rhalf + 4) return "";
@@ -545,13 +678,75 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                 return `M${rx} ${y.toFixed(1)} h${rs * len}`;
                             }).join(" ");
 
+                            // lines that reach the site header fade out under it
+                            const fade = (
+                                <>
+                                    <linearGradient
+                                        id={`${uid}fg${k}`}
+                                        gradientUnits="userSpaceOnUse"
+                                        x1="0"
+                                        y1={T - 22}
+                                        x2="0"
+                                        y2={T + 8}
+                                    >
+                                        <stop offset="0" stopColor="#000" />
+                                        <stop offset="1" stopColor="#fff" />
+                                    </linearGradient>
+                                    <mask
+                                        id={`${uid}f${k}`}
+                                        maskUnits="userSpaceOnUse"
+                                        x="-200"
+                                        y="-300"
+                                        width="2000"
+                                        height="1500"
+                                    >
+                                        <rect
+                                            x="-200"
+                                            y="-300"
+                                            width="2000"
+                                            height="1500"
+                                            fill={`url(#${uid}fg${k})`}
+                                        />
+                                    </mask>
+                                    {/* the running line also dissolves into the floor */}
+                                    <linearGradient
+                                        id={`${uid}bg${k}`}
+                                        gradientUnits="userSpaceOnUse"
+                                        x1="0"
+                                        y1={base - 46}
+                                        x2="0"
+                                        y2={base - 8}
+                                    >
+                                        <stop offset="0" stopColor="#fff" />
+                                        <stop offset="1" stopColor="#000" />
+                                    </linearGradient>
+                                    <mask
+                                        id={`${uid}b${k}`}
+                                        maskUnits="userSpaceOnUse"
+                                        x="-200"
+                                        y="-300"
+                                        width="2000"
+                                        height="1500"
+                                    >
+                                        <rect
+                                            x="-200"
+                                            y="-300"
+                                            width="2000"
+                                            height="1500"
+                                            fill={`url(#${uid}bg${k})`}
+                                        />
+                                    </mask>
+                                </>
+                            );
+                            const faded = `url(#${uid}f${k})`;
+
                             return (
                                 <div
                                     key={k}
                                     ref={(el) => {
                                         mRefs.current[k] = el;
                                     }}
-                                    className={`hl3__m ${on ? "is-on" : ""} ${m.side > 0 ? "is-r" : "is-l"} ${onLight ? "is-ink" : ""}`}
+                                    className={`hl3__m ${on ? "is-on" : ""} ${rs > 0 ? "is-r" : "is-l"} ${onLight ? "is-ink" : ""}`}
                                     style={style}
                                 >
                                     {/* 2 — behind her */}
@@ -559,9 +754,51 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         shadow("hl3__shw--key")}
                                     {mode === "duo" && (
                                         <>
-                                            {shadow("hl3__shw--gel hl3__shw--g1")}
                                             {shadow("hl3__shw--gel hl3__shw--g2")}
+                                            {shadow("hl3__shw--gel hl3__shw--g1")}
                                         </>
+                                    )}
+                                    {mode === "arch" && (
+                                        <svg
+                                            className="hl3__svg hl3__svg--back"
+                                            viewBox="0 0 1600 900"
+                                            preserveAspectRatio="none"
+                                            aria-hidden="true"
+                                        >
+                                            <path
+                                                d={archD(0)}
+                                                pathLength={1}
+                                                className="hl3__draw"
+                                            />
+                                            <path
+                                                d={archD(9)}
+                                                pathLength={1}
+                                                className="hl3__draw hl3__draw--thin"
+                                            />
+                                            {[-1, 1].map((sd) => (
+                                                <path
+                                                    key={sd}
+                                                    className="hl3__draw1"
+                                                    pathLength={1}
+                                                    d={`M${acx + sd * (ar - 18)} ${base} H${acx + sd * (ar + 12)}`}
+                                                />
+                                            ))}
+                                            <path
+                                                className="hl3__draw1 hl3__key"
+                                                pathLength={1}
+                                                d={`M${acx} ${apex - 7} V${apex + 11}`}
+                                            />
+                                            <path id={`${uid}a${k}`} d={archText} />
+                                            <text className="hl3__svgtext hl3__arctext">
+                                                <textPath
+                                                    href={`#${uid}a${k}`}
+                                                    startOffset={rs > 0 ? aStart : aTotal - aStart}
+                                                    textAnchor={rs > 0 ? "start" : "end"}
+                                                >
+                                                    {lineText(m)}
+                                                </textPath>
+                                            </text>
+                                        </svg>
                                     )}
 
                                     {/* 3 — the model herself */}
@@ -574,7 +811,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                     />
 
                                     {/* 4 — in front of her */}
-                                    {!SHADOWS.includes(mode) || mode === "duet" ? (
+                                    {!["shadow", "duo", "arch"].includes(mode) ? (
                                         <svg
                                             className="hl3__svg"
                                             viewBox="0 0 1600 900"
@@ -582,6 +819,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                             aria-hidden="true"
                                         >
                                             <defs>
+                                                {fade}
                                                 {HAS_TEXTLINE.includes(mode) && (
                                                     <mask
                                                         id={`${uid}x${k}`}
@@ -665,61 +903,21 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                 </>
                                             )}
 
-                                            {mode === "arch" && (
-                                                <>
-                                                    <path
-                                                        d={archD(0)}
-                                                        pathLength={1}
-                                                        className="hl3__draw"
-                                                    />
-                                                    <path
-                                                        d={archD(9)}
-                                                        pathLength={1}
-                                                        className="hl3__draw hl3__draw--thin"
-                                                    />
-                                                    {[-1, 1].map((sd) => (
-                                                        <path
-                                                            key={sd}
-                                                            className="hl3__draw1"
-                                                            pathLength={1}
-                                                            d={`M${acx + sd * (ar - 18)} ${base} H${acx + sd * (ar + 12)}`}
-                                                        />
-                                                    ))}
-                                                    <path
-                                                        className="hl3__draw1 hl3__key"
-                                                        pathLength={1}
-                                                        d={`M${acx} ${apex - 7} V${apex + 11}`}
-                                                    />
-                                                    <path
-                                                        id={`${uid}a${k}`}
-                                                        d={`M${acx - ar - 24} ${archY} A${ar + 24} ${ar + 24} 0 0 1 ${acx + ar + 24} ${archY}`}
-                                                    />
-                                                    <text className="hl3__svgtext hl3__arctext">
-                                                        <textPath
-                                                            href={`#${uid}a${k}`}
-                                                            startOffset="50%"
-                                                            textAnchor="middle"
-                                                        >
-                                                            {lineText(m)}
-                                                        </textPath>
-                                                    </text>
-                                                </>
-                                            )}
-
                                             {mode === "ripple" &&
                                                 paths.map((d, i) => (
-                                                    <g
-                                                        key={i}
-                                                        className="hl3__ring"
-                                                        style={{ ["--i" as string]: i }}
-                                                    >
-                                                        <Both
-                                                            d={d}
-                                                            cls={i ? "hl3__ln--thin" : ""}
-                                                            style={{
-                                                                ["--d" as string]: `${i * 0.14}s`,
-                                                            }}
-                                                        />
+                                                    <g key={i} mask={i ? faded : undefined}>
+                                                        <g
+                                                            className="hl3__ring"
+                                                            style={{ ["--i" as string]: i }}
+                                                        >
+                                                            <Both
+                                                                d={d}
+                                                                cls={i ? "hl3__ln--thin" : ""}
+                                                                style={{
+                                                                    ["--d" as string]: `${i * 0.14}s`,
+                                                                }}
+                                                            />
+                                                        </g>
                                                     </g>
                                                 ))}
 
@@ -727,18 +925,23 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                 <>
                                                     <Both d={paths[0]} cls="hl3__ln--thin" />
                                                     <path id={`${uid}l${k}`} d={paths[1]} />
-                                                    <g mask={`url(#${uid}r${k})`}>
-                                                        <text className="hl3__svgtext hl3__looptext">
-                                                            <textPath
-                                                                ref={(el) => {
-                                                                    loopRefs.current[k] = el;
-                                                                }}
-                                                                href={`#${uid}l${k}`}
-                                                                startOffset="0"
-                                                            >
-                                                                {loopText[k]}
-                                                            </textPath>
-                                                        </text>
+                                                    <g mask={faded}>
+                                                        <g mask={`url(#${uid}b${k})`}>
+                                                            <g mask={`url(#${uid}r${k})`}>
+                                                                <text className="hl3__svgtext hl3__looptext">
+                                                                    <textPath
+                                                                        ref={(el) => {
+                                                                            loopRefs.current[k] =
+                                                                                el;
+                                                                        }}
+                                                                        href={`#${uid}l${k}`}
+                                                                        startOffset="0"
+                                                                    >
+                                                                        {loopText[k]}
+                                                                    </textPath>
+                                                                </text>
+                                                            </g>
+                                                        </g>
                                                     </g>
                                                 </>
                                             )}
@@ -760,7 +963,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                             )}
 
                                             {mode === "measure" && (
-                                                <>
+                                                <g mask={faded}>
                                                     {/* from her head and her feet out to the rule */}
                                                     {[ry0, ry1].map((y, i) => (
                                                         <path
@@ -786,13 +989,13 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                     <text
                                                         className="hl3__svgtext hl3__ruletext"
                                                         x={rx}
-                                                        y={rmid + 4}
+                                                        y={rmid + fs * 0.36}
                                                         textAnchor="middle"
-                                                        transform={`rotate(-90 ${rx} ${rmid})`}
+                                                        transform={`rotate(${rs > 0 ? 90 : -90} ${rx} ${rmid})`}
                                                     >
                                                         {lineText(m)}
                                                     </text>
-                                                </>
+                                                </g>
                                             )}
 
                                             {mode === "offset" && (
@@ -824,10 +1027,24 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         </svg>
                                     ) : null}
 
-                                    {TOP_CAPTION.includes(mode) && (
-                                        <div className="hl3__serif">
+                                    {/* the caption runs down her free side */}
+                                    {SIDE_CAPTION.includes(mode) && (
+                                        <div
+                                            className="hl3__cap"
+                                            style={{
+                                                left: pct(rs > 0 ? m.x1 + 0.02 : m.x0 - 0.02),
+                                                top: pct(
+                                                    Math.max(m.head + body * 0.13, geo.top + 0.012),
+                                                ),
+                                            }}
+                                        >
                                             <b>{sentence(m.title)}</b>
-                                            {parts.length > 0 && <i>{m.sub}</i>}
+                                            {parts.length > 0 && (
+                                                <>
+                                                    <s />
+                                                    <i>{m.sub}</i>
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                 </div>

@@ -96,17 +96,17 @@ const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
     {
         mode: "arch",
         label: "Арка",
-        hint: "Арка малюється двома лініями від підлоги до вершини, назва лягає на її дугу",
+        hint: "Арка малюється за моделлю двома лініями від підлоги до вершини, назва лягає на її дугу",
     },
     {
         mode: "shadow",
         label: "Тінь",
-        hint: "Курсор — це лампа: тінь виростає зі ступнів і хилиться від світла",
+        hint: "Спалах камери: тінь лягає на стіну за моделлю і ходить за курсором, як за лампою",
     },
     {
         mode: "duo",
         label: "Кольорові тіні",
-        hint: "Дві лампи — дві тіні в кольорах костюма, рухаються за курсором",
+        hint: "Силует моделі двічі в кольорах костюма — розходиться вбік за курсором",
     },
     {
         mode: "ripple",
@@ -136,7 +136,7 @@ const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
     {
         mode: "duet",
         label: "Контур і тінь",
-        hint: "Тінь від лампи і лінія навколо моделі разом",
+        hint: "Спалах з тінню на стіні і лінія навколо моделі разом",
     },
 ];
 
@@ -253,12 +253,13 @@ interface StageData {
     models2: LiveModel[];
 }
 
-/** the lab page: one full hero, and a dock under it to pick effect + slide */
+/** the lab page: the hero at its real size, and one slim bar to pick effect + slide */
 function LabPlayer({ stages }: { stages: StageData[] }) {
     const [fx, setFx] = useState(0);
     const [slide, setSlide] = useState(0);
+    const [open, setOpen] = useState(false);
     const go = (d: number) => setSlide((i) => (i + d + stages.length) % stages.length);
-    // keyboard: 1-4 effect, arrows slide
+    // keyboard: 1-9 and 0 effect, arrows slide
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
             if (e.target instanceof HTMLInputElement) return;
@@ -267,17 +268,27 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
             else if (n >= 1 && n <= EFFECTS.length) setFx(n - 1);
             if (e.key === "ArrowRight") go(1);
             if (e.key === "ArrowLeft") go(-1);
+            if (e.key === "Escape") setOpen(false);
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    // keep the chosen thumbnail in view
+    // the list of slides closes when anything else is pressed
+    useEffect(() => {
+        if (!open) return;
+        const onDown = (e: PointerEvent) => {
+            if (!(e.target as Element).closest?.(".hldock__slides")) setOpen(false);
+        };
+        document.addEventListener("pointerdown", onDown);
+        return () => document.removeEventListener("pointerdown", onDown);
+    }, [open]);
+    // keep the chosen effect in view when the row scrolls (phone)
     useEffect(() => {
         document
-            .querySelector(".hldock__thumbs .is-on")
+            .querySelector(".hldock__fx .is-on")
             ?.scrollIntoView({ block: "nearest", inline: "center" });
-    }, [slide]);
+    }, [fx]);
 
     const st = stages[slide];
     const e = EFFECTS[fx];
@@ -299,6 +310,7 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
                             type="button"
                             role="tab"
                             aria-selected={i === fx}
+                            title={x.hint}
                             className={i === fx ? "is-on" : ""}
                             onClick={() => setFx(i)}
                         >
@@ -307,44 +319,54 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
                         </button>
                     ))}
                 </div>
-                <div className="hldock__row">
-                    <div className="hldock__slides">
-                        <button
-                            type="button"
-                            className="hldock__arrow"
-                            aria-label="Попередній слайд"
-                            onClick={() => go(-1)}
-                        >
-                            ‹
-                        </button>
-                        <div className="hldock__thumbs" role="tablist" aria-label="Слайд">
-                            {stages.map((s, i) => (
+                <div className="hldock__slides">
+                    <button
+                        type="button"
+                        className="hldock__arrow"
+                        aria-label="Попередній слайд"
+                        onClick={() => go(-1)}
+                    >
+                        ‹
+                    </button>
+                    <button
+                        type="button"
+                        className="hldock__count"
+                        aria-expanded={open}
+                        aria-label="Усі слайди"
+                        onClick={() => setOpen((o) => !o)}
+                    >
+                        <img src={`${st.maskDir}/thumb.webp`} alt="" />
+                        {slide + 1} / {stages.length}
+                    </button>
+                    <button
+                        type="button"
+                        className="hldock__arrow"
+                        aria-label="Наступний слайд"
+                        onClick={() => go(1)}
+                    >
+                        ›
+                    </button>
+                    {open && (
+                        <div className="hldock__panel" role="tablist" aria-label="Слайд">
+                            {stages.map((x, i) => (
                                 <button
-                                    key={s.sid}
+                                    key={x.sid}
                                     type="button"
                                     role="tab"
                                     aria-selected={i === slide}
                                     aria-label={`Слайд ${i + 1}`}
                                     className={i === slide ? "is-on" : ""}
-                                    onClick={() => setSlide(i)}
+                                    onClick={() => {
+                                        setSlide(i);
+                                        setOpen(false);
+                                    }}
                                 >
-                                    <img src={`${s.maskDir}/thumb.webp`} alt="" loading="lazy" />
+                                    <img src={`${x.maskDir}/thumb.webp`} alt="" />
+                                    <span>{i + 1}</span>
                                 </button>
                             ))}
                         </div>
-                        <button
-                            type="button"
-                            className="hldock__arrow"
-                            aria-label="Наступний слайд"
-                            onClick={() => go(1)}
-                        >
-                            ›
-                        </button>
-                    </div>
-                    <p className="hldock__hint">
-                        <b>{e.label}</b>
-                        {e.hint}
-                    </p>
+                    )}
                 </div>
             </nav>
         </main>

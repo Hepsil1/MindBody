@@ -4,9 +4,9 @@
    Durations carry !important so the site-wide reduced-motion rule doesn't
    flatten the lab (the owner reviews with reduce-motion ON). Revisit before
    anything here ships to the home page.
-   JS sets on each model: --sk --sy (how her shadow leans, how long it is),
-   --mx --my (offset print), --p (where lines start, 0..1 along her outline),
-   --bx --by (the bead on the contour). */
+   JS sets on each model: --lx --ly (where the lamp stands relative to her,
+   -1..1, eased every frame), --p (where lines start, 0..1 along her outline),
+   --bx --by (the bead on the contour); on the section: --fs (line type size). */
 
 @property --a {
     syntax: "<number>";
@@ -16,31 +16,6 @@
 @property --b {
     syntax: "<number>";
     inherits: false;
-    initial-value: 0;
-}
-@property --g {
-    syntax: "<number>";
-    inherits: false;
-    initial-value: 0;
-}
-@property --sk {
-    syntax: "<number>";
-    inherits: true;
-    initial-value: -18;
-}
-@property --sy {
-    syntax: "<number>";
-    inherits: true;
-    initial-value: 0.85;
-}
-@property --mx {
-    syntax: "<number>";
-    inherits: true;
-    initial-value: 0;
-}
-@property --my {
-    syntax: "<number>";
-    inherits: true;
     initial-value: 0;
 }
 
@@ -57,6 +32,8 @@
     display: contents;
     color: #fff;
     --p: 0.5;
+    --lx: 0;
+    --ly: 0;
 }
 .hl3__m.is-ink {
     color: var(--ink);
@@ -76,115 +53,100 @@
     font-style: normal;
     font-weight: inherit;
 }
-.hl3__shw {
+.hl3__shw,
+.hl3__svg--back {
     z-index: 1;
 }
 .hl3__cut {
     z-index: 2;
 }
 .hl3__svg,
-.hl3__serif {
+.hl3__cap {
     z-index: 3;
+}
+.hl3 .hl3__svg--back {
+    z-index: 1;
 }
 
 /* ===================================================================== */
 /* HER SHADOW                                                             */
-/* Grows out of her feet (anchored there), leans away from the lamp,      */
-/* crisp near the feet and softer towards the head, in the wall's own     */
-/* colour (multiply), and stops at the line where she stands.             */
+/* A camera flash: her silhouette lands on the wall close behind her — a  */
+/* touch larger than she is, soft-edged, in the wall's own colour         */
+/* (multiply), thinning out towards the floor. It sits opposite the lamp  */
+/* (--lx --ly) and slides round her as the lamp moves; with the lamp      */
+/* straight in front it is hidden behind her, as it would be.             */
 /* ===================================================================== */
 .hl3__shw {
     inset: 0;
+    opacity: 0;
     mix-blend-mode: multiply;
-    -webkit-mask-image: linear-gradient(
-        to bottom,
-        #000 calc(var(--feet) - 0.3%),
-        transparent calc(var(--feet) + 0.6%)
-    );
-    mask-image: linear-gradient(
-        to bottom,
-        #000 calc(var(--feet) - 0.3%),
-        transparent calc(var(--feet) + 0.6%)
-    );
+    transform-origin: var(--cx) var(--feet);
+    transform: translate(calc(var(--lx) * var(--dx, -2.6%)), calc(var(--ly) * var(--dy, -0.8%)))
+        scale(var(--sc, 1.025));
+    transition: opacity 0.3s ease !important;
+    will-change: transform, opacity;
+}
+.is-on .hl3__shw {
+    opacity: var(--so, 0.5);
+    transition: opacity 0.16s ease-out !important;
 }
 .hl3__shb {
     position: absolute;
     inset: 0;
-}
-.hl3__shb--hard {
-    filter: blur(1.2px);
-    -webkit-mask-image: linear-gradient(
-        to bottom,
-        transparent calc(var(--head) + var(--bh) * 0.32),
-        #000 calc(var(--head) + var(--bh) * 0.74)
-    );
-    mask-image: linear-gradient(
-        to bottom,
-        transparent calc(var(--head) + var(--bh) * 0.32),
-        #000 calc(var(--head) + var(--bh) * 0.74)
-    );
-}
-.hl3__shb--soft {
-    filter: blur(calc(var(--ch) * 0.0065));
-    -webkit-mask-image: linear-gradient(
-        to bottom,
-        #000 calc(var(--head) + var(--bh) * 0.5),
-        transparent calc(var(--head) + var(--bh) * 0.86)
-    );
-    mask-image: linear-gradient(
-        to bottom,
-        #000 calc(var(--head) + var(--bh) * 0.5),
-        transparent calc(var(--head) + var(--bh) * 0.86)
-    );
+    filter: blur(calc(var(--ch) * 0.0036));
 }
 .hl3__sh {
     position: absolute;
     display: block;
-    -webkit-mask: var(--sil) 0 0 / 100% 100% no-repeat;
-    mask: var(--sil) 0 0 / 100% 100% no-repeat;
     background: var(--shc, var(--ground));
-    transform-origin: var(--ox) var(--oy);
-    --base: 0;
-    --g: 0;
-    transform: skewX(calc((var(--base) + var(--sk) * var(--kk, 1)) * var(--g) * 1deg))
-        scaleY(calc(var(--sy) * var(--g)));
-    transition:
-        --g 0.45s cubic-bezier(0.5, 0, 0.8, 0.4),
-        --sk 0.5s cubic-bezier(0.2, 0.7, 0.2, 1),
-        --sy 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) !important;
-    will-change: transform;
+    -webkit-mask-image:
+        var(--sil), linear-gradient(to bottom, #000 var(--f0), transparent var(--f1));
+    mask-image: var(--sil), linear-gradient(to bottom, #000 var(--f0), transparent var(--f1));
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+    /* the edge row of a scaled mask leaks a hairline: trim it */
+    clip-path: inset(1.5px);
 }
-.is-on .hl3__sh {
-    --g: 1;
-    transition:
-        --g 1.05s cubic-bezier(0.2, 0.8, 0.2, 1),
-        --sk 0.5s cubic-bezier(0.2, 0.7, 0.2, 1),
-        --sy 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) !important;
+/* the flash itself: she is lit for an instant */
+.hl3--shadow .is-on .hl3__cut,
+.hl3--duet .is-on .hl3__cut {
+    animation: hl3Flash 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both !important;
 }
-.hl3__shw--key {
-    opacity: 0.62;
+@keyframes hl3Flash {
+    0% {
+        filter: brightness(1.2) contrast(1.03);
+    }
+    100% {
+        filter: brightness(1) contrast(1);
+    }
 }
 
-/* duo: two lamps from either side, each throwing a shadow in her colour */
+/* duo: her silhouette twice, in the two colours of her outfit, stepping aside */
 .hl3__shw--gel {
-    --kk: 0.5;
+    mix-blend-mode: normal;
+}
+.hl3__shw--gel .hl3__shb {
+    filter: blur(calc(var(--ch) * 0.0009));
 }
 .hl3__shw--g1 {
     --shc: var(--hex);
-    opacity: 0.72;
+    --so: 0.88;
+    --dx: -2.4%;
+    --sc: 1.012;
 }
 .hl3__shw--g2 {
     --shc: var(--hex2);
-    opacity: 0.78;
+    --so: 0.6;
+    --dx: -4.8%;
+    --dy: -1.2%;
+    --sc: 1.03;
 }
-.hl3__shw--g1 .hl3__sh {
-    --base: 24;
-}
-.hl3__shw--g2 .hl3__sh {
-    --base: -24;
-}
-.hl3__shw--g2 .hl3__sh {
-    transition-delay: 0.08s !important;
+.is-on .hl3__shw--g2 {
+    transition-delay: 0.07s !important;
 }
 
 /* ===================================================================== */
@@ -442,14 +404,11 @@
     stroke-width: 2.6;
     filter: none !important;
 }
-.hl3__off {
-    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) !important;
-}
 .hl3__off--c {
-    transform: translate(calc(var(--mx) * 1px), calc(var(--my) * 1px));
+    transform: translate(calc(var(--lx) * 9px), calc(3px + var(--ly) * 4px));
 }
 .hl3__off--w {
-    transform: translate(calc(var(--mx) * -1px), calc(var(--my) * -1px));
+    transform: translate(calc(var(--lx) * -9px), calc(-3px - var(--ly) * 4px));
 }
 
 /* ===================================================================== */
@@ -458,9 +417,9 @@
 .hl3__svgtext {
     fill: currentColor;
     font:
-        700 12.5px "Manrope",
+        700 var(--fs, 12.5px) "Manrope",
         sans-serif;
-    letter-spacing: 3.3px;
+    letter-spacing: 0.26em;
     text-transform: uppercase;
 }
 /* written beside the contour from its first letter to its last */
@@ -479,113 +438,128 @@
 .hl3__arctext,
 .hl3__ruletext {
     opacity: 0;
-    letter-spacing: 7px;
+    letter-spacing: 0.5em;
     transition:
         opacity 0.2s ease,
         letter-spacing 0.2s ease !important;
 }
 .is-on .hl3__arctext {
     opacity: 1;
-    letter-spacing: 3.3px;
+    letter-spacing: 0.26em;
     transition:
         opacity 0.7s ease 1.2s,
         letter-spacing 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 1.2s !important;
 }
 .is-on .hl3__ruletext {
     opacity: 1;
-    letter-spacing: 3.3px;
+    letter-spacing: 0.26em;
     transition:
         opacity 0.6s ease 0.6s,
         letter-spacing 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.6s !important;
 }
 .hl3__looptext {
-    font-size: 11.5px;
-    letter-spacing: 3px;
+    font-size: calc(var(--fs, 12.5px) * 0.94);
 }
 
-/* serif: italic name over small caps, above her head.
-   The name gathers itself (tracking closes), the small caps follow. */
-.hl3__serif {
-    left: var(--cx);
-    top: calc(var(--head) - 7.4%);
-    transform: translateX(-50%);
-    text-align: center;
+/* caption: her name in italic serif, a hairline, then small caps — one line
+   running down her free side (there is never room above her head) */
+.hl3__cap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    writing-mode: vertical-rl;
     white-space: nowrap;
     opacity: 0;
+    text-shadow: 0 0 10px rgba(30, 20, 40, 0.3);
     transition: opacity 0.2s ease !important;
 }
-.hl3__serif b {
-    display: block;
+.hl3__m.is-ink .hl3__cap {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+.is-l .hl3__cap {
+    translate: -100% 0;
+}
+.hl3__cap b {
     font:
-        italic 500 26px/1 "Spectral",
+        italic 500 clamp(21px, calc(var(--ch) * 0.034), 36px) / 1 "Spectral",
         Georgia,
         serif;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     transition: letter-spacing 0.2s ease !important;
 }
-.hl3__serif i {
-    display: block;
-    margin-top: 7px;
+.hl3__cap s {
+    flex: none;
+    width: 1px;
+    height: clamp(22px, calc(var(--ch) * 0.04), 40px);
+    background: currentColor;
+    opacity: 0.55;
+    transform-origin: 50% 0;
+    transform: scaleY(0);
+    transition: transform 0.2s ease !important;
+}
+.hl3__cap i {
     font:
-        600 10px/1 "Manrope",
+        600 clamp(10px, calc(var(--ch) * 0.0135), 13px) / 1 "Manrope",
         sans-serif;
     letter-spacing: 0.24em;
-    text-indent: 0.24em;
     text-transform: uppercase;
     opacity: 0;
-    translate: 0 5px;
+    translate: 0 -6px;
     transition:
         opacity 0.2s ease,
         translate 0.2s ease !important;
 }
-.is-on .hl3__serif {
+.is-on .hl3__cap {
     opacity: 1;
-    transition: opacity 0.5s ease 0.45s !important;
+    transition: opacity 0.45s ease 0.25s !important;
 }
-.is-on .hl3__serif b {
-    letter-spacing: 0.01em;
-    transition: letter-spacing 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.45s !important;
+.is-on .hl3__cap b {
+    letter-spacing: 0.02em;
+    transition: letter-spacing 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s !important;
 }
-.is-on .hl3__serif i {
-    opacity: 0.9;
+.is-on .hl3__cap s {
+    transform: scaleY(1);
+    transition: transform 0.6s cubic-bezier(0.3, 0, 0.2, 1) 0.55s !important;
+}
+.is-on .hl3__cap i {
+    opacity: 0.92;
     translate: 0 0;
     transition:
-        opacity 0.5s ease 0.8s,
-        translate 0.6s cubic-bezier(0.2, 0.9, 0.2, 1) 0.8s !important;
+        opacity 0.5s ease 0.75s,
+        translate 0.6s cubic-bezier(0.2, 0.9, 0.2, 1) 0.75s !important;
 }
 
 /* ===================================================================== */
-/* the lab page: one hero + a dock to pick the effect and the slide       */
+/* the lab page: the hero at its real size, and one slim bar to pick the  */
+/* effect and the slide. On a desktop the bar takes the place of the      */
+/* site's top strip, so the hero is exactly as tall as on the home page.  */
 /* ===================================================================== */
 .hllab {
-    --dock: 118px;
+    --dock: 38px;
     background: #17141a;
 }
-.hllab .slook {
-    height: calc(100svh - var(--dock));
-    min-height: 480px;
+body:has(.hllab) .top-bar {
+    visibility: hidden;
 }
 .hldock {
     position: fixed;
+    top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    z-index: 60;
+    z-index: 1300;
     height: var(--dock);
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 9px;
-    padding: 0 clamp(14px, 2.4vw, 36px);
-    padding-right: max(96px, clamp(14px, 2.4vw, 36px)); /* chat buttons sit in this corner */
+    align-items: center;
+    gap: 16px;
+    padding: 0 clamp(12px, 2vw, 28px);
     background: #17141a;
     color: #fff;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 .hldock__fx {
-    flex: none;
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
-    gap: 6px;
+    gap: 5px;
     overflow-x: auto;
     scrollbar-width: none;
 }
@@ -596,15 +570,15 @@
     flex: none;
     display: flex;
     align-items: center;
-    gap: 7px;
-    height: 38px;
-    padding: 0 14px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    gap: 6px;
+    height: 28px;
+    padding: 0 11px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 999px;
     background: none;
     color: #fff;
     font:
-        600 13px/1 "Manrope",
+        600 12.5px/1 "Manrope",
         sans-serif;
     white-space: nowrap;
     cursor: pointer;
@@ -615,13 +589,13 @@
 }
 .hldock__fx button span {
     font:
-        700 11px/1 "Onest",
+        700 10.5px/1 "Onest",
         sans-serif;
     color: #e08a66;
     font-variant-numeric: tabular-nums;
 }
 .hldock__fx button:hover {
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: rgba(255, 255, 255, 0.65);
 }
 .hldock__fx button.is-on {
     background: #fff;
@@ -631,57 +605,74 @@
 .hldock__fx button.is-on span {
     color: #c0562e;
 }
-.hldock__row {
+.hldock__slides {
+    position: relative;
     flex: none;
     display: flex;
     align-items: center;
-    gap: 14px;
-    min-width: 0;
+    gap: 4px;
 }
-.hldock__slides {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    flex: 0 1 auto;
+.hldock__arrow,
+.hldock__count {
+    height: 28px;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
 .hldock__arrow {
-    flex: none;
-    width: 30px;
-    height: 40px;
-    border: 0;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    width: 28px;
     font:
-        400 20px/1 "Manrope",
+        400 18px/1 "Manrope",
         sans-serif;
-    cursor: pointer;
 }
-.hldock__arrow:hover {
-    background: rgba(255, 255, 255, 0.18);
-}
-.hldock__thumbs {
+.hldock__count {
     display: flex;
-    gap: 5px;
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding: 2px;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px 0 3px;
+    font:
+        600 12.5px/1 "Manrope",
+        sans-serif;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
-.hldock__thumbs::-webkit-scrollbar {
-    display: none;
+.hldock__count img {
+    display: block;
+    width: 39px;
+    height: 22px;
+    border-radius: 4px;
+    object-fit: cover;
 }
-.hldock__thumbs button {
-    flex: none;
-    width: 68px;
-    height: 38px;
+.hldock__arrow:hover,
+.hldock__count:hover,
+.hldock__count[aria-expanded="true"] {
+    background: rgba(255, 255, 255, 0.22);
+}
+/* all the slides at once */
+.hldock__panel {
+    position: absolute;
+    top: calc(100% + 5px);
+    right: 0;
+    display: grid;
+    grid-template-columns: repeat(5, 104px);
+    gap: 6px;
+    padding: 10px;
+    border-radius: 0 0 12px 12px;
+    background: #17141a;
+    box-shadow: 0 18px 40px rgba(10, 6, 14, 0.4);
+}
+.hldock__panel button {
+    position: relative;
+    height: 58px;
     padding: 0;
     border: 0;
     border-radius: 6px;
     overflow: hidden;
     background: #2a2630;
-    opacity: 0.5;
+    opacity: 0.72;
     outline: 2px solid transparent;
     outline-offset: 1px;
     cursor: pointer;
@@ -689,73 +680,71 @@
         opacity 0.2s ease,
         outline-color 0.2s ease;
 }
-.hldock__thumbs button:hover {
-    opacity: 0.85;
+.hldock__panel button:hover {
+    opacity: 1;
 }
-.hldock__thumbs button.is-on {
+.hldock__panel button.is-on {
     opacity: 1;
     outline-color: #e08a66;
 }
-.hldock__thumbs img {
+.hldock__panel img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-.hldock__hint {
-    flex: 1 1 280px;
-    min-width: 260px;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-    margin: 0;
+.hldock__panel span {
+    position: absolute;
+    left: 5px;
+    bottom: 4px;
     font:
-        400 12.5px/1.4 "Manrope",
+        700 10.5px/1 "Onest",
         sans-serif;
-    color: rgba(255, 255, 255, 0.62);
-}
-.hldock__hint b {
-    font-weight: 600;
     color: #fff;
-    margin-right: 8px;
-}
-@media (max-width: 1100px) {
-    .hldock__hint {
-        display: none;
-    }
-}
-@media (max-width: 768px) {
-    .hllab {
-        --dock: 112px;
-    }
-    .hldock {
-        padding: 8px 12px;
-        gap: 8px;
-    }
-    .hldock__fx button {
-        height: 36px;
-        padding: 0 12px;
-        font-size: 12.5px;
-    }
-    .hldock__thumbs button {
-        width: 62px;
-        height: 36px;
-    }
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
 }
 
-/* phone: a narrow screen has no room for a long leaning shadow */
+/* phone: the site has no top strip there — the bar sits under the hero */
 @media (max-width: 768px) {
-    .hl3__shw--key {
-        --kk: 0.45;
+    .hllab {
+        --dock: 52px;
     }
-    .hl3__shw--gel {
-        --kk: 0.25;
+    .hllab .slook {
+        height: calc(100svh - var(--dock));
+        min-height: 480px;
     }
-    .hl3__shw--g1 .hl3__sh {
-        --base: 13;
+    .hldock {
+        top: auto;
+        bottom: 0;
+        gap: 10px;
+        padding: 0 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .hl3__shw--g2 .hl3__sh {
-        --base: -13;
+    .hldock__fx button {
+        height: 34px;
+        padding: 0 12px;
+    }
+    .hldock__arrow,
+    .hldock__count {
+        height: 34px;
+    }
+    .hldock__arrow {
+        width: 30px;
+    }
+    .hldock__count {
+        padding: 0 9px;
+    }
+    .hldock__count img {
+        display: none;
+    }
+    .hldock__panel {
+        top: auto;
+        bottom: calc(100% + 9px);
+        right: -4px;
+        grid-template-columns: repeat(3, 96px);
+        border-radius: 12px 12px 0 0;
+    }
+    .hldock__panel button {
+        height: 54px;
     }
 }
