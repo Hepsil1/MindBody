@@ -3,10 +3,10 @@
  * page stays the client's untouched review set). Each page shows ONE concept on
  * a stack of slides with different models, so it can be judged on more than a
  * single photo.
- *   /hero-lab     the set offered to the client: the nine strongest variants grown
- *                 from the three ideas the owner kept (colour behind the model,
- *                 camera light, a drawn line) — HeroLabStage2. Every variant
- *                 can be switched to any of 15 slides.
+ *   /hero-lab     the set offered to the client: ONE full hero + a dock below it to
+ *                 pick the effect (4) and the slide (15). The slide is a layered
+ *                 scene (HeroLabLive, scratch/build_hero_lab_v6.py), so the
+ *                 effects come from the model herself and follow the pointer.
  * Older experiments, kept for reference only:
  *   /hero-lab/1   reference — the DUO CONTRAST slide exactly as in the gallery
  *   /hero-lab/2   tap/hover a model → spotlight (the rest sinks into shade)
@@ -31,12 +31,12 @@
  */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { data, redirect, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import SingleLookHero from "../components/SingleLookHero";
 import HeroLabStage, { type LabMode, type LabModel } from "../components/HeroLabStage";
-import HeroLabStage2, { type Lab2Mode, type Lab2Model } from "../components/HeroLabStage2";
+import HeroLabLive, { type LiveMode, type LiveModel } from "../components/HeroLabLive";
 import { useI18n, useMoney } from "../i18n";
 import { getColorLabel } from "../utils/colors";
 import { getHeroLooks } from "../utils/heroLooks.server";
@@ -86,75 +86,31 @@ const LAB_SLIDES: typeof SLIDES = [
     { sid: "u18_sky_zip", variant: "match" },
 ];
 
-/** /hero-lab: variant → group, label, what happens, and the slide (index in LAB_SLIDES) it opens on */
-const GROUPS = ["Колір за моделлю", "Світло", "Лінія"];
-const CONCEPTS: Array<{ mode: Lab2Mode; g: number; label: string; note: string; slide: number }> = [
-    {
-        mode: "column",
-        g: 0,
-        label: "Колона",
-        note: "Паперовий фон кольору костюма розгортається згори, назва надрукована на ньому",
-        slide: 1,
-    },
-    {
-        mode: "arch",
-        g: 0,
-        label: "Арка",
-        note: "Класична арка виростає від підлоги, назва курсивом у її склепінні",
-        slide: 7,
-    },
-    {
-        mode: "disc",
-        g: 0,
-        label: "Коло",
-        note: "Коло кольору розкривається за плечима, підпис іде по дузі",
-        slide: 3,
-    },
-    {
-        mode: "silh",
-        g: 0,
-        label: "Силует",
-        note: "З-за моделі виходять два її силуети в кольорі костюма, поруч назва курсивом",
-        slide: 5,
-    },
-    {
-        mode: "flash",
-        g: 1,
-        label: "Спалах",
-        note: "Спалах камери: різка тінь на стіні, наліпки з назвою",
-        slide: 13,
-    },
-    {
-        mode: "colflash",
-        g: 1,
-        label: "Спалах на кольорі",
-        note: "Спалах — і за моделлю вже кольоровий фон з її тінню",
-        slide: 2,
-    },
+/** /hero-lab: the four effects, in the order of the dock */
+const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
     {
         mode: "contour",
-        g: 2,
         label: "Контур",
-        note: "Тонка лінія обводить модель від стоп до голови, текст пишеться вздовж неї",
-        slide: 4,
+        hint: "Лінія починається там, де ви торкнулись моделі, і обходить її; намистинка їде по лінії за курсором",
     },
     {
-        mode: "archline",
-        g: 2,
-        label: "Арка лінією",
-        note: "Арка малюється від підлоги до вершини, підпис висить під нею, як замковий камінь",
-        slide: 10,
+        mode: "light",
+        label: "Світло",
+        hint: "Курсор — це лампа: спалах, і тінь на стіні рухається за ним",
     },
     {
-        mode: "frame",
-        g: 2,
-        label: "Рамка",
-        note: "Подвійна рамка зі стиками, як у галереї, і табличка з назвою",
-        slide: 11,
+        mode: "gel",
+        label: "Кольорова тінь",
+        hint: "Дві тіні кольору костюма розходяться за моделлю і йдуть за курсором",
+    },
+    {
+        mode: "column",
+        label: "Колона",
+        hint: "Розгортається паперовий фон кольору костюма, тінь моделі падає на нього",
     },
 ];
 
-type Geo = Omit<Lab2Model, "href" | "title" | "sub">;
+type Geo = Omit<LiveModel, "href" | "title" | "sub">;
 
 interface LabMeta {
     models: Array<{
@@ -187,7 +143,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         const geo = best
             ? (
                   JSON.parse(
-                      await readFile(metaPath.replace("meta.json", "meta5.json"), "utf8"),
+                      await readFile(metaPath.replace("meta.json", "meta6.json"), "utf8"),
                   ) as { models: Geo[] }
               ).models
             : null;
@@ -229,7 +185,7 @@ export default function HeroLab() {
             look,
             maskDir: `/hero/lab/${sid}`,
             studioBg: look.studioBg,
-            models2: (geo ?? []).map((g, k): Lab2Model => ({ ...g, ...info(k) })),
+            models2: (geo ?? []).map((g, k): LiveModel => ({ ...g, ...info(k) })),
             models: models.map(
                 (m, k): LabModel => ({
                     ...info(k),
@@ -243,38 +199,7 @@ export default function HeroLab() {
         };
     });
 
-    if (best) {
-        return (
-            <main className="hlabx">
-                <section className="hlabx__index">
-                    <h1>Hero lab · {CONCEPTS.length} варіантів</h1>
-                    <p>
-                        Наведіть на модель (на телефоні — торкніться): спрацює варіант, клік
-                        відкриває товар. Кружечки з цифрами праворуч перемикають слайд — будь-який
-                        варіант можна подивитися на {stages.length} слайдах з різними моделями.
-                    </p>
-                    <div className="hlabx__groups">
-                        {GROUPS.map((g, gi) => (
-                            <div key={g}>
-                                <h3>{g}</h3>
-                                {CONCEPTS.map((c, i) =>
-                                    c.g === gi ? (
-                                        <a key={c.mode} href={`#v${i + 1}`}>
-                                            <span>{String(i + 1).padStart(2, "0")}</span>
-                                            {c.label}
-                                        </a>
-                                    ) : null,
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </section>
-                {CONCEPTS.map((c, i) => (
-                    <Variant key={c.mode} n={i + 1} concept={c} stages={stages} />
-                ))}
-            </main>
-        );
-    }
+    if (best) return <LabPlayer stages={stages} />;
 
     return (
         <main style={{ background: "#f4f1ec" }}>
@@ -295,50 +220,100 @@ interface StageData {
     sid: string;
     maskDir: string;
     studioBg?: string;
-    models2: Lab2Model[];
+    models2: LiveModel[];
 }
 
-/** one variant: a caption bar (outside the hero) + the hero on a chosen slide */
-function Variant({
-    n,
-    concept,
-    stages,
-}: {
-    n: number;
-    concept: (typeof CONCEPTS)[number];
-    stages: StageData[];
-}) {
-    const [slide, setSlide] = useState(Math.min(concept.slide, stages.length - 1));
+/** the lab page: one full hero, and a dock under it to pick effect + slide */
+function LabPlayer({ stages }: { stages: StageData[] }) {
+    const [fx, setFx] = useState(0);
+    const [slide, setSlide] = useState(0);
+    const go = (d: number) => setSlide((i) => (i + d + stages.length) % stages.length);
+    // keyboard: 1-4 effect, arrows slide
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement) return;
+            const n = Number(e.key);
+            if (n >= 1 && n <= EFFECTS.length) setFx(n - 1);
+            if (e.key === "ArrowRight") go(1);
+            if (e.key === "ArrowLeft") go(-1);
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // keep the chosen thumbnail in view
+    useEffect(() => {
+        document
+            .querySelector(".hldock__thumbs .is-on")
+            ?.scrollIntoView({ block: "nearest", inline: "center" });
+    }, [slide]);
+
     const st = stages[slide];
+    const e = EFFECTS[fx];
     if (!st?.models2.length) return null;
     return (
-        <article className="hlabx__item" id={`v${n}`}>
-            <header className="hlabx__bar">
-                <b>{String(n).padStart(2, "0")}</b>
-                <h2>{concept.label}</h2>
-                <p>{concept.note}</p>
-                <div className="hlabx__slides" role="tablist" aria-label="Слайд">
-                    {stages.map((s, i) => (
-                        <button
-                            key={s.sid}
-                            type="button"
-                            role="tab"
-                            aria-selected={i === slide}
-                            className={i === slide ? "is-on" : ""}
-                            onClick={() => setSlide(i)}
-                        >
-                            {i + 1}
-                        </button>
-                    ))}
-                </div>
-            </header>
-            <HeroLabStage2
-                key={st.sid}
+        <main className="hllab">
+            <HeroLabLive
+                key={`${st.sid}-${e.mode}`}
                 maskDir={st.maskDir}
                 studioBg={st.studioBg}
                 models={st.models2}
-                mode={concept.mode}
+                mode={e.mode}
             />
-        </article>
+            <nav className="hldock" aria-label="Hero lab">
+                <div className="hldock__fx" role="tablist" aria-label="Ефект">
+                    {EFFECTS.map((x, i) => (
+                        <button
+                            key={x.mode}
+                            type="button"
+                            role="tab"
+                            aria-selected={i === fx}
+                            className={i === fx ? "is-on" : ""}
+                            onClick={() => setFx(i)}
+                        >
+                            <span>{i + 1}</span>
+                            {x.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="hldock__slides">
+                    <button
+                        type="button"
+                        className="hldock__arrow"
+                        aria-label="Попередній слайд"
+                        onClick={() => go(-1)}
+                    >
+                        ‹
+                    </button>
+                    <div className="hldock__thumbs" role="tablist" aria-label="Слайд">
+                        {stages.map((s, i) => (
+                            <button
+                                key={s.sid}
+                                type="button"
+                                role="tab"
+                                aria-selected={i === slide}
+                                aria-label={`Слайд ${i + 1}`}
+                                className={i === slide ? "is-on" : ""}
+                                onClick={() => setSlide(i)}
+                            >
+                                <img src={`${s.maskDir}/thumb.webp`} alt="" loading="lazy" />
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        type="button"
+                        className="hldock__arrow"
+                        aria-label="Наступний слайд"
+                        onClick={() => go(1)}
+                    >
+                        ›
+                    </button>
+                </div>
+                <p className="hldock__hint">
+                    <b>{e.label}</b>
+                    {e.hint}
+                </p>
+            </nav>
+        </main>
     );
 }
