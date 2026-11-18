@@ -3,10 +3,10 @@
  * page stays the client's untouched review set). Each page shows ONE concept on
  * a stack of slides with different models, so it can be judged on more than a
  * single photo.
- *   /hero-lab     the set offered to the client: 30 variants grown from the three
- *                 ideas the owner kept (colour behind the model, a drawn line,
- *                 camera light) — HeroLabStage2. Every variant can be switched
- *                 to any of 15 slides.
+ *   /hero-lab     the set offered to the client: the nine strongest variants grown
+ *                 from the three ideas the owner kept (colour behind the model,
+ *                 camera light, a drawn line) — HeroLabStage2. Every variant
+ *                 can be switched to any of 15 slides.
  * Older experiments, kept for reference only:
  *   /hero-lab/1   reference — the DUO CONTRAST slide exactly as in the gallery
  *   /hero-lab/2   tap/hover a model → spotlight (the rest sinks into shade)
@@ -87,20 +87,20 @@ const LAB_SLIDES: typeof SLIDES = [
 ];
 
 /** /hero-lab: variant → group, label, what happens, and the slide (index in LAB_SLIDES) it opens on */
-const GROUPS = ["Колір за моделлю", "Світло і тінь", "Лінія", "Поєднання"];
+const GROUPS = ["Колір за моделлю", "Світло", "Лінія"];
 const CONCEPTS: Array<{ mode: Lab2Mode; g: number; label: string; note: string; slide: number }> = [
     {
         mode: "column",
         g: 0,
         label: "Колона",
-        note: "Паперовий фон кольору костюма розгортається згори",
+        note: "Паперовий фон кольору костюма розгортається згори, назва надрукована на ньому",
         slide: 1,
     },
     {
         mode: "arch",
         g: 0,
         label: "Арка",
-        note: "Класична арка в кольорі костюма виростає від підлоги",
+        note: "Класична арка виростає від підлоги, назва курсивом у її склепінні",
         slide: 7,
     },
     {
@@ -111,45 +111,10 @@ const CONCEPTS: Array<{ mode: Lab2Mode; g: number; label: string; note: string; 
         slide: 3,
     },
     {
-        mode: "dado",
-        g: 0,
-        label: "Панель",
-        note: "Нижня частина стіни фарбується від моделі в обидва боки",
-        slide: 4,
-    },
-    {
-        mode: "block",
-        g: 0,
-        label: "Квадрат",
-        note: "Кольоровий квадрат виїжджає з-за плеча, підпис у його куті",
-        slide: 2,
-    },
-    {
-        mode: "stripes",
-        g: 0,
-        label: "Палітра",
-        note: "Три відтінки кольору костюма падають смугами по черзі",
-        slide: 12,
-    },
-    {
-        mode: "slash",
-        g: 0,
-        label: "Діагональ",
-        note: "Навскісна смуга кольору, підпис лежить уздовж неї",
-        slide: 0,
-    },
-    {
-        mode: "wall",
-        g: 0,
-        label: "Студія в кольорі",
-        note: "Уся стіна перефарбовується в колір костюма",
-        slide: 9,
-    },
-    {
         mode: "silh",
         g: 0,
-        label: "Кольоровий силует",
-        note: "З-за моделі виходить її силует у кольорі костюма",
+        label: "Силует",
+        note: "З-за моделі виходять два її силуети в кольорі костюма, поруч назва курсивом",
         slide: 5,
     },
     {
@@ -160,132 +125,32 @@ const CONCEPTS: Array<{ mode: Lab2Mode; g: number; label: string; note: string; 
         slide: 13,
     },
     {
-        mode: "noir",
+        mode: "colflash",
         g: 1,
-        label: "Нуар",
-        note: "Повільно загоряється лампа — велика м’яка тінь на стіні",
-        slide: 10,
-    },
-    {
-        mode: "evening",
-        g: 1,
-        label: "Вечірнє світло",
-        note: "Довга тінь лягає на підлогу, як від низького сонця",
-        slide: 14,
+        label: "Спалах на кольорі",
+        note: "Спалах — і за моделлю вже кольоровий фон з її тінню",
+        slide: 2,
     },
     {
         mode: "contour",
         g: 2,
         label: "Контур",
-        note: "Тонка лінія обводить модель, текст пишеться по лінії",
+        note: "Тонка лінія обводить модель від стоп до голови, текст пишеться вздовж неї",
         slide: 4,
-    },
-    {
-        mode: "stitch",
-        g: 2,
-        label: "Викрійка",
-        note: "Пунктир кравецького шва обходить модель і рухається",
-        slide: 8,
-    },
-    {
-        mode: "echo",
-        g: 2,
-        label: "Подвійний контур",
-        note: "Дві лінії одна за одною, поруч назва курсивом",
-        slide: 6,
-    },
-    {
-        mode: "frame",
-        g: 2,
-        label: "Рамка",
-        note: "Подвійна рамка, як у галереї, і табличка з назвою",
-        slide: 11,
     },
     {
         mode: "archline",
         g: 2,
         label: "Арка лінією",
-        note: "Арка малюється від підлоги до вершини, підпис по дузі",
+        note: "Арка малюється від підлоги до вершини, підпис висить під нею, як замковий камінь",
         slide: 10,
     },
-    { mode: "ring", g: 2, label: "Кільце", note: "Тонке кільце проходить за моделлю", slide: 6 },
     {
-        mode: "measure",
+        mode: "frame",
         g: 2,
-        label: "Мірка",
-        note: "Кравецька розмірна лінія на весь зріст з підписом",
-        slide: 13,
-    },
-    {
-        mode: "rule",
-        g: 2,
-        label: "Рядок",
-        note: "Журнальна лінія виходить з-за плеча, назва стоїть на ній",
-        slide: 8,
-    },
-    { mode: "parens", g: 2, label: "Дужки", note: "Дві дуги беруть модель у дужки", slide: 11 },
-    {
-        mode: "pillars",
-        g: 2,
-        label: "Дві лінії",
-        note: "Дві вертикалі опускаються по боках, підпис між ними",
-        slide: 14,
-    },
-    {
-        mode: "colcontour",
-        g: 3,
-        label: "Колона + контур",
-        note: "Колір розгортається, потім по ньому малюється контур",
-        slide: 0,
-    },
-    {
-        mode: "colflash",
-        g: 3,
-        label: "Колона + спалах",
-        note: "Спалах — і за моделлю вже кольоровий фон з її тінню",
-        slide: 3,
-    },
-    {
-        mode: "all",
-        g: 3,
-        label: "Колона + спалах + контур",
-        note: "Колір, спалах і контур одне за одним",
-        slide: 1,
-    },
-    {
-        mode: "archflash",
-        g: 3,
-        label: "Арка + спалах",
-        note: "Спалах відкриває арку з різкою тінню, поруч табличка",
-        slide: 5,
-    },
-    {
-        mode: "disccontour",
-        g: 3,
-        label: "Коло + контур",
-        note: "Коло розкривається, по ньому проходить контур",
-        slide: 12,
-    },
-    {
-        mode: "frameflash",
-        g: 3,
-        label: "Рамка + спалах",
-        note: "Рамка домальовується — і спалах, як знімок у галереї",
-        slide: 9,
-    },
-    {
-        mode: "wallcontour",
-        g: 3,
-        label: "Студія в кольорі + контур",
-        note: "Стіна в кольорі костюма, модель обведена лінією",
-        slide: 7,
-    },
-    {
-        mode: "silhcontour",
-        g: 3,
-        label: "Силует + контур",
-        note: "Кольоровий силует і біла лінія навколо моделі",
-        slide: 2,
+        label: "Рамка",
+        note: "Подвійна рамка зі стиками, як у галереї, і табличка з назвою",
+        slide: 11,
     },
 ];
 

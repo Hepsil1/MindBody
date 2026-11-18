@@ -3,15 +3,12 @@
  * photo, centre logo, single CTA); the models are the interaction: hover / tap
  * a model → her variant plays, click / second tap opens the outfit.
  *
- * A variant is a recipe (RECIPES below) put together from four kinds of parts:
- *   fill   colour of her outfit on the wall behind her, or a shadow
- *          (column, arch, disc, dado, block, stripes, slash, wall, silh,
- *          noir, evening) — pre-rendered, revealed with a clip or a fade
- *   snap   a frame that arrives with a camera flash (flash, colflash, archflash)
- *   line   a hairline drawn in SVG (contour, stitch, echo, frame, archline,
- *          ring, measure, rule, parens, pillars)
- *   cap    how the minimal info is set (chip, serif, arc, edge, corner, vert,
- *          rot, plate, dymo, path, sideserif, sidecaps, topcaps, …)
+ * Nine variants, each a recipe (RECIPES below) of up to four parts:
+ *   fill   colour of her outfit behind her (column, arch, disc, silh) —
+ *          pre-rendered, revealed with a clip or a soft wipe
+ *   snap   a frame that arrives with a camera flash (flash, colflash)
+ *   line   a hairline drawn in SVG (contour, archline, frame)
+ *   cap    how the minimal info is set — a different way in every variant
  * Every picture state is pre-rendered with real matting by
  * scratch/build_hero_lab_v5.py; CSS only reveals it.
  *
@@ -25,45 +22,10 @@ import "../styles/single-look.css";
 import "../styles/hero-lab.css";
 import "../styles/hero-lab2.css";
 
-type Fill =
-    | "column"
-    | "arch"
-    | "disc"
-    | "dado"
-    | "block"
-    | "stripes"
-    | "slash"
-    | "wall"
-    | "silh"
-    | "noir"
-    | "evening";
-type Snap = "flash" | "colflash" | "archflash";
-type Line =
-    | "contour"
-    | "stitch"
-    | "echo"
-    | "frame"
-    | "archline"
-    | "ring"
-    | "measure"
-    | "rule"
-    | "parens"
-    | "pillars";
-type Cap =
-    | "chip"
-    | "serif"
-    | "arc"
-    | "edge"
-    | "corner"
-    | "vert"
-    | "rot"
-    | "plate"
-    | "dymo"
-    | "path"
-    | "sideserif"
-    | "sidecaps"
-    | "topcaps"
-    | "none";
+type Fill = "column" | "arch" | "disc" | "silh";
+type Snap = "flash" | "colflash";
+type Line = "contour" | "archline" | "frame";
+type Cap = "chip" | "serif" | "arc" | "sideserif" | "dymo" | "path" | "key" | "plate";
 
 interface Recipe {
     fill?: Fill;
@@ -79,48 +41,15 @@ interface Recipe {
 }
 
 export const RECIPES = {
-    // colour on the wall
     column: { fill: "column", cap: "chip", ground: "fill", cd: 0.45 },
-    arch: { fill: "arch", cap: "serif", ground: "fill", cd: 0.6 },
-    disc: { fill: "disc", cap: "arc", ground: "wall", cd: 0.45 },
-    dado: { fill: "dado", cap: "edge", ground: "wall", cd: 0.6 },
-    block: { fill: "block", cap: "corner", ground: "fill", cd: 0.5 },
-    stripes: { fill: "stripes", cap: "vert", ground: "wall", cd: 0.7 },
-    slash: { fill: "slash", cap: "rot", ground: "fill", cd: 0.55 },
-    wall: { fill: "wall", cap: "plate", ground: "fill", cd: 0.8 },
-    silh: { fill: "silh", cap: "topcaps", ground: "wall", cd: 0.4 },
-    // light
+    arch: { fill: "arch", cap: "serif", ground: "fill", cd: 0.65 },
+    disc: { fill: "disc", cap: "arc", ground: "wall", cd: 0.5 },
+    silh: { fill: "silh", cap: "sideserif", ground: "wall", cd: 0.55 },
     flash: { snap: "flash", cap: "dymo", ground: "wall" },
-    noir: { fill: "noir", cap: "serif", ground: "wall", cd: 0.7 },
-    evening: { fill: "evening", cap: "sidecaps", ground: "wall", cd: 0.8 },
-    // lines
+    colflash: { snap: "colflash", cap: "chip", ground: "fill", cd: 0.32 },
     contour: { line: "contour", cap: "path", ground: "wall" },
-    stitch: { line: "stitch", cap: "plate", ground: "wall", cd: 0.9 },
-    echo: { line: "echo", cap: "sideserif", ground: "wall", cd: 0.8 },
-    frame: { line: "frame", cap: "plate", ground: "wall", cd: 1 },
-    archline: { line: "archline", cap: "arc", ground: "wall", cd: 0.9 },
-    ring: { line: "ring", cap: "arc", ground: "wall", cd: 0.9 },
-    measure: { line: "measure", cap: "none", ground: "wall" },
-    rule: { line: "rule", cap: "none", ground: "wall" },
-    parens: { line: "parens", cap: "topcaps", ground: "wall", cd: 0.5 },
-    pillars: { line: "pillars", cap: "chip", ground: "wall", cd: 0.5 },
-    // combinations
-    colcontour: { fill: "column", line: "contour", cap: "path", ground: "fill", ct: 0.7 },
-    colflash: { snap: "colflash", cap: "dymo", ground: "fill" },
-    all: {
-        fill: "column",
-        snap: "colflash",
-        line: "contour",
-        cap: "path",
-        ground: "fill",
-        fl: 0.95,
-        ct: 1.3,
-    },
-    archflash: { snap: "archflash", cap: "plate", ground: "fill", cd: 0.5 },
-    disccontour: { fill: "disc", line: "contour", cap: "path", ground: "fill", ct: 0.5 },
-    frameflash: { line: "frame", snap: "flash", cap: "plate", ground: "wall", fl: 1.05, cd: 1.5 },
-    wallcontour: { fill: "wall", line: "contour", cap: "path", ground: "fill", ct: 0.8 },
-    silhcontour: { fill: "silh", line: "contour", cap: "path", ground: "wall", ct: 0.45 },
+    archline: { line: "archline", cap: "key", ground: "wall", cd: 1.05 },
+    frame: { line: "frame", cap: "plate", ground: "wall", cd: 1.15 },
 } satisfies Record<string, Recipe>;
 
 export type Lab2Mode = keyof typeof RECIPES;
@@ -145,23 +74,12 @@ export interface Lab2Model {
     wallL: number;
     /** the colour the fills are painted in (her outfit, lifted) */
     hex: string;
-    /** where the wall meets the floor */
-    hz: number;
     /** top of the arch */
     apex: number;
     /** disc: cx, cy, r (r in canvas widths) */
     disc: number[];
-    /** top edge of the dado */
-    dado: number;
-    /** block: x, y, w, h */
-    block: number[];
-    /** stripes: left / right edge */
-    stripes: number[];
-    /** slash: slope (canvas widths per canvas height), y where it crosses her, half width */
-    slash: number[];
-    /** outline paths, viewBox 1600x900: left foot → over the head → right foot */
+    /** outline path, viewBox 1600x900: left foot → over the head → right foot */
     path: string;
-    path2: string;
     /** rects [x, y, w, h] (canvas fractions) of the pre-rendered layers */
     r: Record<string, number[]>;
 }
@@ -176,6 +94,8 @@ interface Props {
 const USER_HOLD = 9000;
 const SLOT = 5600;
 const DEMO_MS = 3600;
+/** the centre logo keeps this band of the slide to itself */
+const LOGO = [0.395, 0.605];
 
 const rect = (r: number[]): React.CSSProperties => ({
     left: `${r[0] * 100}%`,
@@ -186,7 +106,6 @@ const rect = (r: number[]): React.CSSProperties => ({
 const pct = (v: number) => `${(v * 100).toFixed(3)}%`;
 const X = (f: number) => +(f * 1600).toFixed(1);
 const Y = (f: number) => +(f * 900).toFixed(1);
-
 const sentence = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 
 const lineText = (m: Lab2Model) => {
@@ -221,7 +140,7 @@ function textLine(path: string, chars: number, side: number): string {
         while (d < -Math.PI) d += 2 * Math.PI;
         acc.push(acc[acc.length - 1] + Math.abs(d));
     });
-    const need = chars * 10.9 + 40;
+    const need = chars * 11.6 + 40;
     const [lo, hi] = side > 0 ? [0.56 * total, 0.97 * total] : [0.03 * total, 0.44 * total];
     let best = Infinity;
     let bi = -1;
@@ -251,7 +170,7 @@ function textLine(path: string, chars: number, side: number): string {
     }
     // outward = left on her left side, right on her right side
     const out = side > 0 ? 1 : -1;
-    const gap = Math.max(...seg.map((p, i) => (p[0] - xs[i]) * out)) + 13;
+    const gap = Math.max(...seg.map((p, i) => (p[0] - xs[i]) * out)) + 14;
     return (
         "M" + seg.map((p, i) => `${(xs[i] + gap * out).toFixed(1)} ${p[1].toFixed(1)}`).join(" L")
     );
@@ -387,7 +306,6 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
         () => models.map((m) => textLine(m.path, lineText(m).length, m.side)),
         [models],
     );
-    const hasOutline = line === "contour" || line === "stitch" || line === "echo";
     const mask = { ["--mask" as string]: `url(${maskDir}/outall.png)` };
 
     return (
@@ -427,18 +345,18 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                         {models.map((m, k) => {
                             const on = active === k;
                             const parts = m.sub.split(" · ").filter(Boolean);
-                            const first = parts[0] ?? "";
                             const body = m.feet - m.head;
                             const onLight = rc.ground === "fill" ? !m.colDark : m.wallL > 76;
-                            // room beside her on her free side, up to the next model or
-                            // the centre logo; too little → mid-height captions go above her
+                            // room beside her, up to the next model, the slide edge or the logo
                             const prev = models[k - 1];
                             const next = models[k + 1];
-                            const room =
-                                m.side > 0
-                                    ? Math.min(next ? next.x0 : 1, m.cx < 0.5 ? 0.395 : 1) - m.x1
-                                    : m.x0 - Math.max(prev ? prev.x1 : 0, m.cx > 0.5 ? 0.605 : 0);
-                            const tight = room < 0.115;
+                            const roomAt = (sd: number) =>
+                                sd > 0
+                                    ? Math.min(next ? next.x0 : 1, m.cx < 0.5 ? LOGO[0] : 1) - m.x1
+                                    : m.x0 - Math.max(prev ? prev.x1 : 0, m.cx > 0.5 ? LOGO[1] : 0);
+                            // the big side caption stands on the side the silhouette does NOT take
+                            const capSide = -m.side;
+                            const tight = roomAt(capSide) < 0.115;
                             const style = {
                                 ["--cx" as string]: pct(m.cx),
                                 ["--head" as string]: pct(m.head),
@@ -447,6 +365,7 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                 ["--x1" as string]: pct(m.x1),
                                 ["--c0" as string]: pct(m.col[0]),
                                 ["--cw" as string]: pct(m.col[1] - m.col[0]),
+                                ["--apex" as string]: pct(m.apex),
                                 ["--body" as string]: body,
                                 // arch radius as a length (half the column width)
                                 ["--ar" as string]: `calc(var(--ch) * ${(((m.col[1] - m.col[0]) / 2) * (16 / 9)).toFixed(4)})`,
@@ -454,33 +373,16 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                             // geometry of the drawn lines, viewBox 1600x900
                             const colR = X(m.col[1] - m.col[0]) / 2;
                             const archY = Y(m.apex) + colR;
+                            const [ax0, ax1, base] = [X(m.col[0]), X(m.col[1]), Y(m.feet)];
                             const [dcx, dcy, dr] = [X(m.disc[0]), Y(m.disc[1]), X(m.disc[2])];
-                            const arcOf =
-                                line === "archline"
-                                    ? { cx: X(m.cx), cy: archY, r: colR + 13 }
-                                    : { cx: dcx, cy: dcy, r: dr + 23 };
                             const fr = {
-                                x0: X(m.x0 - 0.022),
-                                x1: X(m.x1 + 0.022),
-                                y0: Y(m.head - 0.04),
+                                x0: X(m.x0 - 0.024),
+                                x1: X(m.x1 + 0.024),
+                                y0: Y(m.head - 0.042),
                                 y1: Y(m.feet + 0.012),
                             };
                             const frMid = (fr.x0 + fr.x1) / 2;
-                            const meaSide = tight ? -m.side : m.side;
-                            const meaX = X(meaSide > 0 ? m.x1 + 0.03 : m.x0 - 0.03);
-                            const meaMid = Y(m.head + body / 2);
-                            const meaHalf = (lineText(m).length * 9.4 + 26) / 2;
-                            // slash caption: on the band, beside her head
-                            const rotY = m.head - 0.035;
-                            const rotX = m.cx + m.side * m.slash[0] * (m.slash[1] - rotY);
-                            const rotDeg =
-                                (-m.side * Math.atan2(1, m.slash[0] * (1600 / 900)) * 180) /
-                                Math.PI;
-                            // captions that stand beside her, on her free side
-                            const sideAt = (gap: number): React.CSSProperties =>
-                                m.side > 0
-                                    ? { left: pct(m.x1 + gap) }
-                                    : { right: pct(1 - m.x0 + gap) };
+                            const G = 9; // gap between the two lines of the frame / arch
 
                             return (
                                 <div
@@ -488,22 +390,17 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                     className={`hl2__m ${on ? "is-on" : ""} ${m.side > 0 ? "is-r" : "is-l"} ${onLight ? "is-ink" : ""} ${tight ? "is-tight" : ""}`}
                                     style={style}
                                 >
-                                    {/* ---------- colour / shadow behind her ---------- */}
-                                    {fill &&
-                                        (fill === "stripes" ? [0, 1, 2] : [0]).map((i) => (
-                                            <img
-                                                key={i}
-                                                className={`hl2__frm hl2__frm--${fill}`}
-                                                src={`${maskDir}/${fill}${k}.webp`}
-                                                alt=""
-                                                loading="lazy"
-                                                decoding="async"
-                                                style={{
-                                                    ...rect(m.r[fill]),
-                                                    ["--i" as string]: i,
-                                                }}
-                                            />
-                                        ))}
+                                    {/* ---------- colour behind her ---------- */}
+                                    {fill && (
+                                        <img
+                                            className={`hl2__frm hl2__frm--${fill}`}
+                                            src={`${maskDir}/${fill}${k}.webp`}
+                                            alt=""
+                                            loading="lazy"
+                                            decoding="async"
+                                            style={rect(m.r[fill])}
+                                        />
+                                    )}
                                     {fill === "column" && (
                                         // the roll of paper at the column's leading edge;
                                         // masked so it passes behind the models
@@ -511,7 +408,26 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                             <span className="hl2__roll" />
                                         </div>
                                     )}
+                                    {fill === "disc" && (
+                                        // a keyline in the same colour just off the disc, behind her
+                                        <div className="hl2__behind" style={mask}>
+                                            <svg
+                                                className="hl2__svg"
+                                                viewBox="0 0 1600 900"
+                                                preserveAspectRatio="none"
+                                                aria-hidden="true"
+                                            >
+                                                <path
+                                                    className="hl2__draw hl2__key"
+                                                    pathLength={1}
+                                                    style={{ stroke: m.hex }}
+                                                    d={`M${dcx} ${dcy - dr - 11} A${dr + 11} ${dr + 11} 0 1 1 ${dcx - 0.1} ${dcy - dr - 11}`}
+                                                />
+                                            </svg>
+                                        </div>
+                                    )}
 
+                                    {/* ---------- the frame the flash leaves ---------- */}
                                     {snap && (
                                         <img
                                             className="hl2__frm hl2__frm--snap"
@@ -524,233 +440,15 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                     )}
                                     {snap && on && <span key={pulse} className="hl2__pop" />}
 
-                                    {(fill === "block" || fill === "disc") && (
-                                        // a keyline in the same colour just off the shape:
-                                        // it only shows where it leaves the colour
-                                        <div className="hl2__behind" style={mask}>
-                                            <svg
-                                                className="hl2__svg"
-                                                viewBox="0 0 1600 900"
-                                                preserveAspectRatio="none"
-                                                aria-hidden="true"
-                                            >
-                                                {fill === "block" ? (
-                                                    <path
-                                                        className="hl2__draw hl2__key"
-                                                        pathLength={1}
-                                                        style={{ stroke: m.hex }}
-                                                        d={`M${X(m.block[0]) + m.side * 11} ${Y(m.block[1]) + 11} h${X(m.block[2])} v${Y(m.block[3])} h${-X(m.block[2])} Z`}
-                                                    />
-                                                ) : (
-                                                    <path
-                                                        className="hl2__draw hl2__key"
-                                                        pathLength={1}
-                                                        style={{ stroke: m.hex }}
-                                                        d={`M${dcx} ${dcy - dr - 11} A${dr + 11} ${dr + 11} 0 1 1 ${dcx - 0.1} ${dcy - dr - 11}`}
-                                                    />
-                                                )}
-                                            </svg>
-                                        </div>
-                                    )}
-
-                                    {/* ---------- lines that pass behind her ---------- */}
-                                    {line === "ring" && (
-                                        <div className="hl2__behind" style={mask}>
-                                            <svg
-                                                className="hl2__svg"
-                                                viewBox="0 0 1600 900"
-                                                preserveAspectRatio="none"
-                                                aria-hidden="true"
-                                            >
-                                                <path
-                                                    className="hl2__draw"
-                                                    pathLength={1}
-                                                    d={`M${dcx} ${dcy - dr} A${dr} ${dr} 0 1 1 ${dcx - 0.1} ${dcy - dr}`}
-                                                />
-                                                <path
-                                                    className="hl2__draw hl2__draw--thin"
-                                                    pathLength={1}
-                                                    style={{ ["--d" as string]: "0.18s" }}
-                                                    d={`M${dcx} ${dcy - dr - 9} A${dr + 9} ${dr + 9} 0 1 1 ${dcx - 0.1} ${dcy - dr - 9}`}
-                                                />
-                                            </svg>
-                                        </div>
-                                    )}
-                                    {line === "rule" && (
-                                        <>
-                                            <div className="hl2__behind" style={mask}>
-                                                <span className="hl2__rule" />
-                                            </div>
-                                            <div className="hl2__ruletext">
-                                                <b>{m.title}</b>
-                                                <i>{m.sub}</i>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {/* ---------- lines drawn in front ---------- */}
-                                    {line && line !== "ring" && line !== "rule" && (
+                                    {/* ---------- drawn lines ---------- */}
+                                    {line && (
                                         <svg
                                             className="hl2__svg"
                                             viewBox="0 0 1600 900"
                                             preserveAspectRatio="none"
                                             aria-hidden="true"
                                         >
-                                            {hasOutline && (
-                                                <defs>
-                                                    <mask
-                                                        id={`${uid}k${k}`}
-                                                        maskUnits="userSpaceOnUse"
-                                                        x="0"
-                                                        y="0"
-                                                        width="1600"
-                                                        height="900"
-                                                    >
-                                                        <path
-                                                            d={m.path}
-                                                            pathLength={1}
-                                                            className="hl2__ct-mask"
-                                                        />
-                                                    </mask>
-                                                </defs>
-                                            )}
                                             {line === "contour" && (
-                                                <>
-                                                    <path
-                                                        d={m.path}
-                                                        pathLength={1}
-                                                        className="hl2__draw"
-                                                    />
-                                                    <path
-                                                        d={m.path}
-                                                        pathLength={1}
-                                                        className="hl2__pen hl2__pen--a"
-                                                    />
-                                                    <path
-                                                        d={m.path}
-                                                        pathLength={1}
-                                                        className="hl2__pen hl2__pen--b"
-                                                    />
-                                                </>
-                                            )}
-                                            {line === "stitch" && (
-                                                <g mask={`url(#${uid}k${k})`}>
-                                                    <path d={m.path} className="hl2__stitch" />
-                                                </g>
-                                            )}
-                                            {line === "echo" && (
-                                                <>
-                                                    <path
-                                                        d={m.path}
-                                                        pathLength={1}
-                                                        className="hl2__draw"
-                                                    />
-                                                    <path
-                                                        d={m.path2}
-                                                        pathLength={1}
-                                                        className="hl2__draw hl2__draw--thin"
-                                                        style={{ ["--d" as string]: "0.28s" }}
-                                                    />
-                                                </>
-                                            )}
-                                            {line === "frame" && (
-                                                <>
-                                                    <path
-                                                        className="hl2__draw"
-                                                        pathLength={1}
-                                                        d={`M${frMid} ${fr.y0} H${fr.x1} V${fr.y1} H${fr.x0} V${fr.y0} H${frMid}`}
-                                                    />
-                                                    <path
-                                                        className="hl2__draw hl2__draw--thin"
-                                                        pathLength={1}
-                                                        style={{ ["--d" as string]: "0.2s" }}
-                                                        d={`M${frMid} ${fr.y0 + 8} H${fr.x1 - 8} V${fr.y1 - 8} H${fr.x0 + 8} V${fr.y0 + 8} H${frMid}`}
-                                                    />
-                                                </>
-                                            )}
-                                            {line === "archline" && (
-                                                <>
-                                                    <path
-                                                        className="hl2__draw"
-                                                        pathLength={1}
-                                                        d={`M${X(m.col[0])} ${Y(m.feet)} V${archY} A${colR} ${colR} 0 0 1 ${X(m.col[1])} ${archY} V${Y(m.feet)}`}
-                                                    />
-                                                    <path
-                                                        className="hl2__draw hl2__draw--thin"
-                                                        pathLength={1}
-                                                        style={{ ["--d" as string]: "0.2s" }}
-                                                        d={`M${X(m.col[0]) + 8} ${Y(m.feet)} V${archY} A${colR - 8} ${colR - 8} 0 0 1 ${X(m.col[1]) - 8} ${archY} V${Y(m.feet)}`}
-                                                    />
-                                                </>
-                                            )}
-                                            {line === "parens" &&
-                                                [-1, 1].map((sg) => {
-                                                    const px =
-                                                        sg < 0 ? X(m.x0 - 0.02) : X(m.x1 + 0.02);
-                                                    const y0 = Y(m.head - 0.01);
-                                                    const y1 = Y(m.feet);
-                                                    return [62, 74].map((bul, i) => (
-                                                        <path
-                                                            key={`${sg}${i}`}
-                                                            className={`hl2__draw ${i ? "hl2__draw--thin" : ""}`}
-                                                            pathLength={1}
-                                                            style={{
-                                                                ["--d" as string]: `${i * 0.12}s`,
-                                                            }}
-                                                            d={`M${px} ${y0} Q${px + sg * bul} ${(y0 + y1) / 2} ${px} ${y1}`}
-                                                        />
-                                                    ));
-                                                })}
-                                            {line === "pillars" &&
-                                                [0, 1].flatMap((i) =>
-                                                    [0, 8].map((off) => (
-                                                        <path
-                                                            key={`${i}${off}`}
-                                                            className={`hl2__draw1 ${off ? "hl2__draw1--thin" : ""}`}
-                                                            pathLength={1}
-                                                            style={{
-                                                                ["--d" as string]: `${i * 0.16 + (off ? 0.12 : 0)}s`,
-                                                            }}
-                                                            d={`M${X(m.col[i]) + (i ? off : -off)} 0 V${Y(m.feet)}`}
-                                                        />
-                                                    )),
-                                                )}
-                                            {line === "measure" && (
-                                                <>
-                                                    <path
-                                                        className="hl2__draw1"
-                                                        pathLength={1}
-                                                        d={`M${meaX - 9} ${Y(m.head)} H${meaX + 9}`}
-                                                    />
-                                                    <path
-                                                        className="hl2__draw1"
-                                                        pathLength={1}
-                                                        d={`M${meaX - 9} ${Y(m.feet)} H${meaX + 9}`}
-                                                    />
-                                                    <path
-                                                        className="hl2__draw1"
-                                                        pathLength={1}
-                                                        style={{ ["--d" as string]: "0.15s" }}
-                                                        d={`M${meaX} ${Y(m.head)} V${meaMid - meaHalf}`}
-                                                    />
-                                                    <path
-                                                        className="hl2__draw1"
-                                                        pathLength={1}
-                                                        style={{ ["--d" as string]: "0.15s" }}
-                                                        d={`M${meaX} ${Y(m.feet)} V${meaMid + meaHalf}`}
-                                                    />
-                                                    <text
-                                                        className="hl2__svgtext hl2__svgtext--fade"
-                                                        x={meaX}
-                                                        y={meaMid + 4}
-                                                        textAnchor="middle"
-                                                        transform={`rotate(-90 ${meaX} ${meaMid})`}
-                                                    >
-                                                        {lineText(m)}
-                                                    </text>
-                                                </>
-                                            )}
-                                            {cap === "path" && (
                                                 <>
                                                     <defs>
                                                         <mask
@@ -768,6 +466,21 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                                             />
                                                         </mask>
                                                     </defs>
+                                                    <path
+                                                        d={m.path}
+                                                        pathLength={1}
+                                                        className="hl2__draw"
+                                                    />
+                                                    <path
+                                                        d={m.path}
+                                                        pathLength={1}
+                                                        className="hl2__pen hl2__pen--a"
+                                                    />
+                                                    <path
+                                                        d={m.path}
+                                                        pathLength={1}
+                                                        className="hl2__pen hl2__pen--b"
+                                                    />
                                                     <path id={`${uid}t${k}`} d={textLines[k]} />
                                                     <g mask={`url(#${uid}x${k})`}>
                                                         <text className="hl2__svgtext">
@@ -781,9 +494,71 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                                     </g>
                                                 </>
                                             )}
+                                            {line === "archline" && (
+                                                <>
+                                                    {/* plinths first, then the arch from both feet */}
+                                                    {[ax0, ax1].map((x, i) => (
+                                                        <path
+                                                            key={i}
+                                                            className="hl2__draw1"
+                                                            pathLength={1}
+                                                            d={
+                                                                i
+                                                                    ? `M${x - G - 7} ${base} H${x + 12}`
+                                                                    : `M${x + G + 7} ${base} H${x - 12}`
+                                                            }
+                                                        />
+                                                    ))}
+                                                    <path
+                                                        className="hl2__draw"
+                                                        pathLength={1}
+                                                        style={{ ["--d" as string]: "0.18s" }}
+                                                        d={`M${ax0} ${base} V${archY} A${colR} ${colR} 0 0 1 ${ax1} ${archY} V${base}`}
+                                                    />
+                                                    <path
+                                                        className="hl2__draw hl2__draw--thin"
+                                                        pathLength={1}
+                                                        style={{ ["--d" as string]: "0.36s" }}
+                                                        d={`M${ax0 + G} ${base} V${archY} A${colR - G} ${colR - G} 0 0 1 ${ax1 - G} ${archY} V${base}`}
+                                                    />
+                                                </>
+                                            )}
+                                            {line === "frame" && (
+                                                <>
+                                                    <path
+                                                        className="hl2__draw"
+                                                        pathLength={1}
+                                                        d={`M${frMid} ${fr.y0} H${fr.x1} V${fr.y1} H${fr.x0} V${fr.y0} H${frMid}`}
+                                                    />
+                                                    <path
+                                                        className="hl2__draw hl2__draw--thin"
+                                                        pathLength={1}
+                                                        style={{ ["--d" as string]: "0.2s" }}
+                                                        d={`M${frMid} ${fr.y0 + G} H${fr.x1 - G} V${fr.y1 - G} H${fr.x0 + G} V${fr.y0 + G} H${frMid}`}
+                                                    />
+                                                    {/* mitres: the joints of a real frame */}
+                                                    {[
+                                                        [fr.x0, fr.y0, 1, 1],
+                                                        [fr.x1, fr.y0, -1, 1],
+                                                        [fr.x1, fr.y1, -1, -1],
+                                                        [fr.x0, fr.y1, 1, -1],
+                                                    ].map(([x, y, sx, sy], i) => (
+                                                        <path
+                                                            key={i}
+                                                            className="hl2__draw1 hl2__draw1--thin"
+                                                            pathLength={1}
+                                                            style={{
+                                                                ["--d" as string]: `${0.95 + i * 0.06}s`,
+                                                            }}
+                                                            d={`M${x} ${y} l${sx * G} ${sy * G}`}
+                                                        />
+                                                    ))}
+                                                </>
+                                            )}
                                         </svg>
                                     )}
-                                    {/* ---------- text on an arc (disc / arch) ---------- */}
+
+                                    {/* ---------- text on an arc over the disc ---------- */}
                                     {cap === "arc" && (
                                         <svg
                                             className="hl2__svg"
@@ -793,7 +568,7 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                         >
                                             <path
                                                 id={`${uid}a${k}`}
-                                                d={`M${arcOf.cx - arcOf.r} ${arcOf.cy} A${arcOf.r} ${arcOf.r} 0 0 1 ${arcOf.cx + arcOf.r} ${arcOf.cy}`}
+                                                d={`M${dcx - dr - 24} ${dcy} A${dr + 24} ${dr + 24} 0 0 1 ${dcx + dr + 24} ${dcy}`}
                                             />
                                             <text className="hl2__svgtext hl2__svgtext--fade">
                                                 <textPath
@@ -814,7 +589,7 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                             style={{ left: pct((m.col[0] + m.col[1]) / 2) }}
                                         >
                                             <b>
-                                                <span>{first || m.title}</span>
+                                                <span>{parts[0] ?? m.title}</span>
                                             </b>
                                             <u />
                                             <i>
@@ -828,62 +603,8 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                             <i>{m.sub}</i>
                                         </div>
                                     )}
-                                    {cap === "topcaps" && (
-                                        <div className="hl2__cap hl2__cap--topcaps">
-                                            <b>{m.title}</b>
-                                            {m.sub && <i>{m.sub}</i>}
-                                        </div>
-                                    )}
-                                    {cap === "edge" && (
-                                        <div
-                                            className="hl2__cap hl2__cap--edge is-side"
-                                            style={{ top: pct(m.dado - 0.034), ...sideAt(0.022) }}
-                                        >
-                                            <b>{m.title}</b>
-                                            {m.sub && <i>{m.sub}</i>}
-                                        </div>
-                                    )}
-                                    {cap === "corner" && (
-                                        <div
-                                            className="hl2__cap hl2__cap--corner is-side"
-                                            style={{
-                                                bottom: pct(1 - m.block[1] - m.block[3] + 0.022),
-                                                ...(m.side > 0
-                                                    ? {
-                                                          right: pct(
-                                                              1 - m.block[0] - m.block[2] + 0.012,
-                                                          ),
-                                                      }
-                                                    : { left: pct(m.block[0] + 0.012) }),
-                                            }}
-                                        >
-                                            <b>{m.title}</b>
-                                            {m.sub && <i>{m.sub}</i>}
-                                        </div>
-                                    )}
-                                    {cap === "vert" && (
-                                        <div
-                                            className="hl2__cap hl2__cap--vert"
-                                            style={{
-                                                bottom: pct(1 - m.hz + 0.03),
-                                                ...(m.side > 0
-                                                    ? { left: pct(m.stripes[1] + 0.012) }
-                                                    : { right: pct(1 - m.stripes[0] + 0.012) }),
-                                            }}
-                                        >
-                                            <b>{m.title}</b>
-                                            {m.sub && <i>{m.sub}</i>}
-                                        </div>
-                                    )}
-                                    {cap === "rot" && (
-                                        <div
-                                            className="hl2__cap hl2__cap--rot"
-                                            style={{
-                                                left: pct(rotX),
-                                                top: pct(rotY),
-                                                ["--rot" as string]: `${rotDeg.toFixed(1)}deg`,
-                                            }}
-                                        >
+                                    {cap === "key" && (
+                                        <div className="hl2__cap hl2__cap--key">
                                             <b>{m.title}</b>
                                             {m.sub && <i>{m.sub}</i>}
                                         </div>
@@ -892,8 +613,10 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                         <div
                                             className="hl2__cap hl2__cap--plate is-side"
                                             style={{
-                                                top: pct(m.feet - 0.2),
-                                                ...sideAt(line === "frame" ? 0.04 : 0.03),
+                                                top: pct(m.feet - 0.21),
+                                                ...(m.side > 0
+                                                    ? { left: pct(m.x1 + 0.044) }
+                                                    : { right: pct(1 - m.x0 + 0.044) }),
                                             }}
                                         >
                                             <b>{sentence(m.title)}</b>
@@ -902,27 +625,16 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                     )}
                                     {cap === "sideserif" && (
                                         <div
-                                            className="hl2__cap hl2__cap--sideserif is-side"
+                                            className={`hl2__cap hl2__cap--sideserif is-side ${capSide > 0 ? "" : "is-right"}`}
                                             style={{
-                                                top: pct(m.head + body * 0.2),
-                                                ...sideAt(0.03),
+                                                top: pct(m.head + body * 0.16),
+                                                ...(capSide > 0
+                                                    ? { left: pct(m.x1 + 0.03) }
+                                                    : { right: pct(1 - m.x0 + 0.03) }),
                                             }}
                                         >
                                             <b>{sentence(m.title)}</b>
                                             <u />
-                                            {m.sub && <i>{m.sub}</i>}
-                                        </div>
-                                    )}
-                                    {cap === "sidecaps" && (
-                                        <div
-                                            className="hl2__cap hl2__cap--sidecaps is-side"
-                                            style={{
-                                                top: pct(m.head + body * 0.34),
-                                                ...sideAt(0.035),
-                                            }}
-                                        >
-                                            <u />
-                                            <b>{m.title}</b>
                                             {m.sub && <i>{m.sub}</i>}
                                         </div>
                                     )}

@@ -1,4 +1,4 @@
-"""Hero-lab v5 - assets for the ~30 variants of /hero-lab (HeroLabStage2).
+"""Hero-lab v5 - assets for the variants of /hero-lab (HeroLabStage2).
 
   python scratch/build_hero_lab_v5.py s1_duo:match u21_palette:match ...
 
@@ -8,12 +8,13 @@ only reveals the state.
 
 Per model k in public/hero/lab/<sid>/ (RGBA crops of what differs from base):
   colour on the wall, in the colour of her outfit
-    column  arch  disc  dado  block  stripes  slash  wall  silh
+    column  arch  disc   painted like paper: lit from above, a lighter left
+                         edge, a thin shadow off the wall, and her own soft
+                         shadow falling on it
+    silh                 her silhouette in her colour, twice, stepping aside
   light
-    flash  colflash  archflash   on-camera flash, hard shadow (+ column / arch)
-    noir                         one big soft shadow, film-noir
-    evening                      long low-sun shadow across the floor
-  meta5.json  rects + geometry + outline paths
+    flash  colflash      on-camera flash, hard shadow (+ the colour column)
+  meta5.json  rects + geometry + outline path
 Also (for slides the lab has not seen yet): base.webp, base-1600.webp, hit.png,
 outall.png.   QA sheets: scratch/audit_shots/lab5_<sid>_<k>.jpg
 """
@@ -151,12 +152,28 @@ def main(spec):
             """shape runs down the wall and dissolves into the mirror floor"""
             return (shape * (1 - t) + blur(shape, 12) * t) * ((1 - t) + t * floor_k)
 
-        def tint(m, dL=0.0, shadow=None):
+        # her own soft shadow, a little down-right of her: it lands on the colour
+        Mh = np.float32([[1.02, 0, cxp * (1 - 1.02) + 0.010 * W], [0, 1.02, feet * (1 - 1.02) + 0.003 * H]])
+        amb = cv2.warpAffine((a > 0.5).astype(np.float32), Mh, (W, H), flags=cv2.INTER_LINEAR)
+        amb = blur(amb, 17) * (1 - smooth(yy, feet - 0.13 * H, feet - 0.03 * H))
+
+        def tint(m, dL=0.0, shadow=None, paper=None, soft=True):
+            """m: how much colour; shadow: the shape, for the thin shadow it casts
+            on the wall; paper=(shape, top, bottom): light it like a sheet of paper"""
             Lc = LBall.copy()
             Lc[..., 0] = LBall[..., 0] * (1 - 0.74 * m) + (Lt + dL) * 0.74 * m
             Lc[..., 1] = LBall[..., 1] * (1 - m) + ga * sc * m
             Lc[..., 2] = LBall[..., 2] * (1 - m) + gb * sc * m
             tot = m
+            if paper is not None:
+                shp, top, bot = paper
+                v = np.clip((yy - top) / max(bot - top, 1), 0, 1) * ones
+                on = np.clip(shp, 0, 1) * (1 - t)
+                Lc[..., 0] += on * 3.4 * (0.5 - v)  # lit from above
+                edge = np.clip(shp - np.roll(shp, 3, axis=1), 0, 1) * (1 - t)
+                Lc[..., 0] += 4.5 * edge  # the sheet's left edge catches the light
+                if soft:
+                    Lc[..., 0] *= 1 - 0.17 * amb * on
             if shadow is not None:
                 # the colour stands a finger off the wall: thin shadow down-right
                 sh = blur(np.roll(np.roll(shadow, 9, axis=1), 5, axis=0), 8) * (1 - np.clip(shadow, 0, 1)) * (1 - t) * 0.16
@@ -174,65 +191,35 @@ def main(spec):
         half = max(0.62 * w, 0.06 * W, 0.5 * w + 0.03 * W)
         cx0, cx1 = cxp - half, cxp + half
         box = np.clip(np.minimum(xx - cx0, cx1 - xx) + 0.5, 0, 1) * ones
-        Bcol = tint(to_floor(box), shadow=box)
+        Bcol = tint(to_floor(box), shadow=box, paper=(box, 0, hz))
         qa["column"] = put("column", Bcol)
+        Bcol_flash = tint(to_floor(box), shadow=box, paper=(box, 0, hz), soft=False)
         Lcol = lab(Bcol)[..., 0]
         col_L = float(np.median(Lcol[(box > 0.9) & (yy < y) & (yy > 0.1 * H)])) if y > 0.12 * H else Lt
 
         # ---- arch: the column with a round head ----
-        apex = max(y - 0.085 * H, 0.105 * H)
+        apex = max(y - 0.085 * H, 0.125 * H)
         cyc = apex + half
         circ = np.clip(half - np.hypot(xx - cxp, yy - cyc) + 0.5, 0, 1)
         arch = np.where(yy < cyc, circ, box)
-        Barch = tint(to_floor(arch), shadow=arch)
+        Barch = tint(to_floor(arch), shadow=arch, paper=(arch, apex, hz))
         qa["arch"] = put("arch", Barch)
 
         # ---- disc behind head and shoulders ----
         dR = 0.30 * h
         dcy = y + 0.27 * h
         disc = np.clip(dR - np.hypot(xx - cxp, yy - dcy) + 0.5, 0, 1)
-        qa["disc"] = put("disc", tint(disc * (1 - t), shadow=disc))
+        qa["disc"] = put("disc", tint(disc * (1 - t), shadow=disc, paper=(disc, dcy - dR, dcy + dR)))
 
-        # ---- dado: the lower wall painted, with a lighter rail along the top ----
-        yd = y + 0.52 * h
-        dado = np.clip(yy - yd + 0.5, 0, 1) * ones
-        rail = dado * (1 - np.clip(yy - (yd + 0.007 * H) + 0.5, 0, 1))
-        md = dado * ((1 - t) + t * 0.3 * (1 - smooth(yy, hz, hz + 0.2 * H)))
-        qa["dado"] = put("dado", tint(md, dL=9.0 * rail))
+        # ---- silh: her silhouette in her colour, twice, stepping aside ----
+        def stepped(dx, grow):
+            Ms = np.float32([[grow, 0, cxp * (1 - grow) + side * dx * W], [0, grow, feet * (1 - grow) - 0.006 * H]])
+            sil = cv2.warpAffine((a > 0.5).astype(np.float32), Ms, (W, H), flags=cv2.INTER_LINEAR)
+            return blur(sil, 1.3) * (1 - smooth(yy, feet - 0.15 * H, feet - 0.05 * H))
 
-        # ---- block: a square of colour off her shoulder ----
-        S = 0.46 * h
-        bx0 = cxp - 0.14 * S if side > 0 else cxp - 0.86 * S
-        by0 = y - 0.05 * h
-        blk = (np.clip(np.minimum(xx - bx0, bx0 + S - xx) + 0.5, 0, 1) * np.clip(np.minimum(yy - by0, by0 + S - yy) + 0.5, 0, 1))
-        qa["block"] = put("block", tint(blk * (1 - t), shadow=blk))
-
-        # ---- stripes: three tones of her colour ----
-        ws, gap = 0.040 * W, 0.013 * W
-        stp = np.zeros((H, W), np.float32)
-        dLm = np.zeros((H, W), np.float32)
-        for j, d in enumerate((-8.0, 0.0, 9.0)):
-            c = cxp + (j - 1) * (ws + gap)
-            b1 = np.clip(np.minimum(xx - (c - ws / 2), (c + ws / 2) - xx) + 0.5, 0, 1) * ones
-            stp = np.maximum(stp, b1)
-            dLm += d * b1
-        qa["stripes"] = put("stripes", tint(to_floor(stp), dL=dLm, shadow=stp))
-        st_x = [(cxp - 1.5 * ws - gap) / W, (cxp + 1.5 * ws + gap) / W]
-
-        # ---- slash: a diagonal band leaning to her free side ----
-        sl_k, sl_y, sl_hw = 0.36, y + 0.42 * h, 0.062 * W
-        axis = cxp + side * sl_k * (sl_y - yy)
-        slash = np.clip(sl_hw - np.abs(xx - axis) + 0.5, 0, 1)
-        qa["slash"] = put("slash", tint(slash * (1 - t), shadow=slash))
-
-        # ---- wall: the whole studio in her colour ----
-        qa["wall"] = put("wall", tint(to_floor(ones)))
-
-        # ---- silh: her silhouette in her colour, stepped aside ----
-        Ms = np.float32([[1.03, 0, cxp * (1 - 1.03) + side * 0.036 * W], [0, 1.03, feet * (1 - 1.03) - 0.006 * H]])
-        sil = cv2.warpAffine((a > 0.5).astype(np.float32), Ms, (W, H), flags=cv2.INTER_LINEAR)
-        sil = blur(sil, 1.3) * (1 - smooth(yy, feet - 0.15 * H, feet - 0.05 * H))
-        qa["silh"] = put("silh", tint(sil * 0.94, dL=-3.0))
+        s1, s2 = stepped(0.034, 1.03), stepped(0.068, 1.06)
+        far = s2 * (1 - np.clip(s1, 0, 1))
+        qa["silh"] = put("silh", tint(np.maximum(s1 * 0.94, far * 0.52), dL=-3.0 + 9.0 * far))
 
         # ---- flash ----
         M = np.float32([[1.035, 0, cxp * (1 - 1.035) + 0.020 * W], [0, 1.035, feet * (1 - 1.035) - 0.004 * H]])
@@ -245,26 +232,10 @@ def main(spec):
         def flashed(Bg):
             return over(Bg * (1 - 0.36 * shd[..., None])) + a3 * (Ffl - F)
 
-        for name, Bg in (("flash", Ball), ("colflash", Bcol), ("archflash", Barch)):
+        for name, Bg in (("flash", Ball), ("colflash", Bcol_flash)):
             fr = flashed(Bg)
             r[name] = save_frame(fr, rgb, f"{out_dir}/{name}{k}.webp")
             qa[name] = fr
-
-        # ---- noir: one big soft shadow thrown to her free side ----
-        Mn = np.float32([[1.36, 0, cxp * (1 - 1.36) + side * 0.07 * W], [0, 1.36, feet * (1 - 1.36)]])
-        big = cv2.warpAffine((a > 0.5).astype(np.float32), Mn, (W, H), flags=cv2.INTER_LINEAR)
-        big = blur(big, 10) * (1 - smooth(yy, feet - 0.19 * H, feet - 0.08 * H))
-        qa["noir"] = put("noir", Ball * (1 - 0.30 * big[..., None]))
-
-        # ---- evening: low sun, long shadow across the floor ----
-        Me = np.float32([[1, -side * 0.92, side * 0.92 * feet], [0, 0.26, 0.74 * feet]])
-        lng = cv2.warpAffine((a > 0.5).astype(np.float32), Me, (W, H), flags=cv2.INTER_LINEAR)
-        far = smooth(feet - yy, 0, 0.16 * H) * ones
-        lng = blur(lng, 2.2) * (1 - far) + blur(lng, 10) * far
-        lng *= 1 - 0.4 * far
-        Lev = LBall.copy()
-        Lev[..., 0] *= 1 - 0.46 * lng
-        qa["evening"] = put("evening", np.where(lng[..., None] > 0.003, unlab(Lev), Ball))
 
         hexc = "#%02x%02x%02x" % tuple(int(v) for v in unlab(np.array([[[Lt, ga * sc, gb * sc]]], np.float32))[0, 0])
         meta.append({
@@ -274,11 +245,7 @@ def main(spec):
             "wallL": round(wall_L, 1), "hex": hexc, "hz": round(hz / H, 4),
             "apex": round(apex / H, 4),
             "disc": [round(cxp / W, 4), round(dcy / H, 4), round(dR / W, 4)],
-            "dado": round(yd / H, 4),
-            "block": [round(bx0 / W, 4), round(by0 / H, 4), round(S / W, 4), round(S / H, 4)],
-            "stripes": [round(v, 4) for v in st_x],
-            "slash": [round(sl_k * H / W, 4), round(sl_y / H, 4), round(sl_hw / W, 4)],
-            "path": contour_path(a, feet, W, H), "path2": contour_path(a, feet, W, H, grow=30.0),
+            "path": contour_path(a, feet, W, H),
             "r": r,
         })
         names = list(qa)
