@@ -236,6 +236,9 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
     /** the lamp, relative to her: -1..1 across, -1..1 up/down; eased towards its target */
     const lamp = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
     const lampSide = useRef(0);
+    /** the flash fires the first time a model is chosen, not on every re-hover */
+    const flashed = useRef(new Set<number>());
+    const [fresh, setFresh] = useState<number | null>(null);
     const [active, setActive] = useState<number | null>(null);
     const [view, setView] = useState(0);
     const [geo, setGeo] = useState<Geo>({
@@ -400,6 +403,8 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
             const el = mRefs.current[k];
             pointerLed.current = led && !!at;
             lampSide.current = 0;
+            setFresh(flashed.current.has(k) ? null : k);
+            flashed.current.add(k);
             // lines start where she was touched (or at the top of her head)
             const start = at ? nearest(k, at.x, at.y) : nearest(k, m.cx, m.head - 0.05);
             el?.style.setProperty("--p", clamp(start.f, 0.02, 0.98).toFixed(4));
@@ -746,7 +751,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                     ref={(el) => {
                                         mRefs.current[k] = el;
                                     }}
-                                    className={`hl3__m ${on ? "is-on" : ""} ${rs > 0 ? "is-r" : "is-l"} ${onLight ? "is-ink" : ""}`}
+                                    className={`hl3__m ${on ? "is-on" : ""} ${on && fresh === k ? "is-fresh" : ""} ${rs > 0 ? "is-r" : "is-l"} ${onLight ? "is-ink" : ""}`}
                                     style={style}
                                 >
                                     {/* 2 — behind her */}

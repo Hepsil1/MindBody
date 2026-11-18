@@ -112,8 +112,8 @@
     clip-path: inset(1.5px);
 }
 /* the flash itself: she is lit for an instant */
-.hl3--shadow .is-on .hl3__cut,
-.hl3--duet .is-on .hl3__cut {
+.hl3--shadow .is-fresh .hl3__cut,
+.hl3--duet .is-fresh .hl3__cut {
     animation: hl3Flash 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both !important;
 }
 @keyframes hl3Flash {
@@ -562,6 +562,22 @@ body:has(.hllab) .top-bar {
     gap: 5px;
     overflow-x: auto;
     scrollbar-width: none;
+    /* the row scrolls: its cut edges fade, so nothing looks chopped off */
+    padding: 0 14px;
+    -webkit-mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 14px,
+        #000 calc(100% - 18px),
+        transparent
+    );
+    mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 14px,
+        #000 calc(100% - 18px),
+        transparent
+    );
 }
 .hldock__fx::-webkit-scrollbar {
     display: none;
