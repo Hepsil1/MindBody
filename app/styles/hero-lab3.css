@@ -202,7 +202,10 @@
 .is-on .hl3__fab--touch {
     opacity: 1;
     transition: opacity 0.15s ease !important;
-    animation: hl3Spread 1.7s cubic-bezier(0.3, 0.1, 0.25, 1) both !important;
+    /* the light lands, then eases back so her outfit is its own colour again */
+    animation:
+        hl3Spread 1.7s cubic-bezier(0.3, 0.1, 0.25, 1) both,
+        hl3Settle 3.2s ease both !important;
 }
 .is-on .hl3__fab--touch-edge {
     animation:
@@ -215,6 +218,15 @@
     }
     to {
         --r: 150%;
+    }
+}
+@keyframes hl3Settle {
+    0%,
+    55% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.3;
     }
 }
 @keyframes hl3Rim {
@@ -253,7 +265,9 @@
 .is-on .hl3__fab--scan {
     opacity: 1;
     transition: opacity 0.15s ease !important;
-    animation: hl3Scan 1.9s cubic-bezier(0.45, 0.05, 0.35, 1) 0.1s both !important;
+    animation:
+        hl3Scan 1.9s cubic-bezier(0.45, 0.05, 0.35, 1) 0.1s both,
+        hl3Settle 3.4s ease both !important;
 }
 .is-on .hl3__fab--scan-edge {
     animation:
@@ -709,6 +723,9 @@ body:has(.hllab) .top-bar {
 }
 .hldock__fx button:hover {
     border-color: rgba(255, 255, 255, 0.65);
+}
+.hldock__fx button.is-off {
+    opacity: 0.38;
 }
 .hldock__fx button.is-on {
     background: #fff;

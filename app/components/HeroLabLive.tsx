@@ -102,7 +102,7 @@ const FABRIC: LiveMode[] = ["sheen", "touch", "scan", "loupe"];
 const SIDE_CAPTION: LiveMode[] = ["shadow", "sheen", "touch", "scan", "loupe"];
 /** the lens: its width as a fraction of the canvas, and how much it magnifies */
 const LENS = 0.064;
-const ZOOM = 2.4;
+const ZOOM = 1.8;
 /** letters of the line text: width of one, in em */
 const EM = 0.93;
 

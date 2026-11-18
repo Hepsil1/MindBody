@@ -309,6 +309,9 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
     if (!st?.models2.length) return null;
     const dir = classic ? st.maskDirC : st.maskDir;
     const ms = classic ? st.models2C : st.models2;
+    // a busy print / hair the colour of the suit: the outfit can't be lit on its own here
+    const noFab = ms.every((m) => m.fab === false);
+    const FAB_MODES: LiveMode[] = ["sheen", "touch", "scan", "loupe"];
     return (
         <main className="hllab">
             <HeroLabLive
@@ -326,8 +329,12 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
                             type="button"
                             role="tab"
                             aria-selected={i === fx}
-                            title={x.hint}
-                            className={i === fx ? "is-on" : ""}
+                            title={
+                                noFab && FAB_MODES.includes(x.mode)
+                                    ? "На цьому слайді костюм не відділити від моделі — замість ефекту на тканині тут контур"
+                                    : x.hint
+                            }
+                            className={`${i === fx ? "is-on" : ""} ${noFab && FAB_MODES.includes(x.mode) ? "is-off" : ""}`}
                             onClick={() => setFx(i)}
                         >
                             <span>{i + 1}</span>
