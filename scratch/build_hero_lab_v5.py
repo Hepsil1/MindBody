@@ -137,6 +137,11 @@ def main(spec):
         chroma = float(np.hypot(ga, gb))
         sc = float(np.clip(chroma * 1.5, chroma, 46)) / chroma if chroma > 6 else 0.0
         Lt = float(np.clip(gL + 16, 30, 66))
+        # a pale outfit on a pale wall would give a fill nobody sees: keep her hue
+        # but go deep enough to stand off the wall
+        ring = (cv2.dilate((a > 0.5).astype(np.uint8), np.ones((61, 61), np.uint8)) > 0) & (A_all < 0.02) & (yy < y + h - 0.2 * H)
+        wall_L = float(np.median(LBall[..., 0][ring]))
+        Lt = min(Lt, wall_L - 24)
 
         hz = feet - 0.20 * H
         t = smooth(yy, hz - 0.04 * H, hz + 0.04 * H) * ones  # 0 wall -> 1 floor
@@ -252,17 +257,15 @@ def main(spec):
         qa["noir"] = put("noir", Ball * (1 - 0.30 * big[..., None]))
 
         # ---- evening: low sun, long shadow across the floor ----
-        Me = np.float32([[1, -side * 0.78, side * 0.78 * feet], [0, 0.23, 0.77 * feet]])
+        Me = np.float32([[1, -side * 0.92, side * 0.92 * feet], [0, 0.26, 0.74 * feet]])
         lng = cv2.warpAffine((a > 0.5).astype(np.float32), Me, (W, H), flags=cv2.INTER_LINEAR)
-        far = smooth(feet - yy, 0, 0.14 * H) * ones
-        lng = blur(lng, 3) * (1 - far) + blur(lng, 11) * far
-        lng *= 1 - 0.45 * far
+        far = smooth(feet - yy, 0, 0.16 * H) * ones
+        lng = blur(lng, 2.2) * (1 - far) + blur(lng, 10) * far
+        lng *= 1 - 0.4 * far
         Lev = LBall.copy()
-        Lev[..., 0] *= 1 - 0.34 * lng
+        Lev[..., 0] *= 1 - 0.46 * lng
         qa["evening"] = put("evening", np.where(lng[..., None] > 0.003, unlab(Lev), Ball))
 
-        ring = (cv2.dilate((a > 0.5).astype(np.uint8), np.ones((61, 61), np.uint8)) > 0) & (A_all < 0.02) & (yy < feet - 0.2 * H)
-        wall_L = float(np.median(LBall[..., 0][ring]))
         hexc = "#%02x%02x%02x" % tuple(int(v) for v in unlab(np.array([[[Lt, ga * sc, gb * sc]]], np.float32))[0, 0])
         meta.append({
             "cx": round(cxp / W, 4), "head": round(y / H, 4), "feet": round(feet / H, 4),

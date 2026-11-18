@@ -143,6 +143,8 @@ export interface Lab2Model {
     colDark: boolean;
     /** lightness (Lab L) of the wall round her */
     wallL: number;
+    /** the colour the fills are painted in (her outfit, lifted) */
+    hex: string;
     /** where the wall meets the floor */
     hz: number;
     /** top of the arch */
@@ -446,6 +448,8 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                 ["--c0" as string]: pct(m.col[0]),
                                 ["--cw" as string]: pct(m.col[1] - m.col[0]),
                                 ["--body" as string]: body,
+                                // arch radius as a length (half the column width)
+                                ["--ar" as string]: `calc(var(--ch) * ${(((m.col[1] - m.col[0]) / 2) * (16 / 9)).toFixed(4)})`,
                             };
                             // geometry of the drawn lines, viewBox 1600x900
                             const colR = X(m.col[1] - m.col[0]) / 2;
@@ -454,7 +458,7 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                             const arcOf =
                                 line === "archline"
                                     ? { cx: X(m.cx), cy: archY, r: colR + 13 }
-                                    : { cx: dcx, cy: dcy, r: dr + (line === "ring" ? 22 : 13) };
+                                    : { cx: dcx, cy: dcy, r: dr + 23 };
                             const fr = {
                                 x0: X(m.x0 - 0.022),
                                 x1: X(m.x1 + 0.022),
@@ -519,6 +523,35 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                         />
                                     )}
                                     {snap && on && <span key={pulse} className="hl2__pop" />}
+
+                                    {(fill === "block" || fill === "disc") && (
+                                        // a keyline in the same colour just off the shape:
+                                        // it only shows where it leaves the colour
+                                        <div className="hl2__behind" style={mask}>
+                                            <svg
+                                                className="hl2__svg"
+                                                viewBox="0 0 1600 900"
+                                                preserveAspectRatio="none"
+                                                aria-hidden="true"
+                                            >
+                                                {fill === "block" ? (
+                                                    <path
+                                                        className="hl2__draw hl2__key"
+                                                        pathLength={1}
+                                                        style={{ stroke: m.hex }}
+                                                        d={`M${X(m.block[0]) + m.side * 11} ${Y(m.block[1]) + 11} h${X(m.block[2])} v${Y(m.block[3])} h${-X(m.block[2])} Z`}
+                                                    />
+                                                ) : (
+                                                    <path
+                                                        className="hl2__draw hl2__key"
+                                                        pathLength={1}
+                                                        style={{ stroke: m.hex }}
+                                                        d={`M${dcx} ${dcy - dr - 11} A${dr + 11} ${dr + 11} 0 1 1 ${dcx - 0.1} ${dcy - dr - 11}`}
+                                                    />
+                                                )}
+                                            </svg>
+                                        </div>
+                                    )}
 
                                     {/* ---------- lines that pass behind her ---------- */}
                                     {line === "ring" && (
@@ -669,17 +702,19 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                                     ));
                                                 })}
                                             {line === "pillars" &&
-                                                [0, 1].map((i) => (
-                                                    <path
-                                                        key={i}
-                                                        className="hl2__draw1"
-                                                        pathLength={1}
-                                                        style={{
-                                                            ["--d" as string]: `${i * 0.16}s`,
-                                                        }}
-                                                        d={`M${X(m.col[i])} 0 V${Y(m.feet)}`}
-                                                    />
-                                                ))}
+                                                [0, 1].flatMap((i) =>
+                                                    [0, 8].map((off) => (
+                                                        <path
+                                                            key={`${i}${off}`}
+                                                            className={`hl2__draw1 ${off ? "hl2__draw1--thin" : ""}`}
+                                                            pathLength={1}
+                                                            style={{
+                                                                ["--d" as string]: `${i * 0.16 + (off ? 0.12 : 0)}s`,
+                                                            }}
+                                                            d={`M${X(m.col[i]) + (i ? off : -off)} 0 V${Y(m.feet)}`}
+                                                        />
+                                                    )),
+                                                )}
                                             {line === "measure" && (
                                                 <>
                                                     <path
@@ -717,8 +752,24 @@ export default function HeroLabStage2({ maskDir, models, mode, studioBg }: Props
                                             )}
                                             {cap === "path" && (
                                                 <>
+                                                    <defs>
+                                                        <mask
+                                                            id={`${uid}x${k}`}
+                                                            maskUnits="userSpaceOnUse"
+                                                            x="0"
+                                                            y="0"
+                                                            width="1600"
+                                                            height="900"
+                                                        >
+                                                            <path
+                                                                d={textLines[k]}
+                                                                pathLength={1}
+                                                                className="hl2__tx-mask"
+                                                            />
+                                                        </mask>
+                                                    </defs>
                                                     <path id={`${uid}t${k}`} d={textLines[k]} />
-                                                    <g mask={`url(#${uid}k${k})`}>
+                                                    <g mask={`url(#${uid}x${k})`}>
                                                         <text className="hl2__svgtext">
                                                             <textPath
                                                                 href={`#${uid}t${k}`}
