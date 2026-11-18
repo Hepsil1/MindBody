@@ -7,24 +7,24 @@
  * scratch/build_hero_lab_v6.py):
  *     plate (studio, nobody in it) → what goes behind her → the cut-out models
  * so anything put behind a model is composited exactly like the photograph and
- * can move. Every effect comes from the model herself:
+ * can move. Every effect comes from the model herself.
  *
+ * On her outfit (scratch/build_hero_lab_v7_fabric.py: fab<k> = the garment
+ * alone, lit like under a brighter lamp; skin, hair and face never change):
+ *   sheen     a band of light glides across the fabric, like satin under a lamp
+ *   touch     the light spreads over the fabric from where she was touched
+ *   scan      a line of light runs down her and switches the fabric on
+ *   loupe     a round lens over the fabric shows its knit up close; it follows
+ *             the pointer, but only over the outfit (never her face or skin)
+ * Round her:
  *   contour   a hairline starts where she was touched and runs round her both
  *             ways; text written beside it; a bead rides it with the pointer
- *   arch      an arch drawn in two lines from both feet up to the keystone;
- *             the name set on its curve
- *   shadow    a camera flash: her shadow lands on the wall close behind her, in
- *             the wall's own colour; the pointer is the lamp, the shadow slides
- *             round her as it moves
- *   duo       her silhouette twice in the colours of her outfit, stepping aside
- *   ripple    four outlines spread out from her like rings on water, then breathe
- *   loop      her name runs round her, along a line just off her body
- *   stitch    a tailor's running stitch round her, a needle point travelling it
+ *   shadow    her shadow comes out from behind her onto the wall and stays
+ *   arch      an arch drawn behind her in two lines; the name set on its curve
  *   measure   a tailor's height rule beside her, ticks counted off top to bottom
- *   offset    her outline printed twice, white and in her colour, slightly off
- *             register; the two drift apart with the pointer
- *   duet      contour + shadow
- * No pointer (first view, touch, keyboard): the lamp sways slowly by itself.
+ *   loop      her name runs round her, along a line just off her body
+ * Where an outfit can't be told from her (a busy print, brown hair on a brown
+ * suit: `fab: false`) the outfit effects fall back to the contour.
  *
  * Nothing is placed above her head: on most screens that is where the site
  * header is (and on wide short screens the picture is cropped there). Captions
@@ -38,16 +38,15 @@ import "../styles/hero-lab.css";
 import "../styles/hero-lab3.css";
 
 export type LiveMode =
+    | "sheen"
+    | "touch"
+    | "scan"
+    | "loupe"
     | "contour"
-    | "arch"
     | "shadow"
-    | "duo"
-    | "ripple"
-    | "loop"
-    | "stitch"
+    | "arch"
     | "measure"
-    | "offset"
-    | "duet";
+    | "loop";
 
 export interface LiveModel {
     href: string;
@@ -77,6 +76,12 @@ export interface LiveModel {
     paths: string[];
     /** rects [x, y, w, h] (canvas fractions) of the layers */
     r: Record<"cut" | "sil", number[]>;
+    /** false: her outfit could not be separated well - no fabric effects */
+    fab?: boolean;
+    /** a black / navy / dark outfit */
+    gdark?: boolean;
+    /** the widest row of fabric across her torso: [x left, x right, y] */
+    band?: number[] | null;
 }
 
 interface Props {
@@ -92,8 +97,12 @@ const DEMO_MS = 4400;
 /** the centre logo keeps this band of the slide to itself */
 const LOGO = [0.395, 0.605];
 
-const HAS_TEXTLINE: LiveMode[] = ["contour", "stitch", "duet", "ripple"];
-const SIDE_CAPTION: LiveMode[] = ["shadow", "duo", "offset"];
+/** effects played on her outfit */
+const FABRIC: LiveMode[] = ["sheen", "touch", "scan", "loupe"];
+const SIDE_CAPTION: LiveMode[] = ["shadow", "sheen", "touch", "scan", "loupe"];
+/** the lens: its width as a fraction of the canvas, and how much it magnifies */
+const LENS = 0.064;
+const ZOOM = 2.4;
 /** letters of the line text: width of one, in em */
 const EM = 0.93;
 
@@ -231,14 +240,8 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
     const userAt = useRef(-Infinity);
     const demoUntil = useRef(0);
     const activeRef = useRef<number | null>(null);
-    /** true while the lamp is driven by a real pointer (otherwise it sways by itself) */
+    /** true while the bead is driven by a real pointer (otherwise it travels by itself) */
     const pointerLed = useRef(false);
-    /** the lamp, relative to her: -1..1 across, -1..1 up/down; eased towards its target */
-    const lamp = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
-    const lampSide = useRef(0);
-    /** the flash fires the first time a model is chosen, not on every re-hover */
-    const flashed = useRef(new Set<number>());
-    const [fresh, setFresh] = useState<number | null>(null);
     const [active, setActive] = useState<number | null>(null);
     const [view, setView] = useState(0);
     const [geo, setGeo] = useState<Geo>({
@@ -313,17 +316,9 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
     const textLines = useMemo(
         () =>
             models.map((m, k) =>
-                textLine(
-                    traces[k],
-                    m,
-                    lineText(m).length,
-                    sides[k],
-                    fs,
-                    mode === "ripple" ? 40 : 0,
-                    geo.top,
-                ),
+                textLine(traces[k], m, lineText(m).length, sides[k], fs, 0, geo.top),
             ),
-        [models, traces, sides, fs, mode, geo.top],
+        [models, traces, sides, fs, geo.top],
     );
     const loopText = useMemo(
         () =>
@@ -334,6 +329,44 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
             }),
         [models],
     );
+
+    // the lens only goes where there is fabric: read each outfit's alpha once
+    const fabRef = useRef<Array<ImageData | null>>([]);
+    useEffect(() => {
+        if (mode !== "loupe") return;
+        models.forEach((m, k) => {
+            if (m.fab === false) return;
+            const img = new Image();
+            img.onload = () => {
+                const c = document.createElement("canvas");
+                // a quarter size is plenty to tell fabric from skin
+                c.width = Math.max(1, Math.round(img.naturalWidth / 4));
+                c.height = Math.max(1, Math.round(img.naturalHeight / 4));
+                const ctx = c.getContext("2d");
+                if (!ctx) return;
+                ctx.drawImage(img, 0, 0, c.width, c.height);
+                fabRef.current[k] = ctx.getImageData(0, 0, c.width, c.height);
+            };
+            img.src = `${maskDir}/fab${k}.webp`;
+        });
+    }, [mode, models, maskDir]);
+
+    /** is (px, py) on her fabric? */
+    const onFabric = (k: number, px: number, py: number) => {
+        const d = fabRef.current[k];
+        const [x0, y0, w, h] = models[k].r.cut;
+        if (!d) return false;
+        const x = Math.floor(((px - x0) / w) * d.width);
+        const y = Math.floor(((py - y0) / h) * d.height);
+        if (x < 0 || y < 0 || x >= d.width || y >= d.height) return false;
+        return d.data[(y * d.width + x) * 4 + 3] > 200;
+    };
+    const setLens = (k: number, px: number, py: number) => {
+        const el = mRefs.current[k];
+        if (!el) return;
+        el.style.setProperty("--lx", px.toFixed(4));
+        el.style.setProperty("--ly", py.toFixed(4));
+    };
 
     useEffect(() => {
         const img = new Image();
@@ -354,20 +387,6 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         const box = camRef.current?.getBoundingClientRect();
         if (!box) return null;
         return { x: (clientX - box.left) / box.width, y: (clientY - box.top) / box.height };
-    };
-
-    /** the lamp is at (px, py): where it stands relative to her */
-    const setLight = (k: number, px: number, py: number) => {
-        const m = models[k];
-        const body = m.feet - m.head;
-        const dx = px - m.cx;
-        // the lamp is never dead in front of her (the shadow would hide behind her):
-        // it keeps to one side, and changes side only once the pointer has crossed her
-        let sign = lampSide.current || -sidesRef.current[k];
-        if (Math.abs(dx) > 0.006) sign = Math.sign(dx);
-        lampSide.current = sign;
-        lamp.current.tx = sign * Math.max(0.5, clamp(Math.abs(dx) / 0.05, 0, 1) ** 0.6);
-        lamp.current.ty = clamp((py - (m.head + body * 0.4)) / (body * 0.5), -1, 1);
     };
 
     /** nearest point of her outline to (px, py) */
@@ -402,24 +421,18 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
             const m = models[k];
             const el = mRefs.current[k];
             pointerLed.current = led && !!at;
-            lampSide.current = 0;
-            setFresh(flashed.current.has(k) ? null : k);
-            flashed.current.add(k);
             // lines start where she was touched (or at the top of her head)
             const start = at ? nearest(k, at.x, at.y) : nearest(k, m.cx, m.head - 0.05);
             el?.style.setProperty("--p", clamp(start.f, 0.02, 0.98).toFixed(4));
-            const L = lamp.current;
-            if (pointerLed.current && at) setLight(k, at.x, at.y);
-            else {
-                // the lamp stands on her crowded side: the shadow falls where there is room
-                L.tx = -sidesRef.current[k] * 0.8;
-                L.ty = 0.2;
-            }
-            // the shadow comes out from behind her
-            L.x = L.tx * 0.3;
-            L.y = L.ty;
-            el?.style.setProperty("--lx", L.x.toFixed(4));
-            el?.style.setProperty("--ly", L.y.toFixed(4));
+            // the light on her outfit spreads from the touch (or from her waist)
+            const [cx0, cy0, cw, ch] = m.r.cut;
+            const tx = at ? at.x : m.band ? (m.band[0] + m.band[1]) / 2 : m.cx;
+            const ty = at ? at.y : m.band ? m.band[2] : m.head + (m.feet - m.head) * 0.4;
+            el?.style.setProperty("--tx", pct((tx - cx0) / cw));
+            el?.style.setProperty("--ty", pct((ty - cy0) / ch));
+            // the lens starts where she was touched if that is fabric, else on her waist
+            if (at && onFabric(k, at.x, at.y)) setLens(k, at.x, at.y);
+            else setLens(k, m.band ? (m.band[0] + m.band[1]) / 2 : m.cx, ty);
             if (at) setBead(k, at.x, at.y);
             else setBead(k, m.cx, m.head - 0.05);
             setView(k);
@@ -427,42 +440,27 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         setActive(k);
     };
 
-    // the lamp eases towards where it should be; with no pointer it sways by itself
+    // contour: with no pointer on her, the bead travels her outline by itself
     useEffect(() => {
-        if (active === null) return;
+        if (active === null || mode !== "contour") return;
         const k = active;
         const el = mRefs.current[k];
         const tr = traces[k];
         const t0 = performance.now();
-        let last = t0;
-        let raf = 0;
-        const tick = (now: number) => {
-            const dt = Math.min(0.05, (now - last) / 1000);
-            last = now;
-            const L = lamp.current;
-            if (!pointerLed.current) {
-                const tt = (now - t0) / 1000;
-                L.tx = -sidesRef.current[k] * (0.74 + 0.2 * Math.sin(tt * 0.7));
-                L.ty = 0.1 + 0.4 * Math.cos(tt * 0.5);
-                const i = Math.round(
-                    clamp(0.5 + 0.42 * Math.sin(tt * 0.7), 0.04, 0.96) * (tr.pts.length - 1),
-                );
-                if (el && tr.pts[i] && tt > 1.6) {
-                    el.style.setProperty("--bx", `${tr.pts[i][0].toFixed(1)}px`);
-                    el.style.setProperty("--by", `${tr.pts[i][1].toFixed(1)}px`);
-                }
+        const id = window.setInterval(() => {
+            if (pointerLed.current) return;
+            const tt = (performance.now() - t0) / 1000;
+            const i = Math.round(
+                clamp(0.5 + 0.42 * Math.sin(tt * 0.7), 0.04, 0.96) * (tr.pts.length - 1),
+            );
+            if (el && tr.pts[i] && tt > 1.6) {
+                el.style.setProperty("--bx", `${tr.pts[i][0].toFixed(1)}px`);
+                el.style.setProperty("--by", `${tr.pts[i][1].toFixed(1)}px`);
             }
-            const f = 1 - Math.exp(-dt / 0.14);
-            L.x += (L.tx - L.x) * f;
-            L.y += (L.ty - L.y) * f;
-            el?.style.setProperty("--lx", L.x.toFixed(4));
-            el?.style.setProperty("--ly", L.y.toFixed(4));
-            raf = requestAnimationFrame(tick);
-        };
-        raf = requestAnimationFrame(tick);
-        return () => cancelAnimationFrame(raf);
+        }, 60);
+        return () => window.clearInterval(id);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [active]);
+    }, [active, mode]);
 
     // loop: her name keeps running round her while she is chosen
     useEffect(() => {
@@ -556,8 +554,8 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         if (k !== null) demoUntil.current = 0;
         if (k !== null && k === activeRef.current && at) {
             pointerLed.current = true;
-            setLight(k, at.x, at.y);
             setBead(k, at.x, at.y);
+            if (mode === "loupe" && onFabric(k, at.x, at.y)) setLens(k, at.x, at.y);
             return;
         }
         activate(k, at ?? undefined, true);
@@ -582,7 +580,11 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         <section
             ref={sectionRef}
             className={`slook hlab hl3 hl3--${mode} ${active !== null ? "has-active" : ""}`}
-            style={{ ["--fs" as string]: `${fs}px` }}
+            style={{
+                ["--fs" as string]: `${fs}px`,
+                ["--lw" as string]: LENS,
+                ["--zoom" as string]: ZOOM,
+            }}
             aria-label={t("Вітрина бренду MIND BODY")}
         >
             <div className="hlab__stage" style={{ backgroundColor: studioBg || "#dedad4" }}>
@@ -620,6 +622,11 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                             const rs = sides[k];
                             /** where the free picture starts, in viewBox units */
                             const T = geo.top * 900;
+                            /** her outfit can carry an effect; otherwise fall back to the contour */
+                            const fabric = FABRIC.includes(mode) && m.fab !== false;
+                            const lines = mode === "contour" || (FABRIC.includes(mode) && !fabric);
+                            const fabSrc = `${maskDir}/fab${k}.webp`;
+                            const cutR = m.r.cut;
                             const style = {
                                 ["--cx" as string]: pct(m.cx),
                                 ["--head" as string]: pct(m.head),
@@ -631,19 +638,11 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                 ["--hex2" as string]: m.hex2,
                                 ["--ground" as string]: m.ground,
                                 ["--sil" as string]: `url(${maskDir}/sil${k}.webp)`,
+                                ["--fab" as string]: `url(${fabSrc})`,
                                 // her shadow is on the wall: it thins out towards the floor
                                 ["--f0" as string]: pct((m.feet - 0.17 - sil[1]) / sil[3]),
                                 ["--f1" as string]: pct((m.feet - 0.06 - sil[1]) / sil[3]),
                             };
-
-                            /** her silhouette on the wall behind her */
-                            const shadow = (cls: string) => (
-                                <div className={`hl3__shw ${cls}`}>
-                                    <div className="hl3__shb">
-                                        <span className="hl3__sh" style={rect(sil)} />
-                                    </div>
-                                </div>
-                            );
 
                             // the arch: centred on her, a little wider than her, and
                             // never taller than the free picture
@@ -751,17 +750,19 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                     ref={(el) => {
                                         mRefs.current[k] = el;
                                     }}
-                                    className={`hl3__m ${on ? "is-on" : ""} ${on && fresh === k ? "is-fresh" : ""} ${rs > 0 ? "is-r" : "is-l"} ${onLight ? "is-ink" : ""}`}
+                                    className={`hl3__m ${on ? "is-on" : ""} ${rs > 0 ? "is-r" : "is-l"} ${onLight ? "is-ink" : ""} ${fabric ? "has-fab" : ""}`}
                                     style={style}
                                 >
-                                    {/* 2 — behind her */}
-                                    {(mode === "shadow" || mode === "duet") &&
-                                        shadow("hl3__shw--key")}
-                                    {mode === "duo" && (
-                                        <>
-                                            {shadow("hl3__shw--gel hl3__shw--g2")}
-                                            {shadow("hl3__shw--gel hl3__shw--g1")}
-                                        </>
+                                    {/* 2 — behind her: her shadow comes out onto the wall */}
+                                    {mode === "shadow" && (
+                                        <div
+                                            className="hl3__shw"
+                                            style={{ ["--sd" as string]: rs }}
+                                        >
+                                            <div className="hl3__shb">
+                                                <span className="hl3__sh" style={rect(sil)} />
+                                            </div>
+                                        </div>
                                     )}
                                     {mode === "arch" && (
                                         <svg
@@ -812,11 +813,49 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         src={`${maskDir}/cut${k}.webp`}
                                         alt=""
                                         decoding="async"
-                                        style={rect(m.r.cut)}
+                                        style={rect(cutR)}
                                     />
 
+                                    {/* 3b — her outfit, lit: revealed through a moving mask */}
+                                    {fabric && mode !== "loupe" && (
+                                        <img
+                                            className={`hl3__fab hl3__fab--${mode}`}
+                                            src={fabSrc}
+                                            alt=""
+                                            decoding="async"
+                                            style={rect(cutR)}
+                                        />
+                                    )}
+                                    {fabric && (mode === "scan" || mode === "touch") && (
+                                        <img
+                                            className={`hl3__fab hl3__fab--edge hl3__fab--${mode}-edge`}
+                                            src={fabSrc}
+                                            alt=""
+                                            decoding="async"
+                                            style={rect(cutR)}
+                                        />
+                                    )}
+                                    {fabric && mode === "loupe" && (
+                                        <div className="hl3__lens" aria-hidden="true">
+                                            <div className="hl3__lens-in">
+                                                <img
+                                                    src={`${maskDir}/plate.webp`}
+                                                    alt=""
+                                                    decoding="async"
+                                                    style={rect([0, 0, 1, 1])}
+                                                />
+                                                <img
+                                                    src={`${maskDir}/cut${k}.webp`}
+                                                    alt=""
+                                                    decoding="async"
+                                                    style={rect(cutR)}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* 4 — in front of her */}
-                                    {!["shadow", "duo", "arch"].includes(mode) ? (
+                                    {lines || ["measure", "loop"].includes(mode) ? (
                                         <svg
                                             className="hl3__svg"
                                             viewBox="0 0 1600 900"
@@ -825,7 +864,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         >
                                             <defs>
                                                 {fade}
-                                                {HAS_TEXTLINE.includes(mode) && (
+                                                {lines && (
                                                     <mask
                                                         id={`${uid}x${k}`}
                                                         maskUnits="userSpaceOnUse"
@@ -841,7 +880,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                         />
                                                     </mask>
                                                 )}
-                                                {(mode === "loop" || mode === "stitch") && (
+                                                {mode === "loop" && (
                                                     <mask
                                                         id={`${uid}r${k}`}
                                                         maskUnits="userSpaceOnUse"
@@ -850,14 +889,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                         width="1600"
                                                         height="900"
                                                     >
-                                                        <Both
-                                                            d={
-                                                                mode === "loop"
-                                                                    ? paths[1]
-                                                                    : paths[0]
-                                                            }
-                                                            cls="hl3__ln--mask"
-                                                        />
+                                                        <Both d={paths[1]} cls="hl3__ln--mask" />
                                                     </mask>
                                                 )}
                                                 {mode === "measure" && (
@@ -880,7 +912,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                 )}
                                             </defs>
 
-                                            {(mode === "contour" || mode === "duet") && (
+                                            {lines && (
                                                 <>
                                                     <Both d={m.path} />
                                                     <path
@@ -908,24 +940,6 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                 </>
                                             )}
 
-                                            {mode === "ripple" &&
-                                                paths.map((d, i) => (
-                                                    <g key={i} mask={i ? faded : undefined}>
-                                                        <g
-                                                            className="hl3__ring"
-                                                            style={{ ["--i" as string]: i }}
-                                                        >
-                                                            <Both
-                                                                d={d}
-                                                                cls={i ? "hl3__ln--thin" : ""}
-                                                                style={{
-                                                                    ["--d" as string]: `${i * 0.14}s`,
-                                                                }}
-                                                            />
-                                                        </g>
-                                                    </g>
-                                                ))}
-
                                             {mode === "loop" && (
                                                 <>
                                                     <Both d={paths[0]} cls="hl3__ln--thin" />
@@ -948,22 +962,6 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                             </g>
                                                         </g>
                                                     </g>
-                                                </>
-                                            )}
-
-                                            {mode === "stitch" && (
-                                                <>
-                                                    <g mask={`url(#${uid}r${k})`}>
-                                                        <path
-                                                            d={paths[0]}
-                                                            className="hl3__stitch"
-                                                        />
-                                                    </g>
-                                                    <path
-                                                        d={paths[0]}
-                                                        pathLength={1}
-                                                        className="hl3__needle"
-                                                    />
                                                 </>
                                             )}
 
@@ -1003,18 +1001,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                 </g>
                                             )}
 
-                                            {mode === "offset" && (
-                                                <>
-                                                    <g className="hl3__off hl3__off--c">
-                                                        <Both d={m.path} cls="hl3__ln--col" />
-                                                    </g>
-                                                    <g className="hl3__off hl3__off--w">
-                                                        <Both d={m.path} />
-                                                    </g>
-                                                </>
-                                            )}
-
-                                            {HAS_TEXTLINE.includes(mode) && (
+                                            {lines && (
                                                 <>
                                                     <path id={`${uid}t${k}`} d={textLines[k]} />
                                                     <g mask={`url(#${uid}x${k})`}>
@@ -1033,7 +1020,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                     ) : null}
 
                                     {/* the caption runs down her free side */}
-                                    {SIDE_CAPTION.includes(mode) && (
+                                    {SIDE_CAPTION.includes(mode) && !lines && (
                                         <div
                                             className="hl3__cap"
                                             style={{

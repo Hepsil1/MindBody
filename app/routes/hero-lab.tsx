@@ -86,42 +86,42 @@ const LAB_SLIDES: typeof SLIDES = [
     { sid: "u18_sky_zip", variant: "match" },
 ];
 
-/** /hero-lab: the effects, in the order of the dock */
+/** /hero-lab: the effects, in the order of the bar - first the ones on her outfit */
 const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
+    {
+        mode: "sheen",
+        label: "Блік",
+        hint: "Смуга світла пробігає по тканині костюма, як по атласу під лампою",
+    },
+    {
+        mode: "touch",
+        label: "Дотик",
+        hint: "Від точки дотику світло розходиться по тканині і лишається",
+    },
+    {
+        mode: "scan",
+        label: "Скан",
+        hint: "Лінія світла проходить згори донизу і вмикає тканину",
+    },
+    {
+        mode: "loupe",
+        label: "Лупа",
+        hint: "Кругла лінза над тканиною показує її фактуру зблизька й ходить за курсором — лише по костюму",
+    },
     {
         mode: "contour",
         label: "Контур",
-        hint: "Лінія починається там, де ви торкнулись моделі, і обходить її; намистинка їде по лінії за курсором",
-    },
-    {
-        mode: "arch",
-        label: "Арка",
-        hint: "Арка малюється за моделлю двома лініями від підлоги до вершини, назва лягає на її дугу",
+        hint: "Лінія починається там, де ви торкнулись моделі, і обходить її",
     },
     {
         mode: "shadow",
         label: "Тінь",
-        hint: "Спалах камери: тінь лягає на стіну за моделлю і ходить за курсором, як за лампою",
+        hint: "Тінь моделі виходить з-за неї на стіну і лишається",
     },
     {
-        mode: "duo",
-        label: "Кольорові тіні",
-        hint: "Силует моделі двічі в кольорах костюма — розходиться вбік за курсором",
-    },
-    {
-        mode: "ripple",
-        label: "Хвилі",
-        hint: "Чотири контури розходяться від моделі, як кола на воді, і дихають",
-    },
-    {
-        mode: "loop",
-        label: "Рядок",
-        hint: "Назва безперервно біжить навколо моделі вздовж її силуету",
-    },
-    {
-        mode: "stitch",
-        label: "Викрійка",
-        hint: "Кравецький шов обходить модель, по ньому ходить голка",
+        mode: "arch",
+        label: "Арка",
+        hint: "Арка малюється за моделлю двома лініями, назва лягає на її дугу",
     },
     {
         mode: "measure",
@@ -129,14 +129,9 @@ const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
         hint: "Кравецька мірка на весь зріст: поділки відлічуються зверху вниз",
     },
     {
-        mode: "offset",
-        label: "Зсув",
-        hint: "Два контури — білий і в кольорі костюма — розходяться за курсором, як друк зі зсувом",
-    },
-    {
-        mode: "duet",
-        label: "Контур і тінь",
-        hint: "Спалах з тінню на стіні і лінія навколо моделі разом",
+        mode: "loop",
+        label: "Рядок",
+        hint: "Назва безперервно біжить навколо моделі вздовж її силуету",
     },
 ];
 
@@ -177,9 +172,21 @@ export async function loader({ params }: LoaderFunctionArgs) {
                   ) as { models: Geo[] }
               ).models
             : null;
+        // the same slide on its original wall (built into lab/<sid>__c)
+        const cPath = metaPath.replace(
+            `${sid}${path.sep}meta.json`,
+            `${sid}__c${path.sep}meta6.json`,
+        );
+        const classic =
+            best && variant
+                ? await readFile(cPath, "utf8")
+                      .then((t) => (JSON.parse(t) as { models: Geo[] }).models)
+                      .catch(() => null)
+                : null;
         slides.push({
             sid,
             geo,
+            geoC: classic,
             colors: colors ?? null,
             models: labMeta.models,
             look: variant
@@ -200,7 +207,7 @@ export default function HeroLab() {
     const { t } = useI18n();
     const money = useMoney();
 
-    const stages = slides.map(({ sid, look, models, colors, geo }) => {
+    const stages = slides.map(({ sid, look, models, colors, geo, geoC }) => {
         const short = (look.name.match(/«([^»]+)»/)?.[1] ?? look.name).toUpperCase();
         const [lookName, lookNote] = look.kicker.split(" · ");
         const info = (k: number) => ({
@@ -216,6 +223,9 @@ export default function HeroLab() {
             maskDir: `/hero/lab/${sid}`,
             studioBg: look.studioBg,
             models2: (geo ?? []).map((g, k): LiveModel => ({ ...g, ...info(k) })),
+            // original wall: its own folder when the slide is recoloured, else the same
+            maskDirC: geoC ? `/hero/lab/${sid}__c` : `/hero/lab/${sid}`,
+            models2C: (geoC ?? geo ?? []).map((g, k): LiveModel => ({ ...g, ...info(k) })),
             models: models.map(
                 (m, k): LabModel => ({
                     ...info(k),
@@ -233,7 +243,7 @@ export default function HeroLab() {
 
     return (
         <main style={{ background: "#f4f1ec" }}>
-            {stages.map(({ sid, look, models2: _m2, ...stage }) => (
+            {stages.map(({ sid, look, models2: _m2, models2C: _c, maskDirC: _d, ...stage }) => (
                 <div key={sid} style={{ marginBottom: 12 }}>
                     {mode ? (
                         <HeroLabStage {...stage} mode={mode} />
@@ -249,8 +259,10 @@ export default function HeroLab() {
 interface StageData {
     sid: string;
     maskDir: string;
+    maskDirC: string;
     studioBg?: string;
     models2: LiveModel[];
+    models2C: LiveModel[];
 }
 
 /** the lab page: the hero at its real size, and one slim bar to pick effect + slide */
@@ -258,6 +270,8 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
     const [fx, setFx] = useState(0);
     const [slide, setSlide] = useState(0);
     const [open, setOpen] = useState(false);
+    /** the original photograph (true) or the wall recoloured to her outfit */
+    const [classic, setClassic] = useState(true);
     const go = (d: number) => setSlide((i) => (i + d + stages.length) % stages.length);
     // keyboard: 1-9 and 0 effect, arrows slide
     useEffect(() => {
@@ -293,13 +307,15 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
     const st = stages[slide];
     const e = EFFECTS[fx];
     if (!st?.models2.length) return null;
+    const dir = classic ? st.maskDirC : st.maskDir;
+    const ms = classic ? st.models2C : st.models2;
     return (
         <main className="hllab">
             <HeroLabLive
-                key={`${st.sid}-${e.mode}`}
-                maskDir={st.maskDir}
+                key={`${dir}-${e.mode}`}
+                maskDir={dir}
                 studioBg={st.studioBg}
-                models={st.models2}
+                models={ms}
                 mode={e.mode}
             />
             <nav className="hldock" aria-label="Hero lab">
@@ -319,6 +335,24 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
                         </button>
                     ))}
                 </div>
+                <div className="hldock__wall" role="group" aria-label="Фон">
+                    <button
+                        type="button"
+                        className={classic ? "is-on" : ""}
+                        aria-pressed={classic}
+                        onClick={() => setClassic(true)}
+                    >
+                        Оригінал
+                    </button>
+                    <button
+                        type="button"
+                        className={classic ? "" : "is-on"}
+                        aria-pressed={!classic}
+                        onClick={() => setClassic(false)}
+                    >
+                        Колір
+                    </button>
+                </div>
                 <div className="hldock__slides">
                     <button
                         type="button"
@@ -335,7 +369,7 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
                         aria-label="Усі слайди"
                         onClick={() => setOpen((o) => !o)}
                     >
-                        <img src={`${st.maskDir}/thumb.webp`} alt="" />
+                        <img src={`${dir}/thumb.webp`} alt="" />
                         {slide + 1} / {stages.length}
                     </button>
                     <button
@@ -361,7 +395,10 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
                                         setOpen(false);
                                     }}
                                 >
-                                    <img src={`${x.maskDir}/thumb.webp`} alt="" />
+                                    <img
+                                        src={`${classic ? x.maskDirC : x.maskDir}/thumb.webp`}
+                                        alt=""
+                                    />
                                     <span>{i + 1}</span>
                                 </button>
                             ))}

@@ -1,6 +1,7 @@
 """Hero-lab v6 - a LAYERED scene for /hero-lab (HeroLabLive).
 
   python scratch/build_hero_lab_v6.py s1_duo:match u21_palette:match ...
+  python scratch/build_hero_lab_v6.py s1_duo:classic      (original wall -> lab/s1_duo__c)
 
 Until now every effect was a finished frame (base + one pre-rendered state).
 That cannot move. v6 splits the slide the way it is matted:
@@ -47,10 +48,14 @@ def save_rgba(rgb, alpha, path, pad=6, q=93):
 
 def main(spec):
     sid, _, variant = spec.partition(":")
+    # "classic": the original wall, not recoloured -> its own folder <sid>__c
+    suffix = "__c" if variant == "classic" else ""
+    if variant == "classic":
+        variant = ""
     rgb = V.lossless_slide(sid, variant)
     matte = np.asarray(Image.open(f"{ROOT}/scratch/hero_v4_base/{sid}_matte.png")).astype(np.float32) / 255
     H, W = matte.shape
-    out_dir = f"{ROOT}/public/hero/lab/{sid}"
+    out_dir = f"{ROOT}/public/hero/lab/{sid}{suffix}"
     os.makedirs(out_dir, exist_ok=True)
 
     n, cl, st, _ = cv2.connectedComponentsWithStats((matte > 0.5).astype(np.uint8))
@@ -173,7 +178,7 @@ def main(spec):
     print(sid, "plate+cuts vs picture: max %.1f, mean %.3f, >3: %d px" % (diff.max(), diff.mean(), int((diff > 3).sum())), flush=True)
     qa = np.hstack([cv2.resize(np.clip(im, 0, 255).astype(np.uint8), (854, 480), interpolation=cv2.INTER_AREA)
                     for im in (recomposed, rgb, np.dstack([diff * 8] * 3))])
-    Image.fromarray(qa).save(f"{ROOT}/scratch/audit_shots/lab6_{sid}.jpg", quality=88)
+    Image.fromarray(qa).save(f"{ROOT}/scratch/audit_shots/lab6_{sid}{suffix}.jpg", quality=88)
     json.dump({"models": meta}, open(f"{out_dir}/meta6.json", "w"))
 
 
