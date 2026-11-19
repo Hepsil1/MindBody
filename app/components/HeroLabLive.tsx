@@ -872,6 +872,36 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                             <i className="hl3__sun-rays" />
                                         </div>
                                     )}
+                                    {/* under the sun: her name, a hairline, colour and price */}
+                                    {mode === "sun" && (
+                                        <div
+                                            className="hl3__suncap"
+                                            style={{
+                                                left: pct(sunX - sunRoom / 2),
+                                                width: pct(sunRoom),
+                                                top: pct(sunY + sunH / 2 + 0.014),
+                                            }}
+                                        >
+                                            <b>{sentence(m.title)}</b>
+                                            {parts.length > 0 && (
+                                                <>
+                                                    <s />
+                                                    {parts.map((x) => (
+                                                        <i
+                                                            key={x}
+                                                            className={
+                                                                /[₴$]/.test(x)
+                                                                    ? "is-price"
+                                                                    : undefined
+                                                            }
+                                                        >
+                                                            {x}
+                                                        </i>
+                                                    ))}
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* closer: her contact shadow on the floor deepens as she steps in */}
                                     {mode === "closer" && (

@@ -379,6 +379,69 @@
     }
 }
 
+/* under the sun: her name in italic serif, a short hairline, then colour and
+   price in small caps - it surfaces once the rays are drawn */
+.hl3 .hl3__suncap {
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5em;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(6px);
+    text-shadow: 0 0 10px rgba(30, 20, 40, 0.3);
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease !important;
+}
+.hl3__m.is-ink .hl3__suncap {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+.is-on .hl3__suncap {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity 0.8s ease 1.5s,
+        transform 1s cubic-bezier(0.22, 1, 0.36, 1) 1.5s !important;
+}
+.hl3__suncap b {
+    font:
+        italic 500 clamp(18px, calc(var(--ch) * 0.03), 32px) / 1.05 "Spectral",
+        Georgia,
+        serif;
+    letter-spacing: 0.06em;
+}
+.hl3__suncap s {
+    width: 0;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.6;
+    transition: width 0.2s ease !important;
+}
+.is-on .hl3__suncap s {
+    width: 34px;
+    transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1) 1.8s !important;
+}
+.hl3__suncap i {
+    font:
+        600 clamp(9.5px, calc(var(--ch) * 0.0135), 12.5px) / 1.4 "Manrope",
+        sans-serif;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.hl3__suncap i.is-price {
+    margin-top: -0.2em;
+    font:
+        600 clamp(12px, calc(var(--ch) * 0.017), 15px) / 1.2 "Onest",
+        sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: none;
+    opacity: 1;
+}
+
 /* closer: she takes a step towards the camera - grows a little from her feet,
    her contact shadow deepens; the others step back and lose a little light.
    Nothing is drawn: it is only the photograph, moved like a camera would. */
