@@ -545,16 +545,22 @@ async function renderWebProfile(
     }
 }
 
-// ── Image buffer → master .webp + -400w.webp (webp-only; grid never asks AVIF) ──
+// ── Image buffer → master .webp + every -Nw.webp the <picture> srcset lists
+// (400/800/1200/1600). Files written at runtime never get the build-time
+// variants, so a missing width would 404 on hi-DPR screens. webp-only; the
+// grid never asks AVIF. Widths above the source are just capped copies. ──
+const IG_VARIANT_WIDTHS = [400, 800, 1200, 1600];
 async function processIgImage(buf: Buffer, base: string, masterWidth = 1080): Promise<void> {
     await sharp(buf)
         .resize({ width: masterWidth, withoutEnlargement: true })
         .webp({ quality: 80 })
         .toFile(path.join(IG_DIR, `${base}.webp`));
-    await sharp(buf)
-        .resize({ width: 400, withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .toFile(path.join(IG_DIR, `${base}-400w.webp`));
+    for (const w of IG_VARIANT_WIDTHS) {
+        await sharp(buf)
+            .resize({ width: Math.min(w, masterWidth), withoutEnlargement: true })
+            .webp({ quality: 80 })
+            .toFile(path.join(IG_DIR, `${base}-${w}w.webp`));
+    }
 }
 
 async function pruneOldImages(keep: Set<string>): Promise<void> {
@@ -650,7 +656,10 @@ async function refreshViaApify(
         const isVideo = p.type === "Video" || p.type === "Reel";
         const filePath = path.join(IG_DIR, `${code}.webp`);
 
-        if (!existsSync(filePath) && p.displayUrl) {
+        // the last variant is written last, so it marks a complete set; an
+        // older partial set (master + 400w only) is filled in again
+        const complete = existsSync(path.join(IG_DIR, `${code}-1600w.webp`));
+        if ((!existsSync(filePath) || !complete) && p.displayUrl) {
             try {
                 const imgRes = await fetch(p.displayUrl);
                 if (imgRes.ok) {
