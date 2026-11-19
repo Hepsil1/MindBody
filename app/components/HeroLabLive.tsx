@@ -144,6 +144,30 @@ const pct = (v: number) => `${(v * 100).toFixed(3)}%`;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const sentence = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 const X = (f: number) => +(f * 1600).toFixed(1);
+/**
+ * phone: where the picture is centred to show a model. On her, but never so
+ * far that the canvas edge comes into view (a model near the edge of a wide
+ * group shot used to leave an empty strip down the side of the screen).
+ */
+const panTo = (cx: number, half: number) => clamp(cx, half, 1 - half);
+/** average colour of the top rows of an image */
+const topColour = (img: HTMLImageElement): string | null => {
+    try {
+        const c = document.createElement("canvas");
+        c.width = 32;
+        c.height = 18;
+        const ctx = c.getContext("2d");
+        if (!ctx) return null;
+        ctx.drawImage(img, 0, 0, 32, 18);
+        const d = ctx.getImageData(0, 0, 32, 2).data;
+        const sum = [0, 0, 0];
+        for (let i = 0; i < d.length; i += 4) for (let j = 0; j < 3; j++) sum[j] += d[i + j];
+        const n = d.length / 4;
+        return `rgb(${sum.map((v) => Math.round(v / n)).join(",")})`;
+    } catch {
+        return null;
+    }
+};
 const Y = (f: number) => +(f * 900).toFixed(1);
 
 const lineText = (m: LiveModel) => {
@@ -259,6 +283,9 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
     const pointerLed = useRef(false);
     const [active, setActive] = useState<number | null>(null);
     const [view, setView] = useState(0);
+    /** the wall's colour along the top of the plate: the stage around a
+     *  shrunk picture continues it */
+    const [wallTop, setWallTop] = useState<string | null>(null);
     const [geo, setGeo] = useState<Geo>({
         u: 1,
         top: 0,
@@ -309,8 +336,9 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                 const prev = models[k - 1];
                 const next = models[k + 1];
                 // the chat buttons live in the right corner of a desktop screen
-                const vr = geo.narrow ? m.cx + geo.half - 0.01 : geo.vx1 - 0.05;
-                const vl = geo.narrow ? m.cx - geo.half + 0.01 : geo.vx0 + 0.01;
+                const c = panTo(m.cx, geo.half);
+                const vr = geo.narrow ? c + geo.half - 0.01 : geo.vx1 - 0.05;
+                const vl = geo.narrow ? c - geo.half + 0.01 : geo.vx0 + 0.01;
                 const logoR = !geo.narrow && m.cx < 0.5 ? LOGO[0] : 1;
                 const logoL = !geo.narrow && m.cx > 0.5 ? LOGO[1] : 0;
                 const room = (sd: number) =>
@@ -328,8 +356,9 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
             models.map((m, k) => {
                 const prev = models[k - 1];
                 const next = models[k + 1];
-                const vr = geo.narrow ? m.cx + geo.half - 0.01 : geo.vx1 - 0.05;
-                const vl = geo.narrow ? m.cx - geo.half + 0.01 : geo.vx0 + 0.01;
+                const c = panTo(m.cx, geo.half);
+                const vr = geo.narrow ? c + geo.half - 0.01 : geo.vx1 - 0.05;
+                const vl = geo.narrow ? c - geo.half + 0.01 : geo.vx0 + 0.01;
                 const logoR = !geo.narrow && m.cx < 0.5 ? LOGO[0] : 1;
                 const logoL = !geo.narrow && m.cx > 0.5 ? LOGO[1] : 0;
                 return [
@@ -591,6 +620,9 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
     };
 
     const vm = models[view] ?? models[0];
+    /** how much of the canvas width the group of models takes, with a margin:
+     *  on a narrow desktop the picture shrinks to keep them all in view */
+    const span = Math.max(...models.map((m) => m.x1)) - Math.min(...models.map((m) => m.x0)) + 0.06;
 
     return (
         <section
@@ -599,8 +631,17 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
             style={{ ["--fs" as string]: `${fs}px` }}
             aria-label={t("Вітрина бренду MIND BODY")}
         >
-            <div className="hlab__stage" style={{ backgroundColor: studioBg || "#dedad4" }}>
-                <div className="hlab__canvas" style={{ ["--vx" as string]: vm.cx }}>
+            <div
+                className="hlab__stage"
+                style={{ backgroundColor: wallTop ?? studioBg ?? "#dedad4" }}
+            >
+                <div
+                    className="hlab__canvas"
+                    style={{
+                        ["--vx" as string]: panTo(vm.cx, geo.half),
+                        ["--span" as string]: span.toFixed(3),
+                    }}
+                >
                     <div
                         ref={camRef}
                         className="hl3__cam"
@@ -621,6 +662,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                             alt=""
                             className="hlab__img hl3__plate"
                             decoding="async"
+                            onLoad={(e) => setWallTop(topColour(e.currentTarget))}
                         />
 
                         {models.map((m, k) => {

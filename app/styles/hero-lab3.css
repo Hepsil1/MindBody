@@ -22,6 +22,20 @@
 .hl3 {
     --ink: #241d2b;
 }
+/* desktop narrower than 16:9 (laptops 16:10 / 4:3, tablets): a plain cover
+   crop cut the outer models of a group shot off at the screen edges. The
+   picture shrinks just enough to keep the whole group (--span, set from JS)
+   in view; above it the stage continues the wall (its colour is sampled from
+   the plate's top row) and the plate's top edge fades into it. */
+@media (min-width: 769px) {
+    .hl3 .hlab__canvas {
+        width: max(100cqw, min(calc(100cqh * 16 / 9), calc(100cqw / var(--span, 0.1))));
+    }
+}
+.hl3 .hl3__plate {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 8%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 8%);
+}
 .hl3__cam {
     position: absolute;
     inset: 0;
