@@ -104,11 +104,6 @@ const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
         hint: "Лінія світла проходить згори донизу і вмикає тканину",
     },
     {
-        mode: "loupe",
-        label: "Лупа",
-        hint: "Кругла лінза над тканиною показує її фактуру зблизька й ходить за курсором — лише по костюму",
-    },
-    {
         mode: "contour",
         label: "Контур",
         hint: "Лінія починається там, де ви торкнулись моделі, і обходить її",
@@ -132,6 +127,31 @@ const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
         mode: "loop",
         label: "Рядок",
         hint: "Назва безперервно біжить навколо моделі вздовж її силуету",
+    },
+    {
+        mode: "fit",
+        label: "Примірка",
+        hint: "Мірка відлічує зріст, і лінія світла йде по костюму в такт поділкам",
+    },
+    {
+        mode: "echo",
+        label: "Відгук",
+        hint: "Один дотик — дві відповіді: світло по тканині й лінія навколо моделі з тієї ж точки",
+    },
+    {
+        mode: "lamp",
+        label: "Софіт",
+        hint: "Вмикається лампа: тінь лягає на стіну, а світло пробігає по костюму з боку лампи",
+    },
+    {
+        mode: "niche",
+        label: "Ніша",
+        hint: "За моделлю малюється арка, і її тінь лягає всередину, як у галерейній ніші",
+    },
+    {
+        mode: "beam",
+        label: "Промінь",
+        hint: "Смуга світла на костюмі ходить за курсором угору й униз, лінія навколо моделі веде намистинку",
     },
 ];
 
@@ -311,7 +331,7 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
     const ms = classic ? st.models2C : st.models2;
     // a busy print / hair the colour of the suit: the outfit can't be lit on its own here
     const noFab = ms.every((m) => m.fab === false);
-    const FAB_MODES: LiveMode[] = ["sheen", "touch", "scan", "loupe"];
+    const FAB_MODES: LiveMode[] = ["sheen", "touch", "scan", "fit", "echo", "lamp", "beam"];
     return (
         <main className="hllab">
             <HeroLabLive

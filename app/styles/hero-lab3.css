@@ -283,56 +283,107 @@
     }
 }
 
-/* loupe: a round lens over her fabric, the knit seen up close. The lens is
-   --lw of the canvas wide (and as tall, so round); inside it the same scene,
-   scaled by --zoom about the point under the lens. */
-.hl3 .hl3__lens {
-    z-index: 3;
-    --lh: calc(var(--lw) * 16 / 9);
-    left: calc((var(--lx, 0.5) - var(--lw) / 2) * 100%);
-    top: calc((var(--ly, 0.5) - var(--lh) / 2) * 100%);
-    width: calc(var(--lw) * 100%);
-    height: calc(var(--lh) * 100%);
-    border-radius: 50%;
-    overflow: hidden;
-    box-shadow:
-        0 0 0 1.5px rgba(255, 255, 255, 0.92),
-        0 0 0 6px rgba(255, 255, 255, 0.16),
-        0 14px 34px rgba(20, 12, 28, 0.32);
-    opacity: 0;
-    scale: 0.55;
-    transition:
-        opacity 0.2s ease,
-        scale 0.25s ease,
-        left 0.16s cubic-bezier(0.2, 0.7, 0.2, 1),
-        top 0.16s cubic-bezier(0.2, 0.7, 0.2, 1) !important;
+/* ---- two ideas at once ---- */
+
+/* fit: the line of light runs down her outfit with the rule's ticks */
+.hl3--fit .is-on .hl3__fab--scan {
+    animation:
+        hl3ScanFit 1.2s cubic-bezier(0.4, 0, 0.3, 1) 0.45s both,
+        hl3Settle 3.4s ease 0.3s both !important;
 }
-.is-on .hl3__lens {
+.hl3--fit .is-on .hl3__fab--scan-edge {
+    animation:
+        hl3ScanFit 1.2s cubic-bezier(0.4, 0, 0.3, 1) 0.45s both,
+        hl3Rim 1.75s linear 0.2s both !important;
+}
+@keyframes hl3ScanFit {
+    from {
+        --s: 0%;
+    }
+    to {
+        --s: 101%;
+    }
+}
+
+/* lamp: the light floods her outfit from the lamp's side (opposite her
+   shadow), then settles back to her own colour */
+.hl3__fab--flood {
+    --fl: linear-gradient(to var(--fdir, right), #000 calc(var(--sx) - 18%), transparent var(--sx));
+    -webkit-mask-image: var(--fl);
+    mask-image: var(--fl);
+}
+.is-l .hl3__fab--flood {
+    --fdir: left;
+}
+.is-on .hl3__fab--flood {
     opacity: 1;
-    scale: 1;
-    transition:
-        opacity 0.35s ease 0.15s,
-        scale 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s,
-        left 0.16s cubic-bezier(0.2, 0.7, 0.2, 1),
-        top 0.16s cubic-bezier(0.2, 0.7, 0.2, 1) !important;
+    transition: opacity 0.15s ease !important;
+    animation:
+        hl3Flood 1.4s cubic-bezier(0.3, 0.1, 0.25, 1) 0.15s both,
+        hl3Settle 3.4s ease both !important;
 }
-.hl3__lens-in {
-    position: absolute;
-    width: calc(100% / var(--lw));
-    height: calc(100% / var(--lh));
-    left: calc((var(--lw) / 2 - var(--lx, 0.5)) / var(--lw) * 100%);
-    top: calc((var(--lh) / 2 - var(--ly, 0.5)) / var(--lh) * 100%);
-    transform-origin: calc(var(--lx, 0.5) * 100%) calc(var(--ly, 0.5) * 100%);
-    transform: scale(var(--zoom));
-    transition:
-        left 0.16s cubic-bezier(0.2, 0.7, 0.2, 1),
-        top 0.16s cubic-bezier(0.2, 0.7, 0.2, 1),
-        transform-origin 0.16s cubic-bezier(0.2, 0.7, 0.2, 1) !important;
+@keyframes hl3Flood {
+    from {
+        --sx: 0%;
+    }
+    to {
+        --sx: 125%;
+    }
 }
-.hl3__lens-in img {
-    position: absolute;
-    display: block;
-    max-width: none;
+
+/* niche: her shadow stays close, inside the arch */
+.hl3--niche .is-on .hl3__shw {
+    opacity: 0.5;
+    transform: translate(calc(var(--sd) * 1.5%), -0.5%) scale(1.02);
+    transition:
+        opacity 0.6s ease-out 0.9s,
+        transform 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.9s !important;
+}
+
+/* beam: a soft band of light on her outfit, at the pointer's height */
+@property --gy {
+    syntax: "<percentage>";
+    inherits: true;
+    initial-value: 45%;
+}
+.hl3__m {
+    transition: --gy 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) !important;
+}
+.hl3__fab--beam {
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent calc(var(--gy) - 13%),
+        #000 calc(var(--gy) - 3%),
+        #000 calc(var(--gy) + 3%),
+        transparent calc(var(--gy) + 13%)
+    );
+    mask-image: linear-gradient(
+        to bottom,
+        transparent calc(var(--gy) - 13%),
+        #000 calc(var(--gy) - 3%),
+        #000 calc(var(--gy) + 3%),
+        transparent calc(var(--gy) + 13%)
+    );
+}
+.hl3__fab--beam-edge {
+    filter: brightness(1.4);
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent calc(var(--gy) - 1.2%),
+        #000 var(--gy),
+        transparent calc(var(--gy) + 1.2%)
+    );
+    mask-image: linear-gradient(
+        to bottom,
+        transparent calc(var(--gy) - 1.2%),
+        #000 var(--gy),
+        transparent calc(var(--gy) + 1.2%)
+    );
+}
+.is-on .hl3__fab--beam,
+.is-on .hl3__fab--beam-edge {
+    opacity: 1;
+    transition: opacity 0.6s ease 0.3s !important;
 }
 
 /* ===================================================================== */
