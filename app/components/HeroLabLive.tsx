@@ -24,13 +24,14 @@
  * Five more, each from a different world:
  *   focus     a camera racks focus onto her: the studio and the others go soft,
  *             she alone stays sharp
- *   frame     a camera viewfinder: corner marks snap onto her, the focus square
- *             locks on, the shutter fires; the shot's caption below
- *   paint     a watercolour bloom: her outfit's colour spreads on the wall
- *             behind her like pigment on wet paper, darker at its edge
- *   tag       a paper hang tag drops in on a thread beside her and swings to rest
- *   spot      a stage spotlight: the room dims, a beam falls on her from above
- *             and lights a pool on the floor at her feet
+ *   sun       the brand's sun rises behind her head and shoulders, in her
+ *             colour, and turns very slowly
+ *   mirror    the floor turns to still water: her reflection grows out of her feet
+ *   tag       the brand's swing tag, tied to her at the shoulder, drops on its
+ *             string and swings to rest (name, colour, price)
+ *   window    golden hour: a window's panes of low sun slide onto the wall
+ *             behind her, leaves sway their shadows through it, a stripe of the
+ *             same light lies across her
  * Where an outfit can't be told from her (a busy print, brown hair on a brown
  * suit: `fab: false`) the outfit effects fall back to the contour.
  *
@@ -55,10 +56,10 @@ export type LiveMode =
     | "measure"
     | "loop"
     | "focus"
-    | "frame"
-    | "paint"
+    | "sun"
+    | "mirror"
     | "tag"
-    | "spot";
+    | "window";
 
 export interface LiveModel {
     href: string;
@@ -117,7 +118,16 @@ const FAB_KIND: Partial<Record<LiveMode, "sheen" | "touch" | "scan">> = {
 };
 /** effects that are only the outfit light (they fall back to the contour) */
 const FAB_ONLY: LiveMode[] = ["sheen", "touch", "scan"];
-const SIDE_CAPTION: LiveMode[] = ["shadow", "sheen", "touch", "scan", "focus", "spot", "paint"];
+const SIDE_CAPTION: LiveMode[] = [
+    "shadow",
+    "sheen",
+    "touch",
+    "scan",
+    "focus",
+    "sun",
+    "mirror",
+    "window",
+];
 /** letters of the line text: width of one, in em */
 const EM = 0.93;
 
@@ -658,58 +668,40 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                 ["--f1" as string]: pct((m.feet - 0.06 - sil[1]) / sil[3]),
                             };
 
-                            // paint: a bloom of her colour on the wall, centred on her body and
-                            // never wider than the free wall round her
                             const [roomL, roomR] = rooms[k];
-                            const pcx = X(m.cx);
-                            const pcy = Y(m.head + body * 0.36);
-                            const prx = clamp(
-                                X(Math.min(m.cx - roomL, roomR - m.cx)) * 0.96,
-                                X(m.x1 - m.x0) * 0.62,
-                                body * 900 * 0.32,
+                            /** free wall to the nearer side of her centre (canvas width) */
+                            const halfRoom = Math.min(m.cx - roomL, roomR - m.cx);
+
+                            // sun: the brand's sun rises behind her head and shoulders.
+                            // Sized in canvas height; the canvas is 16:9.
+                            const sunH = Math.min(body * 0.36, ((halfRoom * 2 * 16) / 9) * 0.98);
+                            const sunW = (sunH * 9) / 16;
+                            const sunY = Math.max(
+                                m.head + body * 0.15,
+                                geo.top + sunH * 0.5 + 0.01,
                             );
-                            const pry = Math.min(body * 900 * 0.44, prx * 1.45);
-                            // a deep colour is a heavy stain on a pale wall: thinner wash
-                            const pLum = parseInt(m.hex.slice(1), 16);
-                            const pL =
-                                (0.3 * (pLum >> 16) +
-                                    0.59 * ((pLum >> 8) & 255) +
-                                    0.11 * (pLum & 255)) /
-                                255;
-                            const pAlpha = clamp(0.45 + pL * 1.1, 0.62, 1);
-                            // a few drops flicked off the brush, just outside the rim
-                            const drops = [
-                                [-0.92, -0.42, 7],
-                                [0.88, -0.18, 4.5],
-                                [-0.7, 0.62, 5.5],
-                                [0.97, 0.5, 3.2],
-                                [0.34, -0.97, 3.8],
-                            ].map(([a, b, r], i) => {
-                                const sx = (i + k) % 2 ? 1 : -1;
-                                return [pcx + a * prx * 1.04 * sx, pcy + b * pry * 1.02, r];
-                            });
 
-                            // viewfinder: corner marks round her, inside the free picture
-                            const fx0 = X(Math.max(m.x0 - 0.014, roomL));
-                            const fx1 = X(Math.min(m.x1 + 0.014, roomR));
-                            const fy0 = Math.max(Y(m.head - 0.03), T + 8);
-                            const fy1 = Y(m.feet + 0.012);
-                            const fl = Math.min(42, (fx1 - fx0) * 0.22);
-                            const corners = [
-                                `M${fx0} ${fy0 + fl} V${fy0} H${fx0 + fl}`,
-                                `M${fx1 - fl} ${fy0} H${fx1} V${fy0 + fl}`,
-                                `M${fx1} ${fy1 - fl} V${fy1} H${fx1 - fl}`,
-                                `M${fx0 + fl} ${fy1} H${fx0} V${fy1 - fl}`,
-                            ];
-                            const fcx = X(m.band ? (m.band[0] + m.band[1]) / 2 : m.cx);
-                            const fcy = Y(m.band ? m.band[2] - body * 0.1 : m.head + body * 0.3);
+                            // window light: a window's panes of low sun fall on the wall
+                            // behind her from her free side
+                            const winH = body * 0.62;
+                            const winW = Math.min((winH * 9) / 16, halfRoom * 2 + (m.x1 - m.x0));
+                            const winX = m.cx + rs * (m.x1 - m.x0) * 0.22 - winW / 2;
+                            const winY = m.head + body * 0.1;
 
-                            // hang tag: on whichever side has more room, as wide as it allows
+                            // hang tag: tied to her at the shoulder, hanging on the side
+                            // with more room, as wide as that room allows
                             const tR = roomR - m.x1;
                             const tL = m.x0 - roomL;
                             const tSide = tR >= tL ? 1 : -1;
-                            const tagW = clamp(Math.max(tR, tL) - 0.026, 0.04, 0.1);
-                            const tagX = tSide > 0 ? m.x1 + 0.011 : m.x0 - 0.011 - tagW;
+                            const tagW = clamp(Math.max(tR, tL) - 0.03, 0.045, 0.082);
+                            const tAt = nearest(k, tSide > 0 ? m.x1 : m.x0, m.head + body * 0.19);
+                            const tAx = tAt.x / 1600;
+                            const tAy = tAt.y / 900;
+                            const tEdge = tSide > 0 ? m.x1 + 0.012 + tagW : m.x0 - 0.012 - tagW;
+                            const tBoxW = Math.abs(tEdge - tAx);
+                            const tHole = (tagW / 2 / tBoxW) * 100;
+                            const tHoleX = tSide > 0 ? 100 - tHole : tHole;
+                            const tKnot = tSide > 0 ? 0 : 100;
 
                             // the arch: centred on her, a little wider than her, and
                             // never taller than the free picture
@@ -874,135 +866,59 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         </svg>
                                     )}
 
-                                    {/* paint: a watercolour bloom of her colour, behind her */}
-                                    {mode === "paint" && (
-                                        <svg
-                                            className="hl3__svg hl3__svg--back hl3__paint"
-                                            style={{ opacity: pAlpha }}
-                                            viewBox="0 0 1600 900"
-                                            preserveAspectRatio="none"
-                                            aria-hidden="true"
+                                    {/* sun: the brand's sun rises behind her */}
+                                    {mode === "sun" && (
+                                        <div
+                                            className="hl3__sun"
+                                            style={{
+                                                left: pct(m.cx - sunW / 2),
+                                                top: pct(sunY - sunH / 2),
+                                                width: pct(sunW),
+                                                height: pct(sunH),
+                                            }}
                                         >
-                                            <defs>
-                                                {fade}
-                                                <radialGradient id={`${uid}pg${k}`}>
-                                                    <stop
-                                                        offset="0"
-                                                        stopColor={m.hex2}
-                                                        stopOpacity="0.2"
-                                                    />
-                                                    <stop
-                                                        offset="0.62"
-                                                        stopColor={m.hex2}
-                                                        stopOpacity="0.34"
-                                                    />
-                                                    <stop
-                                                        offset="0.88"
-                                                        stopColor={m.hex}
-                                                        stopOpacity="0.44"
-                                                    />
-                                                    <stop
-                                                        offset="0.96"
-                                                        stopColor={m.hex}
-                                                        stopOpacity="0.62"
-                                                    />
-                                                    <stop
-                                                        offset="1"
-                                                        stopColor={m.hex}
-                                                        stopOpacity="0"
-                                                    />
-                                                </radialGradient>
-                                                {/* the second, wetter pool inside: no dark rim of its own */}
-                                                <radialGradient id={`${uid}ph${k}`}>
-                                                    <stop
-                                                        offset="0"
-                                                        stopColor={m.hex2}
-                                                        stopOpacity="0.3"
-                                                    />
-                                                    <stop
-                                                        offset="0.7"
-                                                        stopColor={m.hex2}
-                                                        stopOpacity="0.16"
-                                                    />
-                                                    <stop
-                                                        offset="1"
-                                                        stopColor={m.hex2}
-                                                        stopOpacity="0"
-                                                    />
-                                                </radialGradient>
-                                                {[0, 1].map((j) => (
-                                                    <filter
-                                                        key={j}
-                                                        id={`${uid}pf${k}${j}`}
-                                                        x="-30%"
-                                                        y="-30%"
-                                                        width="160%"
-                                                        height="160%"
-                                                    >
-                                                        <feTurbulence
-                                                            type="fractalNoise"
-                                                            baseFrequency={j ? 0.022 : 0.011}
-                                                            numOctaves={3}
-                                                            seed={k * 11 + j * 5 + 3}
-                                                        />
-                                                        <feDisplacementMap
-                                                            in="SourceGraphic"
-                                                            scale={j ? 26 : 64}
-                                                            xChannelSelector="R"
-                                                            yChannelSelector="G"
-                                                        />
-                                                        <feGaussianBlur
-                                                            stdDeviation={j ? 0.6 : 1.4}
-                                                        />
-                                                    </filter>
-                                                ))}
-                                            </defs>
-                                            <g mask={faded}>
-                                                <g mask={`url(#${uid}b${k})`}>
-                                                    <ellipse
-                                                        className="hl3__paint-wash"
-                                                        cx={pcx}
-                                                        cy={pcy}
-                                                        rx={prx}
-                                                        ry={pry}
-                                                        fill={`url(#${uid}pg${k})`}
-                                                        filter={`url(#${uid}pf${k}0)`}
-                                                    />
-                                                    <ellipse
-                                                        className="hl3__paint-wash hl3__paint-wash--2"
-                                                        cx={pcx + prx * 0.18 * (k % 2 ? -1 : 1)}
-                                                        cy={pcy - pry * 0.22}
-                                                        rx={prx * 0.62}
-                                                        ry={pry * 0.5}
-                                                        fill={`url(#${uid}ph${k})`}
-                                                        filter={`url(#${uid}pf${k}1)`}
-                                                    />
-                                                    {drops.map(([x, y, r], i) => (
-                                                        <circle
-                                                            key={i}
-                                                            className="hl3__paint-drop"
-                                                            cx={x}
-                                                            cy={y}
-                                                            r={r}
-                                                            fill={m.hex}
-                                                            filter={`url(#${uid}pf${k}1)`}
-                                                            style={{
-                                                                ["--dl" as string]: `${0.9 + i * 0.09}s`,
-                                                            }}
-                                                        />
-                                                    ))}
-                                                </g>
-                                            </g>
-                                        </svg>
+                                            <i className="hl3__sun-glow" />
+                                            <i className="hl3__sun-rays" />
+                                        </div>
                                     )}
 
-                                    {/* spotlight: the room dims, a beam falls on her */}
-                                    {mode === "spot" && (
-                                        <div className="hl3__spot">
-                                            <i className="hl3__spot-dim" />
-                                            <i className="hl3__spot-beam" />
-                                            <i className="hl3__spot-dust" />
-                                            <i className="hl3__spot-pool" />
+                                    {/* mirror: her reflection in the floor, under her feet */}
+                                    {mode === "mirror" && (
+                                        <img
+                                            className="hl3__mirror"
+                                            src={`${maskDir}/cut${k}.webp`}
+                                            alt=""
+                                            decoding="async"
+                                            style={{
+                                                ...rect(cutR),
+                                                // the soles, a hair above the matte's last row
+                                                transformOrigin: `50% ${pct((m.feet - body * 0.008 - cutR[1]) / cutR[3])}`,
+                                            }}
+                                        />
+                                    )}
+
+                                    {/* window light on the wall behind her */}
+                                    {mode === "window" && (
+                                        <div className="hl3__win">
+                                            <i className="hl3__win-tone" />
+                                            <i
+                                                className="hl3__win-pane"
+                                                style={{
+                                                    left: pct(winX),
+                                                    top: pct(winY),
+                                                    width: pct(winW),
+                                                    height: pct(winH),
+                                                }}
+                                            />
+                                            <i
+                                                className="hl3__win-leaf"
+                                                style={{
+                                                    left: pct(winX),
+                                                    top: pct(winY),
+                                                    width: pct(winW),
+                                                    height: pct(winH),
+                                                }}
+                                            />
                                         </div>
                                     )}
 
@@ -1200,72 +1116,60 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         </svg>
                                     ) : null}
 
-                                    {/* viewfinder: corner marks, focus square, the shot's caption */}
-                                    {mode === "frame" && (
-                                        <>
-                                            <svg
-                                                className="hl3__svg hl3__vf"
-                                                viewBox="0 0 1600 900"
-                                                preserveAspectRatio="none"
-                                                aria-hidden="true"
-                                            >
-                                                {corners.map((d, i) => (
-                                                    <path
-                                                        key={i}
-                                                        d={d}
-                                                        className="hl3__vf-corner"
-                                                        style={{
-                                                            transformOrigin: `${X(m.cx)}px ${(fy0 + fy1) / 2}px`,
-                                                        }}
-                                                    />
-                                                ))}
-                                                <rect
-                                                    className="hl3__vf-focus"
-                                                    x={fcx - 16}
-                                                    y={fcy - 16}
-                                                    width="32"
-                                                    height="32"
-                                                    style={{ transformOrigin: `${fcx}px ${fcy}px` }}
-                                                />
-                                                <circle
-                                                    className="hl3__vf-rec"
-                                                    cx={fx0 + 10}
-                                                    cy={fy0 + fl + 16}
-                                                    r="3.6"
-                                                />
-                                                <text
-                                                    className="hl3__svgtext hl3__vf-text"
-                                                    x={rs > 0 ? fx1 + 12 : fx0 - 12}
-                                                    y={fy0 + 10}
-                                                    textAnchor="start"
-                                                    transform={`rotate(${rs > 0 ? 90 : -90} ${rs > 0 ? fx1 + 12 : fx0 - 12} ${fy0 + 10})`}
-                                                    style={
-                                                        rs > 0 ? undefined : { textAnchor: "end" }
-                                                    }
-                                                >
-                                                    {lineText(m)}
-                                                </text>
-                                            </svg>
-                                            {on && <i className="hl3__flash" />}
-                                        </>
+                                    {/* window light: the same low sun lies across her, in her shape */}
+                                    {mode === "window" && (
+                                        <i
+                                            className="hl3__win-on"
+                                            style={{
+                                                ...rect(sil),
+                                                backgroundImage: `linear-gradient(${rs > 0 ? 250 : 110}deg, transparent 30%, rgba(255, 214, 150, 0.45) 42%, rgba(255, 228, 176, 0.5) 52%, transparent 64%)`,
+                                            }}
+                                        />
                                     )}
 
-                                    {/* hang tag on a thread */}
+                                    {/* the brand's hang tag, tied to her at the shoulder */}
                                     {mode === "tag" && (
                                         <div
                                             className="hl3__tag"
                                             style={{
-                                                left: pct(tagX),
-                                                width: pct(tagW),
-                                                top: pct(geo.top),
-                                                height: pct(m.head + body * 0.2 - geo.top),
+                                                left: pct(tSide > 0 ? tAx : tAx - tBoxW),
+                                                top: pct(tAy),
+                                                width: pct(tBoxW),
+                                                height: pct(body * 0.07),
+                                                transformOrigin: `${tKnot}% 0`,
+                                                ["--sw" as string]: tSide,
                                             }}
                                         >
-                                            <div className="hl3__tag-card">
+                                            <svg
+                                                className="hl3__tag-str"
+                                                viewBox="0 0 100 100"
+                                                preserveAspectRatio="none"
+                                                aria-hidden="true"
+                                            >
+                                                <path
+                                                    d={`M${tKnot} 0 Q${(tKnot + tHoleX) / 2} 92 ${tHoleX} 100`}
+                                                />
+                                            </svg>
+                                            <div
+                                                className="hl3__tag-card"
+                                                style={{
+                                                    width: `${(tagW / tBoxW) * 100}%`,
+                                                    [tSide > 0 ? "right" : "left"]: 0,
+                                                }}
+                                            >
                                                 <span className="hl3__tag-hole" />
+                                                <i className="hl3__tag-sun" />
+                                                <span className="hl3__tag-brand">MIND BODY</span>
                                                 <b>{sentence(m.title)}</b>
                                                 {parts.map((x) => (
-                                                    <i key={x}>{x}</i>
+                                                    <i
+                                                        key={x}
+                                                        className={
+                                                            /[₴$]/.test(x) ? "is-price" : undefined
+                                                        }
+                                                    >
+                                                        {x}
+                                                    </i>
                                                 ))}
                                             </div>
                                         </div>
