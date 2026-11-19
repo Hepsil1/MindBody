@@ -283,107 +283,351 @@
     }
 }
 
-/* ---- two ideas at once ---- */
+/* ===================================================================== */
+/* FIVE FROM OTHER WORLDS: camera, magazine, label, stage                 */
+/* ===================================================================== */
 
-/* fit: the line of light runs down her outfit with the rule's ticks */
-.hl3--fit .is-on .hl3__fab--scan {
-    animation:
-        hl3ScanFit 1.2s cubic-bezier(0.4, 0, 0.3, 1) 0.45s both,
-        hl3Settle 3.4s ease 0.3s both !important;
+/* focus: the camera racks focus onto her - the studio and the others go
+   soft, she stays sharp. Nothing is drawn over her. */
+.hl3--focus .hl3__plate,
+.hl3--focus .hl3__cut {
+    filter: blur(0);
+    transition: filter 0.5s ease !important;
 }
-.hl3--fit .is-on .hl3__fab--scan-edge {
-    animation:
-        hl3ScanFit 1.2s cubic-bezier(0.4, 0, 0.3, 1) 0.45s both,
-        hl3Rim 1.75s linear 0.2s both !important;
-}
-@keyframes hl3ScanFit {
-    from {
-        --s: 0%;
-    }
-    to {
-        --s: 101%;
-    }
+.hl3--focus.has-active .hl3__plate,
+.hl3--focus.has-active .hl3__m:not(.is-on) .hl3__cut {
+    filter: blur(calc(var(--ch) * 0.0075)) brightness(0.97);
+    transition: filter 1.1s cubic-bezier(0.3, 0, 0.2, 1) !important;
 }
 
-/* lamp: the light floods her outfit from the lamp's side (opposite her
-   shadow), then settles back to her own colour */
-.hl3__fab--flood {
-    --fl: linear-gradient(to var(--fdir, right), #000 calc(var(--sx) - 18%), transparent var(--sx));
-    -webkit-mask-image: var(--fl);
-    mask-image: var(--fl);
-}
-.is-l .hl3__fab--flood {
-    --fdir: left;
-}
-.is-on .hl3__fab--flood {
-    opacity: 1;
-    transition: opacity 0.15s ease !important;
-    animation:
-        hl3Flood 1.4s cubic-bezier(0.3, 0.1, 0.25, 1) 0.15s both,
-        hl3Settle 3.4s ease both !important;
-}
-@keyframes hl3Flood {
-    from {
-        --sx: 0%;
-    }
-    to {
-        --sx: 125%;
-    }
-}
-
-/* niche: her shadow stays close, inside the arch */
-.hl3--niche .is-on .hl3__shw {
-    opacity: 0.5;
-    transform: translate(calc(var(--sd) * 1.5%), -0.5%) scale(1.02);
+/* frame: a camera viewfinder */
+.hl3__vf-corner {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: square;
+    opacity: 0;
+    transform: scale(1.22);
     transition:
-        opacity 0.6s ease-out 0.9s,
-        transform 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.9s !important;
+        opacity 0.2s ease,
+        transform 0.2s ease !important;
+}
+.is-on .hl3__vf-corner {
+    opacity: 1;
+    transform: scale(1);
+    transition:
+        opacity 0.25s ease,
+        transform 0.7s cubic-bezier(0.34, 1.4, 0.4, 1) !important;
+}
+.hl3__vf-focus {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    opacity: 0;
+    transform: scale(2.4);
+}
+.is-on .hl3__vf-focus {
+    animation: hl3Focus 1.3s cubic-bezier(0.3, 0, 0.2, 1) 0.35s both !important;
+}
+@keyframes hl3Focus {
+    0% {
+        opacity: 0;
+        transform: scale(2.4);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1);
+        stroke: currentColor;
+    }
+    52%,
+    64% {
+        opacity: 1;
+        transform: scale(0.9);
+        stroke: #8be28b;
+    }
+    58% {
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.9);
+        stroke: #8be28b;
+    }
+}
+.hl3__vf-rec {
+    fill: #e2483d;
+    opacity: 0;
+}
+.is-on .hl3__vf-rec {
+    animation: hl3Rec 1.4s steps(1) 1.2s infinite !important;
+}
+@keyframes hl3Rec {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}
+.hl3__vf-text {
+    font-family: "Onest", ui-monospace, monospace;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    opacity: 0;
+    transition: opacity 0.2s ease !important;
+}
+.is-on .hl3__vf-text {
+    opacity: 0.95;
+    transition: opacity 0.5s ease 1.25s !important;
+}
+/* the shutter: one short flash over the whole picture */
+.hl3 .hl3__flash {
+    inset: 0;
+    z-index: 4;
+    background: #fff;
+    opacity: 0;
+    animation: hl3Shutter 0.55s ease-out 1.05s both !important;
+}
+@keyframes hl3Shutter {
+    0% {
+        opacity: 0;
+    }
+    12% {
+        opacity: 0.55;
+    }
+    100% {
+        opacity: 0;
+    }
 }
 
-/* beam: a soft band of light on her outfit, at the pointer's height */
-@property --gy {
-    syntax: "<percentage>";
-    inherits: true;
-    initial-value: 45%;
+/* cover: her name huge on the wall behind her; it rises out of a line */
+.hl3__cover-word {
+    fill: currentColor;
+    font-family: "Spectral", Georgia, serif;
+    font-style: italic;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    opacity: 0;
+    transform: translateY(0.9em);
+    transition:
+        opacity 0.25s ease,
+        transform 0.3s ease,
+        letter-spacing 0.3s ease !important;
 }
-.hl3__m {
-    transition: --gy 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) !important;
+.is-on .hl3__cover-word {
+    opacity: 0.94;
+    transform: translateY(0);
+    letter-spacing: -0.01em;
+    transition:
+        opacity 0.6s ease 0.05s,
+        transform 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.05s,
+        letter-spacing 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.05s !important;
 }
-.hl3__fab--beam {
-    -webkit-mask-image: linear-gradient(
-        to bottom,
-        transparent calc(var(--gy) - 13%),
-        #000 calc(var(--gy) - 3%),
-        #000 calc(var(--gy) + 3%),
-        transparent calc(var(--gy) + 13%)
-    );
-    mask-image: linear-gradient(
-        to bottom,
-        transparent calc(var(--gy) - 13%),
-        #000 calc(var(--gy) - 3%),
-        #000 calc(var(--gy) + 3%),
-        transparent calc(var(--gy) + 13%)
-    );
+.hl3__m:not(.is-ink) .hl3__cover-word {
+    filter: drop-shadow(0 2px 14px rgba(30, 20, 40, 0.16));
 }
-.hl3__fab--beam-edge {
-    filter: brightness(1.4);
-    -webkit-mask-image: linear-gradient(
-        to bottom,
-        transparent calc(var(--gy) - 1.2%),
-        #000 var(--gy),
-        transparent calc(var(--gy) + 1.2%)
-    );
-    mask-image: linear-gradient(
-        to bottom,
-        transparent calc(var(--gy) - 1.2%),
-        #000 var(--gy),
-        transparent calc(var(--gy) + 1.2%)
-    );
+
+/* tag: a paper hang tag on a thread, dropping in and swinging to rest */
+.hl3 .hl3__tag {
+    z-index: 3;
+    container-type: inline-size;
+    transform-origin: 50% 0;
+    opacity: 0;
+    transform: translateY(-40%);
+    transition:
+        opacity 0.25s ease,
+        transform 0.3s ease !important;
 }
-.is-on .hl3__fab--beam,
-.is-on .hl3__fab--beam-edge {
+.hl3__tag::before {
+    /* the thread */
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: currentColor;
+    opacity: 0.55;
+}
+.is-on .hl3__tag {
     opacity: 1;
-    transition: opacity 0.6s ease 0.3s !important;
+    transform: none;
+    transition: opacity 0.3s ease !important;
+    animation: hl3Swing 2.4s cubic-bezier(0.25, 0.1, 0.25, 1) both !important;
+}
+@keyframes hl3Swing {
+    0% {
+        transform: translateY(-55%) rotate(0deg);
+    }
+    28% {
+        transform: translateY(0) rotate(-7deg);
+    }
+    48% {
+        transform: rotate(4.5deg);
+    }
+    66% {
+        transform: rotate(-3.2deg);
+    }
+    82% {
+        transform: rotate(1.4deg);
+    }
+    100% {
+        transform: rotate(0deg);
+    }
+}
+.hl3__tag-card {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45em;
+    padding: 1.9em 0.6em 1em;
+    border-radius: 0.5em 0.5em 0.9em 0.9em;
+    background: #f7f2ea;
+    color: #2a2230;
+    font-size: clamp(9.5px, 10cqw, 15px);
+    text-align: center;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.6) inset,
+        0 10px 24px rgba(30, 20, 40, 0.22),
+        0 2px 5px rgba(30, 20, 40, 0.12);
+}
+.hl3__tag-hole {
+    position: absolute;
+    top: 0.7em;
+    left: 50%;
+    width: 0.7em;
+    height: 0.7em;
+    margin-left: -0.35em;
+    border-radius: 50%;
+    background: rgba(40, 30, 50, 0.16);
+    box-shadow: 0 0 0 0.18em #c9a86a;
+}
+.hl3__tag-card b {
+    font:
+        italic 500 1.75em/1 "Spectral",
+        Georgia,
+        serif;
+}
+.hl3__tag-card i {
+    font:
+        600 0.82em/1.2 "Manrope",
+        sans-serif;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+.hl3__tag-card i:last-child {
+    margin-top: 0.3em;
+    padding-top: 0.6em;
+    border-top: 1px dashed rgba(42, 34, 48, 0.3);
+    font:
+        700 1.05em/1 "Onest",
+        sans-serif;
+    letter-spacing: 0.04em;
+    opacity: 1;
+}
+.hl3__tag-card i:only-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border: 0;
+}
+
+/* spot: a stage spotlight - the room dims, a beam falls on her from above */
+.hl3 .hl3__spot {
+    inset: 0;
+    z-index: 1;
+}
+.hl3__spot i {
+    position: absolute;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.35s ease !important;
+}
+.hl3__spot-dim {
+    inset: 0;
+    background: radial-gradient(
+        ellipse calc(var(--bh) * 0.32) calc(var(--bh) * 0.62) at var(--cx)
+            calc(var(--head) + var(--bh) * 0.55),
+        transparent 35%,
+        rgba(14, 10, 20, 0.55) 100%
+    );
+}
+.hl3__spot-beam {
+    left: calc(var(--x0) - 4%);
+    right: calc(100% - var(--x1) - 4%);
+    top: 0;
+    bottom: calc(100% - var(--feet) - 1%);
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 248, 236, 0.5),
+        rgba(255, 248, 236, 0.16) 70%,
+        rgba(255, 248, 236, 0.3)
+    );
+    clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%);
+    filter: blur(calc(var(--ch) * 0.012));
+    mix-blend-mode: screen;
+    transform-origin: 50% 0;
+}
+.hl3__spot-pool {
+    left: calc(var(--x0) - 5%);
+    right: calc(100% - var(--x1) - 5%);
+    top: calc(var(--feet) - 3%);
+    height: 5.5%;
+    border-radius: 50%;
+    background: radial-gradient(
+        closest-side,
+        rgba(255, 250, 240, 0.7),
+        rgba(255, 250, 240, 0.2) 60%,
+        transparent
+    );
+    mix-blend-mode: screen;
+}
+.has-active .hl3__m:not(.is-on) .hl3__spot-dim {
+    opacity: 0;
+}
+.hl3--spot .is-on .hl3__spot-dim {
+    opacity: 1;
+    transition: opacity 0.7s ease !important;
+}
+.hl3--spot .is-on .hl3__spot-beam {
+    animation: hl3SpotOn 1.1s linear 0.25s both !important;
+}
+.hl3--spot .is-on .hl3__spot-pool {
+    opacity: 1;
+    transition: opacity 0.9s ease 0.55s !important;
+}
+/* a stage light: a stutter, then on */
+@keyframes hl3SpotOn {
+    0% {
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.8;
+    }
+    16% {
+        opacity: 0.15;
+    }
+    26% {
+        opacity: 0.9;
+    }
+    32% {
+        opacity: 0.45;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+/* the others step back into the dark */
+.hl3--spot.has-active .hl3__m:not(.is-on) .hl3__cut {
+    filter: brightness(0.55) saturate(0.85);
+    transition: filter 0.7s ease !important;
+}
+.hl3--spot .hl3__cut {
+    transition: filter 0.4s ease !important;
 }
 
 /* ===================================================================== */

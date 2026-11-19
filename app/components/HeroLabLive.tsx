@@ -21,17 +21,16 @@
  *   arch      an arch drawn behind her in two lines; the name set on its curve
  *   measure   a tailor's height rule beside her, ticks counted off top to bottom
  *   loop      her name runs round her, along a line just off her body
- * Two ideas at once, each one hook serving the other:
- *   fit       (measure + scan) the tailor's rule counts down her height and the
- *             line of light runs down her outfit with it, tick for tick
- *   echo      (touch + contour) one touch, two answers: the light spreads over
- *             her outfit and the line runs round her from the same point
- *   lamp      (shadow + light) a lamp comes on: her shadow lands on the wall and
- *             the light floods her outfit from the lamp's side, then settles
- *   niche     (arch + shadow) the arch is drawn behind her and her shadow lands
- *             inside it, like a figure in a gallery niche
- *   beam      (contour + sheen) a band of light on her outfit follows the
- *             pointer up and down her; the line round her carries the bead
+ * Five more, each from a different world:
+ *   focus     a camera racks focus onto her: the studio and the others go soft,
+ *             she alone stays sharp
+ *   frame     a camera viewfinder: corner marks snap onto her, the focus square
+ *             locks on, the shutter fires; the shot's caption below
+ *   cover     a magazine cover: her name in huge serif type on the wall BEHIND
+ *             her - she stands in front of the letters
+ *   tag       a paper hang tag drops in on a thread beside her and swings to rest
+ *   spot      a stage spotlight: the room dims, a beam falls on her from above
+ *             and lights a pool on the floor at her feet
  * Where an outfit can't be told from her (a busy print, brown hair on a brown
  * suit: `fab: false`) the outfit effects fall back to the contour.
  *
@@ -55,11 +54,11 @@ export type LiveMode =
     | "arch"
     | "measure"
     | "loop"
-    | "fit"
-    | "echo"
-    | "lamp"
-    | "niche"
-    | "beam";
+    | "focus"
+    | "frame"
+    | "cover"
+    | "tag"
+    | "spot";
 
 export interface LiveModel {
     href: string;
@@ -111,22 +110,14 @@ const DEMO_MS = 4400;
 const LOGO = [0.395, 0.605];
 
 /** which light plays on her outfit in each effect */
-const FAB_KIND: Partial<Record<LiveMode, "sheen" | "touch" | "scan" | "beam" | "flood">> = {
+const FAB_KIND: Partial<Record<LiveMode, "sheen" | "touch" | "scan">> = {
     sheen: "sheen",
     touch: "touch",
     scan: "scan",
-    fit: "scan",
-    echo: "touch",
-    lamp: "flood",
-    beam: "beam",
 };
 /** effects that are only the outfit light (they fall back to the contour) */
 const FAB_ONLY: LiveMode[] = ["sheen", "touch", "scan"];
-const LINES: LiveMode[] = ["contour", "echo", "beam"];
-const SHADOW: LiveMode[] = ["shadow", "lamp", "niche"];
-const ARCH: LiveMode[] = ["arch", "niche"];
-const MEASURE: LiveMode[] = ["measure", "fit"];
-const SIDE_CAPTION: LiveMode[] = ["shadow", "sheen", "touch", "scan", "lamp"];
+const SIDE_CAPTION: LiveMode[] = ["shadow", "sheen", "touch", "scan", "focus", "spot"];
 /** letters of the line text: width of one, in em */
 const EM = 0.93;
 
@@ -331,6 +322,23 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
             }),
         [models, geo],
     );
+    /** how far the free wall reaches left and right of each model (canvas fractions) */
+    const rooms = useMemo(
+        () =>
+            models.map((m, k) => {
+                const prev = models[k - 1];
+                const next = models[k + 1];
+                const vr = geo.narrow ? m.cx + geo.half - 0.01 : geo.vx1 - 0.05;
+                const vl = geo.narrow ? m.cx - geo.half + 0.01 : geo.vx0 + 0.01;
+                const logoR = !geo.narrow && m.cx < 0.5 ? LOGO[0] : 1;
+                const logoL = !geo.narrow && m.cx > 0.5 ? LOGO[1] : 0;
+                return [
+                    Math.max(prev ? prev.x1 + 0.008 : 0, logoL, vl),
+                    Math.min(next ? next.x0 - 0.008 : 1, logoR, vr),
+                ];
+            }),
+        [models, geo],
+    );
     const sidesRef = useRef(sides);
     useEffect(() => {
         sidesRef.current = sides;
@@ -416,8 +424,6 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
             const ty = at ? at.y : m.band ? m.band[2] : m.head + (m.feet - m.head) * 0.4;
             el?.style.setProperty("--tx", pct((tx - cx0) / cw));
             el?.style.setProperty("--ty", pct((ty - cy0) / ch));
-            // beam: the band of light starts at the touch (or her waist)
-            el?.style.setProperty("--gy", pct((ty - cy0) / ch));
             if (at) setBead(k, at.x, at.y);
             else setBead(k, m.cx, m.head - 0.05);
             setView(k);
@@ -427,7 +433,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
 
     // contour: with no pointer on her, the bead travels her outline by itself
     useEffect(() => {
-        if (active === null || !["contour", "beam"].includes(mode)) return;
+        if (active === null || mode !== "contour") return;
         const k = active;
         const el = mRefs.current[k];
         const tr = traces[k];
@@ -442,12 +448,6 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                 el.style.setProperty("--bx", `${tr.pts[i][0].toFixed(1)}px`);
                 el.style.setProperty("--by", `${tr.pts[i][1].toFixed(1)}px`);
             }
-            // beam: the light drifts slowly from her waist to her knees and back
-            if (el && mode === "beam" && tt > 0.9)
-                el.style.setProperty(
-                    "--gy",
-                    `${(48 + 22 * Math.sin((tt - 0.9) * 0.8)).toFixed(2)}%`,
-                );
         }, 60);
         return () => window.clearInterval(id);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -546,10 +546,6 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         if (k !== null && k === activeRef.current && at) {
             pointerLed.current = true;
             setBead(k, at.x, at.y);
-            if (mode === "beam") {
-                const [, cy0, , ch] = models[k].r.cut;
-                mRefs.current[k]?.style.setProperty("--gy", pct((at.y - cy0) / ch));
-            }
             return;
         }
         activate(k, at ?? undefined, true);
@@ -616,7 +612,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                             const kind = m.fab !== false ? FAB_KIND[mode] : undefined;
                             const fabric = !!kind;
                             const lines =
-                                LINES.includes(mode) || (FAB_ONLY.includes(mode) && !fabric);
+                                mode === "contour" || (FAB_ONLY.includes(mode) && !fabric);
                             const fabSrc = `${maskDir}/fab${k}.webp`;
                             const cutR = m.r.cut;
                             const style = {
@@ -635,6 +631,47 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                 ["--f0" as string]: pct((m.feet - 0.17 - sil[1]) / sil[3]),
                                 ["--f1" as string]: pct((m.feet - 0.06 - sil[1]) / sil[3]),
                             };
+
+                            // cover: like a masthead, the name starts just inside her and runs
+                            // out across the free wall on her side - she overlaps only its
+                            // first letter, so it always reads
+                            const [roomL, roomR] = rooms[k];
+                            const cName = sentence(m.title);
+                            // the edge of her body at chest height (the outfit band, else her box)
+                            const cEdgeR = m.band ? m.band[1] : m.x1 - (m.x1 - m.x0) * 0.2;
+                            const cEdgeL = m.band ? m.band[0] : m.x0 + (m.x1 - m.x0) * 0.2;
+                            const cFrom = rs > 0 ? cEdgeR - 0.007 : cEdgeL + 0.007;
+                            const cRoom = rs > 0 ? roomR - cFrom : cFrom - roomL;
+                            const cSize = Math.min(
+                                (X(cRoom) * 0.92) / (cName.length * 0.56 + 0.1),
+                                body * 900 * 0.26,
+                            );
+                            const cBase = Math.max(
+                                Y(m.head + body * 0.3) + cSize * 0.3,
+                                T + cSize * 0.78,
+                            );
+
+                            // viewfinder: corner marks round her, inside the free picture
+                            const fx0 = X(Math.max(m.x0 - 0.014, roomL));
+                            const fx1 = X(Math.min(m.x1 + 0.014, roomR));
+                            const fy0 = Math.max(Y(m.head - 0.03), T + 8);
+                            const fy1 = Y(m.feet + 0.012);
+                            const fl = Math.min(42, (fx1 - fx0) * 0.22);
+                            const corners = [
+                                `M${fx0} ${fy0 + fl} V${fy0} H${fx0 + fl}`,
+                                `M${fx1 - fl} ${fy0} H${fx1} V${fy0 + fl}`,
+                                `M${fx1} ${fy1 - fl} V${fy1} H${fx1 - fl}`,
+                                `M${fx0 + fl} ${fy1} H${fx0} V${fy1 - fl}`,
+                            ];
+                            const fcx = X(m.band ? (m.band[0] + m.band[1]) / 2 : m.cx);
+                            const fcy = Y(m.band ? m.band[2] - body * 0.1 : m.head + body * 0.3);
+
+                            // hang tag: on whichever side has more room, as wide as it allows
+                            const tR = roomR - m.x1;
+                            const tL = m.x0 - roomL;
+                            const tSide = tR >= tL ? 1 : -1;
+                            const tagW = clamp(Math.max(tR, tL) - 0.026, 0.04, 0.1);
+                            const tagX = tSide > 0 ? m.x1 + 0.011 : m.x0 - 0.011 - tagW;
 
                             // the arch: centred on her, a little wider than her, and
                             // never taller than the free picture
@@ -746,7 +783,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                     style={style}
                                 >
                                     {/* 2 — behind her: her shadow comes out onto the wall */}
-                                    {SHADOW.includes(mode) && (
+                                    {mode === "shadow" && (
                                         <div
                                             className="hl3__shw"
                                             style={{ ["--sd" as string]: rs }}
@@ -756,7 +793,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                             </div>
                                         </div>
                                     )}
-                                    {ARCH.includes(mode) && (
+                                    {mode === "arch" && (
                                         <svg
                                             className="hl3__svg hl3__svg--back"
                                             viewBox="0 0 1600 900"
@@ -799,6 +836,48 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         </svg>
                                     )}
 
+                                    {/* cover: her name on the wall, behind her */}
+                                    {mode === "cover" && (
+                                        <svg
+                                            className="hl3__svg hl3__svg--back hl3__cover"
+                                            viewBox="0 0 1600 900"
+                                            preserveAspectRatio="none"
+                                            aria-hidden="true"
+                                        >
+                                            <defs>
+                                                <clipPath id={`${uid}c${k}`}>
+                                                    <rect
+                                                        className="hl3__cover-clip"
+                                                        x="0"
+                                                        y={cBase - cSize * 1.05}
+                                                        width="1600"
+                                                        height={cSize * 1.4}
+                                                    />
+                                                </clipPath>
+                                            </defs>
+                                            <g clipPath={`url(#${uid}c${k})`}>
+                                                <text
+                                                    className="hl3__cover-word"
+                                                    x={X(cFrom)}
+                                                    y={cBase}
+                                                    textAnchor={rs > 0 ? "start" : "end"}
+                                                    style={{ fontSize: cSize }}
+                                                >
+                                                    {cName}
+                                                </text>
+                                            </g>
+                                        </svg>
+                                    )}
+
+                                    {/* spotlight: the room dims, a beam falls on her */}
+                                    {mode === "spot" && (
+                                        <div className="hl3__spot">
+                                            <i className="hl3__spot-dim" />
+                                            <i className="hl3__spot-beam" />
+                                            <i className="hl3__spot-pool" />
+                                        </div>
+                                    )}
+
                                     {/* 3 — the model herself */}
                                     <img
                                         className="hl3__cut"
@@ -818,7 +897,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                             style={rect(cutR)}
                                         />
                                     )}
-                                    {(kind === "scan" || kind === "touch" || kind === "beam") && (
+                                    {(kind === "scan" || kind === "touch") && (
                                         <img
                                             className={`hl3__fab hl3__fab--edge hl3__fab--${kind}-edge`}
                                             src={fabSrc}
@@ -829,7 +908,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                     )}
 
                                     {/* 4 — in front of her */}
-                                    {lines || MEASURE.includes(mode) || mode === "loop" ? (
+                                    {lines || mode === "measure" || mode === "loop" ? (
                                         <svg
                                             className="hl3__svg"
                                             viewBox="0 0 1600 900"
@@ -866,7 +945,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                         <Both d={paths[1]} cls="hl3__ln--mask" />
                                                     </mask>
                                                 )}
-                                                {MEASURE.includes(mode) && (
+                                                {mode === "measure" && (
                                                     <mask
                                                         id={`${uid}m${k}`}
                                                         maskUnits="userSpaceOnUse"
@@ -899,7 +978,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                         pathLength={1}
                                                         className="hl3__pen hl3__pen--b"
                                                     />
-                                                    {(mode === "contour" || mode === "beam") && (
+                                                    {mode === "contour" && (
                                                         <g className="hl3__bead">
                                                             <circle
                                                                 r="7.5"
@@ -939,7 +1018,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                 </>
                                             )}
 
-                                            {MEASURE.includes(mode) && (
+                                            {mode === "measure" && (
                                                 <g mask={faded}>
                                                     {/* from her head and her feet out to the rule */}
                                                     {[ry0, ry1].map((y, i) => (
@@ -992,6 +1071,77 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                             )}
                                         </svg>
                                     ) : null}
+
+                                    {/* viewfinder: corner marks, focus square, the shot's caption */}
+                                    {mode === "frame" && (
+                                        <>
+                                            <svg
+                                                className="hl3__svg hl3__vf"
+                                                viewBox="0 0 1600 900"
+                                                preserveAspectRatio="none"
+                                                aria-hidden="true"
+                                            >
+                                                {corners.map((d, i) => (
+                                                    <path
+                                                        key={i}
+                                                        d={d}
+                                                        className="hl3__vf-corner"
+                                                        style={{
+                                                            transformOrigin: `${X(m.cx)}px ${(fy0 + fy1) / 2}px`,
+                                                        }}
+                                                    />
+                                                ))}
+                                                <rect
+                                                    className="hl3__vf-focus"
+                                                    x={fcx - 16}
+                                                    y={fcy - 16}
+                                                    width="32"
+                                                    height="32"
+                                                    style={{ transformOrigin: `${fcx}px ${fcy}px` }}
+                                                />
+                                                <circle
+                                                    className="hl3__vf-rec"
+                                                    cx={fx0 + 10}
+                                                    cy={fy0 + fl + 16}
+                                                    r="3.6"
+                                                />
+                                                <text
+                                                    className="hl3__svgtext hl3__vf-text"
+                                                    x={rs > 0 ? fx1 + 12 : fx0 - 12}
+                                                    y={fy0 + 10}
+                                                    textAnchor="start"
+                                                    transform={`rotate(${rs > 0 ? 90 : -90} ${rs > 0 ? fx1 + 12 : fx0 - 12} ${fy0 + 10})`}
+                                                    style={
+                                                        rs > 0 ? undefined : { textAnchor: "end" }
+                                                    }
+                                                >
+                                                    {lineText(m)}
+                                                </text>
+                                            </svg>
+                                            {on && <i className="hl3__flash" />}
+                                        </>
+                                    )}
+
+                                    {/* hang tag on a thread */}
+                                    {mode === "tag" && (
+                                        <div
+                                            className="hl3__tag"
+                                            style={{
+                                                left: pct(tagX),
+                                                width: pct(tagW),
+                                                top: pct(geo.top),
+                                                height: pct(m.head + body * 0.2 - geo.top),
+                                            }}
+                                        >
+                                            <div className="hl3__tag-card">
+                                                <span className="hl3__tag-hole" />
+                                                <b>{sentence(m.title)}</b>
+                                                {parts.map((x) => (
+                                                    <i key={x}>{x}</i>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* the caption runs down her free side */}
                                     {SIDE_CAPTION.includes(mode) && !lines && (

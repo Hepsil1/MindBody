@@ -129,29 +129,29 @@ const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
         hint: "Назва безперервно біжить навколо моделі вздовж її силуету",
     },
     {
-        mode: "fit",
-        label: "Примірка",
-        hint: "Мірка відлічує зріст, і лінія світла йде по костюму в такт поділкам",
+        mode: "focus",
+        label: "Фокус",
+        hint: "Камера переводить фокус на модель: студія й інші м'яко розмиваються, різка лише вона",
     },
     {
-        mode: "echo",
-        label: "Відгук",
-        hint: "Один дотик — дві відповіді: світло по тканині й лінія навколо моделі з тієї ж точки",
+        mode: "frame",
+        label: "Видошукач",
+        hint: "Рамка видошукача стягується на модель, фокус ловить її, клацає затвор",
     },
     {
-        mode: "lamp",
-        label: "Софіт",
-        hint: "Вмикається лампа: тінь лягає на стіну, а світло пробігає по костюму з боку лампи",
+        mode: "cover",
+        label: "Обкладинка",
+        hint: "Як на обкладинці журналу: величезна назва на стіні позаду моделі, вона стоїть перед літерами",
     },
     {
-        mode: "niche",
-        label: "Ніша",
-        hint: "За моделлю малюється арка, і її тінь лягає всередину, як у галерейній ніші",
+        mode: "tag",
+        label: "Бирка",
+        hint: "Паперова бирка з назвою й ціною спускається на нитці поруч і погойдується",
     },
     {
-        mode: "beam",
-        label: "Промінь",
-        hint: "Смуга світла на костюмі ходить за курсором угору й униз, лінія навколо моделі веде намистинку",
+        mode: "spot",
+        label: "Прожектор",
+        hint: "Сцена темніє, згори на модель падає промінь прожектора й світла пляма біля ніг",
     },
 ];
 
@@ -331,7 +331,7 @@ function LabPlayer({ stages }: { stages: StageData[] }) {
     const ms = classic ? st.models2C : st.models2;
     // a busy print / hair the colour of the suit: the outfit can't be lit on its own here
     const noFab = ms.every((m) => m.fab === false);
-    const FAB_MODES: LiveMode[] = ["sheen", "touch", "scan", "fit", "echo", "lamp", "beam"];
+    const FAB_MODES: LiveMode[] = ["sheen", "touch", "scan"];
     return (
         <main className="hllab">
             <HeroLabLive
