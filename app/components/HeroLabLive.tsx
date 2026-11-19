@@ -673,10 +673,10 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
 
                             // sun: the brand's sun rises behind her head and shoulders.
                             // Sized in canvas height; the canvas is 16:9.
-                            const sunH = Math.min(body * 0.36, ((halfRoom * 2 * 16) / 9) * 0.98);
+                            const sunH = Math.min(body * 0.4, ((halfRoom * 2 * 16) / 9) * 0.98);
                             const sunW = (sunH * 9) / 16;
                             const sunY = Math.max(
-                                m.head + body * 0.15,
+                                m.head + body * 0.11,
                                 geo.top + sunH * 0.5 + 0.01,
                             );
 
@@ -1105,6 +1105,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                     {mode === "tag" && (
                                         <div
                                             className="hl3__tag"
+                                            data-side={tSide > 0 ? "r" : "l"}
                                             style={{
                                                 left: pct(tSide > 0 ? tAx : tAx - tBoxW),
                                                 top: pct(tAy),
