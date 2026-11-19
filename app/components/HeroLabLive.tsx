@@ -26,8 +26,8 @@
  *             she alone stays sharp
  *   frame     a camera viewfinder: corner marks snap onto her, the focus square
  *             locks on, the shutter fires; the shot's caption below
- *   cover     a magazine cover: her name in huge serif type on the wall BEHIND
- *             her - she stands in front of the letters
+ *   paint     a watercolour bloom: her outfit's colour spreads on the wall
+ *             behind her like pigment on wet paper, darker at its edge
  *   tag       a paper hang tag drops in on a thread beside her and swings to rest
  *   spot      a stage spotlight: the room dims, a beam falls on her from above
  *             and lights a pool on the floor at her feet
@@ -56,7 +56,7 @@ export type LiveMode =
     | "loop"
     | "focus"
     | "frame"
-    | "cover"
+    | "paint"
     | "tag"
     | "spot";
 
@@ -117,7 +117,7 @@ const FAB_KIND: Partial<Record<LiveMode, "sheen" | "touch" | "scan">> = {
 };
 /** effects that are only the outfit light (they fall back to the contour) */
 const FAB_ONLY: LiveMode[] = ["sheen", "touch", "scan"];
-const SIDE_CAPTION: LiveMode[] = ["shadow", "sheen", "touch", "scan", "focus", "spot"];
+const SIDE_CAPTION: LiveMode[] = ["shadow", "sheen", "touch", "scan", "focus", "spot", "paint"];
 /** letters of the line text: width of one, in em */
 const EM = 0.93;
 
@@ -453,24 +453,50 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [active, mode]);
 
-    // loop: her name keeps running round her while she is chosen
+    // loop: her name keeps running round her while she is chosen. One clock for
+    // every model: the chosen one eases up to cruise, the one let go slows to a
+    // stop while its line is drawn back (it used to freeze mid-retreat)
     useEffect(() => {
-        if (mode !== "loop" || active === null) return;
-        const tp = loopRefs.current[active];
-        const txt = tp?.parentElement as unknown as SVGTextElement | null;
-        if (!tp || !txt) return;
-        const copies = Math.max(1, loopText[active].split("   ·   ").length - 1);
-        const unit = txt.getComputedTextLength() / copies || 300;
+        if (mode !== "loop") return;
+        const SPEED = 34;
+        const off = models.map(() => 0);
+        const vel = models.map(() => 0);
+        let unit: number[] = [];
+        const unitOf = (k: number) => {
+            if (unit[k]) return unit[k];
+            const tp = loopRefs.current[k];
+            const txt = tp?.parentElement as unknown as SVGTextElement | null;
+            if (!txt) return 0;
+            const copies = Math.max(1, loopText[k].split("   ·   ").length - 1);
+            const u = txt.getComputedTextLength() / copies;
+            if (u > 0) unit[k] = u;
+            return u;
+        };
+        // the web font changes the width of a copy: measure again once it is in
+        void document.fonts?.ready.then(() => {
+            unit = [];
+        });
         let raf = 0;
-        const t0 = performance.now();
+        let last = performance.now();
         const tick = (now: number) => {
-            const off = -(((now - t0) / 1000) * 34) % unit;
-            tp.setAttribute("startOffset", off.toFixed(1));
+            const dt = Math.min(0.05, (now - last) / 1000);
+            last = now;
+            for (let k = 0; k < models.length; k++) {
+                const goal = activeRef.current === k ? SPEED : 0;
+                // about half a second to reach cruise or to come to rest
+                vel[k] += (goal - vel[k]) * Math.min(1, dt * 4);
+                if (goal === 0 && vel[k] < 0.05) continue;
+                const u = unitOf(k);
+                const tp = loopRefs.current[k];
+                if (!u || !tp) continue;
+                off[k] = (off[k] - vel[k] * dt) % u;
+                tp.setAttribute("startOffset", off[k].toFixed(1));
+            }
             raf = requestAnimationFrame(tick);
         };
         raf = requestAnimationFrame(tick);
         return () => cancelAnimationFrame(raf);
-    }, [mode, active, loopText]);
+    }, [mode, models, loopText, fs]);
 
     // idle behaviour, only while the slide is on screen
     useEffect(() => {
@@ -632,24 +658,36 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                 ["--f1" as string]: pct((m.feet - 0.06 - sil[1]) / sil[3]),
                             };
 
-                            // cover: like a masthead, the name starts just inside her and runs
-                            // out across the free wall on her side - she overlaps only its
-                            // first letter, so it always reads
+                            // paint: a bloom of her colour on the wall, centred on her body and
+                            // never wider than the free wall round her
                             const [roomL, roomR] = rooms[k];
-                            const cName = sentence(m.title);
-                            // the edge of her body at chest height (the outfit band, else her box)
-                            const cEdgeR = m.band ? m.band[1] : m.x1 - (m.x1 - m.x0) * 0.2;
-                            const cEdgeL = m.band ? m.band[0] : m.x0 + (m.x1 - m.x0) * 0.2;
-                            const cFrom = rs > 0 ? cEdgeR - 0.007 : cEdgeL + 0.007;
-                            const cRoom = rs > 0 ? roomR - cFrom : cFrom - roomL;
-                            const cSize = Math.min(
-                                (X(cRoom) * 0.92) / (cName.length * 0.56 + 0.1),
-                                body * 900 * 0.26,
+                            const pcx = X(m.cx);
+                            const pcy = Y(m.head + body * 0.36);
+                            const prx = clamp(
+                                X(Math.min(m.cx - roomL, roomR - m.cx)) * 0.96,
+                                X(m.x1 - m.x0) * 0.62,
+                                body * 900 * 0.32,
                             );
-                            const cBase = Math.max(
-                                Y(m.head + body * 0.3) + cSize * 0.3,
-                                T + cSize * 0.78,
-                            );
+                            const pry = Math.min(body * 900 * 0.44, prx * 1.45);
+                            // a deep colour is a heavy stain on a pale wall: thinner wash
+                            const pLum = parseInt(m.hex.slice(1), 16);
+                            const pL =
+                                (0.3 * (pLum >> 16) +
+                                    0.59 * ((pLum >> 8) & 255) +
+                                    0.11 * (pLum & 255)) /
+                                255;
+                            const pAlpha = clamp(0.45 + pL * 1.1, 0.62, 1);
+                            // a few drops flicked off the brush, just outside the rim
+                            const drops = [
+                                [-0.92, -0.42, 7],
+                                [0.88, -0.18, 4.5],
+                                [-0.7, 0.62, 5.5],
+                                [0.97, 0.5, 3.2],
+                                [0.34, -0.97, 3.8],
+                            ].map(([a, b, r], i) => {
+                                const sx = (i + k) % 2 ? 1 : -1;
+                                return [pcx + a * prx * 1.04 * sx, pcy + b * pry * 1.02, r];
+                            });
 
                             // viewfinder: corner marks round her, inside the free picture
                             const fx0 = X(Math.max(m.x0 - 0.014, roomL));
@@ -836,35 +874,124 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         </svg>
                                     )}
 
-                                    {/* cover: her name on the wall, behind her */}
-                                    {mode === "cover" && (
+                                    {/* paint: a watercolour bloom of her colour, behind her */}
+                                    {mode === "paint" && (
                                         <svg
-                                            className="hl3__svg hl3__svg--back hl3__cover"
+                                            className="hl3__svg hl3__svg--back hl3__paint"
+                                            style={{ opacity: pAlpha }}
                                             viewBox="0 0 1600 900"
                                             preserveAspectRatio="none"
                                             aria-hidden="true"
                                         >
                                             <defs>
-                                                <clipPath id={`${uid}c${k}`}>
-                                                    <rect
-                                                        className="hl3__cover-clip"
-                                                        x="0"
-                                                        y={cBase - cSize * 1.05}
-                                                        width="1600"
-                                                        height={cSize * 1.4}
+                                                {fade}
+                                                <radialGradient id={`${uid}pg${k}`}>
+                                                    <stop
+                                                        offset="0"
+                                                        stopColor={m.hex2}
+                                                        stopOpacity="0.2"
                                                     />
-                                                </clipPath>
+                                                    <stop
+                                                        offset="0.62"
+                                                        stopColor={m.hex2}
+                                                        stopOpacity="0.34"
+                                                    />
+                                                    <stop
+                                                        offset="0.88"
+                                                        stopColor={m.hex}
+                                                        stopOpacity="0.44"
+                                                    />
+                                                    <stop
+                                                        offset="0.96"
+                                                        stopColor={m.hex}
+                                                        stopOpacity="0.62"
+                                                    />
+                                                    <stop
+                                                        offset="1"
+                                                        stopColor={m.hex}
+                                                        stopOpacity="0"
+                                                    />
+                                                </radialGradient>
+                                                {/* the second, wetter pool inside: no dark rim of its own */}
+                                                <radialGradient id={`${uid}ph${k}`}>
+                                                    <stop
+                                                        offset="0"
+                                                        stopColor={m.hex2}
+                                                        stopOpacity="0.3"
+                                                    />
+                                                    <stop
+                                                        offset="0.7"
+                                                        stopColor={m.hex2}
+                                                        stopOpacity="0.16"
+                                                    />
+                                                    <stop
+                                                        offset="1"
+                                                        stopColor={m.hex2}
+                                                        stopOpacity="0"
+                                                    />
+                                                </radialGradient>
+                                                {[0, 1].map((j) => (
+                                                    <filter
+                                                        key={j}
+                                                        id={`${uid}pf${k}${j}`}
+                                                        x="-30%"
+                                                        y="-30%"
+                                                        width="160%"
+                                                        height="160%"
+                                                    >
+                                                        <feTurbulence
+                                                            type="fractalNoise"
+                                                            baseFrequency={j ? 0.022 : 0.011}
+                                                            numOctaves={3}
+                                                            seed={k * 11 + j * 5 + 3}
+                                                        />
+                                                        <feDisplacementMap
+                                                            in="SourceGraphic"
+                                                            scale={j ? 26 : 64}
+                                                            xChannelSelector="R"
+                                                            yChannelSelector="G"
+                                                        />
+                                                        <feGaussianBlur
+                                                            stdDeviation={j ? 0.6 : 1.4}
+                                                        />
+                                                    </filter>
+                                                ))}
                                             </defs>
-                                            <g clipPath={`url(#${uid}c${k})`}>
-                                                <text
-                                                    className="hl3__cover-word"
-                                                    x={X(cFrom)}
-                                                    y={cBase}
-                                                    textAnchor={rs > 0 ? "start" : "end"}
-                                                    style={{ fontSize: cSize }}
-                                                >
-                                                    {cName}
-                                                </text>
+                                            <g mask={faded}>
+                                                <g mask={`url(#${uid}b${k})`}>
+                                                    <ellipse
+                                                        className="hl3__paint-wash"
+                                                        cx={pcx}
+                                                        cy={pcy}
+                                                        rx={prx}
+                                                        ry={pry}
+                                                        fill={`url(#${uid}pg${k})`}
+                                                        filter={`url(#${uid}pf${k}0)`}
+                                                    />
+                                                    <ellipse
+                                                        className="hl3__paint-wash hl3__paint-wash--2"
+                                                        cx={pcx + prx * 0.18 * (k % 2 ? -1 : 1)}
+                                                        cy={pcy - pry * 0.22}
+                                                        rx={prx * 0.62}
+                                                        ry={pry * 0.5}
+                                                        fill={`url(#${uid}ph${k})`}
+                                                        filter={`url(#${uid}pf${k}1)`}
+                                                    />
+                                                    {drops.map(([x, y, r], i) => (
+                                                        <circle
+                                                            key={i}
+                                                            className="hl3__paint-drop"
+                                                            cx={x}
+                                                            cy={y}
+                                                            r={r}
+                                                            fill={m.hex}
+                                                            filter={`url(#${uid}pf${k}1)`}
+                                                            style={{
+                                                                ["--dl" as string]: `${0.9 + i * 0.09}s`,
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </g>
                                             </g>
                                         </svg>
                                     )}
@@ -874,6 +1001,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         <div className="hl3__spot">
                                             <i className="hl3__spot-dim" />
                                             <i className="hl3__spot-beam" />
+                                            <i className="hl3__spot-dust" />
                                             <i className="hl3__spot-pool" />
                                         </div>
                                     )}
