@@ -14442,7 +14442,10 @@ select {
         display: flex !important;
         flex-direction: column !important;
         gap: 32px !important;
-        padding: 40px 0 32px !important;
+        /* the contact column already ends in a row of round buttons: no
+           extra 70px of black under it before the payment row */
+        padding: 40px 0 0 !important;
+        margin-bottom: 28px !important;
     }
 
     /* Newsletter card MOVED to top of mobile footer via CSS order */

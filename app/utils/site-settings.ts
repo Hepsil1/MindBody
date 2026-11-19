@@ -210,8 +210,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
                 poster: "/generalpics/595_131123-1200w.webp",
             },
             {
-                title: "Сертифікована якість",
-                desc: "100% контроль, створено з любов'ю та увагою до кожної деталі.",
+                title: "Власний цех",
+                desc: "Шиємо в Україні та перевіряємо якість кожного виробу у своєму цеху.",
                 video: "/uploads/brand-video-2.mp4",
                 poster: "/generalpics/347_131123-1200w.webp",
             },

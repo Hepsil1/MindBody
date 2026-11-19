@@ -2144,7 +2144,7 @@
     font-weight: 700;
     line-height: 0.8;
     color: transparent;
-    -webkit-text-stroke: 1px rgba(0, 0, 0, 0.15); /* Outline effect */
+    -webkit-text-stroke: 1px rgba(0, 0, 0, 0.28); /* Outline effect - readable, still quieter than the playing one */
     position: relative;
     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -2371,16 +2371,18 @@
     margin: 0 auto;
     background: rgba(36, 29, 21, 0.14);
 }
-/* Title-card headline — explicit Onest 800 kills the global h2→Cormorant leak */
+/* Headline in the page's own voice: light Onest, the verb in Spectral italic
+   teal - the same pairing as «Рух що перетворює» (explicit family kills the
+   global h2→Cormorant leak) */
 .ig-hyper__title {
     font-family:
         "Onest",
         -apple-system,
         sans-serif;
-    font-weight: 800;
-    font-size: clamp(2.6rem, 6vw, 5rem);
-    line-height: 1;
-    letter-spacing: -0.02em;
+    font-weight: 300;
+    font-size: clamp(2.4rem, 4.6vw, 4.1rem);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
     color: #1a1a1a;
     margin: 22px 0;
     text-transform: none;
@@ -2393,6 +2395,13 @@
 }
 .ig-hyper__title .ig-line > .l {
     display: block;
+}
+.ig-hyper__title .ig-hyper__accent {
+    font-family: "Spectral", Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: #2a5a5a;
 }
 .ig-hyper__subtitle {
     font-family: "Onest", "Manrope", sans-serif;
@@ -2566,13 +2575,30 @@
     position: relative;
     z-index: 2;
 }
+/* the real numbers, refreshed from Instagram */
 .ig-hyper__audience {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
     font-family: "Onest", "Manrope", sans-serif;
     font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: #8a7f6c;
+}
+.ig-hyper__audience b {
+    font-weight: 700;
+    color: #3d3a35;
+    letter-spacing: 0.06em;
+}
+.ig-hyper__audience i {
+    width: 3px;
+    height: 3px;
+    margin: 0 0.5em;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
 }
 /* Motion — gated; base state stays VISIBLE so reduce-motion / no-JS shows the
    finished title card (avoids the recurrent freeze-invisible bug). */
@@ -6022,12 +6048,16 @@
         padding: 80px 0 60px;
     }
     .ig-hyper__title {
-        font-size: 3rem;
+        font-size: 2.8rem;
     }
 }
 @media (max-width: 560px) {
     .ig-hyper__title {
-        font-size: 2.2rem;
+        font-size: 2.3rem;
+    }
+    .ig-hyper__audience {
+        letter-spacing: 0.08em;
+        font-size: 11px;
     }
     .ig-hyper__subtitle {
         font-size: 1.05rem;
