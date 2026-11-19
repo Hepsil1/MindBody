@@ -26,12 +26,12 @@
  *             she alone stays sharp
  *   sun       the brand's sun rises behind her head and shoulders, in her
  *             colour, and turns very slowly
- *   mirror    the floor turns to still water: her reflection grows out of her feet
+ *   closer    she takes a step towards the camera; the others step back a little
+ *   mono      the scene goes black and white - she alone stays in colour
  *   tag       the brand's swing tag, tied to her at the shoulder, drops on its
  *             string and swings to rest (name, colour, price)
- *   window    golden hour: a window's panes of low sun slide onto the wall
- *             behind her, leaves sway their shadows through it, a stripe of the
- *             same light lies across her
+ *   softbox   a studio softbox comes on at her free side: soft white key
+ *             light on her, the backdrop behind her lifts
  * Where an outfit can't be told from her (a busy print, brown hair on a brown
  * suit: `fab: false`) the outfit effects fall back to the contour.
  *
@@ -57,9 +57,10 @@ export type LiveMode =
     | "loop"
     | "focus"
     | "sun"
-    | "mirror"
+    | "closer"
+    | "mono"
     | "tag"
-    | "window";
+    | "softbox";
 
 export interface LiveModel {
     href: string;
@@ -125,8 +126,9 @@ const SIDE_CAPTION: LiveMode[] = [
     "scan",
     "focus",
     "sun",
-    "mirror",
-    "window",
+    "closer",
+    "mono",
+    "softbox",
 ];
 /** letters of the line text: width of one, in em */
 const EM = 0.93;
@@ -681,13 +683,6 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                 geo.top + sunH * 0.5 + 0.01,
                             );
 
-                            // window light: a window's panes of low sun fall on the wall
-                            // behind her from her free side
-                            const winH = body * 0.62;
-                            const winW = Math.min((winH * 9) / 16, halfRoom * 2 + (m.x1 - m.x0));
-                            const winX = m.cx + rs * (m.x1 - m.x0) * 0.22 - winW / 2;
-                            const winY = m.head + body * 0.1;
-
                             // hang tag: tied to her at the shoulder, hanging on the side
                             // with more room, as wide as that room allows
                             const tR = roomR - m.x1;
@@ -695,7 +690,7 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                             const tSide = tR >= tL ? 1 : -1;
                             const tagW = clamp(Math.max(tR, tL) - 0.03, 0.045, 0.082);
                             const tAt = nearest(k, tSide > 0 ? m.x1 : m.x0, m.head + body * 0.19);
-                            const tAx = tAt.x / 1600;
+                            const tAx = tAt.x / 1600 - tSide * 0.002;
                             const tAy = tAt.y / 900;
                             const tEdge = tSide > 0 ? m.x1 + 0.012 + tagW : m.x0 - 0.012 - tagW;
                             const tBoxW = Math.abs(tEdge - tAx);
@@ -882,45 +877,21 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         </div>
                                     )}
 
-                                    {/* mirror: her reflection in the floor, under her feet */}
-                                    {mode === "mirror" && (
-                                        <img
-                                            className="hl3__mirror"
-                                            src={`${maskDir}/cut${k}.webp`}
-                                            alt=""
-                                            decoding="async"
+                                    {/* closer: her contact shadow on the floor deepens as she steps in */}
+                                    {mode === "closer" && (
+                                        <i
+                                            className="hl3__contact"
                                             style={{
-                                                ...rect(cutR),
-                                                // the soles, a hair above the matte's last row
-                                                transformOrigin: `50% ${pct((m.feet - body * 0.008 - cutR[1]) / cutR[3])}`,
+                                                left: pct(m.cx - (m.x1 - m.x0) * 0.42),
+                                                width: pct((m.x1 - m.x0) * 0.84),
+                                                top: pct(m.feet - body * 0.03),
+                                                height: pct(body * 0.05),
                                             }}
                                         />
                                     )}
 
-                                    {/* window light on the wall behind her */}
-                                    {mode === "window" && (
-                                        <div className="hl3__win">
-                                            <i className="hl3__win-tone" />
-                                            <i
-                                                className="hl3__win-pane"
-                                                style={{
-                                                    left: pct(winX),
-                                                    top: pct(winY),
-                                                    width: pct(winW),
-                                                    height: pct(winH),
-                                                }}
-                                            />
-                                            <i
-                                                className="hl3__win-leaf"
-                                                style={{
-                                                    left: pct(winX),
-                                                    top: pct(winY),
-                                                    width: pct(winW),
-                                                    height: pct(winH),
-                                                }}
-                                            />
-                                        </div>
-                                    )}
+                                    {/* softbox: the backdrop behind her catches the light */}
+                                    {mode === "softbox" && <i className="hl3__bglight" />}
 
                                     {/* 3 — the model herself */}
                                     <img
@@ -928,8 +899,25 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         src={`${maskDir}/cut${k}.webp`}
                                         alt=""
                                         decoding="async"
-                                        style={rect(cutR)}
+                                        style={{
+                                            ...rect(cutR),
+                                            transformOrigin: `50% ${pct((m.feet - cutR[1]) / cutR[3])}`,
+                                        }}
                                     />
+
+                                    {/* softbox: the same picture of her, brighter, faded in from her lit side */}
+                                    {mode === "softbox" && (
+                                        <img
+                                            className="hl3__keylight"
+                                            src={`${maskDir}/cut${k}.webp`}
+                                            alt=""
+                                            decoding="async"
+                                            style={{
+                                                ...rect(cutR),
+                                                ["--kd" as string]: rs > 0 ? "to left" : "to right",
+                                            }}
+                                        />
+                                    )}
 
                                     {/* 3b — her outfit, lit: revealed through a moving mask */}
                                     {fabric && (
@@ -1116,17 +1104,6 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         </svg>
                                     ) : null}
 
-                                    {/* window light: the same low sun lies across her, in her shape */}
-                                    {mode === "window" && (
-                                        <i
-                                            className="hl3__win-on"
-                                            style={{
-                                                ...rect(sil),
-                                                backgroundImage: `linear-gradient(${rs > 0 ? 250 : 110}deg, transparent 30%, rgba(255, 214, 150, 0.45) 42%, rgba(255, 228, 176, 0.5) 52%, transparent 64%)`,
-                                            }}
-                                        />
-                                    )}
-
                                     {/* the brand's hang tag, tied to her at the shoulder */}
                                     {mode === "tag" && (
                                         <div
@@ -1147,9 +1124,18 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                                 aria-hidden="true"
                                             >
                                                 <path
+                                                    className="hl3__tag-cord"
+                                                    d={`M${tKnot} 0 Q${(tKnot + tHoleX) / 2} 92 ${tHoleX} 100`}
+                                                />
+                                                <path
+                                                    className="hl3__tag-twist"
                                                     d={`M${tKnot} 0 Q${(tKnot + tHoleX) / 2} 92 ${tHoleX} 100`}
                                                 />
                                             </svg>
+                                            <i
+                                                className="hl3__tag-knot"
+                                                style={{ left: `${tKnot}%` }}
+                                            />
                                             <div
                                                 className="hl3__tag-card"
                                                 style={{
@@ -1159,7 +1145,10 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                             >
                                                 <span className="hl3__tag-hole" />
                                                 <i className="hl3__tag-sun" />
-                                                <span className="hl3__tag-brand">MIND BODY</span>
+                                                <i
+                                                    className="hl3__tag-brand"
+                                                    aria-label="MIND BODY"
+                                                />
                                                 <b>{sentence(m.title)}</b>
                                                 {parts.map((x) => (
                                                     <i
