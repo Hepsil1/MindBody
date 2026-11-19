@@ -300,42 +300,49 @@
     transition: filter 1.1s cubic-bezier(0.3, 0, 0.2, 1) !important;
 }
 
-/* sun: the brand's sun (the mark at the centre of the hero) behind her head.
-   First a soft daylight glow comes up behind her, then the rays are drawn
-   round one after another, like the sun opening; then it turns very slowly.
-   Her own colour, light, half see-through - a watermark, not a sticker. */
+/* sun: the brand's sun (the mark at the centre of the hero) rises from behind
+   her - it starts hidden behind her chest, small - travels up and out to
+   stand beside her on the free wall, its rays are drawn round one after
+   another, then it turns very slowly. Her colour, clearly visible. */
 .hl3 .hl3__sun {
     z-index: 1;
+    opacity: 0;
+    transform: translate(var(--sdx), var(--sdy)) scale(0.55);
+    transition:
+        opacity 0.3s ease,
+        transform 0.4s ease !important;
+}
+.is-on .hl3__sun {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity 0.5s ease,
+        transform 1.6s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 .hl3__sun i {
     position: absolute;
     inset: 0;
     display: block;
 }
+/* a soft daylight glow round it */
 .hl3__sun .hl3__sun-glow {
-    inset: -18%;
+    inset: -22%;
     background: radial-gradient(
         closest-side,
-        rgba(255, 255, 255, 0.85) 0%,
-        rgba(255, 255, 255, 0.45) 32%,
-        rgba(255, 255, 255, 0.12) 62%,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.5) 34%,
+        rgba(255, 255, 255, 0.14) 64%,
         transparent 100%
     );
     opacity: 0;
-    transform: scale(0.7);
-    transition:
-        opacity 0.4s ease,
-        transform 0.5s ease !important;
+    transition: opacity 0.3s ease !important;
 }
 .is-on .hl3__sun-glow {
     opacity: 1;
-    transform: none;
-    transition:
-        opacity 1.4s ease,
-        transform 2.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition: opacity 1.2s ease 0.5s !important;
 }
 .hl3__sun-rays {
-    background: linear-gradient(165deg, var(--hex2), var(--hex));
+    background: linear-gradient(160deg, var(--hex2) 0%, var(--hex) 55%, var(--hex) 100%);
     -webkit-mask:
         url(/logo-sun.webp) center / contain no-repeat,
         conic-gradient(from -90deg, #000 var(--sa), transparent calc(var(--sa) + 0.5deg));
@@ -344,20 +351,17 @@
         url(/logo-sun.webp) center / contain no-repeat,
         conic-gradient(from -90deg, #000 var(--sa), transparent calc(var(--sa) + 0.5deg));
     mask-composite: intersect;
-    opacity: 0;
-    transition: opacity 0.35s ease !important;
+    filter: drop-shadow(0 1px 1px rgba(30, 24, 36, 0.18));
 }
 .is-on .hl3__sun-rays {
-    opacity: 0.6;
-    transition: opacity 0.6s ease 0.25s !important;
     animation:
-        hl3SunDraw 2s cubic-bezier(0.45, 0, 0.2, 1) 0.3s both,
-        hl3SunTurn 140s linear 2.3s infinite !important;
+        hl3SunDraw 1.8s cubic-bezier(0.45, 0, 0.2, 1) 0.2s both,
+        hl3SunTurn 140s linear 2s infinite !important;
 }
 @keyframes hl3SunDraw {
     from {
         --sa: 0deg;
-        transform: scale(0.92) rotate(-12deg);
+        transform: rotate(-30deg);
     }
     to {
         --sa: 361deg;

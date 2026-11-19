@@ -24,8 +24,8 @@
  * Five more, each from a different world:
  *   focus     a camera racks focus onto her: the studio and the others go soft,
  *             she alone stays sharp
- *   sun       the brand's sun rises behind her head and shoulders, in her
- *             colour, and turns very slowly
+ *   sun       the brand's sun rises from behind her and stands beside her on
+ *             the free wall, in her colour; its rays are drawn round, it turns slowly
  *   closer    she takes a step towards the camera; the others step back a little
  *   tag       the brand's swing tag, tied to her at the shoulder, drops on its
  *             string and swings to rest (name, colour, price)
@@ -117,16 +117,7 @@ const FAB_KIND: Partial<Record<LiveMode, "sheen" | "touch" | "scan">> = {
 };
 /** effects that are only the outfit light (they fall back to the contour) */
 const FAB_ONLY: LiveMode[] = ["sheen", "touch", "scan"];
-const SIDE_CAPTION: LiveMode[] = [
-    "shadow",
-    "sheen",
-    "touch",
-    "scan",
-    "focus",
-    "sun",
-    "closer",
-    "softbox",
-];
+const SIDE_CAPTION: LiveMode[] = ["shadow", "sheen", "touch", "scan", "focus", "closer", "softbox"];
 /** letters of the line text: width of one, in em */
 const EM = 0.93;
 
@@ -671,14 +662,20 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                             /** free wall to the nearer side of her centre (canvas width) */
                             const halfRoom = Math.min(m.cx - roomL, roomR - m.cx);
 
-                            // sun: the brand's sun rises behind her head and shoulders.
+                            // sun: the brand's sun rises from behind her and comes to stand
+                            // beside her, on the free wall, as big as that wall allows.
                             // Sized in canvas height; the canvas is 16:9.
-                            const sunH = Math.min(body * 0.4, ((halfRoom * 2 * 16) / 9) * 0.98);
+                            const sunRoom = rs > 0 ? roomR - m.x1 : m.x0 - roomL;
+                            const sunH = clamp((sunRoom * 0.92 * 16) / 9, body * 0.12, body * 0.34);
                             const sunW = (sunH * 9) / 16;
+                            const sunX = rs > 0 ? m.x1 + sunRoom / 2 : m.x0 - sunRoom / 2;
                             const sunY = Math.max(
-                                m.head + body * 0.11,
-                                geo.top + sunH * 0.5 + 0.01,
+                                m.head + body * 0.2,
+                                geo.top + sunH * 0.5 + 0.015,
                             );
+                            // where it starts: behind her chest, lower and smaller
+                            const sunDx = ((m.cx - sunX) / sunW) * 100;
+                            const sunDy = ((body * 0.12) / sunH) * 100;
 
                             // hang tag: tied to her at the shoulder, hanging on the side
                             // with more room, as wide as that room allows
@@ -863,10 +860,12 @@ export default function HeroLabLive({ maskDir, models, mode, studioBg }: Props) 
                                         <div
                                             className="hl3__sun"
                                             style={{
-                                                left: pct(m.cx - sunW / 2),
+                                                left: pct(sunX - sunW / 2),
                                                 top: pct(sunY - sunH / 2),
                                                 width: pct(sunW),
                                                 height: pct(sunH),
+                                                ["--sdx" as string]: `${sunDx.toFixed(1)}%`,
+                                                ["--sdy" as string]: `${sunDy.toFixed(1)}%`,
                                             }}
                                         >
                                             <i className="hl3__sun-glow" />
