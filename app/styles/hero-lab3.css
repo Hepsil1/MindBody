@@ -284,7 +284,7 @@
 }
 
 /* ===================================================================== */
-/* SIX MORE: camera, brand sun, a step, monochrome, swing tag, softbox    */
+/* FIVE MORE: camera, brand sun, a step, swing tag, softbox               */
 /* ===================================================================== */
 
 /* focus: the camera racks focus onto her - the studio and the others go
@@ -395,21 +395,6 @@
     transition:
         opacity 1.2s ease,
         transform 1.4s cubic-bezier(0.22, 1, 0.36, 1) !important;
-}
-
-/* mono: the scene goes black and white, she alone keeps her colour */
-.hl3--mono .hl3__plate,
-.hl3--mono .hl3__cut {
-    transition: filter 0.6s ease !important;
-}
-.hl3--mono.has-active .hl3__plate,
-.hl3--mono.has-active .hl3__m:not(.is-on) .hl3__cut {
-    filter: grayscale(1) contrast(1.06) brightness(0.98);
-    transition: filter 1.2s cubic-bezier(0.3, 0, 0.2, 1) !important;
-}
-.hl3--mono.has-active .hl3__m.is-on .hl3__cut {
-    filter: saturate(1.08) contrast(1.02);
-    transition: filter 1.2s ease !important;
 }
 
 /* softbox: a studio softbox comes on at her free side. A second copy of her,
@@ -554,7 +539,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0 0 13cqw;
     color: #f4efe6;
     text-align: center;
     filter: drop-shadow(0 12px 18px rgba(18, 32, 32, 0.26))
@@ -586,6 +570,12 @@
 .hl3__tag-card > * {
     position: relative;
     z-index: 1;
+}
+/* the space under the price. Not padding on the card: cq units on the card's
+   own box resolve against the viewport (it is its own container), which made
+   the board run down to her feet on wide screens */
+.hl3__tag-card > :last-child {
+    margin-bottom: 13cqw;
 }
 /* brass eyelet: a ring with a highlight, a dark hole, and the cord through it */
 .hl3__tag-hole {

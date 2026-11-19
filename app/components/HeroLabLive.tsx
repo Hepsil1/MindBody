@@ -27,7 +27,6 @@
  *   sun       the brand's sun rises behind her head and shoulders, in her
  *             colour, and turns very slowly
  *   closer    she takes a step towards the camera; the others step back a little
- *   mono      the scene goes black and white - she alone stays in colour
  *   tag       the brand's swing tag, tied to her at the shoulder, drops on its
  *             string and swings to rest (name, colour, price)
  *   softbox   a studio softbox comes on at her free side: soft white key
@@ -58,7 +57,6 @@ export type LiveMode =
     | "focus"
     | "sun"
     | "closer"
-    | "mono"
     | "tag"
     | "softbox";
 
@@ -127,7 +125,6 @@ const SIDE_CAPTION: LiveMode[] = [
     "focus",
     "sun",
     "closer",
-    "mono",
     "softbox",
 ];
 /** letters of the line text: width of one, in em */

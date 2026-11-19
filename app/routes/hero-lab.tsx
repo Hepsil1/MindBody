@@ -144,11 +144,6 @@ const EFFECTS: Array<{ mode: LiveMode; label: string; hint: string }> = [
         hint: "Модель робить крок до камери, інші ледь відходять назад",
     },
     {
-        mode: "mono",
-        label: "Монохром",
-        hint: "Уся сцена стає чорно-білою, у кольорі лише вона",
-    },
-    {
         mode: "tag",
         label: "Бирка",
         hint: "Фірмова бирка MIND BODY на нитці з плеча моделі: падає й погойдується",
